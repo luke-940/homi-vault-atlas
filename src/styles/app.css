@@ -2219,6 +2219,14 @@
     grid-template-rows: minmax(320px, 1.05fr) minmax(260px, .95fr);
     overflow: auto;
   }
+  .atlas-app.is-theatre .matrix-canvas {
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+  .atlas-app.is-theatre .matrix-canvas svg {
+    display: block;
+    max-width: none;
+  }
   .atlas-app.is-theatre .chord-panel { display: grid; }
   .atlas-app.is-theatre .mobile-sibling { display: none; }
   .atlas-app.is-theatre .route-rail,

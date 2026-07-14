@@ -360,9 +360,25 @@ function RelationMatrix() {
         : navigationEntries[0]?.key ?? "";
     if (preferred !== activeEntryKey) setActiveEntryKey(preferred);
   }, [activeEntryKey, navigationEntries, selectedEntryKey]);
-  const margin = { top: 82, right: 18, bottom: 20, left: 98 };
-  const x = scaleBand<string>().domain(order).range([margin.left, Math.max(margin.left + 1, width - margin.right)]).padding(0.08);
-  const y = scaleBand<string>().domain(order).range([margin.top, Math.max(margin.top + 1, height - margin.bottom)]).padding(0.08);
+  const compactTheatre = state.theatre && width < 600;
+  const margin = compactTheatre
+    ? { top: 68, right: 12, bottom: 16, left: 78 }
+    : { top: 82, right: 18, bottom: 20, left: 98 };
+  const bandPadding = 0.08;
+  const minimumInteractiveBand = compactTheatre ? 24 : 0;
+  const minimumPlotExtent = minimumInteractiveBand
+    ? Math.ceil((order.length - bandPadding + (bandPadding * 2)) * minimumInteractiveBand / (1 - bandPadding))
+    : 0;
+  const renderWidth = Math.max(width, margin.left + margin.right + minimumPlotExtent);
+  const renderHeight = Math.max(height, margin.top + margin.bottom + minimumPlotExtent);
+  const x = scaleBand<string>()
+    .domain(order)
+    .range([margin.left, Math.max(margin.left + 1, renderWidth - margin.right)])
+    .padding(bandPadding);
+  const y = scaleBand<string>()
+    .domain(order)
+    .range([margin.top, Math.max(margin.top + 1, renderHeight - margin.bottom)])
+    .padding(bandPadding);
   const max = Math.max(
     1,
     ...atlasData.relation.matrix.flatMap((cell) =>
@@ -375,8 +391,8 @@ function RelationMatrix() {
   return (
     <div className="matrix-canvas" ref={ref} data-testid="relation-matrix">
       <svg
-        width={width}
-        height={height}
+        width={renderWidth}
+        height={renderHeight}
         role={mobileSibling ? undefined : "group"}
         aria-label={mobileSibling ? undefined : `${layerLabel(state.relationLayer)}의 구역 간 관계표`}
         aria-hidden={mobileSibling ? "true" : undefined}

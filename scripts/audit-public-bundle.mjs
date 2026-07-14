@@ -10,7 +10,10 @@ const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".
 const dataDir = path.resolve(process.env.ATLAS_PUBLIC_DATA_DIR ?? path.join(projectDir, "public-safe", "data"));
 const distDir = path.resolve(process.env.ATLAS_PUBLIC_OUTPUT_DIR ?? path.join(projectDir, "dist-public"));
 const artifactDir = path.resolve(process.env.ATLAS_PUBLIC_AUDIT_DIR ?? path.join(projectDir, "artifacts", "publication"));
-const publicRepoDir = path.resolve(process.env.ATLAS_PUBLIC_REPO_DIR ?? path.join(projectDir, "..", "github", "homi-vault-atlas"));
+const defaultPublicRepoDir = path.basename(projectDir) === "homi-vault-atlas"
+  ? projectDir
+  : path.join(projectDir, "..", "github", "homi-vault-atlas");
+const publicRepoDir = path.resolve(process.env.ATLAS_PUBLIC_REPO_DIR ?? defaultPublicRepoDir);
 const execFileAsync = promisify(execFile);
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 const hardPatterns = [

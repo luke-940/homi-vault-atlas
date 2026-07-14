@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
 
@@ -6,6 +6,7 @@ const readJson = (name: string) => JSON.parse(
   readFileSync(path.resolve("public-safe", "data", `${name}.json`), "utf8"),
 );
 const readSource = (name: string) => readFileSync(path.resolve("src", name), "utf8");
+const readProjectFile = (name: string) => readFileSync(path.resolve(name), "utf8");
 
 describe("public Atlas runtime contracts", () => {
   test("every public district resolves to exactly one hierarchy district", () => {
@@ -66,6 +67,16 @@ describe("public Atlas runtime contracts", () => {
     expect(home).toContain('publicProfile ? "집계 문서" : "활성 문서"');
     expect(home).toContain('publicProfile ? "연결군" : "명시 관계"');
     expect(publication.redactionCounts.aggregatedSourceDocuments).toBeGreaterThan(entities.length);
+  });
+
+  test("builds from a clean public checkout and does not claim a private latest pulse", () => {
+    const auditScript = readProjectFile("scripts/audit-public-bundle.mjs");
+    const readme = readProjectFile(existsSync(path.resolve("README.md")) ? "README.md" : "publication-template/README.md");
+    expect(auditScript).toContain('path.basename(projectDir) === "homi-vault-atlas"');
+    expect(auditScript).toContain("? projectDir");
+    expect(readme).toContain("공개 스냅샷의 지식 구조");
+    expect(readme).toContain("공개 가능한 역할 경로");
+    expect(readme).not.toContain("최신 지식 Pulse");
   });
 
   test("uses document units in public comparison and a complete paginated genealogy reader", () => {
