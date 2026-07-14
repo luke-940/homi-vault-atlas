@@ -13,19 +13,19 @@
       "deltas": [
         {
           "state": "born",
-          "label": "born 변화 1",
+          "label": "새로 생김 집계 1",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         },
         {
           "state": "born",
-          "label": "born 변화 2",
+          "label": "새로 생김 집계 2",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         }
       ],
       "unknown": [
@@ -45,19 +45,19 @@
       "deltas": [
         {
           "state": "born",
-          "label": "born 변화 1",
+          "label": "새로 생김 집계 1",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         },
         {
           "state": "born",
-          "label": "born 변화 2",
+          "label": "새로 생김 집계 2",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         }
       ],
       "unknown": [
@@ -78,19 +78,19 @@
       "deltas": [
         {
           "state": "born",
-          "label": "born 변화 1",
+          "label": "새로 생김 집계 1",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         },
         {
           "state": "born",
-          "label": "born 변화 2",
+          "label": "새로 생김 집계 2",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         }
       ],
       "unknown": [
@@ -111,27 +111,27 @@
       "deltas": [
         {
           "state": "born",
-          "label": "born 변화 1",
+          "label": "새로 생김 집계 1",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         },
         {
           "state": "born",
-          "label": "born 변화 2",
+          "label": "새로 생김 집계 2",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         },
         {
           "state": "born",
-          "label": "born 변화 3",
+          "label": "새로 생김 집계 3",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         }
       ],
       "unknown": [
@@ -152,19 +152,19 @@
       "deltas": [
         {
           "state": "born",
-          "label": "born 변화 1",
+          "label": "새로 생김 집계 1",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         },
         {
           "state": "born",
-          "label": "born 변화 2",
+          "label": "새로 생김 집계 2",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         }
       ],
       "unknown": [
@@ -184,19 +184,19 @@
       "deltas": [
         {
           "state": "born",
-          "label": "born 변화 1",
+          "label": "새로 생김 집계 1",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         },
         {
           "state": "born",
-          "label": "born 변화 2",
+          "label": "새로 생김 집계 2",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         }
       ],
       "unknown": [
@@ -216,19 +216,19 @@
       "deltas": [
         {
           "state": "born",
-          "label": "born 변화 1",
+          "label": "새로 생김 집계 1",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         },
         {
           "state": "born",
-          "label": "born 변화 2",
+          "label": "새로 생김 집계 2",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         }
       ],
       "unknown": [
@@ -248,27 +248,27 @@
       "deltas": [
         {
           "state": "born",
-          "label": "born 변화 1",
+          "label": "새로 생김 집계 1",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         },
         {
           "state": "born",
-          "label": "born 변화 2",
+          "label": "새로 생김 집계 2",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         },
         {
           "state": "born",
-          "label": "born 변화 3",
+          "label": "새로 생김 집계 3",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         }
       ],
       "unknown": [
@@ -288,27 +288,27 @@
       "deltas": [
         {
           "state": "born",
-          "label": "born 변화 1",
+          "label": "새로 생김 집계 1",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         },
         {
           "state": "born",
-          "label": "born 변화 2",
+          "label": "새로 생김 집계 2",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         },
         {
           "state": "born",
-          "label": "born 변화 3",
+          "label": "새로 생김 집계 3",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         }
       ],
       "unknown": [
@@ -328,19 +328,19 @@
       "deltas": [
         {
           "state": "born",
-          "label": "born 변화 1",
+          "label": "새로 생김 집계 1",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         },
         {
           "state": "born",
-          "label": "born 변화 2",
+          "label": "새로 생김 집계 2",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         }
       ],
       "unknown": [
@@ -360,35 +360,35 @@
       "deltas": [
         {
           "state": "born",
-          "label": "born 변화 1",
+          "label": "새로 생김 집계 1",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         },
         {
           "state": "born",
-          "label": "born 변화 2",
+          "label": "새로 생김 집계 2",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         },
         {
           "state": "born",
-          "label": "born 변화 3",
+          "label": "새로 생김 집계 3",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         },
         {
           "state": "born",
-          "label": "born 변화 4",
+          "label": "새로 생김 집계 4",
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "high"
+          "confidence": "medium"
         }
       ],
       "unknown": [

@@ -18,7 +18,7 @@ import {
   treemap,
   treemapSquarify,
 } from "d3";
-import { useMemo, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { atlasData, entityById, hierarchyById, hierarchyFocusForDistrict } from "../data";
 import { useElementSize } from "../hooks/useElementSize";
@@ -91,7 +91,7 @@ export function ExploreView() {
       ? {
           eyebrow: "폴더 계보와 문서 위치",
           title: "선택한 문서는 어느 가지에서 내려오는가",
-          question: "왼쪽에서 오른쪽으로 root, 상위 가지, 문서 leaf를 따라가며 형제 가지와 문서군을 함께 읽는다.",
+          question: "중심 root에서 바깥쪽으로 상위 가지와 문서 leaf를 따라가며 형제 가지와 문서군을 함께 읽는다.",
           answer: `${selectedEntity?.displayLabel ?? selectedNode?.label ?? "Homi Vault"}은 ${selectedEntity?.path ?? selectedNode?.path ?? "Vault root"}에 있다.`,
           keyItems: [
             { label: "상위 계보", className: "key-area" },
@@ -235,14 +235,8 @@ function CityBlocks() {
               onPointerEnter={node.depth === 2 ? () => dispatch({ type: "preview", focusId: node.id! }) : undefined}
               onPointerLeave={node.depth === 2 ? () => dispatch({ type: "preview", focusId: null }) : undefined}
               onClick={node.depth === 2 ? () => dispatch({ type: "focus", focusId: node.id! }) : undefined}
-              role={node.depth === 2 ? "button" : "presentation"}
-              tabIndex={node.depth === 2 ? -1 : undefined}
-              aria-label={`${node.data.label}, ${node.data.documentCount}개 문서`}
-              onKeyDown={(event) => {
-                if (node.depth === 2 && (event.key === "Enter" || event.key === " ")) {
-                  dispatch({ type: "focus", focusId: node.id! });
-                }
-              }}
+              role="presentation"
+              aria-hidden={node.depth === 2 ? "true" : undefined}
               pointerEvents={node.depth === 1 ? "none" : undefined}
             >
               <rect data-authority-count={node.data.authorityL1L2} width={w} height={h} rx={node.depth === 1 ? 8 : 3} fill={colorFor(district)} fillOpacity={node.depth === 1 ? 0.82 : 0.96} stroke={selected ? "#183b33" : "#f9fbf9"} strokeWidth={selected ? 2.5 : node.depth === 1 ? 2 : 1} filter={selected && node.depth === 1 ? "url(#focus-shadow)" : undefined} />
@@ -403,15 +397,19 @@ function LineageRadial() {
   const { state, dispatch } = useAtlasState();
   const { ref, width, height } = useElementSize<HTMLDivElement>();
   const [documentQuery, setDocumentQuery] = useState("");
+  const [documentLimit, setDocumentLimit] = useState(60);
   const localModel = useMemo(() => localHierarchy(state.focusId), [state.focusId]);
   const localNodes = localModel.nodes;
-  const branchDocuments = useMemo(() => {
+  const filteredBranchDocuments = useMemo(() => {
     const normalized = documentQuery.trim().toLocaleLowerCase("ko");
     return documentsForAnchor(localModel.anchor)
       .filter((entity) => !normalized || `${entity.title} ${entity.path} ${entity.aliases.join(" ")}`.toLocaleLowerCase("ko").includes(normalized))
-      .sort((a, b) => Number(b.id === state.focusId) - Number(a.id === state.focusId) || a.title.localeCompare(b.title))
-      .slice(0, normalized ? 100 : 60);
+      .sort((a, b) => Number(b.id === state.focusId) - Number(a.id === state.focusId) || a.title.localeCompare(b.title));
   }, [documentQuery, localModel.anchor, state.focusId]);
+  useEffect(() => setDocumentLimit(60), [documentQuery, localModel.anchor.id]);
+  const branchDocuments = filteredBranchDocuments.slice(0, documentLimit);
+  const remainingDocuments = Math.max(0, filteredBranchDocuments.length - branchDocuments.length);
+  const isPublicProfile = atlasData.publication.profile === "public";
   const layout = useMemo(() => {
     if (!width || !height) return [];
     const root = stratify<HierarchyNode>()
@@ -547,7 +545,11 @@ function LineageRadial() {
                       );
                     })}
                   </g>
-                  <text className="lineage-map-caption" x="18" y={height - 18}>{localModel.totalDocuments}개 문서 중 ranked {localModel.visibleDocuments}개 leaf · 전체 목록은 오른쪽 reader</text>
+                  <text className="lineage-map-caption" x="18" y={height - 18}>
+                    {isPublicProfile
+                      ? `${localModel.totalDocuments}개 원문을 공개 문서군으로 요약 · 지도 leaf ${localModel.visibleDocuments}개`
+                      : `${localModel.totalDocuments}개 문서 · 지도 leaf ${localModel.visibleDocuments}개 · reader ${branchDocuments.length}/${filteredBranchDocuments.length}`}
+                  </text>
                 </g>
               );
             })()}
@@ -557,7 +559,11 @@ function LineageRadial() {
           <div className="branch-reader-heading">
             <span className="eyebrow">가지 문서 목록</span>
             <h3>{localModel.anchor.label}</h3>
-            <p>{localModel.totalDocuments}개 문서 · 지도 표식 {localModel.visibleDocuments}개</p>
+            <p aria-live="polite">
+              {isPublicProfile
+                ? `${localModel.totalDocuments}개 원문 · 공개 문서군 ${filteredBranchDocuments.length}개 · 지도 표식 ${localModel.visibleDocuments}개`
+                : `${localModel.totalDocuments}개 문서 · reader ${branchDocuments.length}/${filteredBranchDocuments.length} · 지도 표식 ${localModel.visibleDocuments}개`}
+            </p>
             <small className="branch-ranking-note">선택 문서 → 권위 → 문서량 순으로 최대 28개를 지도에 표시</small>
           </div>
           <label className="branch-search">
@@ -571,6 +577,16 @@ function LineageRadial() {
                 <span><strong>{entity.displayLabel}</strong><small>{entity.path}</small></span>
               </button>
             ))}
+            {remainingDocuments > 0 && (
+              <button
+                className="branch-reader-more"
+                type="button"
+                onClick={() => setDocumentLimit((current) => Math.min(filteredBranchDocuments.length, current + 60))}
+              >
+                <span>다음 {Math.min(60, remainingDocuments)}개 보기</span>
+                <small>{branchDocuments.length}/{filteredBranchDocuments.length} 표시 중</small>
+              </button>
+            )}
             {!branchDocuments.length && <p className="empty-state">일치하는 문서가 없습니다.</p>}
           </div>
         </aside>

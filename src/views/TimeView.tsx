@@ -31,6 +31,7 @@ const currentnessLabels: Record<string, string> = {
   historical: "역사 기록",
   archive: "보관",
   projection: "현재 상태 반영본",
+  public_snapshot: "공개 스냅샷",
 };
 
 function evidenceLabel(value: string) {
@@ -79,7 +80,7 @@ export function TimeView() {
         answer={`시대 ${era.id}에는 근거가 남은 변화 ${era.deltas.length}개와 미확정 항목 ${era.unknown.length}개가 있다.`}
         keyItems={[
           ...[...plottedLifecycleStates, "unknown"].map((stateName) => ({ label: eraStateLabels[stateName], className: `key-era-${stateName}` })),
-          { label: "층 두께 = 근거 신뢰도와 기록 수", className: "key-era-evidence" },
+          { label: "층 = 기록 유무 · 숫자 = 수 · 투명도 = 신뢰", className: "key-era-evidence" },
         ]}
       />
       <nav className="era-rail" aria-label="Era 선택">
@@ -146,9 +147,9 @@ function EraPlot() {
     const samples = atlasData.temporal.eras.map((era) => {
       const deltas = era.deltas.filter((delta) => delta.state === stateName);
       const confidenceFloor = deltas.some((delta) => delta.confidence === "low") ? "low" : deltas.some((delta) => delta.confidence === "medium") ? "medium" : "high";
-      const confidenceFactor = confidenceFloor === "high" ? 1 : confidenceFloor === "medium" ? 0.76 : 0.56;
-      const amplitude = deltas.length ? Math.min(laneGap * 0.29, 5 + deltas.length * 4.2) * confidenceFactor : 1.4;
-      return { era, deltas, x: xForEra(era.id), center, amplitude };
+      const confidenceOpacity = confidenceFloor === "high" ? 1 : confidenceFloor === "medium" ? 0.72 : 0.5;
+      const amplitude = deltas.length ? Math.min(laneGap * 0.18, 8) : 1.4;
+      return { era, deltas, x: xForEra(era.id), center, amplitude, confidenceOpacity };
     });
     const path = area<(typeof samples)[number]>()
       .x((sample) => sample.x)
@@ -161,7 +162,7 @@ function EraPlot() {
   return (
     <div className="era-plot-shell">
       <div className="era-plot era-strata" ref={containerRef} data-testid="era-small-multiples">
-        <svg viewBox={`0 0 ${plotWidth} ${plotHeight}`} role="group" data-selected-era={state.eraId} aria-label="시대 1부터 11까지 탄생, 지속, 약화, 종료의 증거 흐름을 층으로 보여준다. 층의 두께는 기록된 변화 수이며 얇은 선은 기록 없음이다.">
+        <svg viewBox={`0 0 ${plotWidth} ${plotHeight}`} role="group" data-selected-era={state.eraId} aria-label="시대 1부터 11까지 탄생, 지속, 약화, 종료의 증거 흐름을 층으로 보여준다. 층은 변화 기록 유무, 숫자는 기록 수, 표식 투명도는 근거 신뢰를 뜻한다.">
           <defs>
             <filter id="era-strata-glow" x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation="4" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
           </defs>
@@ -175,7 +176,7 @@ function EraPlot() {
                 const selected = sample.era.id === state.eraId;
                 return sample.deltas.length ? (
                   <g key={sample.era.id} transform={`translate(${sample.x},${sample.center})`}>
-                    <circle r={selected ? 10 : 7} className={selected ? "era-strata-mark is-selected" : "era-strata-mark"} fill={eraStateColors[stratum.stateName]} filter={selected ? "url(#era-strata-glow)" : undefined} />
+                    <circle r={selected ? 10 : 7} opacity={sample.confidenceOpacity} className={selected ? "era-strata-mark is-selected" : "era-strata-mark"} fill={eraStateColors[stratum.stateName]} filter={selected ? "url(#era-strata-glow)" : undefined} />
                     <text y="3" textAnchor="middle" className="era-strata-count">{sample.deltas.length}</text>
                     <title>{`시대 ${sample.era.id} · ${eraStateLabels[stratum.stateName]} ${sample.deltas.length}개`}</title>
                   </g>
@@ -200,7 +201,7 @@ function EraPlot() {
           ))}
         </svg>
       </div>
-      <div className="era-unknown-boundary">층 두께 = 기록된 변화 수 × 근거 신뢰 보정 · 얇은 선 = 기록 없음(0 변화 아님) · 현재 Era 미확정 {atlasData.temporal.eras.find((item) => item.id === state.eraId)?.unknown.length ?? 0}개</div>
+      <div className="era-unknown-boundary">층 = 변화 기록 유무 · 숫자 = 기록 수 · 표식 투명도 = 근거 신뢰 · 얇은 선 = 기록 없음(0 변화 아님) · 현재 Era 미확정 {atlasData.temporal.eras.find((item) => item.id === state.eraId)?.unknown.length ?? 0}개</div>
     </div>
   );
 }
@@ -216,7 +217,10 @@ function EntityTimeReadout() {
         <dl>
           <div><dt>현재 권위</dt><dd>{entity.authority}</dd></div>
           <div><dt>현재성</dt><dd>{currentnessLabels[entity.currentness] ?? entity.currentness}</dd></div>
-          <div><dt>마지막 변경 거리</dt><dd>{entity.ageDays}일</dd></div>
+          <div>
+            <dt>{atlasData.publication.profile === "public" ? "시간 기준" : "마지막 변경 거리"}</dt>
+            <dd>{atlasData.publication.profile === "public" ? "공개 스냅샷 집계" : `${entity.ageDays}일`}</dd>
+          </div>
           <div><dt>역사 경계</dt><dd>정확한 과거 파일 모습은 판단 근거 부족</dd></div>
         </dl>
       ) : <p>문서를 선택하면 현재 시점의 권위와 시간 경계를 함께 본다.</p>}

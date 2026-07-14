@@ -66,4 +66,13 @@ describe("public Atlas runtime contracts", () => {
     expect(home).toContain('publicProfile ? "연결군" : "명시 관계"');
     expect(publication.redactionCounts.aggregatedSourceDocuments).toBeGreaterThan(entities.length);
   });
+
+  test("uses document units in public comparison and a complete paginated genealogy reader", () => {
+    const inspector = readSource("components/InspectorTray.tsx");
+    const explore = readSource("views/ExploreView.tsx");
+    expect(inspector).toContain('isPublicProfile ? "개 문서" : "단어"');
+    expect(explore).toContain('className="branch-reader-more"');
+    expect(explore).toContain("filteredBranchDocuments.length");
+    expect(explore).not.toContain("전체 목록은 오른쪽 reader");
+  });
 });

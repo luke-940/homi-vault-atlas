@@ -19,6 +19,8 @@ describe("public Atlas data contract", () => {
       expect(entity.aliases).toEqual([]);
       expect(entity.tags).toEqual([]);
       expect(["public_aggregate", "public_snapshot_boundary"]).toContain(entity.sourceRole);
+      expect(entity.authority).toMatch(/^공개 /);
+      expect(entity.currentness).toBe("public_snapshot");
     }
   });
 
@@ -81,5 +83,15 @@ describe("public Atlas data contract", () => {
   test("exposes only relation layers supported by the public evidence boundary", () => {
     expect(packs.relation.availableLayers).toEqual(["wikilink"]);
     expect(packs.relation.redactedLayers).toEqual(["typed", "route"]);
+  });
+
+  test("uses aggregate-safe Korean Era labels and bounded confidence", () => {
+    for (const era of packs.temporal.eras) {
+      for (const delta of era.deltas) {
+        expect(delta.label).toMatch(/(?:새로 생김|계속 유지|약해짐|역사로 이동|판단 근거 부족|변화) 집계 \d+/);
+        expect(delta.label).not.toMatch(/\b(?:born|persisted|weakened|retired|unknown)\b/i);
+        expect(delta.confidence).toBe("medium");
+      }
+    }
   });
 });

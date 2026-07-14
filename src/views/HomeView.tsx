@@ -210,7 +210,17 @@ function GuideRail() {
             다음 <FastForward size={14} />
           </button>
         ) : (
-          <button type="button" className="is-primary" onClick={() => { close(); dispatch({ type: "journey", target: { workspace: "explore", sceneId: "city-overview", lens: "city" } }); }}>
+          <button type="button" className="is-primary" onClick={() => {
+            close();
+            dispatch({ type: "journey", target: { workspace: "explore", sceneId: "city-overview", lens: "city" } });
+            requestAnimationFrame(() => {
+              const heading = document.getElementById("explore-title");
+              if (!heading) return;
+              heading.setAttribute("tabindex", "-1");
+              heading.focus({ preventScroll: true });
+              heading.scrollIntoView({ block: "nearest" });
+            });
+          }}>
             자유 탐색 <Compass size={14} />
           </button>
         )}

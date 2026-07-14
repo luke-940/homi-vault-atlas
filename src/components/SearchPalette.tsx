@@ -64,12 +64,14 @@ export function SearchPalette() {
   const destinationTitleRef = useRef("explore-title");
 
   useLayoutEffect(() => {
+    const previousOverflow = document.body.style.overflow;
     if (state.searchOpen) {
       returnFocusRef.current = document.activeElement as HTMLElement | null;
       setQuery("");
       setActiveIndex(0);
       document.querySelector<HTMLElement>(".command-bar")?.setAttribute("inert", "");
       document.querySelector<HTMLElement>(".workspace-shell")?.setAttribute("inert", "");
+      document.body.style.overflow = "hidden";
       requestAnimationFrame(() => inputRef.current?.focus());
     } else {
       document.querySelector<HTMLElement>(".command-bar")?.removeAttribute("inert");
@@ -92,6 +94,7 @@ export function SearchPalette() {
     return () => {
       document.querySelector<HTMLElement>(".command-bar")?.removeAttribute("inert");
       document.querySelector<HTMLElement>(".workspace-shell")?.removeAttribute("inert");
+      document.body.style.overflow = previousOverflow;
     };
   }, [state.searchOpen]);
 

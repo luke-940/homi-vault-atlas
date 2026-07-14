@@ -861,6 +861,27 @@
   background: var(--focus);
 }
 
+.branch-document-list button.branch-reader-more {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-inline: 14px;
+  color: var(--mint-deep);
+  background: rgba(221, 239, 232, 0.55);
+}
+
+.branch-document-list button.branch-reader-more span {
+  font-size: 11px;
+  font-weight: 760;
+}
+
+.branch-document-list button.branch-reader-more small {
+  color: var(--ink-faint);
+  font-size: 9px;
+}
+
 .branch-document-list button > span {
   min-width: 0;
   display: grid;

@@ -4,10 +4,11 @@
     "files": 6
   },
   "currentnessCounts": {
-    "reference": 6
+    "public_snapshot": 6
   },
   "authorityCounts": {
-    "L3": 6
+    "공개 집계": 5,
+    "공개 경계": 1
   },
   "unresolvedLinks": {},
   "ambiguousAutoSelections": 0,

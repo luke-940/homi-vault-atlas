@@ -38,6 +38,7 @@ const currentnessLabels: Record<string, string> = {
   historical: "역사 기록",
   archive: "보관",
   projection: "현재 상태 반영본",
+  public_snapshot: "공개 스냅샷",
 };
 
 const deltaLabels: Record<string, string> = {
@@ -385,6 +386,7 @@ export function InspectorTray() {
 
 function ComparisonLedger() {
   const { state, dispatch } = useAtlasState();
+  const isPublicProfile = atlasData.publication.profile === "public";
   const pulseTargets = new Set(
     atlasData.flow.pulse.chains.flatMap((chain) => {
       const stages = chain.stages as Array<{ entityId?: string | null }> | undefined;
@@ -400,7 +402,9 @@ function ComparisonLedger() {
       authority: entity?.authority ?? `${node?.authorityL1L2 ?? 0}개 L1/L2`,
       freshness: entity ? (currentnessLabels[entity.currentness] ?? entity.currentness) : "폴더 집계",
       connections: entity ? (atlasData.relation.neighborhoods[entity.id]?.length ?? 0) : node?.childrenCount ?? 0,
-      size: entity ? `${entity.wordCount.toLocaleString()}단어` : `${node?.documentCount ?? 0}문서`,
+      size: entity
+        ? `${entity.wordCount.toLocaleString()}${isPublicProfile ? "개 문서" : "단어"}`
+        : `${node?.documentCount ?? 0}문서`,
       pulse: pulseTargets.has(id) ? "도달" : "미확인",
     };
   });
@@ -647,10 +651,17 @@ function HistoryContent({
           </div>
         </>
       ) : entity ? (
-        <dl className="evidence-ledger">
-          <div><dt>마지막 변경 거리</dt><dd>{entity.ageDays}일</dd></div>
-          <div><dt>frontmatter Era</dt><dd>{String(entity.frontmatter.era ?? "미지정")}</dd></div>
-        </dl>
+        atlasData.publication.profile === "public" ? (
+          <dl className="evidence-ledger">
+            <div><dt>시간 기준</dt><dd>공개 스냅샷 집계</dd></div>
+            <div><dt>원문 시각</dt><dd>공개판에서 비공개</dd></div>
+          </dl>
+        ) : (
+          <dl className="evidence-ledger">
+            <div><dt>마지막 변경 거리</dt><dd>{entity.ageDays}일</dd></div>
+            <div><dt>frontmatter Era</dt><dd>{String(entity.frontmatter.era ?? "미지정")}</dd></div>
+          </dl>
+        )
       ) : null}
     </section>
   );

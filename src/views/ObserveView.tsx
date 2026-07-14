@@ -89,6 +89,22 @@ export function typedPairPresentation(
   };
 }
 
+export function relationAnswer(
+  pair: MatrixCell,
+  layer: RelationLayer,
+  direction: RelationDirection | null,
+  selected: boolean,
+) {
+  if (layer === "typed") {
+    const presentation = typedPairPresentation(pair, direction);
+    const reverse = presentation.reverseCount > 0
+      ? ` 반대 방향 ${presentation.reverseCount}건은 별도다.`
+      : "";
+    return `${presentation.source} → ${presentation.target}: 명시 관계 ${presentation.selectedCount}건${selected ? "을 선택했다." : "이 가장 강하다."}${reverse}`;
+  }
+  return `${pair.source} ↔ ${pair.target}: ${pair[layer]}건${selected ? "을 선택했다." : "으로 가장 강하다."}`;
+}
+
 export function matrixNavigationEntries(
   matrix: MatrixCell[],
   order: string[],
@@ -212,8 +228,8 @@ export function ObserveView() {
         title="Vault 구역들은 어떤 관계로 이어지는가"
         question="서로 다른 구역 사이의 확인된 관계를 비교한 뒤, 한 연결쌍과 대표 문서까지 내려가 읽는다. 같은 구역 안 관계는 별도 집계한다."
         answer={selectedPair
-          ? `${selectedPair.source} ↔ ${selectedPair.target}: ${selectedPair[state.relationLayer]}건을 선택했다.`
-          : `${strongestPair.source} ↔ ${strongestPair.target}가 현재 층에서 ${strongestPair[state.relationLayer]}건으로 가장 강하다.`}
+          ? relationAnswer(selectedPair, state.relationLayer, state.relationDirection, true)
+          : relationAnswer(strongestPair, state.relationLayer, null, false)}
         keyItems={availableLayerItems.map((item) => ({ label: item.label, className: `key-${item.id}` }))}
         controls={
           <div className="view-switch relation-layer-switch" role="tablist" aria-label="관계층">

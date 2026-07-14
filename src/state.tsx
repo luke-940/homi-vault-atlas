@@ -119,7 +119,28 @@ const focusIds = new Set([
 const relationPairIds = new Set(atlasData.relation.matrix.map((pair) => pair.id));
 const routeIds = new Set(atlasData.flow.routes.map((route) => route.id));
 const eraIds = new Set(atlasData.temporal.eras.map((era) => era.id));
+const defaultSceneByWorkspace: Record<Workspace, string> = {
+  home: "pulse-gateway",
+  explore: "explore",
+  observe: "observe",
+  flow: "flow",
+  time: "time",
+};
+const sceneIdsByWorkspace: Record<Workspace, Set<string>> = {
+  home: new Set(["pulse-gateway"]),
+  explore: new Set(["explore", "city-overview", "city-focus", "city-concentration", "attention-isolate"]),
+  observe: new Set(["observe", "global-relation", "entity-relation"]),
+  flow: new Set(["flow", "latest-pulse"]),
+  time: new Set(["time"]),
+};
+for (const insight of atlasData.insight.items) {
+  sceneIdsByWorkspace[insight.targetScene.workspace].add(insight.targetScene.scene);
+}
 export const mobileSiblingQuery = "(max-width: 820px), (max-height: 520px) and (pointer: coarse)";
+
+function validScene(workspace: Workspace, sceneId: string | null | undefined) {
+  return Boolean(sceneId && sceneIdsByWorkspace[workspace].has(sceneId));
+}
 
 export function dominantTypedDirection(
   pair: Pick<MatrixCell, "typedForward" | "typedReverse"> | undefined,
@@ -154,6 +175,7 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
   const requestedPair = params.get("pair");
   const requestedRoute = params.get("route");
   const requestedEra = Number(params.get("era"));
+  const requestedScene = params.get("scene");
   const guideParam = params.get("guide");
   const requestedGuide = guideParam === null ? Number.NaN : Number(guideParam);
   const rawCompare = (params.get("compare") ?? "").split(",").filter(Boolean);
@@ -198,11 +220,14 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
     params.has("era") && !eraIds.has(requestedEra)
       ? `요청한 시대 ${params.get("era")}를 현재 스냅샷에서 찾지 못했습니다.`
       : null,
+    requestedScene && !validScene(workspace, requestedScene)
+      ? `요청한 장면 ${requestedScene}을 ${workspace} 화면에서 찾지 못해 기본 장면을 열었습니다.`
+      : null,
   ].filter(Boolean);
   return {
     ...defaultState,
     workspace,
-    sceneId: params.get("scene") || (workspace === "home" ? "pulse-gateway" : workspace),
+    sceneId: validScene(workspace, requestedScene) ? requestedScene! : defaultSceneByWorkspace[workspace],
     lens: lensParam && lenses.has(lensParam) ? lensParam : defaultState.lens,
     focusId: requestedFocus && focusIds.has(requestedFocus) ? requestedFocus : defaultState.focusId,
     compareIds: requestedCompare,
@@ -293,7 +318,7 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
         ...state,
         previousScene: captureScene(state),
         workspace: action.workspace,
-        sceneId: action.workspace === "home" ? "pulse-gateway" : action.workspace,
+        sceneId: defaultSceneByWorkspace[action.workspace],
         panel: action.workspace === "home" || state.mobileSibling ? "none" : "inspector",
         guideStep: action.workspace === "home" ? state.guideStep : null,
         fallbackReason: null,
@@ -304,6 +329,8 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
       const requestedPair = action.target.relationPairId;
       const validPair = requestedPair ? relationPairIds.has(requestedPair) : true;
       const targetWorkspace = action.target.workspace ?? state.workspace;
+      const requestedScene = action.target.sceneId;
+      const validRequestedScene = requestedScene ? validScene(targetWorkspace, requestedScene) : true;
       const pairWasRequested = Object.prototype.hasOwnProperty.call(action.target, "relationPairId");
       const targetPair = validPair
         ? pairWasRequested
@@ -320,7 +347,13 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
         ...state,
         previousScene: captureScene(state),
         workspace: targetWorkspace,
-        sceneId: action.target.sceneId ?? action.target.workspace ?? state.sceneId,
+        sceneId: validRequestedScene && requestedScene
+          ? requestedScene
+          : action.target.workspace
+            ? defaultSceneByWorkspace[targetWorkspace]
+            : validScene(targetWorkspace, state.sceneId)
+              ? state.sceneId
+              : defaultSceneByWorkspace[targetWorkspace],
         focusId: validFocus && requestedFocus ? requestedFocus : state.focusId,
         lens: action.target.lens ?? state.lens,
         relationPairId: targetPair ?? null,
@@ -337,6 +370,8 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
             ? `요청한 관계 ${requestedPair}를 현재 스냅샷에서 찾지 못해 이전 관계를 유지했습니다.`
             : !validLayer
               ? `요청한 관계층 ${requestedLayer}은 이 범위에서 제공되지 않아 현재 관계층을 유지했습니다.`
+              : !validRequestedScene
+                ? `요청한 장면 ${requestedScene}을 ${targetWorkspace} 화면에서 찾지 못해 기본 장면을 열었습니다.`
               : action.fallbackReason ?? null,
       };
     }
