@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
+import { execFile } from "node:child_process";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import { auditPublicFieldContract } from "./public-field-contract.mjs";
 
@@ -8,6 +10,8 @@ const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".
 const dataDir = path.resolve(process.env.ATLAS_PUBLIC_DATA_DIR ?? path.join(projectDir, "public-safe", "data"));
 const distDir = path.resolve(process.env.ATLAS_PUBLIC_OUTPUT_DIR ?? path.join(projectDir, "dist-public"));
 const artifactDir = path.resolve(process.env.ATLAS_PUBLIC_AUDIT_DIR ?? path.join(projectDir, "artifacts", "publication"));
+const publicRepoDir = path.resolve(process.env.ATLAS_PUBLIC_REPO_DIR ?? path.join(projectDir, "..", "github", "homi-vault-atlas"));
+const execFileAsync = promisify(execFile);
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 const hardPatterns = [
   ["absolute-user-path", /\/Users\/[^/]+\//i],
@@ -42,6 +46,28 @@ for (const root of [dataDir, distDir]) {
     for (const [id, pattern] of patterns) if (pattern.test(text)) findings.push({ id, path: relative });
   }
 }
+let trackedSourceFiles = 0;
+try {
+  const { stdout } = await execFileAsync(
+    "git",
+    ["-C", publicRepoDir, "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+    { encoding: "utf8" },
+  );
+  const tracked = stdout.split("\0").filter(Boolean);
+  trackedSourceFiles = tracked.length;
+  for (const relativePath of tracked) {
+    const text = (await readFile(path.join(publicRepoDir, relativePath))).toString("utf8");
+    const legalText = relativePath.includes("licenses/") || /(?:\.LEGAL\.txt|THIRD_PARTY_NOTICES\.md)$/.test(relativePath);
+    const patterns = legalText
+      ? hardPatterns.filter(([id]) => id !== "personal-email" && id !== "file-url")
+      : hardPatterns;
+    for (const [id, pattern] of patterns) {
+      if (pattern.test(text)) findings.push({ id: `tracked-${id}`, path: `github/homi-vault-atlas/${relativePath}` });
+    }
+  }
+} catch (error) {
+  findings.push({ id: "tracked-repository-scan-unavailable", path: publicRepoDir, detail: String(error) });
+}
 const publication = JSON.parse(await readFile(path.join(dataDir, "publication.json"), "utf8"));
 const entities = JSON.parse(await readFile(path.join(dataDir, "entity.json"), "utf8"));
 const publicPacks = Object.fromEntries(await Promise.all(
@@ -56,6 +82,9 @@ for (const entity of entities.entities) {
   if (Object.keys(entity.frontmatter ?? {}).length) findings.push({ id: "frontmatter-not-empty", path: entity.id });
   if (entity.aliases?.length || entity.tags?.length) findings.push({ id: "metadata-not-redacted", path: entity.id });
   if (!["public_aggregate", "public_snapshot_boundary"].includes(entity.sourceRole)) findings.push({ id: "document-level-entity", path: entity.id });
+  if (entity.wordCount !== 0) findings.push({ id: "public-word-count-must-be-zero", path: entity.id });
+  if (!Number.isInteger(entity.documentCount) || entity.documentCount < 0) findings.push({ id: "public-document-count-invalid", path: entity.id });
+  if (entity.ageDays !== null) findings.push({ id: "public-age-days-must-be-null", path: entity.id });
 }
 const relation = JSON.parse(await readFile(path.join(dataDir, "relation.json"), "utf8"));
 if (Object.keys(relation.neighborhoods ?? {}).length) findings.push({ id: "document-level-relation", path: "public-safe/data/relation.json" });
@@ -74,6 +103,7 @@ const receipt = {
   profile: publication.profile,
   snapshot: publication.publicSnapshotDigest,
   files: manifests.sort((a, b) => a.path.localeCompare(b.path)),
+  trackedSourceFiles,
   redactionCounts: publication.redactionCounts,
   findings,
   pass: findings.length === 0,

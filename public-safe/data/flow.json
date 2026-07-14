@@ -292,7 +292,7 @@
     "sourceItemCount": null,
     "chains": [
       {
-        "id": "pulse:public:1",
+        "id": "role-path:public:daily",
         "stages": [
           {
             "role": "source",
@@ -306,12 +306,12 @@
           },
           {
             "role": "knowledge",
-            "label": "중심 지식",
+            "label": "Daily Pulse",
             "entityId": null
           },
           {
             "role": "decision",
-            "label": "판단 표면 1",
+            "label": "역할 경계 1",
             "entityId": null
           },
           {
@@ -322,7 +322,7 @@
         ]
       },
       {
-        "id": "pulse:public:2",
+        "id": "role-path:public:batch",
         "stages": [
           {
             "role": "source",
@@ -336,12 +336,12 @@
           },
           {
             "role": "knowledge",
-            "label": "중심 지식",
+            "label": "범위 수술",
             "entityId": null
           },
           {
             "role": "decision",
-            "label": "판단 표면 2",
+            "label": "역할 경계 2",
             "entityId": null
           },
           {
@@ -352,7 +352,7 @@
         ]
       },
       {
-        "id": "pulse:public:3",
+        "id": "role-path:public:provider",
         "stages": [
           {
             "role": "source",
@@ -366,12 +366,12 @@
           },
           {
             "role": "knowledge",
-            "label": "중심 지식",
+            "label": "출처 경계",
             "entityId": null
           },
           {
             "role": "decision",
-            "label": "판단 표면 3",
+            "label": "역할 경계 3",
             "entityId": null
           },
           {
@@ -382,7 +382,7 @@
         ]
       },
       {
-        "id": "pulse:public:4",
+        "id": "role-path:public:paper",
         "stages": [
           {
             "role": "source",
@@ -396,12 +396,72 @@
           },
           {
             "role": "knowledge",
-            "label": "중심 지식",
+            "label": "연구 재사용",
             "entityId": null
           },
           {
             "role": "decision",
-            "label": "판단 표면 4",
+            "label": "역할 경계 4",
+            "entityId": null
+          },
+          {
+            "role": "readable",
+            "label": "팀 읽기 화면",
+            "entityId": null
+          }
+        ]
+      },
+      {
+        "id": "role-path:public:chronicle",
+        "stages": [
+          {
+            "role": "source",
+            "label": "소스 창",
+            "entityId": null
+          },
+          {
+            "role": "daily",
+            "label": "Daily 입력",
+            "entityId": null
+          },
+          {
+            "role": "knowledge",
+            "label": "변화 기록",
+            "entityId": null
+          },
+          {
+            "role": "decision",
+            "label": "역할 경계 5",
+            "entityId": null
+          },
+          {
+            "role": "readable",
+            "label": "팀 읽기 화면",
+            "entityId": null
+          }
+        ]
+      },
+      {
+        "id": "role-path:public:graph",
+        "stages": [
+          {
+            "role": "source",
+            "label": "소스 창",
+            "entityId": null
+          },
+          {
+            "role": "daily",
+            "label": "Daily 입력",
+            "entityId": null
+          },
+          {
+            "role": "knowledge",
+            "label": "시각 확인",
+            "entityId": null
+          },
+          {
+            "role": "decision",
+            "label": "역할 경계 6",
             "entityId": null
           },
           {

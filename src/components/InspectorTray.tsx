@@ -403,7 +403,9 @@ function ComparisonLedger() {
       freshness: entity ? (currentnessLabels[entity.currentness] ?? entity.currentness) : "폴더 집계",
       connections: entity ? (atlasData.relation.neighborhoods[entity.id]?.length ?? 0) : node?.childrenCount ?? 0,
       size: entity
-        ? `${entity.wordCount.toLocaleString()}${isPublicProfile ? "개 문서" : "단어"}`
+        ? isPublicProfile
+          ? `${(entity.documentCount ?? 0).toLocaleString()}개 문서`
+          : `${entity.wordCount.toLocaleString()}단어`
         : `${node?.documentCount ?? 0}문서`,
       pulse: pulseTargets.has(id) ? "도달" : "미확인",
     };
@@ -497,7 +499,7 @@ function SummaryContent({
       <dl className="metric-ledger">
         <div><dt>권위</dt><dd>{entity.authority}</dd></div>
         <div><dt>현재성</dt><dd>{currentnessLabels[entity.currentness] ?? entity.currentness}</dd></div>
-        <div><dt>{atlasData.publication.profile === "public" ? "반영 원문" : "문서량"}</dt><dd>{entity.wordCount.toLocaleString()}{atlasData.publication.profile === "public" ? "개 문서" : "단어"}</dd></div>
+        <div><dt>{atlasData.publication.profile === "public" ? "반영 원문" : "문서량"}</dt><dd>{atlasData.publication.profile === "public" ? (entity.documentCount ?? 0).toLocaleString() : entity.wordCount.toLocaleString()}{atlasData.publication.profile === "public" ? "개 문서" : "단어"}</dd></div>
       </dl>
       <section className="inspector-section">
         <h3>계보 경로</h3>
@@ -658,7 +660,7 @@ function HistoryContent({
           </dl>
         ) : (
           <dl className="evidence-ledger">
-            <div><dt>마지막 변경 거리</dt><dd>{entity.ageDays}일</dd></div>
+            <div><dt>마지막 변경 거리</dt><dd>{entity.ageDays == null ? "공개 집계" : `${entity.ageDays}일`}</dd></div>
             <div><dt>frontmatter Era</dt><dd>{String(entity.frontmatter.era ?? "미지정")}</dd></div>
           </dl>
         )

@@ -23,7 +23,7 @@ import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { atlasData, entityById, hierarchyById, hierarchyFocusForDistrict } from "../data";
 import { useElementSize } from "../hooks/useElementSize";
 import { useAtlasState } from "../state";
-import type { HierarchyNode } from "../types";
+import type { Entity, HierarchyNode } from "../types";
 import { colorForDistrict as colorFor } from "../viz/palette";
 
 function districtForFocus(focusId: string) {
@@ -331,14 +331,17 @@ function localHierarchy(focusId: string) {
   });
   const allDocuments = documentsForAnchor(anchor);
   const representedDocumentCount = atlasData.publication.profile === "public"
-    ? allDocuments.reduce((total, entity) => total + entity.wordCount, 0)
+    ? allDocuments.reduce((total, entity) => total + (entity.documentCount ?? 0), 0)
     : allDocuments.length;
   const selectedFirst = [...allDocuments].sort((a, b) => {
     const selectedDelta = Number(b.id === focusId) - Number(a.id === focusId);
     if (selectedDelta) return selectedDelta;
     const authority = (value: string) => ({ L1: 5, L2: 4, L3: 3, L4: 2, L5: 1 }[value] ?? 0);
     const authorityDelta = authority(b.authority) - authority(a.authority);
-    return authorityDelta || b.wordCount - a.wordCount || (a.title < b.title ? -1 : a.title > b.title ? 1 : 0);
+    const weight = (entity: Entity) => atlasData.publication.profile === "public"
+      ? entity.documentCount ?? 0
+      : entity.wordCount;
+    return authorityDelta || weight(b) - weight(a) || (a.title < b.title ? -1 : a.title > b.title ? 1 : 0);
   });
   const visibleDocumentIds = new Set(selectedFirst.slice(0, 28).map((entity) => entity.id));
   const documents = atlasData.structure.hierarchyNodes.filter((node) => visibleDocumentIds.has(node.id));
@@ -558,7 +561,7 @@ function LineageRadial() {
         <aside className="branch-document-reader" aria-label={`${localModel.anchor.label} 문서 목록`}>
           <div className="branch-reader-heading">
             <span className="eyebrow">가지 문서 목록</span>
-            <h3>{localModel.anchor.label}</h3>
+            <h2>{localModel.anchor.label}</h2>
             <p aria-live="polite">
               {isPublicProfile
                 ? `${localModel.totalDocuments}개 원문 · 공개 문서군 ${filteredBranchDocuments.length}개 · 지도 표식 ${localModel.visibleDocuments}개`
@@ -756,6 +759,12 @@ function MobileExplore() {
   const { state, dispatch } = useAtlasState();
   const entity = entityById.get(state.focusId);
   const district = districtForFocus(state.focusId);
+  const districtRecord = atlasData.structure.districts.find((item) => item.name === district)
+    ?? [...atlasData.structure.districts].sort((a, b) => b.documentCount - a.documentCount)[0];
+  const branchAnchor = anchorForFocus(state.focusId);
+  const branchDocuments = documentsForAnchor(branchAnchor)
+    .sort((a, b) => Number(b.id === state.focusId) - Number(a.id === state.focusId) || a.title.localeCompare(b.title))
+    .slice(0, 6);
   const lineage = [];
   let node = hierarchyById.get(state.focusId);
   while (node) {
@@ -763,12 +772,17 @@ function MobileExplore() {
     node = node.parentId ? hierarchyById.get(node.parentId) : undefined;
   }
   const neighbors = entity ? atlasData.relation.neighborhoods[entity.id] ?? [] : [];
+  const lensTitle = state.lens === "lineage" ? "계보 위치" : state.lens === "constellation" ? "성운 구성" : "구역 지도";
   return (
-    <div className="mobile-sibling mobile-explore">
+    <div className={`mobile-sibling mobile-explore lens-${state.lens}`}>
       <section className="mobile-selection">
-        <span className="eyebrow">현재 위치</span>
+        <span className="eyebrow">{lensTitle}</span>
         <h2>{entity?.title ?? hierarchyById.get(state.focusId)?.label ?? "Homi Vault"}</h2>
-        <p>{entity?.path ?? hierarchyById.get(state.focusId)?.path}</p>
+        <p>{state.lens === "city"
+          ? `${districtRecord?.name ?? "전체"} · ${districtRecord?.documentCount ?? 0}개 문서`
+          : state.lens === "constellation"
+            ? `${districtRecord?.constellationComposition.categoryCount ?? 0}개 문서군 · 직접 문서 ${districtRecord?.constellationComposition.directDocumentCount ?? 0}개`
+            : entity?.path ?? hierarchyById.get(state.focusId)?.path}</p>
         <button
           className="mobile-inspector-cue"
           type="button"
@@ -779,18 +793,47 @@ function MobileExplore() {
           선택 해석 보기
         </button>
       </section>
-      <nav className="mobile-lineage" aria-label="계보 경로">
-        {lineage.map((item) => <button key={item.id} type="button" onClick={() => dispatch({ type: "focus", focusId: item.id })}>{item.label}</button>)}
-      </nav>
+      {state.lens === "lineage" && (
+        <nav className="mobile-lineage" aria-label="계보 경로">
+          {lineage.map((item) => <button key={item.id} type="button" onClick={() => dispatch({ type: "focus", focusId: item.id })}>{item.label}</button>)}
+        </nav>
+      )}
       <section className="mobile-ranked-list">
-        <h3>{entity ? "가까운 문서" : `${district ?? "전체"}의 주요 구역`}</h3>
-        {(entity ? neighbors.slice(0, 5).map((neighbor) => entityById.get(neighbor.id)).filter(Boolean) : atlasData.structure.districts.slice(0, 6)).map((item: any) => (
+        <h3>{state.lens === "lineage" ? `${branchAnchor.label} 가지의 문서` : state.lens === "constellation" ? `${districtRecord?.name ?? "전체"}의 문서군` : entity ? "가까운 문서" : `${district ?? "전체"}의 주요 구역`}</h3>
+        {state.lens === "lineage" && branchDocuments.map((item) => (
+          <button key={item.id} type="button" onClick={() => dispatch({ type: "focus", focusId: item.id })}>
+            <span><strong>{item.title}</strong><small>{item.path}</small></span><ListTree size={16} />
+          </button>
+        ))}
+        {state.lens === "city" && (entity ? neighbors.slice(0, 5).map((neighbor) => entityById.get(neighbor.id)).filter(Boolean) : atlasData.structure.districts.slice(0, 6)).map((item: any) => (
           <button key={item.id} type="button" onClick={() => dispatch({ type: "focus", focusId: item.path ? item.id : hierarchyFocusForDistrict(item.name) ?? atlasData.structure.rootId })}>
             <span><strong>{item.title ?? item.name}</strong><small>{item.path ?? `${item.documentCount}개 문서`}</small></span><LocateFixed size={16} />
           </button>
         ))}
+        {state.lens === "constellation" && districtRecord?.constellationComposition.categories.slice(0, 6).map((category) => {
+          const districtNodeId = hierarchyFocusForDistrict(districtRecord.name);
+          const target = atlasData.structure.hierarchyNodes.find((candidate) => candidate.parentId === districtNodeId && candidate.label === category.label);
+          return (
+            <button key={category.id} type="button" onClick={() => target && dispatch({ type: "focus", focusId: target.id })}>
+              <span><strong>{category.label}</strong><small>{category.documentCount}개 문서 · {Math.round(category.share * 100)}%</small></span><CircleDot size={16} />
+            </button>
+          );
+        })}
       </section>
-      <section className="mobile-district-map" aria-label="주요 구역 미니 지도">
+      {state.lens === "lineage" ? (
+        <section className="mobile-lineage-summary" aria-label="현재 가지 요약">
+          <span><b>{lineage.length}</b>단계 계보</span>
+          <span><b>{branchDocuments.length}</b>개 대표 문서</span>
+          <span><b>{branchAnchor.documentCount}</b>개 하위 문서</span>
+        </section>
+      ) : state.lens === "constellation" ? (
+        <section className="mobile-constellation-summary" aria-label="문서군 비율 미니 지도">
+          {districtRecord?.constellationComposition.categories.slice(0, 8).map((category) => (
+            <i key={category.id} style={{ flexGrow: Math.max(1, category.documentCount), background: colorFor(districtRecord.name) }} title={`${category.label} ${category.documentCount}개`} />
+          ))}
+        </section>
+      ) : (
+        <section className="mobile-district-map" aria-label="주요 구역 미니 지도">
         <h3>주요 구역</h3>
         <div>
           {atlasData.structure.districts.slice(0, 8).map((item) => (
@@ -799,7 +842,8 @@ function MobileExplore() {
             </button>
           ))}
         </div>
-      </section>
+        </section>
+      )}
       <button className="mobile-theatre-action" type="button" onClick={() => dispatch({ type: "theatre", open: true })}>읽기 집중 보기</button>
     </div>
   );

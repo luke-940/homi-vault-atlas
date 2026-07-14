@@ -4,10 +4,13 @@ import { atlasData, entityById } from "../data";
 import { useAtlasState } from "../state";
 import type { AtlasInsight, InsightTargetScene } from "../types";
 
+const publicProfile = atlasData.publication.profile === "public";
 const guideSteps = [
   {
-    title: "Pulse를 먼저 읽기",
-    body: "왼쪽 경로는 최신 신호가 중심 지식과 판단 표면으로 이동한 검증 기록을 보여줍니다.",
+    title: publicProfile ? "역할 경로를 먼저 읽기" : "Pulse를 먼저 읽기",
+    body: publicProfile
+      ? "왼쪽 경로는 공개 가능한 역할과 작업 순서를 요약합니다. 실제 최신 Daily 전파 기록은 공개판에 포함하지 않습니다."
+      : "왼쪽 경로는 최신 Daily 관계 영수증이 중심 지식과 terminal state까지 확인한 범위를 보여줍니다.",
   },
   {
     title: "네 가지 인사이트 고르기",
@@ -18,8 +21,6 @@ const guideSteps = [
     body: "탐색, 관측, 흐름, 시간에서도 같은 선택을 유지합니다. 검색은 어디서든 Cmd+K로 열 수 있습니다.",
   },
 ] as const;
-
-const publicProfile = atlasData.publication.profile === "public";
 const homeDocumentCount = publicProfile
   ? atlasData.publication.redactionCounts.aggregatedSourceDocuments
     ?? atlasData.bootstrap.snapshot.activeMarkdownCount
@@ -45,7 +46,7 @@ function targetToJourney(target: InsightTargetScene) {
 
 function insightLabel(insight: AtlasInsight) {
   return ({
-    latest_pulse: "최신 Pulse",
+    latest_pulse: publicProfile ? "공개 역할 경로" : "최신 Pulse",
     strongest_relation: "가장 강한 연결",
     knowledge_concentration: "지식 집중 구역",
     attention: "주의 신호",
@@ -63,10 +64,10 @@ function KnowledgePulseMap() {
   const rows = [154, 254, 354, 454];
 
   return (
-    <div className="home-pulse-map" aria-label="최신 Daily에서 중심 지식과 판단으로 이동한 지식 Pulse">
+    <div className="home-pulse-map" aria-label={publicProfile ? "공개 가능한 지식 작업 역할 경로" : "최신 Daily 관계 영수증이 확인한 중심 지식과 terminal state"}>
       <svg viewBox="0 0 1120 610" role="group" aria-labelledby="pulse-map-title pulse-map-desc">
-        <title id="pulse-map-title">{pulse.latestDailyDate ?? "최근 Daily"} 지식 Pulse</title>
-        <desc id="pulse-map-desc">소스 창에서 Daily, 중심 지식과 판단까지 확인된 전파 경로. 읽기용 표면은 별도 검증이 필요한 경계로 표시한다.</desc>
+        <title id="pulse-map-title">{publicProfile ? "공개 역할 경로" : `${pulse.latestDailyDate ?? "최근 Daily"} 지식 Pulse`}</title>
+        <desc id="pulse-map-desc">{publicProfile ? "공개 가능한 역할과 작업 순서를 집계한 경로. 실제 최신 Daily 전파 완료를 주장하지 않는다." : "소스 창과 읽기용 표면은 경계로 표시하고, 움직이는 신호는 Daily 관계 영수증이 중심 지식과 terminal state까지 확인한 범위에만 사용한다."}</desc>
         <defs>
           <pattern id="pulse-grid" width="40" height="40" patternUnits="userSpaceOnUse">
             <path d="M40 0H0V40" fill="none" stroke="rgba(44,77,66,.075)" strokeWidth="1" />
@@ -89,7 +90,7 @@ function KnowledgePulseMap() {
           const entity = knowledge?.entityId ? entityById.get(knowledge.entityId) : undefined;
           const fullLabel = entity?.displayLabel ?? knowledge?.label ?? "중심 지식";
           const y = rows[index];
-          const path = `M414 304 C470 304 472 ${y} 534 ${y} L716 ${y} C788 ${y} 780 304 842 304`;
+          const path = `M288 304 C398 304 430 ${y} 534 ${y} L620 ${y}`;
           const selected = state.focusId === knowledge?.entityId;
           const previewed = state.previewId === knowledge?.entityId;
           const interactive = Boolean(knowledge?.entityId);
@@ -123,9 +124,10 @@ function KnowledgePulseMap() {
                   <tspan x="0" dy="15" className="pulse-node-state">{decision?.label ?? "판단 상태"}</tspan>
                 </text>
               </g>
-              {!state.reducedMotion && !document.hidden && knowledge?.entityId && (
-                <circle className="home-pulse-packet" r="5" fill="#ed9840">
-                  <animateMotion dur={`${1.55 + index * 0.12}s`} begin={`${0.3 + index * 0.14}s`} repeatCount="1" path={path} />
+              {!state.reducedMotion && !document.hidden && !publicProfile && knowledge?.entityId && (
+                <circle className="home-pulse-packet" r="5" fill="#ed9840" opacity="0">
+                  <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;.08;.88;1" dur={`${1.55 + index * 0.12}s`} begin={`${0.3 + index * 0.14}s`} fill="freeze" />
+                  <animateMotion dur={`${1.55 + index * 0.12}s`} begin={`${0.3 + index * 0.14}s`} repeatCount="1" fill="freeze" path={path} />
                 </circle>
               )}
             </g>
@@ -134,12 +136,12 @@ function KnowledgePulseMap() {
         <g className="pulse-origin" transform="translate(92 304)">
           <circle r="47" fill="#e5f2ee" stroke="#5b9d93" strokeWidth="2" />
           <circle r="10" fill="#5b9d93" />
-          <text y="73" textAnchor="middle"><tspan x="0">소스 창</tspan><tspan x="0" dy="15" className="pulse-node-state">{pulse.sourceItemCount ?? "확인"}건 검토</tspan></text>
+          <text y="73" textAnchor="middle"><tspan x="0">{publicProfile ? "역할 기준" : "소스 창"}</tspan><tspan x="0" dy="15" className="pulse-node-state">{publicProfile ? "공개 집계" : `${pulse.sourceItemCount ?? "확인"}건 검토`}</tspan></text>
         </g>
         <g className="pulse-daily" transform="translate(288 304)">
           <path d="M0-54 46-27 46 27 0 54-46 27-46-27Z" fill="#e8edfb" stroke="#6d86c8" strokeWidth="2.5" />
           <circle r="9" fill="#6d86c8" />
-          <text y="78" textAnchor="middle"><tspan x="0">Daily</tspan><tspan x="0" dy="15" className="pulse-node-state">{pulse.latestDailyDate ?? "최근"}</tspan></text>
+          <text y="78" textAnchor="middle"><tspan x="0">{publicProfile ? "작업 경로" : "Daily"}</tspan><tspan x="0" dy="15" className="pulse-node-state">{publicProfile ? "대표 순서" : pulse.latestDailyDate ?? "최근"}</tspan></text>
         </g>
         <path className="pulse-outbound is-boundary" d="M842 304 C910 304 954 304 1020 304" />
         <g className="pulse-readable" transform="translate(1020 304)">
@@ -147,8 +149,8 @@ function KnowledgePulseMap() {
           <path d="M-29-14H29M-29 0H18M-29 14H8" stroke="#bd7130" strokeWidth="3" strokeLinecap="round" />
           <text y="70" textAnchor="middle"><tspan x="0">팀 읽기 경계</tspan><tspan x="0" dy="15" className="pulse-node-state">별도 검증</tspan></text>
         </g>
-        <text x="52" y="58" className="pulse-map-kicker">LIVE KNOWLEDGE PULSE · {pulse.latestDailyDate ?? "LATEST"}</text>
-        <text x="52" y="88" className="pulse-map-headline">{publicProfile ? `${chains.length}개의 공개 역할 경로를 요약합니다` : `${chains.length}개의 확인된 경로가 중심 지식으로 이어졌습니다`}</text>
+        <text x="52" y="58" className="pulse-map-kicker">{publicProfile ? "PUBLIC ROLE PATHS" : `LIVE KNOWLEDGE PULSE · ${pulse.latestDailyDate ?? "LATEST"}`}</text>
+        <text x="52" y="88" className="pulse-map-headline">{publicProfile ? `${chains.length}개의 공개 역할 경로를 요약합니다` : `${chains.length}개의 Daily 관계가 중심 지식과 terminal state까지 확인됐습니다`}</text>
       </svg>
     </div>
   );
@@ -161,7 +163,7 @@ function InsightRail() {
       <header>
         <span className="eyebrow">지금 이 Vault에서 읽을 것</span>
         <h2>네 가지 현재 답</h2>
-        <p>모든 문장은 frozen snapshot 수량과 relation evidence에 연결됩니다.</p>
+        <p>모든 문장은 동결된 스냅샷 수량과 관계 근거에 연결됩니다.</p>
       </header>
       <div className="home-insight-list">
         {atlasData.insight.items.map((insight, index) => (
@@ -236,8 +238,9 @@ function MobileHome() {
       <section className="mobile-home-intro">
         <img src={homiLockup} alt="Homi AI" />
         <span className="eyebrow">Living Insight Gateway</span>
-        <h1>지식이 들어와 판단으로 바뀌는 순간을 봅니다</h1>
-        <p>{atlasData.flow.pulse.latestDailyDate ?? "최근"} Pulse · {homeDocumentLabel} {homeDocumentCount}개</p>
+        <h1>{publicProfile ? "정제된 지식 구조와 역할 경로를 봅니다" : "지식이 들어와 판단으로 바뀌는 순간을 봅니다"}</h1>
+        <p>{publicProfile ? "공개 역할 지도" : `${atlasData.flow.pulse.latestDailyDate ?? "최근"} Pulse`} · {homeDocumentLabel} {homeDocumentCount}개</p>
+        {publicProfile && <p className="public-home-boundary">실제 최신 Daily 전파 기록은 공개판에 포함하지 않습니다.</p>}
       </section>
       <section className="mobile-home-insights" aria-label="현재 인사이트">
         {atlasData.insight.items.map((insight, index) => (
@@ -265,7 +268,8 @@ export function HomeView() {
         <div>
           <img src={homiLockup} alt="Homi AI" />
           <span className="eyebrow">Living Insight Gateway</span>
-          <h1 id="home-title">지식이 들어와 판단으로 바뀌는 순간을 봅니다</h1>
+          <h1 id="home-title">{publicProfile ? "정제된 지식 구조와 역할 경로를 봅니다" : "지식이 들어와 판단으로 바뀌는 순간을 봅니다"}</h1>
+          {publicProfile && <p className="public-home-boundary">실제 최신 Daily 전파 기록은 공개판에 포함하지 않습니다.</p>}
         </div>
         <div className="home-snapshot-readout">
           <span><b>{homeDocumentCount}</b> {homeDocumentLabel}</span>

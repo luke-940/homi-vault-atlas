@@ -21,6 +21,9 @@ describe("public Atlas data contract", () => {
       expect(["public_aggregate", "public_snapshot_boundary"]).toContain(entity.sourceRole);
       expect(entity.authority).toMatch(/^공개 /);
       expect(entity.currentness).toBe("public_snapshot");
+      expect(entity.wordCount).toBe(0);
+      expect(entity.documentCount).toBeGreaterThanOrEqual(0);
+      expect(entity.ageDays).toBeNull();
     }
   });
 
@@ -85,12 +88,13 @@ describe("public Atlas data contract", () => {
     expect(packs.relation.redactedLayers).toEqual(["typed", "route"]);
   });
 
-  test("uses aggregate-safe Korean Era labels and bounded confidence", () => {
+  test("uses aggregate-safe Korean Era labels without invented calibration", () => {
     for (const era of packs.temporal.eras) {
       for (const delta of era.deltas) {
         expect(delta.label).toMatch(/(?:새로 생김|계속 유지|약해짐|역사로 이동|판단 근거 부족|변화) 집계 \d+/);
         expect(delta.label).not.toMatch(/\b(?:born|persisted|weakened|retired|unknown)\b/i);
-        expect(delta.confidence).toBe("medium");
+        expect(delta.evidenceStatus).toBe("recorded");
+        expect(delta).not.toHaveProperty("confidence");
       }
     }
   });

@@ -17,7 +17,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         },
         {
           "state": "born",
@@ -25,7 +25,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         }
       ],
       "unknown": [
@@ -49,7 +49,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         },
         {
           "state": "born",
@@ -57,7 +57,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         }
       ],
       "unknown": [
@@ -82,7 +82,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         },
         {
           "state": "born",
@@ -90,7 +90,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         }
       ],
       "unknown": [
@@ -115,7 +115,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         },
         {
           "state": "born",
@@ -123,7 +123,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         },
         {
           "state": "born",
@@ -131,7 +131,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         }
       ],
       "unknown": [
@@ -156,7 +156,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         },
         {
           "state": "born",
@@ -164,7 +164,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         }
       ],
       "unknown": [
@@ -188,7 +188,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         },
         {
           "state": "born",
@@ -196,7 +196,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         }
       ],
       "unknown": [
@@ -220,7 +220,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         },
         {
           "state": "born",
@@ -228,7 +228,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         }
       ],
       "unknown": [
@@ -252,7 +252,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         },
         {
           "state": "born",
@@ -260,7 +260,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         },
         {
           "state": "born",
@@ -268,7 +268,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         }
       ],
       "unknown": [
@@ -292,7 +292,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         },
         {
           "state": "born",
@@ -300,7 +300,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         },
         {
           "state": "born",
@@ -308,7 +308,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         }
       ],
       "unknown": [
@@ -332,7 +332,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         },
         {
           "state": "born",
@@ -340,7 +340,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         }
       ],
       "unknown": [
@@ -364,7 +364,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         },
         {
           "state": "born",
@@ -372,7 +372,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         },
         {
           "state": "born",
@@ -380,7 +380,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         },
         {
           "state": "born",
@@ -388,7 +388,7 @@
           "evidenceRef": "doc:pub:05496b59819cd2759f",
           "evidenceAnchor": "public-snapshot-boundary",
           "evidenceClass": "public_curated_snapshot",
-          "confidence": "medium"
+          "evidenceStatus": "recorded"
         }
       ],
       "unknown": [

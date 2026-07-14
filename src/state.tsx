@@ -142,21 +142,46 @@ function validScene(workspace: Workspace, sceneId: string | null | undefined) {
   return Boolean(sceneId && sceneIdsByWorkspace[workspace].has(sceneId));
 }
 
+export function isDirectedRelationLayer(layer: RelationLayer) {
+  return layer === "typed" || layer === "wikilink";
+}
+
+export function relationDirectionCounts(
+  pair: Pick<MatrixCell, "typedForward" | "typedReverse" | "wikilinkForward" | "wikilinkReverse"> | undefined,
+  layer: RelationLayer,
+) {
+  if (!pair || !isDirectedRelationLayer(layer)) return { forward: 0, reverse: 0 };
+  return layer === "typed"
+    ? { forward: pair.typedForward, reverse: pair.typedReverse }
+    : { forward: pair.wikilinkForward, reverse: pair.wikilinkReverse };
+}
+
+export function dominantRelationDirection(
+  pair: Pick<MatrixCell, "typedForward" | "typedReverse" | "wikilinkForward" | "wikilinkReverse"> | undefined,
+  layer: RelationLayer,
+): RelationDirection | null {
+  const counts = relationDirectionCounts(pair, layer);
+  if (counts.forward <= 0 && counts.reverse <= 0) return null;
+  return counts.reverse > counts.forward ? "reverse" : "forward";
+}
+
 export function dominantTypedDirection(
   pair: Pick<MatrixCell, "typedForward" | "typedReverse"> | undefined,
 ): RelationDirection | null {
-  if (!pair || (pair.typedForward <= 0 && pair.typedReverse <= 0)) return null;
-  return pair.typedReverse > pair.typedForward ? "reverse" : "forward";
+  if (!pair) return null;
+  return dominantRelationDirection({ ...pair, wikilinkForward: 0, wikilinkReverse: 0 }, "typed");
 }
 
-function normalizedTypedDirection(
+function normalizedRelationDirection(
   pair: MatrixCell | undefined,
+  layer: RelationLayer,
   requested: RelationDirection | null | undefined,
 ): RelationDirection | null {
-  if (!pair) return null;
-  if (requested === "forward" && pair.typedForward > 0) return requested;
-  if (requested === "reverse" && pair.typedReverse > 0) return requested;
-  return dominantTypedDirection(pair);
+  if (!pair || !isDirectedRelationLayer(layer)) return null;
+  const counts = relationDirectionCounts(pair, layer);
+  if (requested === "forward" && counts.forward > 0) return requested;
+  if (requested === "reverse" && counts.reverse > 0) return requested;
+  return dominantRelationDirection(pair, layer);
 }
 
 export function createAtlasState(hash: string, environment: ResponsiveEnvironment): AtlasState {
@@ -179,7 +204,7 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
   const guideParam = params.get("guide");
   const requestedGuide = guideParam === null ? Number.NaN : Number(guideParam);
   const rawCompare = (params.get("compare") ?? "").split(",").filter(Boolean);
-  const requestedCompare = rawCompare.filter((id) => focusIds.has(id)).slice(0, 2);
+  const requestedCompare = [...new Set(rawCompare.filter((id) => focusIds.has(id)))].slice(0, 2);
   const relationLayer = layerParam && layers.has(layerParam) && availableLayers.has(layerParam)
     ? layerParam
     : defaultState.relationLayer;
@@ -232,18 +257,16 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
     focusId: requestedFocus && focusIds.has(requestedFocus) ? requestedFocus : defaultState.focusId,
     compareIds: requestedCompare,
     relationPairId: relationPair?.id ?? null,
-    relationDirection:
-      relationLayer === "typed"
-        ? normalizedTypedDirection(
-            relationPair,
-            directionParam && directions.has(directionParam) ? directionParam : null,
-          )
-        : null,
+    relationDirection: normalizedRelationDirection(
+      relationPair,
+      relationLayer,
+      directionParam && directions.has(directionParam) ? directionParam : null,
+    ),
     relationLayer,
     routeId: requestedRoute && routeIds.has(requestedRoute) ? requestedRoute : defaultState.routeId,
     eraId: eraIds.has(requestedEra) ? requestedEra : defaultState.eraId,
     guideStep: Number.isInteger(requestedGuide) && requestedGuide >= 0 && requestedGuide <= 2 ? requestedGuide : null,
-    filters: (params.get("filters") ?? "").split(",").map((value) => value.trim()).filter(Boolean).slice(0, 12),
+    filters: [...new Set((params.get("filters") ?? "").split(",").map((value) => value.trim()).filter(Boolean))].slice(0, 12),
     camera: params.get("cam") || null,
     panel:
       panelParam && ["none", "navigator", "inspector", "data"].includes(panelParam)
@@ -267,7 +290,7 @@ export function stateToHash(state: AtlasState) {
   if (state.workspace === "observe") {
     params.set("layer", state.relationLayer);
     if (state.relationPairId) params.set("pair", state.relationPairId);
-    if (state.relationLayer === "typed" && state.relationDirection) params.set("dir", state.relationDirection);
+    if (isDirectedRelationLayer(state.relationLayer) && state.relationDirection) params.set("dir", state.relationDirection);
   }
   if (state.workspace === "flow") params.set("route", state.routeId);
   if (state.workspace === "time") params.set("era", String(state.eraId));
@@ -358,7 +381,7 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
         lens: action.target.lens ?? state.lens,
         relationPairId: targetPair ?? null,
         relationLayer: targetLayer,
-        relationDirection: targetLayer === "typed" ? normalizedTypedDirection(pair, action.target.relationDirection) : null,
+        relationDirection: normalizedRelationDirection(pair, targetLayer, action.target.relationDirection),
         routeId: action.target.routeId && routeIds.has(action.target.routeId) ? action.target.routeId : state.routeId,
         eraId: action.target.eraId && eraIds.has(action.target.eraId) ? action.target.eraId : state.eraId,
         panel: targetWorkspace === "home" || state.mobileSibling ? "none" : "inspector",
@@ -414,9 +437,7 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
       return {
         ...state,
         relationPairId: pair?.id ?? null,
-        relationDirection: state.relationLayer === "typed"
-          ? normalizedTypedDirection(pair, action.direction)
-          : null,
+        relationDirection: normalizedRelationDirection(pair, state.relationLayer, action.direction),
         panel: state.mobileSibling ? "none" : "inspector",
       };
     }
@@ -433,9 +454,7 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
       return {
         ...state,
         relationLayer: action.relationLayer,
-        relationDirection: action.relationLayer === "typed"
-          ? normalizedTypedDirection(selectedPair, state.relationDirection)
-          : null,
+        relationDirection: normalizedRelationDirection(selectedPair, action.relationLayer, state.relationDirection),
       };
     }
     case "route":

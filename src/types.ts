@@ -95,8 +95,9 @@ export interface Entity {
   sourceRole: string;
   defaultPreload: boolean;
   wordCount: number;
+  documentCount?: number;
   mtimeNs?: string;
-  ageDays: number;
+  ageDays: number | null;
   sha256: string;
   frontmatter: Record<string, unknown>;
 }
@@ -154,6 +155,8 @@ export interface MatrixCell {
   source: string;
   target: string;
   wikilink: number;
+  wikilinkForward: number;
+  wikilinkReverse: number;
   typed: number;
   typedForward: number;
   typedReverse: number;
@@ -226,7 +229,7 @@ export interface EraRecord {
     evidenceRef: string;
     evidenceAnchor: string;
     evidenceClass: string;
-    confidence: "high" | "medium" | "low";
+    evidenceStatus: "recorded";
   }>;
   unknown: string[];
   proofBoundary: string;

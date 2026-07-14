@@ -437,6 +437,14 @@
 .guide-actions button.is-primary { border-color: #cf7f37; background: #fff0df; color: #824820; }
 .guide-replay { position: static; justify-self: end; margin: 8px 16px; z-index: 2; }
 .home-evidence-boundary { display: none; }
+
+.public-home-boundary {
+  margin: 4px 0 0;
+  color: var(--ink-faint);
+  font-size: 10px;
+  font-weight: 560;
+  line-height: 1.4;
+}
 .mobile-home-sibling { display: none; }
 
 @keyframes home-pulse-reveal {
@@ -789,7 +797,7 @@
   border-bottom: 1px solid var(--line);
 }
 
-.branch-reader-heading h3 {
+.branch-reader-heading h2 {
   margin: 3px 0 4px;
   font-size: 16px;
 }
@@ -819,6 +827,14 @@
   color: var(--ink);
   font: inherit;
   font-size: 11px;
+}
+
+.branch-search:has(input:focus-visible) {
+  box-shadow: inset 0 0 0 2px rgba(51, 143, 128, .48);
+}
+
+.branch-search input:focus-visible {
+  outline: 2px solid transparent;
 }
 
 .branch-document-list {
@@ -1530,13 +1546,6 @@
 .station-label { font-size: 10px; }
 .station-path { font-size: 8px; }
 
-.route-packet {
-  offset-distance: 0%;
-  offset-rotate: 0deg;
-  animation: route-progression 820ms ease-out 1 both;
-}
-
-.atlas-app[data-document-hidden="true"] .route-packet,
 .atlas-app[data-document-hidden="true"] .relation-ribbon.is-selected {
   animation-play-state: paused;
 }
@@ -1851,6 +1860,14 @@
   font-size: 15px;
 }
 
+.search-input-row:has(input:focus-visible) {
+  box-shadow: inset 0 0 0 2px rgba(51, 143, 128, .5);
+}
+
+.search-input-row input:focus-visible {
+  outline: 2px solid transparent;
+}
+
 .search-context {
   padding: 8px 16px;
   border-bottom: 1px solid var(--line);
@@ -1967,13 +1984,6 @@
 
 .atlas-app.is-theatre .workspace-view {
   --workspace-header-height: 62px;
-}
-
-@keyframes route-progression {
-  0% { offset-distance: 0%; opacity: 0; }
-  8% { opacity: 1; }
-  88% { opacity: 1; }
-  100% { offset-distance: 100%; opacity: 0; }
 }
 
 @keyframes relation-trace {
@@ -2112,6 +2122,14 @@
   .mobile-district-map button { min-width: 0; min-height: 58px; display: grid; align-content: center; gap: 3px; padding: 8px 10px; border: 1px solid rgba(44, 87, 72, .16); border-radius: 5px; color: var(--ink); text-align: left; cursor: pointer; }
   .mobile-district-map strong { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
   .mobile-district-map small { color: #243d34; font-size: 10px; font-weight: 650; }
+  .mobile-lineage-summary { min-height: 76px; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: #edf4ef; }
+  .mobile-lineage-summary span { display: grid; place-items: center; align-content: center; gap: 2px; border-right: 1px solid var(--line); color: var(--ink-faint); font-size: 9px; text-align: center; }
+  .mobile-lineage-summary span:last-child { border-right: 0; }
+  .mobile-lineage-summary b { color: var(--focus); font-size: 16px; }
+  .mobile-constellation-summary { min-height: 88px; display: flex; align-items: stretch; gap: 5px; padding: 14px 16px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: #f0ecfb; }
+  .mobile-constellation-summary i { min-width: 12px; border: 1px solid rgba(71, 73, 112, .16); border-radius: 50%; opacity: .72; }
+  .mobile-explore.lens-lineage .mobile-selection { background: #eef0fa; }
+  .mobile-explore.lens-constellation .mobile-selection { background: #f1edfa; }
   .mobile-theatre-action { min-height: 48px; margin: 12px 16px 20px; background: #e1eee9; color: var(--focus); font-size: 12px; font-weight: 700; }
   .mobile-layer-switch,
   .mobile-route-switch,
@@ -2196,6 +2214,12 @@
     min-height: calc(100dvh - 102px);
     display: grid;
   }
+  .atlas-app.is-theatre .observation-surface {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(320px, 1.05fr) minmax(260px, .95fr);
+    overflow: auto;
+  }
+  .atlas-app.is-theatre .chord-panel { display: grid; }
   .atlas-app.is-theatre .mobile-sibling { display: none; }
   .atlas-app.is-theatre .route-rail,
   .atlas-app.is-theatre .era-rail { display: none; }
@@ -2216,6 +2240,11 @@
 }
 
 @media (max-height: 520px) and (min-width: 821px) and (pointer: coarse) {
+  .atlas-app.is-theatre .observation-surface {
+    grid-template-columns: minmax(420px, 1.2fr) minmax(300px, .8fr);
+    grid-template-rows: minmax(0, 1fr);
+    overflow: hidden;
+  }
   .mobile-sibling {
     height: calc(100dvh - 52px);
     grid-template-columns: minmax(260px, 34%) minmax(0, 66%);
@@ -2260,6 +2289,5 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
-  .route-packet { display: none; }
   .relation-ribbon.is-selected { stroke-dasharray: none; }
 }

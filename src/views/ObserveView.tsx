@@ -14,7 +14,14 @@ import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { atlasData, entityById } from "../data";
 import { useElementSize } from "../hooks/useElementSize";
-import { dominantTypedDirection, useAtlasState, type RelationDirection } from "../state";
+import {
+  dominantRelationDirection,
+  dominantTypedDirection,
+  isDirectedRelationLayer,
+  relationDirectionCounts,
+  useAtlasState,
+  type RelationDirection,
+} from "../state";
 import type { MatrixCell, RelationLayer } from "../types";
 import {
   colorForDistrict,
@@ -66,27 +73,36 @@ export interface TypedPairPresentation {
   reverseCount: number;
 }
 
-export function typedPairPresentation(
+export function directedPairPresentation(
   pair: MatrixCell,
+  layer: RelationLayer,
   requestedDirection: RelationDirection | null,
 ): TypedPairPresentation {
-  const direction = requestedDirection ?? dominantTypedDirection(pair);
+  const counts = relationDirectionCounts(pair, layer);
+  const direction = requestedDirection ?? dominantRelationDirection(pair, layer);
   if (direction === "reverse") {
     return {
       direction,
       source: pair.target,
       target: pair.source,
-      selectedCount: pair.typedReverse,
-      reverseCount: pair.typedForward,
+      selectedCount: counts.reverse,
+      reverseCount: counts.forward,
     };
   }
   return {
     direction,
     source: pair.source,
     target: pair.target,
-    selectedCount: pair.typedForward,
-    reverseCount: pair.typedReverse,
+    selectedCount: counts.forward,
+    reverseCount: counts.reverse,
   };
+}
+
+export function typedPairPresentation(
+  pair: MatrixCell,
+  requestedDirection: RelationDirection | null,
+): TypedPairPresentation {
+  return directedPairPresentation(pair, "typed", requestedDirection);
 }
 
 export function relationAnswer(
@@ -95,12 +111,13 @@ export function relationAnswer(
   direction: RelationDirection | null,
   selected: boolean,
 ) {
-  if (layer === "typed") {
-    const presentation = typedPairPresentation(pair, direction);
+  if (isDirectedRelationLayer(layer)) {
+    const presentation = directedPairPresentation(pair, layer, direction);
+    const noun = layer === "typed" ? "명시 관계" : "링크 출현";
     const reverse = presentation.reverseCount > 0
       ? ` 반대 방향 ${presentation.reverseCount}건은 별도다.`
       : "";
-    return `${presentation.source} → ${presentation.target}: 명시 관계 ${presentation.selectedCount}건${selected ? "을 선택했다." : "이 가장 강하다."}${reverse}`;
+    return `${presentation.source} → ${presentation.target}: ${noun} ${presentation.selectedCount}건${selected ? "을 선택했다." : "이 가장 강하다."}${reverse}`;
   }
   return `${pair.source} ↔ ${pair.target}: ${pair[layer]}건${selected ? "을 선택했다." : "으로 가장 강하다."}`;
 }
@@ -116,17 +133,18 @@ export function matrixNavigationEntries(
     const sourceIndex = districtIndex.get(cell.source);
     const targetIndex = districtIndex.get(cell.target);
     if (sourceIndex == null || targetIndex == null || sourceIndex === targetIndex) continue;
-    if (layer === "typed") {
-      if (cell.typedForward > 0) {
+    if (isDirectedRelationLayer(layer)) {
+      const counts = relationDirectionCounts(cell, layer);
+      if (counts.forward > 0) {
         entries.push({
           key: `${cell.id}:forward`, cell, source: cell.source, target: cell.target,
-          direction: "forward", value: cell.typedForward, row: sourceIndex, column: targetIndex,
+          direction: "forward", value: counts.forward, row: sourceIndex, column: targetIndex,
         });
       }
-      if (cell.typedReverse > 0) {
+      if (counts.reverse > 0) {
         entries.push({
           key: `${cell.id}:reverse`, cell, source: cell.target, target: cell.source,
-          direction: "reverse", value: cell.typedReverse, row: targetIndex, column: sourceIndex,
+          direction: "reverse", value: counts.reverse, row: targetIndex, column: sourceIndex,
         });
       }
       continue;
@@ -180,8 +198,8 @@ function matrixEntryDomId(entry: MatrixNavigationEntry) {
 
 function pairHeading(pair: MatrixCell | undefined, layer: RelationLayer, direction: RelationDirection | null) {
   if (!pair) return "구역 간 연결 링";
-  if (layer !== "typed") return `${pair.source} ↔ ${pair.target}`;
-  const presentation = typedPairPresentation(pair, direction);
+  if (!isDirectedRelationLayer(layer)) return `${pair.source} ↔ ${pair.target}`;
+  const presentation = directedPairPresentation(pair, layer, direction);
   return presentation.direction
     ? `${presentation.source} → ${presentation.target}`
     : `${pair.source} · ${pair.target}`;
@@ -205,8 +223,13 @@ function relationCoverageReadout(layer: RelationLayer) {
 export function ObserveView() {
   const { state, dispatch } = useAtlasState();
   const selectedPair = atlasData.relation.matrix.find((pair) => pair.id === state.relationPairId);
-  const strongestPair = [...atlasData.relation.matrix]
-    .sort((a, b) => b[state.relationLayer] - a[state.relationLayer] || a.id.localeCompare(b.id))[0];
+  const rankedPairs = [...atlasData.relation.matrix]
+    .filter((pair) => pair[state.relationLayer] > 0)
+    .sort((a, b) => b[state.relationLayer] - a[state.relationLayer] || a.id.localeCompare(b.id));
+  const strongestPair = rankedPairs[0];
+  const strongestTieCount = strongestPair
+    ? rankedPairs.filter((pair) => pair[state.relationLayer] === strongestPair[state.relationLayer]).length
+    : 0;
   const handleLayerKey = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     const last = availableLayerItems.length - 1;
     let nextIndex = index;
@@ -229,7 +252,9 @@ export function ObserveView() {
         question="서로 다른 구역 사이의 확인된 관계를 비교한 뒤, 한 연결쌍과 대표 문서까지 내려가 읽는다. 같은 구역 안 관계는 별도 집계한다."
         answer={selectedPair
           ? relationAnswer(selectedPair, state.relationLayer, state.relationDirection, true)
-          : relationAnswer(strongestPair, state.relationLayer, null, false)}
+          : strongestTieCount > 1
+            ? `${layerLabel(state.relationLayer)} 최댓값 ${strongestPair[state.relationLayer]}건인 연결쌍이 ${strongestTieCount}개다. 한 쌍을 고르면 방향과 대표 문서까지 내려가 읽을 수 있다.`
+            : relationAnswer(strongestPair, state.relationLayer, null, false)}
         keyItems={availableLayerItems.map((item) => ({ label: item.label, className: `key-${item.id}` }))}
         controls={
           <div className="view-switch relation-layer-switch" role="tablist" aria-label="관계층">
@@ -292,9 +317,10 @@ function relationValue(
   layer: RelationLayer,
 ) {
   if (!cell || source === target) return 0;
-  if (layer !== "typed") return cell[layer];
-  if (source === cell.source && target === cell.target) return cell.typedForward;
-  if (source === cell.target && target === cell.source) return cell.typedReverse;
+  if (!isDirectedRelationLayer(layer)) return cell[layer];
+  const counts = relationDirectionCounts(cell, layer);
+  if (source === cell.source && target === cell.target) return counts.forward;
+  if (source === cell.target && target === cell.source) return counts.reverse;
   return 0;
 }
 
@@ -305,7 +331,7 @@ function directionFor(cell: MatrixCell | undefined, source: string, target: stri
 
 function RelationMatrix() {
   const { state, dispatch } = useAtlasState();
-  const mobileSibling = useMobileSibling();
+  const mobileSibling = useMobileSibling() && !state.theatre;
   const { ref, width, height } = useElementSize<HTMLDivElement>();
   const order = atlasData.relation.districtOrder;
   const cells = useMemo(
@@ -321,7 +347,7 @@ function RelationMatrix() {
     [navigationEntries],
   );
   const selectedEntryKey = state.relationPairId
-    ? `${state.relationPairId}:${state.relationLayer === "typed" ? state.relationDirection ?? "forward" : "pair"}`
+    ? `${state.relationPairId}:${isDirectedRelationLayer(state.relationLayer) ? state.relationDirection ?? "forward" : "pair"}`
     : null;
   const [activeEntryKey, setActiveEntryKey] = useState(
     () => selectedEntryKey ?? navigationEntries[0]?.key ?? "",
@@ -340,8 +366,8 @@ function RelationMatrix() {
   const max = Math.max(
     1,
     ...atlasData.relation.matrix.flatMap((cell) =>
-      state.relationLayer === "typed"
-        ? [cell.typedForward, cell.typedReverse]
+      isDirectedRelationLayer(state.relationLayer)
+        ? Object.values(relationDirectionCounts(cell, state.relationLayer))
         : [cell[state.relationLayer]],
     ),
   );
@@ -369,7 +395,7 @@ function RelationMatrix() {
             const direction = directionFor(cell, source, target);
             const navigationEntry = entryByCoordinate.get(`${row}:${column}`);
             const selected = cell?.id === state.relationPairId && (
-              state.relationLayer !== "typed" || state.relationDirection === direction
+              !isDirectedRelationLayer(state.relationLayer) || state.relationDirection === direction
             );
             const focusedDistrict = entityById.get(state.focusId)?.district;
             const focused = source === focusedDistrict || target === focusedDistrict;
@@ -383,7 +409,7 @@ function RelationMatrix() {
                 role={markInteractive ? "button" : undefined}
                 tabIndex={markInteractive ? (navigationEntry?.key === activeEntryKey ? 0 : -1) : undefined}
                 aria-current={markInteractive && selected ? "true" : undefined}
-                aria-label={markInteractive && navigationEntry ? `${navigationEntry.source}${state.relationLayer === "typed" ? "에서" : "와"} ${navigationEntry.target}${state.relationLayer === "typed" ? "로" : ""}: ${layerLabel(state.relationLayer)} ${navigationEntry.value}` : undefined}
+                aria-label={markInteractive && navigationEntry ? `${navigationEntry.source}${isDirectedRelationLayer(state.relationLayer) ? "에서" : "와"} ${navigationEntry.target}${isDirectedRelationLayer(state.relationLayer) ? "로" : ""}: ${layerLabel(state.relationLayer)} ${navigationEntry.value}` : undefined}
                 onFocus={() => navigationEntry && setActiveEntryKey(navigationEntry.key)}
                 onClick={() => navigationEntry && dispatch({ type: "relationPair", relationPairId: navigationEntry.cell.id, direction: navigationEntry.direction })}
                 onKeyDown={(event) => {
@@ -434,7 +460,7 @@ function RelationMatrix() {
 
 function GlobalChord() {
   const { state, dispatch } = useAtlasState();
-  const mobileSibling = useMobileSibling();
+  const mobileSibling = useMobileSibling() && !state.theatre;
   const { ref, width, height } = useElementSize<HTMLDivElement>();
   const order = atlasData.relation.districtOrder;
   const layout = useMemo(() => {
@@ -444,22 +470,23 @@ function GlobalChord() {
       const a = index.get(cell.source);
       const b = index.get(cell.target);
       if (a == null || b == null) continue;
-      if (state.relationLayer === "typed") {
-        values[a][b] = cell.typedForward;
-        values[b][a] = cell.typedReverse;
+      if (isDirectedRelationLayer(state.relationLayer)) {
+        const counts = relationDirectionCounts(cell, state.relationLayer);
+        values[a][b] = counts.forward;
+        values[b][a] = counts.reverse;
       } else {
         values[a][b] = cell[state.relationLayer];
         values[b][a] = cell[state.relationLayer];
       }
     }
-    return state.relationLayer === "typed"
+    return isDirectedRelationLayer(state.relationLayer)
       ? chordDirected().padAngle(0.045).sortSubgroups(descending)(values)
       : d3Chord().padAngle(0.045).sortSubgroups(descending)(values);
   }, [order, state.relationLayer]);
   const outer = Math.max(40, Math.min((width - 140) / 2, (height - 86) / 2));
   const inner = outer - Math.max(12, outer * 0.11);
   const arc = d3Arc().innerRadius(inner).outerRadius(outer);
-  const ribbon = state.relationLayer === "typed"
+  const ribbon = isDirectedRelationLayer(state.relationLayer)
     ? ribbonArrow().radius(inner - 1).padAngle(0.015)
     : d3Ribbon().radius(inner - 1);
   const selectedPair = atlasData.relation.matrix.find((pair) => pair.id === state.relationPairId);
@@ -480,7 +507,7 @@ function GlobalChord() {
             const cell = atlasData.relation.matrix.find((candidate) => pairKey(candidate.source, candidate.target) === pairKey(source, target));
             const direction = directionFor(cell, source, target);
             const selected = selectedPair && pairKey(source, target) === pairKey(selectedPair.source, selectedPair.target) && (
-              state.relationLayer !== "typed" || state.relationDirection === direction
+              !isDirectedRelationLayer(state.relationLayer) || state.relationDirection === direction
             );
             const dimmed = Boolean(selectedPair) && !selected;
             return (
@@ -493,9 +520,9 @@ function GlobalChord() {
                 stroke={selected ? relationColors[state.relationLayer] : "#fff"}
                 strokeWidth={selected ? 2.4 : 0.8}
                 aria-hidden="true"
-                onClick={() => !mobileSibling && cell && dispatch({ type: "relationPair", relationPairId: cell.id, direction: state.relationLayer === "typed" ? direction : null })}
+                onClick={() => !mobileSibling && cell && dispatch({ type: "relationPair", relationPairId: cell.id, direction: isDirectedRelationLayer(state.relationLayer) ? direction : null })}
               >
-                <title>{`${source} ${state.relationLayer === "typed" ? "→" : "↔"} ${target}: ${relationValue(cell, source, target, state.relationLayer)}`}</title>
+                <title>{`${source} ${isDirectedRelationLayer(state.relationLayer) ? "→" : "↔"} ${target}: ${relationValue(cell, source, target, state.relationLayer)}`}</title>
               </path>
             );
           })}
@@ -533,11 +560,13 @@ function PairReadout({ pair }: { pair?: MatrixCell }) {
       </div>
     );
   }
-  const typedPresentation = typedPairPresentation(pair, state.relationDirection);
+  const selectedPresentation = isDirectedRelationLayer(state.relationLayer)
+    ? directedPairPresentation(pair, state.relationLayer, state.relationDirection)
+    : null;
   return (
     <dl className="pair-readout metrics">
-      <div><dt>링크 출현</dt><dd>{pair.wikilink}</dd></div>
-      <div><dt>명시 관계</dt><dd>{state.relationLayer === "typed" ? `${typedPresentation.selectedCount} → / ${typedPresentation.reverseCount} ←` : pair.typed}</dd></div>
+      <div><dt>링크 출현</dt><dd>{state.relationLayer === "wikilink" && selectedPresentation ? `${selectedPresentation.selectedCount} → / ${selectedPresentation.reverseCount} ←` : pair.wikilink}</dd></div>
+      <div><dt>명시 관계</dt><dd>{state.relationLayer === "typed" && selectedPresentation ? `${selectedPresentation.selectedCount} → / ${selectedPresentation.reverseCount} ←` : pair.typed}</dd></div>
       <div><dt>작업 흐름</dt><dd>{pair.route}</dd></div>
     </dl>
   );
@@ -548,19 +577,20 @@ function MobileObserve() {
   const selectedPair = atlasData.relation.matrix.find((pair) => pair.id === state.relationPairId);
   const ranked = [...atlasData.relation.matrix]
     .sort((a, b) => (
-      state.relationLayer === "typed"
-        ? Math.max(b.typedForward, b.typedReverse) - Math.max(a.typedForward, a.typedReverse)
+      isDirectedRelationLayer(state.relationLayer)
+        ? Math.max(...Object.values(relationDirectionCounts(b, state.relationLayer))) - Math.max(...Object.values(relationDirectionCounts(a, state.relationLayer)))
         : b[state.relationLayer] - a[state.relationLayer]
     ))
     .slice(0, 8);
   const previewPair = selectedPair ?? ranked[0];
-  const selectedPresentation = selectedPair && state.relationLayer === "typed"
-    ? typedPairPresentation(selectedPair, state.relationDirection)
+  const selectedPresentation = selectedPair && isDirectedRelationLayer(state.relationLayer)
+    ? directedPairPresentation(selectedPair, state.relationLayer, state.relationDirection)
     : null;
-  const previewPresentation = previewPair && state.relationLayer === "typed"
-    ? typedPairPresentation(
+  const previewPresentation = previewPair && isDirectedRelationLayer(state.relationLayer)
+    ? directedPairPresentation(
         previewPair,
-        previewPair.id === state.relationPairId ? state.relationDirection : dominantTypedDirection(previewPair),
+        state.relationLayer,
+        previewPair.id === state.relationPairId ? state.relationDirection : dominantRelationDirection(previewPair, state.relationLayer),
       )
     : null;
   const handleLayerKey = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
@@ -619,7 +649,7 @@ function MobileObserve() {
           aria-atomic="true"
           data-relation-direction={previewPresentation?.direction ?? "undirected"}
           aria-label={previewPresentation
-            ? `${previewPresentation.source}에서 ${previewPresentation.target}로 명시 관계 ${previewPresentation.selectedCount}건, 반대 방향 ${previewPresentation.reverseCount}건`
+            ? `${previewPresentation.source}에서 ${previewPresentation.target}로 ${layerLabel(state.relationLayer)} ${previewPresentation.selectedCount}건, 반대 방향 ${previewPresentation.reverseCount}건`
             : `${previewPair.source}와 ${previewPair.target} 사이 ${layerLabel(state.relationLayer)} ${previewPair[state.relationLayer]}건`}
         >
           <div>
@@ -642,7 +672,9 @@ function MobileObserve() {
         <h3>상위 구역 간 관계</h3>
         {ranked.map((pair, index) => {
           const presentation = state.relationLayer === "typed"
-            ? typedPairPresentation(pair, pair.id === state.relationPairId ? state.relationDirection : dominantTypedDirection(pair))
+            ? directedPairPresentation(pair, state.relationLayer, pair.id === state.relationPairId ? state.relationDirection : dominantTypedDirection(pair))
+            : state.relationLayer === "wikilink"
+              ? directedPairPresentation(pair, state.relationLayer, pair.id === state.relationPairId ? state.relationDirection : dominantRelationDirection(pair, state.relationLayer))
             : null;
           return (
             <button
@@ -651,7 +683,7 @@ function MobileObserve() {
               className={pair.id === state.relationPairId ? "is-active" : ""}
               aria-current={pair.id === state.relationPairId ? "true" : undefined}
               aria-label={presentation
-                ? `${presentation.source}에서 ${presentation.target}로 명시 관계 ${presentation.selectedCount}건, 반대 방향 ${presentation.reverseCount}건`
+                ? `${presentation.source}에서 ${presentation.target}로 ${layerLabel(state.relationLayer)} ${presentation.selectedCount}건, 반대 방향 ${presentation.reverseCount}건`
                 : `${pair.source}와 ${pair.target}, ${layerLabel(state.relationLayer)} ${pair[state.relationLayer]}건`}
               onClick={() => dispatch({ type: "relationPair", relationPairId: pair.id, direction: presentation?.direction ?? null })}
             >

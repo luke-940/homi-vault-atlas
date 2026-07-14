@@ -24,8 +24,9 @@ const entitySchema = z.object({
   sourceRole: z.string(),
   defaultPreload: z.boolean(),
   wordCount: z.number().nonnegative(),
+  documentCount: z.number().int().nonnegative().optional(),
   mtimeNs: z.string().optional(),
-  ageDays: z.number().nonnegative(),
+  ageDays: z.number().nonnegative().nullable(),
   sha256: z.string().length(64),
   frontmatter: z.record(z.string(), z.unknown()),
 }).strict();
@@ -69,6 +70,8 @@ const matrixSchema = z.object({
   source: z.string().min(1),
   target: z.string().min(1),
   wikilink: z.number().nonnegative(),
+  wikilinkForward: z.number().nonnegative(),
+  wikilinkReverse: z.number().nonnegative(),
   typed: z.number().nonnegative(),
   typedForward: z.number().nonnegative(),
   typedReverse: z.number().nonnegative(),
@@ -232,7 +235,7 @@ const atlasSchema = z.object({
       deltas: z.array(z.object({
         state: z.enum(["born", "persisted", "weakened", "retired", "unknown"]),
         label: z.string(), evidenceRef: z.string(), evidenceAnchor: z.string(), evidenceClass: z.string(),
-        confidence: z.enum(["high", "medium", "low"]),
+        evidenceStatus: z.literal("recorded"),
       })),
       unknown: z.array(z.string()), proofBoundary: z.string(),
     })).min(1),
@@ -401,6 +404,9 @@ export function collectAtlasReferenceFailures(candidate: AtlasData): string[] {
     }
     if (cell.typed !== cell.typedForward + cell.typedReverse) {
       failures.push(`matrix-typed-direction:${cell.id}`);
+    }
+    if (cell.wikilink !== cell.wikilinkForward + cell.wikilinkReverse) {
+      failures.push(`matrix-wikilink-direction:${cell.id}`);
     }
   }
   for (const layer of relationLayerSchema.options) {

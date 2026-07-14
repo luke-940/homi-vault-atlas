@@ -22,7 +22,6 @@ const eraStateLabels: Record<string, string> = {
   retired: "종료",
   unknown: "미확정",
 };
-const confidenceLabels = { high: "높음", medium: "중간", low: "낮음" } as const;
 const currentnessLabels: Record<string, string> = {
   live: "현재 사용",
   durable: "지속 기준",
@@ -75,12 +74,12 @@ export function TimeView() {
       <WorkspaceHeader
         titleId="time-title"
         eyebrow="시간 지식 지도"
-        title="남아 있는 기록은 Vault의 어떤 전환을 증명하는가"
-        question="각 변화에 직접 연결된 기록만 보여준다. 근거가 부족한 상태와 생애주기는 미확정으로 남긴다."
-        answer={`시대 ${era.id}에는 근거가 남은 변화 ${era.deltas.length}개와 미확정 항목 ${era.unknown.length}개가 있다.`}
+        title="기록된 변천 장면은 Vault의 어떤 전환을 보여주는가"
+        question="Era는 동일 간격의 실제 시간축이 아니라 편집된 역사 장면이다. 각 변화에 직접 연결된 기록만 보여주고, 근거가 부족한 생애주기는 미확정으로 남긴다."
+        answer={`장면 ${era.id}에는 기록이 확인된 변화 ${era.deltas.length}개와 미확정 항목 ${era.unknown.length}개가 있다.`}
         keyItems={[
           ...[...plottedLifecycleStates, "unknown"].map((stateName) => ({ label: eraStateLabels[stateName], className: `key-era-${stateName}` })),
-          { label: "층 = 기록 유무 · 숫자 = 수 · 투명도 = 신뢰", className: "key-era-evidence" },
+          { label: "층 = 기록 유무 · 숫자 = 기록 수", className: "key-era-evidence" },
         ]}
       />
       <nav className="era-rail" aria-label="Era 선택">
@@ -100,7 +99,7 @@ export function TimeView() {
       </nav>
       <div className="desktop-visual-surface temporal-surface">
         <section className="era-overview-panel">
-          <div className="panel-title-row"><div><span className="eyebrow">시대별 변화 비교</span><h2>시대 1 → 11</h2></div><span className="panel-readout">근거가 남은 변화만 집계</span></div>
+          <div className="panel-title-row"><div><span className="eyebrow">편집된 변천 장면 비교</span><h2>장면 1 → 11</h2></div><span className="panel-readout">균등 시간축 아님 · 기록이 남은 변화만 집계</span></div>
           <EraPlot />
         </section>
         <section className="era-focus-panel">
@@ -110,7 +109,7 @@ export function TimeView() {
           <p className="era-thesis">{era.thesis}</p>
           <div className="era-delta-ledger">
             {era.deltas.map((delta) => (
-              <div key={delta.label} title={`${delta.evidenceRef}#${delta.evidenceAnchor}`}><i style={{ background: eraStateColors[delta.state] }} /><span><strong>{delta.label}</strong><small>{eraStateLabels[delta.state]} · 근거 신뢰 {confidenceLabels[delta.confidence]} · {evidenceLabel(delta.evidenceClass)}</small></span></div>
+              <div key={delta.label} title={`${delta.evidenceRef}#${delta.evidenceAnchor}`}><i style={{ background: eraStateColors[delta.state] }} /><span><strong>{delta.label}</strong><small>{eraStateLabels[delta.state]} · 기록 확인 · {evidenceLabel(delta.evidenceClass)}</small></span></div>
             ))}
             {missingStates.map((stateName) => (
               <div key={`missing-${stateName}`}><i style={{ background: "transparent", border: `1px dashed ${eraStateColors[stateName]}` }} /><span><strong>{eraStateLabels[stateName]} 기록 없음</strong><small>변화가 0이라는 뜻이 아니라, 판정할 근거가 남아 있지 않음</small></span></div>
@@ -146,10 +145,8 @@ function EraPlot() {
     const center = margin.top + laneGap * (laneIndex + 0.65);
     const samples = atlasData.temporal.eras.map((era) => {
       const deltas = era.deltas.filter((delta) => delta.state === stateName);
-      const confidenceFloor = deltas.some((delta) => delta.confidence === "low") ? "low" : deltas.some((delta) => delta.confidence === "medium") ? "medium" : "high";
-      const confidenceOpacity = confidenceFloor === "high" ? 1 : confidenceFloor === "medium" ? 0.72 : 0.5;
       const amplitude = deltas.length ? Math.min(laneGap * 0.18, 8) : 1.4;
-      return { era, deltas, x: xForEra(era.id), center, amplitude, confidenceOpacity };
+      return { era, deltas, x: xForEra(era.id), center, amplitude };
     });
     const path = area<(typeof samples)[number]>()
       .x((sample) => sample.x)
@@ -162,7 +159,7 @@ function EraPlot() {
   return (
     <div className="era-plot-shell">
       <div className="era-plot era-strata" ref={containerRef} data-testid="era-small-multiples">
-        <svg viewBox={`0 0 ${plotWidth} ${plotHeight}`} role="group" data-selected-era={state.eraId} aria-label="시대 1부터 11까지 탄생, 지속, 약화, 종료의 증거 흐름을 층으로 보여준다. 층은 변화 기록 유무, 숫자는 기록 수, 표식 투명도는 근거 신뢰를 뜻한다.">
+        <svg viewBox={`0 0 ${plotWidth} ${plotHeight}`} role="group" data-selected-era={state.eraId} aria-label="편집된 변천 장면 1부터 11까지 탄생, 지속, 약화, 종료 기록을 층으로 보여준다. 가로 간격은 실제 시간 간격을 뜻하지 않는다.">
           <defs>
             <filter id="era-strata-glow" x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation="4" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
           </defs>
@@ -176,7 +173,7 @@ function EraPlot() {
                 const selected = sample.era.id === state.eraId;
                 return sample.deltas.length ? (
                   <g key={sample.era.id} transform={`translate(${sample.x},${sample.center})`}>
-                    <circle r={selected ? 10 : 7} opacity={sample.confidenceOpacity} className={selected ? "era-strata-mark is-selected" : "era-strata-mark"} fill={eraStateColors[stratum.stateName]} filter={selected ? "url(#era-strata-glow)" : undefined} />
+                    <circle r={selected ? 10 : 7} className={selected ? "era-strata-mark is-selected" : "era-strata-mark"} fill={eraStateColors[stratum.stateName]} filter={selected ? "url(#era-strata-glow)" : undefined} />
                     <text y="3" textAnchor="middle" className="era-strata-count">{sample.deltas.length}</text>
                     <title>{`시대 ${sample.era.id} · ${eraStateLabels[stratum.stateName]} ${sample.deltas.length}개`}</title>
                   </g>
@@ -201,7 +198,7 @@ function EraPlot() {
           ))}
         </svg>
       </div>
-      <div className="era-unknown-boundary">층 = 변화 기록 유무 · 숫자 = 기록 수 · 표식 투명도 = 근거 신뢰 · 얇은 선 = 기록 없음(0 변화 아님) · 현재 Era 미확정 {atlasData.temporal.eras.find((item) => item.id === state.eraId)?.unknown.length ?? 0}개</div>
+      <div className="era-unknown-boundary">편집된 역사 장면 · 가로 간격은 실제 시간 간격이 아님 · 층 = 변화 기록 유무 · 숫자 = 기록 수 · 얇은 선 = 기록 없음(0 변화 아님) · 현재 장면 미확정 {atlasData.temporal.eras.find((item) => item.id === state.eraId)?.unknown.length ?? 0}개</div>
     </div>
   );
 }
@@ -219,7 +216,7 @@ function EntityTimeReadout() {
           <div><dt>현재성</dt><dd>{currentnessLabels[entity.currentness] ?? entity.currentness}</dd></div>
           <div>
             <dt>{atlasData.publication.profile === "public" ? "시간 기준" : "마지막 변경 거리"}</dt>
-            <dd>{atlasData.publication.profile === "public" ? "공개 스냅샷 집계" : `${entity.ageDays}일`}</dd>
+            <dd>{atlasData.publication.profile === "public" ? "공개 스냅샷 집계" : entity.ageDays == null ? "미제공" : `${entity.ageDays}일`}</dd>
           </div>
           <div><dt>역사 경계</dt><dd>정확한 과거 파일 모습은 판단 근거 부족</dd></div>
         </dl>
@@ -251,13 +248,13 @@ function MobileTime() {
           선택 해석 보기
         </button>
       </section>
-      <div className="mobile-era-scrubber" role="navigation" aria-label="시대 선택">
+      <div className="mobile-era-scrubber" role="region" aria-label="변천 장면 선택, 가로로 스크롤 가능" tabIndex={0}>
         {atlasData.temporal.eras.map((item) => <button key={item.id} ref={item.id === state.eraId ? activeEraRef : undefined} type="button" aria-label={`시대 ${item.id}: ${item.title}`} aria-pressed={item.id === state.eraId} className={item.id === state.eraId ? "is-active" : ""} onClick={() => dispatch({ type: "era", eraId: item.id })}>{item.id}</button>)}
       </div>
-      <section className="mobile-ranked-list">
+      <section className="mobile-ranked-list" role="region" aria-label="선택한 장면의 변화 목록" tabIndex={0}>
         <h3>이 Era의 변화</h3>
         {era.deltas.map((delta) => (
-          <div className="mobile-era-row" key={delta.label}><i style={{ background: eraStateColors[delta.state] }} /><span><strong>{delta.label}</strong><small>{eraStateLabels[delta.state]} · 근거 신뢰 {confidenceLabels[delta.confidence]}</small></span><Sparkles size={16} /></div>
+          <div className="mobile-era-row" key={delta.label}><i style={{ background: eraStateColors[delta.state] }} /><span><strong>{delta.label}</strong><small>{eraStateLabels[delta.state]} · 기록 확인</small></span><Sparkles size={16} /></div>
         ))}
         {era.unknown.map((label) => (
           <div className="mobile-era-row" key={label}><i style={{ background: eraStateColors.unknown }} /><span><strong>{label}</strong><small>미확정 · 부재로 단정하지 않음</small></span><Clock3 size={16} /></div>

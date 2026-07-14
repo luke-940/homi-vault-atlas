@@ -32,6 +32,7 @@ describe("public Atlas runtime contracts", () => {
       expect(districts.has(cell.source)).toBe(true);
       expect(districts.has(cell.target)).toBe(true);
       expect(cell.total).toBe(cell.wikilink);
+      expect(cell.wikilink).toBe(cell.wikilinkForward + cell.wikilinkReverse);
       expect(cell.typed).toBe(0);
       expect(cell.route).toBe(0);
     }
@@ -70,7 +71,10 @@ describe("public Atlas runtime contracts", () => {
   test("uses document units in public comparison and a complete paginated genealogy reader", () => {
     const inspector = readSource("components/InspectorTray.tsx");
     const explore = readSource("views/ExploreView.tsx");
-    expect(inspector).toContain('isPublicProfile ? "개 문서" : "단어"');
+    expect(inspector).toContain("isPublicProfile");
+    expect(inspector).toContain("entity.documentCount");
+    expect(inspector).toContain('"개 문서"');
+    expect(inspector).toContain('"단어"');
     expect(explore).toContain('className="branch-reader-more"');
     expect(explore).toContain("filteredBranchDocuments.length");
     expect(explore).not.toContain("전체 목록은 오른쪽 reader");

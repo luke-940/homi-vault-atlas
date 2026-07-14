@@ -4,7 +4,7 @@ const exactRules = new Map([
   ["bootstrap", fields("schema version generatedAt snapshot proofBoundary workspaces defaultFocus")],
   ["bootstrap.snapshot", fields("officialCursor stateSnapshot currentStateHash candidateInputHash activeManifestHash memoryEngineCodeHash memoryIndexHash memoryEngineSchema memoryCorpusDigest memoryFiles graphConfigHash graphJsonUsedAsNodeEdgeSource activeMarkdownCount archiveMarkdownCount buildState")],
   ["entity", fields("entities searchFields")],
-  ["entity.entities[]", fields("id path title displayLabel aliases tags parentId district topLevel depth authority currentness currentnessRaw surfaceRole sourceRole defaultPreload wordCount ageDays sha256 frontmatter")],
+  ["entity.entities[]", fields("id path title displayLabel aliases tags parentId district topLevel depth authority currentness currentnessRaw surfaceRole sourceRole defaultPreload wordCount documentCount ageDays sha256 frontmatter")],
   ["flow", fields("coordinateContract routes pulse")],
   ["flow.coordinateContract", fields("mode sharedXAxis xUnit crossRouteAlignmentMeaning readerLabel")],
   ["flow.routes[]", fields("id label question members provenance classifier sourceRefs stations")],
@@ -21,7 +21,7 @@ const exactRules = new Map([
   ["insight.items[].targetScene", fields("workspace scene focusId lens relationPairId relationLayer routeId eraId")],
   ["publication", fields("schema profile generatedAt publicSnapshotDigest allowedSurfaces excludedFields redactionCounts blockers")],
   ["relation", fields("districtOrder matrix typedRelations routeCoMembership neighborhoods layerDefinitions availableLayers redactedLayers coverage")],
-  ["relation.matrix[]", fields("id source target wikilink typed typedForward typedReverse route total")],
+  ["relation.matrix[]", fields("id source target wikilink wikilinkForward wikilinkReverse typed typedForward typedReverse route total")],
   ["relation.layerDefinitions[]", fields("id label meaning unit")],
   ["relation.coverage", fields("resolvedLinkPairs resolvedLinkWeight unresolvedLinks unresolvedLinkTotal ambiguousLinks typedRelations layers boundary")],
   ["relation.coverage.layers", fields("wikilink typed route")],
@@ -36,7 +36,7 @@ const exactRules = new Map([
   ["structure.archiveScope", fields("active archive defaultState")],
   ["temporal", fields("currentEra eras")],
   ["temporal.eras[]", fields("id title range thesis evidenceRefs evidenceClass deltas unknown proofBoundary")],
-  ["temporal.eras[].deltas[]", fields("state label evidenceRef evidenceAnchor evidenceClass confidence")],
+  ["temporal.eras[].deltas[]", fields("state label evidenceRef evidenceAnchor evidenceClass evidenceStatus")],
 ]);
 
 const primitiveRecordPaths = new Set([

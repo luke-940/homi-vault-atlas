@@ -16,6 +16,7 @@ export function App() {
   const { state, dispatch } = useAtlasState();
   const [documentHidden, setDocumentHidden] = useState(document.hidden);
   const theatreReturnFocusRef = useRef<HTMLElement | null>(null);
+  const theatreReturnScrollRef = useRef({ windowY: 0, mainY: 0 });
   const previousTheatreRef = useRef(state.theatre);
   const previousWorkspaceRef = useRef(state.workspace);
 
@@ -24,6 +25,20 @@ export function App() {
     document.addEventListener("visibilitychange", syncVisibility);
     return () => document.removeEventListener("visibilitychange", syncVisibility);
   }, []);
+
+  useEffect(() => {
+    const captureTheatreReturn = (event: MouseEvent) => {
+      const target = event.target as Element | null;
+      if (state.theatre || !target?.closest(".mobile-theatre-action, .theatre-button")) return;
+      theatreReturnFocusRef.current = document.activeElement as HTMLElement | null;
+      theatreReturnScrollRef.current = {
+        windowY: window.scrollY,
+        mainY: document.querySelector<HTMLElement>(".workspace-main")?.scrollTop ?? 0,
+      };
+    };
+    document.addEventListener("click", captureTheatreReturn, true);
+    return () => document.removeEventListener("click", captureTheatreReturn, true);
+  }, [state.theatre]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -42,6 +57,13 @@ export function App() {
         else if (state.panel !== "none") dispatch({ type: "panel", panel: state.panel });
         else if (state.previousScene) dispatch({ type: "back" });
       } else if (!typing && event.key.toLowerCase() === "f") {
+        if (!state.theatre) {
+          theatreReturnFocusRef.current = document.activeElement as HTMLElement | null;
+          theatreReturnScrollRef.current = {
+            windowY: window.scrollY,
+            mainY: document.querySelector<HTMLElement>(".workspace-main")?.scrollTop ?? 0,
+          };
+        }
         dispatch({ type: "theatre", open: !state.theatre });
       }
     };
@@ -52,12 +74,23 @@ export function App() {
   useEffect(() => {
     const wasOpen = previousTheatreRef.current;
     if (state.theatre && !wasOpen) {
-      theatreReturnFocusRef.current = document.activeElement as HTMLElement | null;
+      if (!theatreReturnFocusRef.current) {
+        theatreReturnFocusRef.current = document.activeElement as HTMLElement | null;
+        theatreReturnScrollRef.current = {
+          windowY: window.scrollY,
+          mainY: document.querySelector<HTMLElement>(".workspace-main")?.scrollTop ?? 0,
+        };
+      }
       requestAnimationFrame(() => document.querySelector<HTMLElement>(".theatre-exit")?.focus());
     } else if (!state.theatre && wasOpen) {
       const target = theatreReturnFocusRef.current;
+      const scroll = theatreReturnScrollRef.current;
       theatreReturnFocusRef.current = null;
-      requestAnimationFrame(() => target?.focus({ preventScroll: true }));
+      requestAnimationFrame(() => {
+        target?.focus({ preventScroll: true });
+        window.scrollTo({ top: scroll.windowY, left: 0, behavior: "auto" });
+        document.querySelector<HTMLElement>(".workspace-main")?.scrollTo({ top: scroll.mainY, left: 0, behavior: "auto" });
+      });
     }
     previousTheatreRef.current = state.theatre;
   }, [state.theatre]);

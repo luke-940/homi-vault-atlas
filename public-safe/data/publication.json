@@ -1,8 +1,8 @@
 {
   "schema": "atlas.publication.v1",
   "profile": "public",
-  "generatedAt": "2026-07-14T13:47:28.080Z",
-  "publicSnapshotDigest": "9cf8742e6279d50d43119b63236a894f6e85d5c49eb8d2f5da74abb70dee0f63",
+  "generatedAt": "2026-07-14T15:27:13.349Z",
+  "publicSnapshotDigest": "0ef8565a5579e051b5873ab63ee6f43d228e308fda4fa81c5c4a8cfb03fe53a8",
   "allowedSurfaces": [
     "district_role_aggregate",
     "reference_boundary",

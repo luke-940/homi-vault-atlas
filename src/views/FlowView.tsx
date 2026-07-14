@@ -4,7 +4,9 @@ import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { atlasData, entityById } from "../data";
 import { useElementSize } from "../hooks/useElementSize";
 import { useAtlasState } from "../state";
-import type { Route, RouteStation, RouteStationKind } from "../types";
+import type { RouteStation, RouteStationKind } from "../types";
+
+const publicProfile = atlasData.publication.profile === "public";
 
 const routeColors: Record<string, string> = {
   daily: "#338f80",
@@ -55,7 +57,9 @@ export function FlowView() {
         eyebrow="볼트 경로 · 지식 전파"
         title="근거가 어떤 경로를 지나 판단과 설명이 되는가"
         question={`선 폭은 수량을 뜻하지 않는다. ${atlasData.flow.coordinateContract.readerLabel}`}
-        answer={`${route.label}은 ${route.stations.length}개 경유점을 지나며, 최신 Pulse는 ${atlasData.flow.pulse.chains.length}개 중심 지식에 도달했다.`}
+        answer={publicProfile
+          ? `${route.label}은 ${route.stations.length}개 안내 정거장으로 구성된 공개 역할 경로다. 실제 최신 실행 기록은 공개판에 포함하지 않는다.`
+          : `${route.label}은 ${route.stations.length}개 안내 정거장으로 구성된다. 최신 Daily 영수증은 ${atlasData.flow.pulse.chains.length}개 Daily → 중심 지식 관계를 확인했다.`}
         keyItems={[
           { label: "선택 경로", className: "key-focus" },
           { label: "검증 관문", className: "key-proof" },
@@ -73,7 +77,7 @@ export function FlowView() {
             onClick={() => dispatch({ type: "route", routeId: item.id })}
           >
             <i style={{ background: routeColors[item.id] }} aria-hidden="true" />
-            <span><strong>{item.label}</strong><small>{item.stations.length}개 경유점</small></span>
+            <span><strong>{item.label}</strong><small>{item.stations.length}개 안내 정거장</small></span>
           </button>
         ))}
       </nav>
@@ -108,40 +112,11 @@ function routeGeometry(width: number, laneY: number, stationCount: number) {
   return { points, path };
 }
 
-function verifiedPulseSegment(
-  route: Route,
-  points: Array<{ x: number; y: number }>,
-  chainEntitySets: Array<Set<string>>,
-) {
-  let bestStart = -1;
-  let bestEnd = -1;
-  for (const entityIds of chainEntitySets) {
-    let runStart = -1;
-    for (let index = 0; index < route.stations.length; index += 1) {
-      const station = route.stations[index];
-      const reached = Boolean(station.entityId && entityIds.has(station.entityId));
-      if (reached && runStart < 0) runStart = index;
-      const runEnds = runStart >= 0 && (!reached || index === route.stations.length - 1);
-      if (!runEnds) continue;
-      const runEnd = reached && index === route.stations.length - 1 ? index : index - 1;
-      if (runEnd > runStart && runEnd - runStart > bestEnd - bestStart) {
-        bestStart = runStart;
-        bestEnd = runEnd;
-      }
-      runStart = -1;
-    }
-  }
-  return bestStart >= 0 ? pathThroughPoints(points.slice(bestStart, bestEnd + 1)) : null;
-}
-
 function VaultMetro() {
   const { state, dispatch } = useAtlasState();
   const { ref, width, height } = useElementSize<HTMLDivElement>();
   const pulseEntityIds = useMemo(() => new Set(
     atlasData.flow.pulse.chains.flatMap((chain: any) => (chain.stages ?? []).map((stage: any) => stage.entityId).filter(Boolean)),
-  ), []);
-  const pulseChainEntitySets = useMemo(() => atlasData.flow.pulse.chains.map(
-    (chain: any) => new Set<string>((chain.stages ?? []).map((stage: any) => stage.entityId).filter(Boolean)),
   ), []);
   const top = 54;
   const laneGap = Math.max(72, (height - 90) / Math.max(1, atlasData.flow.routes.length));
@@ -160,9 +135,8 @@ function VaultMetro() {
         </defs>
         {geometries.map(({ route, path, points }) => {
           const active = route.id === state.routeId;
-          const pulseSegment = verifiedPulseSegment(route, points, pulseChainEntitySets);
           return (
-            <g key={route.id} className={`metro-route${active ? " is-active" : ""}${pulseSegment ? " has-pulse" : ""}`}>
+            <g key={route.id} className={`metro-route${active ? " is-active" : ""}`}>
               <rect
                 className="metro-route-band"
                 x="8"
@@ -173,19 +147,16 @@ function VaultMetro() {
                 aria-hidden="true"
               />
               <path d={path} fill="none" stroke={active ? routeColors[route.id] : "#cad8d2"} strokeWidth={active ? 5 : 2} strokeOpacity={active ? 1 : 0.46} strokeLinecap="round" filter={active ? "url(#metro-focus-glow)" : undefined} />
-              {active && pulseSegment && !state.reducedMotion && (
-                <circle className="route-packet" r="5" fill="#fff" stroke={routeColors[route.id]} strokeWidth="3" style={{ offsetPath: `path('${pulseSegment}')` }} />
-              )}
               <text x={18} y={(points[0]?.y ?? 0) + 4} className={active ? "metro-route-label is-active" : "metro-route-label"}>{route.label}</text>
               {route.stations.map((station, index) => {
                 const point = points[index];
                 const entity = station.entityId ? entityById.get(station.entityId) : undefined;
                 const focused = station.entityId === state.focusId;
                 const previewed = station.entityId === state.previewId;
-                const pulseReached = Boolean(station.entityId && pulseEntityIds.has(station.entityId));
+                const pulseReached = !publicProfile && Boolean(station.entityId && pulseEntityIds.has(station.entityId));
                 const kind = stationKind(station);
                 return (
-                  <g key={station.id} transform={`translate(${point.x},${point.y})`} className={`metro-station kind-${kind}${focused ? " is-focused" : ""}${previewed ? " is-preview" : ""}${pulseReached ? " has-pulse" : ""}`} role={station.entityId ? "button" : undefined} aria-label={station.entityId ? `${station.label}${kind === "proof_gate" ? ", 검증 관문" : ""}${pulseReached ? ", 최신 Pulse 도달" : ""}: ${entity?.displayLabel ?? station.entityId}` : undefined} tabIndex={station.entityId ? 0 : -1} onPointerEnter={() => station.entityId && dispatch({ type: "preview", focusId: station.entityId })} onPointerLeave={() => dispatch({ type: "preview", focusId: null })} onFocus={() => station.entityId && dispatch({ type: "preview", focusId: station.entityId })} onBlur={() => dispatch({ type: "preview", focusId: null })} onClick={() => station.entityId && dispatch({ type: "focus", focusId: station.entityId })} onKeyDown={(event) => {
+                  <g key={station.id} transform={`translate(${point.x},${point.y})`} className={`metro-station kind-${kind}${focused ? " is-focused" : ""}${previewed ? " is-preview" : ""}${pulseReached ? " has-pulse" : ""}`} role={station.entityId ? "button" : undefined} aria-label={station.entityId ? `${station.label}${kind === "proof_gate" ? ", 검증 관문" : ""}${pulseReached ? ", 최신 Daily 관계 영수증에 포함" : ""}: ${entity?.displayLabel ?? station.entityId}` : undefined} tabIndex={station.entityId ? 0 : -1} onPointerEnter={() => station.entityId && dispatch({ type: "preview", focusId: station.entityId })} onPointerLeave={() => dispatch({ type: "preview", focusId: null })} onFocus={() => station.entityId && dispatch({ type: "preview", focusId: station.entityId })} onBlur={() => dispatch({ type: "preview", focusId: null })} onClick={() => station.entityId && dispatch({ type: "focus", focusId: station.entityId })} onKeyDown={(event) => {
                     if (station.entityId && (event.key === "Enter" || event.key === " ")) dispatch({ type: "focus", focusId: station.entityId });
                   }}>
                     {pulseReached && <circle className="pulse-station-ring" r={active ? 16 : 12} />}
@@ -222,11 +193,15 @@ function PulseRail() {
     { role: "readable", label: "읽기용 사본" },
   ];
   return (
-    <section className="pulse-rail" aria-label="최신 Daily 지식 pulse">
+    <section className="pulse-rail" aria-label={publicProfile ? "공개 역할 경로" : "최신 Daily 관계 영수증"}>
       <div className="pulse-heading">
-        <span className="eyebrow">최신 지식 전파</span>
-        <strong>{pulse.latestDailyDate ?? "최신 Daily"}</strong>
-        <small>{pulse.chains.length ? `대표 체인 1/${pulse.chains.length} · 전체 ${pulse.chains.length}개 종결` : "기록된 체인 없음"}</small>
+        <span className="eyebrow">{publicProfile ? "공개 역할 순서" : "Daily 관계 영수증"}</span>
+        <strong>{publicProfile ? "대표 작업 경계" : pulse.latestDailyDate ?? "최신 Daily"}</strong>
+        <small>{publicProfile
+          ? `${pulse.chains.length}개 역할 경로 · 최신 실행 완료를 주장하지 않음`
+          : pulse.chains.length
+            ? `Daily → 중심 지식 직접 관계 ${pulse.chains.length}개 확인 · 소스와 읽기면은 경계 표시`
+            : "기록된 직접 관계 없음"}</small>
       </div>
       <ol>
         {stages.map((stage: any, index: number) => (
@@ -278,7 +253,7 @@ function MobileFlow() {
           </li>
         ))}
       </ol>
-      <div className="mobile-flow-proof"><CircleCheck size={18} /><span>이 안내 경로에는 {route.members.length}개 문서가 연결되어 있다. 실제 진행량이나 연결 횟수를 뜻하지 않는다.</span></div>
+      <div className="mobile-flow-proof"><CircleCheck size={18} /><span>이 안내 경로에는 {route.members.length}개 문서가 연결되어 있다. 실제 실행 완료·진행량·연결 횟수를 뜻하지 않는다.</span></div>
       <button className="mobile-theatre-action" type="button" onClick={() => dispatch({ type: "theatre", open: true })}>경로 읽기 집중 보기</button>
     </div>
   );
