@@ -1,0 +1,36 @@
+{
+  "name": "homi-vault-atlas",
+  "version": "7.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run tests-public",
+    "build": "node scripts/build-public-site.mjs && node scripts/audit-public-bundle.mjs",
+    "audit": "node scripts/audit-public-bundle.mjs"
+  },
+  "dependencies": {
+    "@observablehq/plot": "^0.6.17",
+    "clsx": "^2.1.1",
+    "d3": "^7.9.0",
+    "gray-matter": "^4.0.3",
+    "lucide-react": "^1.24.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "yaml": "^2.9.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
+    "@playwright/test": "^1.61.1",
+    "@types/d3": "^7.4.3",
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "esbuild": "^0.28.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.1.4",
+    "vitest": "^4.1.10"
+  }
+}

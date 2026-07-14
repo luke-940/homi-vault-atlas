@@ -1,0 +1,2 @@
+window.__HOMI_ATLAS_V7_PACKS__ = window.__HOMI_ATLAS_V7_PACKS__ || {};
+window.__HOMI_ATLAS_V7_PACKS__["health"] = {"memoryEngine":{"schema":"public-curated-snapshot.v1","files":6},"currentnessCounts":{"reference":6},"authorityCounts":{"L3":6},"unresolvedLinks":{},"ambiguousAutoSelections":0,"unresolvedTypedRelations":0,"activeIsolates":[],"countReconciliation":{"entities":6,"memoryFiles":6,"hierarchyDocuments":6,"pass":true}};

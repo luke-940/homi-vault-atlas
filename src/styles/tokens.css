@@ -1,0 +1,90 @@
+:root {
+  color-scheme: light;
+  --atlas-bg: #f2f6f3;
+  --atlas-paper: #fbfcfa;
+  --chrome-bg: rgba(249, 251, 249, 0.96);
+  --tray-bg: #f7faf7;
+  --map-bg: #edf4ef;
+  --ink: #17241f;
+  --ink-soft: #4f625a;
+  --ink-faint: #596d64;
+  --line: #d4dfd9;
+  --line-strong: #aebfb7;
+  --mint: #a9d9cf;
+  --mint-deep: #226f62;
+  --ice: #b8d4f0;
+  --lavender: #d5c3ef;
+  --amber: #f3cda9;
+  --homi-amber: #ed9840;
+  --pulse-blue: #6f8fd8;
+  --pulse-teal: #5b9d93;
+  --leaf: #d9e8ad;
+  --coral: #efbaba;
+  --focus: #173c34;
+  --proof: #7561b3;
+  --warning: #a85f41;
+  --control-radius: 6px;
+  --surface-radius: 8px;
+  --map-radius: 4px;
+  --shadow-tray: 0 14px 38px rgba(38, 70, 58, 0.08);
+  --shadow-focus: 0 9px 24px rgba(47, 136, 120, 0.2);
+  --command-height: 58px;
+  --workspace-header-height: 84px;
+  font-family: Inter, Pretendard, "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: geometricPrecision;
+}
+
+* {
+  box-sizing: border-box;
+  letter-spacing: 0;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  min-width: 320px;
+  background: var(--atlas-bg);
+  color: var(--ink);
+  overflow: hidden;
+}
+
+button,
+input {
+  color: inherit;
+  font: inherit;
+}
+
+button {
+  border: 0;
+}
+
+button:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--mint-deep);
+  outline-offset: 2px;
+}
+
+code,
+kbd {
+  font-family: "SFMono-Regular", Consolas, monospace;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

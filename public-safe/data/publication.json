@@ -1,0 +1,43 @@
+{
+  "schema": "atlas.publication.v1",
+  "profile": "public",
+  "generatedAt": "2026-07-14T12:23:04.415Z",
+  "publicSnapshotDigest": "d6accbdc06efa2a298c6e65efb8ca4755f15b9c96b110f238df1bb1822f85e22",
+  "allowedSurfaces": [
+    "district_role_aggregate",
+    "reference_boundary",
+    "district_relation_aggregate",
+    "route_stage_aggregate",
+    "era_state_aggregate"
+  ],
+  "excludedFields": [
+    "absolute_path",
+    "source_document_id",
+    "source_document_title",
+    "frontmatter",
+    "aliases",
+    "tags",
+    "document_body",
+    "document_level_relation",
+    "raw_source",
+    "internal_ownership_record",
+    "internal_proof_record",
+    "external_tool_id",
+    "archive"
+  ],
+  "redactionCounts": {
+    "sourceEntities": 770,
+    "publicEntities": 6,
+    "aggregatedSourceDocuments": 382,
+    "excludedEntities": 770,
+    "pathsReissued": 6,
+    "aliasesRemoved": 1219,
+    "tagsRemoved": 1352,
+    "frontmatterRemoved": 382,
+    "typedRelationReceiptsRemoved": 39,
+    "documentLevelRelationsRemoved": 11653,
+    "rawDailyExcluded": 89,
+    "controlDocumentsExcluded": 53
+  },
+  "blockers": []
+}
