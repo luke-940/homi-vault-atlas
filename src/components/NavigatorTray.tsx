@@ -1,10 +1,8 @@
-import { ChevronRight, Clock3, FileText, FolderTree, Home, Route, Rows3, X } from "lucide-react";
-import { Fragment, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
-import { atlasData, hierarchyFocusForDistrict } from "../data";
+import { ChevronRight, Clock3, FileText, FolderTree, Home, Route, Rows3, UsersRound, X } from "lucide-react";
+import { Fragment, useLayoutEffect, useRef, type KeyboardEvent } from "react";
+import { atlasData, hierarchyFocusForDistrict } from "../data-runtime";
 import { useAtlasState } from "../state";
 import { trayDialogKeyIntent } from "./tray-accessibility";
-
-const mobileTrayQuery = "(max-width: 820px), (max-height: 520px) and (pointer: coarse)";
 
 function getFocusable(container: HTMLElement | null) {
   return [...(container?.querySelectorAll<HTMLElement>(
@@ -16,17 +14,9 @@ export function NavigatorTray() {
   const { state, dispatch } = useAtlasState();
   const trayRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
-  const [isMobile, setIsMobile] = useState(() => window.matchMedia(mobileTrayQuery).matches);
+  const isMobile = state.mobileSibling;
 
   const close = () => dispatch({ type: "panelSet", panel: "none" });
-
-  useLayoutEffect(() => {
-    const media = window.matchMedia(mobileTrayQuery);
-    const sync = () => setIsMobile(media.matches);
-    sync();
-    media.addEventListener("change", sync);
-    return () => media.removeEventListener("change", sync);
-  }, []);
 
   useLayoutEffect(() => {
     if (!isMobile) return;
@@ -87,8 +77,15 @@ export function NavigatorTray() {
         onKeyDown={handleDialogKey}
       >
         <div className="tray-heading">
-          <span className="eyebrow">탐색</span>
-          <h2 id="navigator-tray-title">{({ home: "현재 인사이트", explore: "Vault 구조", observe: "전역 관계", flow: "작업 흐름", time: "Era 시간축" } as const)[state.workspace]}</h2>
+          <span className="eyebrow">NAVIGATOR</span>
+          <h2 id="navigator-tray-title">{({
+            home: "Home insights",
+            explore: "Explore City",
+            observe: "Observe relations",
+            flow: "Flow routes",
+            time: "Time evidence",
+            agency: "Agency system",
+          } as const)[state.workspace]}</h2>
           <button className="mobile-tray-close icon-button" type="button" onClick={close} aria-label="탐색 패널 닫기">
             <X size={18} aria-hidden="true" />
           </button>
@@ -96,11 +93,12 @@ export function NavigatorTray() {
 
         <nav className="navigator-workspaces" aria-label="작업 공간 바로가기">
           {[
-            { id: "home", label: "대문", icon: Home },
-            { id: "explore", label: "탐색", icon: FolderTree },
-            { id: "observe", label: "관측", icon: Rows3 },
-            { id: "flow", label: "흐름", icon: Route },
-            { id: "time", label: "시간", icon: Clock3 },
+            { id: "home", label: "Home", icon: Home },
+            { id: "explore", label: "Explore", icon: FolderTree },
+            { id: "observe", label: "Observe", icon: Rows3 },
+            { id: "flow", label: "Flow", icon: Route },
+            { id: "time", label: "Time", icon: Clock3 },
+            { id: "agency", label: "Agency", icon: UsersRound },
           ].map((item) => {
             const Icon = item.icon;
             return (

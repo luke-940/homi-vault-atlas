@@ -1,23 +1,25 @@
-const districtPalette = [
-  "#b8d4f0",
-  "#c8e9df",
-  "#d8e5df",
-  "#a9d9cf",
-  "#d9e8ad",
-  "#f3cda9",
-  "#d5c3ef",
-  "#b9e0ec",
-  "#efbaba",
-  "#cfd7dd",
-  "#cfc5e9",
-  "#dce3df",
-];
-
-const districtHash = (district: string) => [...district]
-  .reduce((value, character) => ((value * 31) + character.charCodeAt(0)) >>> 0, 2166136261);
+export const districtColorRoles = Object.freeze({
+  "중심 지식": "var(--district-knowledge-fill)",
+  MOC: "var(--district-knowledge-fill)",
+  "연구 논거": "var(--district-research-fill)",
+  Papers: "var(--district-research-fill)",
+  Research: "var(--district-research-fill)",
+  Rocket: "var(--district-research-fill)",
+  전략: "var(--district-strategy-fill)",
+  Strategy: "var(--district-strategy-fill)",
+  Groot: "var(--district-strategy-fill)",
+  신호: "var(--district-signal-fill)",
+  Signals: "var(--district-signal-fill)",
+  "운영 기반": "var(--district-operations-fill)",
+  "Console/Homi": "var(--district-operations-fill)",
+  "Console/Agent": "var(--district-operations-fill)",
+  "Console/Templates": "var(--district-operations-fill)",
+  "Intelligence Layer": "var(--district-operations-fill)",
+  "공개 근거 경계": "var(--public-boundary-fill)",
+} as const);
 
 export const colorForDistrict = (district: string) =>
-  districtPalette[districtHash(district) % districtPalette.length];
+  districtColorRoles[district as keyof typeof districtColorRoles] ?? "var(--district-neutral-fill)";
 
 export const shortDistrictLabel = (district: string) => {
   const leaf = district.split("/").at(-1) ?? district;

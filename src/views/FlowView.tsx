@@ -1,7 +1,7 @@
 import { ArrowRight, CircleCheck } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
-import { atlasData, entityById } from "../data";
+import { atlasData, entityById } from "../data-runtime";
 import { useElementSize } from "../hooks/useElementSize";
 import { useAtlasState } from "../state";
 import type { RouteStation, RouteStationKind } from "../types";

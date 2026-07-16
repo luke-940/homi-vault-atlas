@@ -1,0 +1,117 @@
+{
+  "schema": "homi.atlas_v7_3.visual_golden_manifest.v1",
+  "status": "incomplete_pending_iab_and_ubuntu_review",
+  "environment": {
+    "runner": "ubuntu-24.04",
+    "project": "chromium",
+    "platform": "linux",
+    "workers": 1
+  },
+  "reviewEvidenceDigest": null,
+  "cases": [
+    {
+      "id": "home-default",
+      "viewport": { "width": 1440, "height": 920 },
+      "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/home-default-1440x920-chromium-linux.png",
+      "baselineSha256": null,
+      "iabEvidenceSha256": null,
+      "verdict": "pending"
+    },
+    {
+      "id": "home-selected",
+      "viewport": { "width": 1280, "height": 720 },
+      "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/home-selected-1280x720-chromium-linux.png",
+      "baselineSha256": null,
+      "iabEvidenceSha256": null,
+      "verdict": "pending"
+    },
+    {
+      "id": "home-independent",
+      "viewport": { "width": 768, "height": 1024 },
+      "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/home-independent-768x1024-chromium-linux.png",
+      "baselineSha256": null,
+      "iabEvidenceSha256": null,
+      "verdict": "pending"
+    },
+    {
+      "id": "home-knowledge-return",
+      "viewport": { "width": 390, "height": 844 },
+      "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/home-knowledge-return-390x844-chromium-linux.png",
+      "baselineSha256": null,
+      "iabEvidenceSha256": null,
+      "verdict": "pending"
+    },
+    {
+      "id": "agency-default",
+      "viewport": { "width": 768, "height": 1024 },
+      "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/agency-default-768x1024-chromium-linux.png",
+      "baselineSha256": null,
+      "iabEvidenceSha256": null,
+      "verdict": "pending"
+    },
+    {
+      "id": "agency-actor",
+      "viewport": { "width": 390, "height": 844 },
+      "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/agency-actor-390x844-chromium-linux.png",
+      "baselineSha256": null,
+      "iabEvidenceSha256": null,
+      "verdict": "pending"
+    },
+    {
+      "id": "agency-evolution",
+      "viewport": { "width": 768, "height": 1024 },
+      "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/agency-evolution-768x1024-chromium-linux.png",
+      "baselineSha256": null,
+      "iabEvidenceSha256": null,
+      "verdict": "pending"
+    },
+    {
+      "id": "explore",
+      "viewport": { "width": 320, "height": 844 },
+      "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/explore-320x844-chromium-linux.png",
+      "baselineSha256": null,
+      "iabEvidenceSha256": null,
+      "verdict": "pending"
+    },
+    {
+      "id": "observe",
+      "viewport": { "width": 844, "height": 390 },
+      "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/observe-844x390-chromium-linux.png",
+      "baselineSha256": null,
+      "iabEvidenceSha256": null,
+      "verdict": "pending"
+    },
+    {
+      "id": "flow",
+      "viewport": { "width": 390, "height": 844 },
+      "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/flow-390x844-chromium-linux.png",
+      "baselineSha256": null,
+      "iabEvidenceSha256": null,
+      "verdict": "pending"
+    },
+    {
+      "id": "time",
+      "viewport": { "width": 320, "height": 844 },
+      "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/time-320x844-chromium-linux.png",
+      "baselineSha256": null,
+      "iabEvidenceSha256": null,
+      "verdict": "pending"
+    },
+    {
+      "id": "search-overlay",
+      "viewport": { "width": 1440, "height": 920 },
+      "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/search-overlay-1440x920-chromium-linux.png",
+      "baselineSha256": null,
+      "iabEvidenceSha256": null,
+      "verdict": "pending"
+    },
+    {
+      "id": "data-overlay",
+      "viewport": { "width": 390, "height": 844 },
+      "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/data-overlay-390x844-chromium-linux.png",
+      "baselineSha256": null,
+      "iabEvidenceSha256": null,
+      "verdict": "pending"
+    }
+  ]
+}

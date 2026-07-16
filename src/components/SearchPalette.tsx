@@ -1,14 +1,16 @@
-import { CornerDownLeft, FileText, Folder, Search, X } from "lucide-react";
+import { CornerDownLeft, FileText, Folder, Network, Search, X } from "lucide-react";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
-import { atlasData, entityById } from "../data";
+import { atlasData, entityById } from "../data-runtime";
 import { useAtlasState, type Action } from "../state";
 import type { Workspace } from "../types";
+import { claimModalInert, releaseModalInert } from "./tray-accessibility";
 
 export type SearchResult = {
   id: string;
   label: string;
   meta: string;
-  kind: "document" | "folder" | "district";
+  kind: "actor" | "document" | "folder" | "district";
+  section: "roles" | "knowledge";
 };
 
 export type SearchDestination = {
@@ -18,6 +20,7 @@ export type SearchDestination = {
   routeId?: string;
   eraId?: number;
   relationPairId?: string;
+  actorId?: string;
 };
 
 function strongestPairForDistrict(district: string, layer: "wikilink" | "typed" | "route") {
@@ -28,12 +31,20 @@ function strongestPairForDistrict(district: string, layer: "wikilink" | "typed" 
 }
 
 export function destinationFor(result: SearchResult, workspace: Workspace, layer: "wikilink" | "typed" | "route"): SearchDestination {
+  if (result.kind === "actor") {
+    return {
+      workspace: "agency",
+      actorId: result.id,
+      label: "Agency에서 역할 보기",
+      reason: "운영 역할은 지식 문서와 분리된 Agency 책임 지도에서 엽니다.",
+    };
+  }
   if (result.kind !== "document") {
-    return { workspace: "explore", label: "계보에서 위치 보기", reason: "폴더와 구역은 계보에서 정확한 상하 관계를 확인합니다." };
+    return { workspace: "explore", label: "City에서 위치 보기", reason: "공개 구역은 City에서 집계 위치를 확인합니다." };
   }
   const entity = entityById.get(result.id);
   if (!entity || workspace === "explore") {
-    return { workspace: "explore", label: "탐색에서 위치 보기", reason: "문서의 구역과 계보 경로를 함께 엽니다." };
+    return { workspace: "explore", label: "City에서 위치 보기", reason: "공개 집계가 속한 지식 구역을 City에서 엽니다." };
   }
   if (workspace === "observe") {
     const pair = strongestPairForDistrict(entity.district, layer);
@@ -87,12 +98,14 @@ export function createSearchSelectionPlan(
 ) {
   const destination = destinationFor(result, workspace, layer);
   const actions: Action[] = [
-    { type: "workspace", workspace: destination.workspace },
-    ...(destination.workspace === "explore" ? [{ type: "lens", lens: "lineage" } as const] : []),
+    ...(destination.actorId
+      ? [{ type: "actor", actorId: destination.actorId } as const]
+      : [{ type: "workspace", workspace: destination.workspace } as const]),
+    ...(destination.workspace === "explore" ? [{ type: "lens", lens: "city" } as const] : []),
     ...(destination.relationPairId ? [{ type: "relationPair", relationPairId: destination.relationPairId } as const] : []),
     ...(destination.routeId ? [{ type: "route", routeId: destination.routeId } as const] : []),
     ...(destination.eraId ? [{ type: "era", eraId: destination.eraId } as const] : []),
-    { type: "focus", focusId: result.id },
+    ...(result.kind === "actor" ? [] : [{ type: "focus", focusId: result.id } as const]),
     { type: "search", open: false },
   ];
   return {
@@ -143,6 +156,7 @@ export function wrappedSearchDialogFocusTarget<T>(
 
 export function SearchPalette() {
   const { state, dispatch } = useAtlasState();
+  const isPublicProfile = atlasData.publication.profile === "public";
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -152,6 +166,8 @@ export function SearchPalette() {
   const destinationTitleRef = useRef("explore-title");
 
   useLayoutEffect(() => {
+    const commandBar = document.querySelector<HTMLElement>(".command-bar");
+    const workspaceShell = document.querySelector<HTMLElement>(".workspace-shell");
     const previousOverflow = document.body.style.overflow;
     let restoreDocumentScroll = () => {
       document.body.style.overflow = previousOverflow;
@@ -160,13 +176,13 @@ export function SearchPalette() {
       returnFocusRef.current = document.activeElement as HTMLElement | null;
       setQuery("");
       setActiveIndex(0);
-      document.querySelector<HTMLElement>(".command-bar")?.setAttribute("inert", "");
-      document.querySelector<HTMLElement>(".workspace-shell")?.setAttribute("inert", "");
+      claimModalInert(commandBar, "search");
+      claimModalInert(workspaceShell, "search");
       restoreDocumentScroll = lockDocumentScroll(document.body.style);
       requestAnimationFrame(() => inputRef.current?.focus());
     } else {
-      document.querySelector<HTMLElement>(".command-bar")?.removeAttribute("inert");
-      document.querySelector<HTMLElement>(".workspace-shell")?.removeAttribute("inert");
+      releaseModalInert(commandBar, "search");
+      releaseModalInert(workspaceShell, "search");
       const target = returnFocusRef.current;
       returnFocusRef.current = null;
       if (selectionCommittedRef.current) {
@@ -180,35 +196,62 @@ export function SearchPalette() {
       }
     }
     return () => {
-      document.querySelector<HTMLElement>(".command-bar")?.removeAttribute("inert");
-      document.querySelector<HTMLElement>(".workspace-shell")?.removeAttribute("inert");
+      releaseModalInert(commandBar, "search");
+      releaseModalInert(workspaceShell, "search");
       restoreDocumentScroll();
     };
   }, [state.searchOpen]);
 
   const results = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase("ko-KR");
+    const roleResults = atlasData.agency.actors
+      .filter((actor) => {
+        if (!normalized) return true;
+        const surface = atlasData.agency.surfaces.find((candidate) => candidate.id === actor.ownedSurfaceId)?.label ?? "";
+        return [actor.label, actor.purpose, surface]
+          .join(" ")
+          .toLocaleLowerCase("ko-KR")
+          .includes(normalized);
+      })
+      .map<SearchResult>((actor) => {
+        const group = atlasData.agency.groups.find((candidate) => candidate.id === actor.groupId);
+        const surface = atlasData.agency.surfaces.find((candidate) => candidate.id === actor.ownedSurfaceId)?.label ?? "책임 표면";
+        return {
+          id: actor.id,
+          label: actor.label,
+          meta: `${group?.label ?? "Operating Role"} · ${surface}`,
+          kind: "actor",
+          section: "roles",
+        };
+      });
     if (!normalized) {
-      return atlasData.entity.entities
+      const knowledgeResults = atlasData.entity.entities
         .filter((entity) => entity.defaultPreload || entity.authority === "L1" || entity.authority === "L2")
         .slice(0, 10)
         .map<SearchResult>((entity) => ({
           id: entity.id,
           label: entity.title,
-          meta: `${entity.path} · ${entity.authority}`,
+          meta: isPublicProfile
+            ? `${entity.district} · ${entity.authority}`
+            : `${entity.path} · ${entity.authority}`,
           kind: "document",
+          section: "knowledge",
         }));
+      return [...roleResults, ...knowledgeResults].slice(0, 16);
     }
     const tokens = normalized.split(/\s+/).filter(Boolean);
     const documents = atlasData.entity.entities
       .map((entity) => {
-        const haystack = [entity.title, entity.path, ...entity.aliases, ...entity.tags]
+        const searchableFields = isPublicProfile
+          ? [entity.title, entity.displayLabel, entity.district]
+          : [entity.title, entity.path, ...entity.aliases, ...entity.tags];
+        const haystack = searchableFields
           .join(" ")
           .toLocaleLowerCase("ko-KR");
         const score = tokens.reduce((total, token) => {
           if (entity.title.toLocaleLowerCase("ko-KR").startsWith(token)) return total + 8;
           if (entity.title.toLocaleLowerCase("ko-KR").includes(token)) return total + 5;
-          if (entity.path.toLocaleLowerCase("ko-KR").includes(token)) return total + 3;
+          if (entity.district.toLocaleLowerCase("ko-KR").includes(token)) return total + 3;
           return total + Number(haystack.includes(token));
         }, 0);
         return { entity, score };
@@ -219,8 +262,11 @@ export function SearchPalette() {
       .map<SearchResult>(({ entity }) => ({
         id: entity.id,
         label: entity.title,
-        meta: `${entity.path} · ${entity.authority}`,
+        meta: isPublicProfile
+          ? `${entity.district} · ${entity.authority}`
+          : `${entity.path} · ${entity.authority}`,
         kind: "document",
+        section: "knowledge",
       }));
     const folders = atlasData.structure.hierarchyNodes
       .filter(
@@ -232,11 +278,14 @@ export function SearchPalette() {
       .map<SearchResult>((node) => ({
         id: node.id,
         label: node.label,
-        meta: `${node.documentCount}개 문서 · ${node.path || "Homi Vault"}`,
+        meta: isPublicProfile
+          ? `${node.documentCount}개 공개 기록 · 집계 구역`
+          : `${node.documentCount}개 문서 · ${node.path || "Homi Vault"}`,
         kind: node.kind === "district" ? "district" : "folder",
+        section: "knowledge",
       }));
-    return [...documents, ...folders].slice(0, 15);
-  }, [query]);
+    return [...roleResults, ...documents, ...folders].slice(0, 18);
+  }, [isPublicProfile, query]);
 
   useLayoutEffect(() => {
     if (!state.searchOpen || !results.length) return;
@@ -302,7 +351,7 @@ export function SearchPalette() {
                 dispatch({ type: "search", open: false });
               }
             }}
-            placeholder="제목, 경로, 별칭, 태그로 찾기"
+            placeholder="Operating Roles와 Knowledge 검색"
             aria-label="검색어"
             {...searchComboboxAccessibility(activeOptionId)}
           />
@@ -310,28 +359,34 @@ export function SearchPalette() {
             <X size={18} />
           </button>
         </div>
-        <div className="search-context">제목·경로·별칭·태그로 찾습니다. 현재 작업 공간에 직접 대응하면 그 맥락을 유지하고, 없으면 계보의 정본 위치로 이동합니다.</div>
+        <div className="search-context">Operating Roles와 Knowledge를 분리해 찾습니다. 역할은 Agency로, 공개 지식은 해당 workspace로 이동합니다.</div>
         <div className="search-results" id="atlas-search-results" role="listbox" aria-label="검색 결과">
           {results.map((result, index) => {
-            const Icon = result.kind === "document" ? FileText : Folder;
+            const Icon = result.kind === "actor" ? Network : result.kind === "document" ? FileText : Folder;
             const destination = destinationFor(result, state.workspace, state.relationLayer);
             return (
-              <button
-                key={result.id}
-                id={`atlas-search-option-${index}`}
-                type="button"
-                {...searchOptionAccessibility(index, activeIndex)}
-                className={index === activeIndex ? "search-result is-active" : "search-result"}
-                onMouseEnter={() => setActiveIndex(index)}
-                onClick={() => choose(result)}
-              >
-                <Icon size={17} aria-hidden="true" />
-                <span><strong>{result.label}</strong><small>{result.meta}</small></span>
-                <span className="search-result-action" title={destination.reason}>
-                  <span>{destination.label}</span>
-                  {index === activeIndex && <CornerDownLeft size={15} aria-hidden="true" />}
-                </span>
-              </button>
+              <div className="search-result-group" key={result.id}>
+                {(index === 0 || results[index - 1]?.section !== result.section) && (
+                  <p className="search-section-label" role="presentation">
+                    {result.section === "roles" ? "Operating Roles" : "Knowledge"}
+                  </p>
+                )}
+                <button
+                  id={`atlas-search-option-${index}`}
+                  type="button"
+                  {...searchOptionAccessibility(index, activeIndex)}
+                  className={index === activeIndex ? "search-result is-active" : "search-result"}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onClick={() => choose(result)}
+                >
+                  <Icon size={17} aria-hidden="true" />
+                  <span><strong>{result.label}</strong><small>{result.meta}</small></span>
+                  <span className="search-result-action" title={destination.reason}>
+                    <span>{destination.label}</span>
+                    {index === activeIndex && <CornerDownLeft size={15} aria-hidden="true" />}
+                  </span>
+                </button>
+              </div>
             );
           })}
           {!results.length && <p className="empty-state">일치하는 문서나 구역이 없습니다.</p>}

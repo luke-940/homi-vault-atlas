@@ -1,9 +1,11 @@
 import { Component, StrictMode, type ErrorInfo, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
+import { domAnimation, LazyMotion, MotionConfig } from "motion/react";
 import { App } from "./App";
 import { AtlasStateProvider } from "./state";
 import "./styles/tokens.css";
 import "./styles/app.css";
+import "./styles/v73.css";
 
 class AtlasErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null };
@@ -39,10 +41,17 @@ class AtlasErrorBoundary extends Component<{ children: ReactNode }, { error: Err
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <AtlasErrorBoundary>
-      <AtlasStateProvider>
-        <App />
-      </AtlasStateProvider>
-    </AtlasErrorBoundary>
+    <LazyMotion features={domAnimation} strict>
+      <MotionConfig
+        reducedMotion="user"
+        transition={{ duration: 0.48, ease: [0.2, 0.8, 0.2, 1] }}
+      >
+        <AtlasErrorBoundary>
+          <AtlasStateProvider>
+            <App />
+          </AtlasStateProvider>
+        </AtlasErrorBoundary>
+      </MotionConfig>
+    </LazyMotion>
   </StrictMode>,
 );

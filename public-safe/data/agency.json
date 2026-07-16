@@ -1,0 +1,291 @@
+{
+  "schema": "atlas.agency.v1",
+  "generatedAt": "2026-07-16T11:43:38.408Z",
+  "snapshot": {
+    "asOfDate": "2026-07-16",
+    "status": "current_at_release_capture",
+    "live": false,
+    "caveat": "검증된 버전 스냅샷이며 실시간 작업 상태가 아닙니다."
+  },
+  "principal": {
+    "id": "agency:principal:luke",
+    "label": "Luke",
+    "kind": "human_principal"
+  },
+  "groups": [
+    {
+      "id": "agency:group:homi-core",
+      "label": "Homi Core",
+      "kind": "core",
+      "actorIds": [
+        "actor:control-plane",
+        "actor:daily-runner",
+        "actor:atlas-builder"
+      ]
+    },
+    {
+      "id": "agency:group:independent",
+      "label": "Independent Project Owners",
+      "kind": "independent",
+      "actorIds": [
+        "actor:rocket-manager",
+        "actor:groot-manager",
+        "actor:intelligence-layer-manager"
+      ]
+    }
+  ],
+  "actors": [
+    {
+      "id": "actor:control-plane",
+      "label": "Control Plane",
+      "groupId": "agency:group:homi-core",
+      "purpose": "Homi 전역의 순서, 소유 경계, 검증 일관성을 조정한다.",
+      "ownedSurfaceId": "surface:homi-control-plane",
+      "publicOutput": "검증 가능한 제어면 경계",
+      "proof": "경계와 검증 결과의 일치",
+      "stopBoundary": "Atlas와 독립 프로젝트 owner를 지휘하거나 승인하지 않는다."
+    },
+    {
+      "id": "actor:daily-runner",
+      "label": "Daily Runner",
+      "groupId": "agency:group:homi-core",
+      "purpose": "반복되는 Daily와 Weekly 지식 회로를 책임진다.",
+      "ownedSurfaceId": "surface:daily-weekly-intelligence",
+      "publicOutput": "정제된 반복 지식 흐름",
+      "proof": "입력, 변환, 전파 경계의 검증",
+      "stopBoundary": "다른 책임 주체의 제품과 공식 지식 표면을 수정하지 않는다."
+    },
+    {
+      "id": "actor:atlas-builder",
+      "label": "Atlas Builder",
+      "groupId": "agency:group:homi-core",
+      "purpose": "Atlas 제품, 공개 경계, QA와 릴리스를 책임진다.",
+      "ownedSurfaceId": "surface:atlas-product-release",
+      "publicOutput": "Homi Vault Atlas",
+      "proof": "데이터, 시각, 발행 결과의 검증",
+      "stopBoundary": "Luke Vault와 다른 책임 주체의 공식 지식 표면에는 쓰지 않는다."
+    },
+    {
+      "id": "actor:rocket-manager",
+      "label": "Rocket Manager",
+      "groupId": "agency:group:independent",
+      "purpose": "Project Rocket의 연구와 제품 경계를 책임진다.",
+      "ownedSurfaceId": "surface:project-rocket",
+      "publicOutput": "Rocket의 독립 지식 표면",
+      "proof": "Rocket 공식 지식과 읽기면의 일치",
+      "stopBoundary": "Homi Core와 형제 프로젝트의 공식 지식 표면을 수정하지 않는다."
+    },
+    {
+      "id": "actor:groot-manager",
+      "label": "Groot Manager",
+      "groupId": "agency:group:independent",
+      "purpose": "Project Groot의 분석과 실행 경계를 책임진다.",
+      "ownedSurfaceId": "surface:project-groot",
+      "publicOutput": "Groot의 독립 지식 표면",
+      "proof": "Groot 공식 지식과 읽기면의 일치",
+      "stopBoundary": "Homi Core와 형제 프로젝트의 공식 지식 표면을 수정하지 않는다."
+    },
+    {
+      "id": "actor:intelligence-layer-manager",
+      "label": "Intelligence Layer Manager",
+      "groupId": "agency:group:independent",
+      "purpose": "Homi Intelligence Layer의 독립된 지식 계약을 책임진다.",
+      "ownedSurfaceId": "surface:homi-intelligence-layer",
+      "publicOutput": "검증된 Intelligence Layer 표면",
+      "proof": "계약, 증거, 경계의 일치",
+      "stopBoundary": "다른 책임 주체의 공식 지식 표면을 수정하지 않는다."
+    }
+  ],
+  "surfaces": [
+    {
+      "id": "surface:homi-control-plane",
+      "label": "Homi Control Plane",
+      "actorId": "actor:control-plane"
+    },
+    {
+      "id": "surface:daily-weekly-intelligence",
+      "label": "Daily / Weekly Intelligence",
+      "actorId": "actor:daily-runner"
+    },
+    {
+      "id": "surface:atlas-product-release",
+      "label": "Atlas Product & Release",
+      "actorId": "actor:atlas-builder"
+    },
+    {
+      "id": "surface:project-rocket",
+      "label": "Project Rocket",
+      "actorId": "actor:rocket-manager"
+    },
+    {
+      "id": "surface:project-groot",
+      "label": "Project Groot",
+      "actorId": "actor:groot-manager"
+    },
+    {
+      "id": "surface:homi-intelligence-layer",
+      "label": "Homi Intelligence Layer",
+      "actorId": "actor:intelligence-layer-manager"
+    }
+  ],
+  "links": [
+    {
+      "id": "link:direction:control-plane",
+      "source": "agency:principal:luke",
+      "target": "actor:control-plane",
+      "kind": "sets_direction"
+    },
+    {
+      "id": "link:direction:daily-runner",
+      "source": "agency:principal:luke",
+      "target": "actor:daily-runner",
+      "kind": "sets_direction"
+    },
+    {
+      "id": "link:direction:atlas-builder",
+      "source": "agency:principal:luke",
+      "target": "actor:atlas-builder",
+      "kind": "sets_direction"
+    },
+    {
+      "id": "link:direction:rocket-manager",
+      "source": "agency:principal:luke",
+      "target": "actor:rocket-manager",
+      "kind": "sets_direction"
+    },
+    {
+      "id": "link:direction:groot-manager",
+      "source": "agency:principal:luke",
+      "target": "actor:groot-manager",
+      "kind": "sets_direction"
+    },
+    {
+      "id": "link:direction:intelligence-layer-manager",
+      "source": "agency:principal:luke",
+      "target": "actor:intelligence-layer-manager",
+      "kind": "sets_direction"
+    },
+    {
+      "id": "link:ownership:control-plane",
+      "source": "actor:control-plane",
+      "target": "surface:homi-control-plane",
+      "kind": "owns_surface"
+    },
+    {
+      "id": "link:ownership:daily-runner",
+      "source": "actor:daily-runner",
+      "target": "surface:daily-weekly-intelligence",
+      "kind": "owns_surface"
+    },
+    {
+      "id": "link:ownership:atlas-builder",
+      "source": "actor:atlas-builder",
+      "target": "surface:atlas-product-release",
+      "kind": "owns_surface"
+    },
+    {
+      "id": "link:ownership:rocket-manager",
+      "source": "actor:rocket-manager",
+      "target": "surface:project-rocket",
+      "kind": "owns_surface"
+    },
+    {
+      "id": "link:ownership:groot-manager",
+      "source": "actor:groot-manager",
+      "target": "surface:project-groot",
+      "kind": "owns_surface"
+    },
+    {
+      "id": "link:ownership:intelligence-layer-manager",
+      "source": "actor:intelligence-layer-manager",
+      "target": "surface:homi-intelligence-layer",
+      "kind": "owns_surface"
+    },
+    {
+      "id": "link:result:control-plane",
+      "source": "actor:control-plane",
+      "target": "agency:principal:luke",
+      "kind": "returns_result"
+    },
+    {
+      "id": "link:result:daily-runner",
+      "source": "actor:daily-runner",
+      "target": "agency:principal:luke",
+      "kind": "returns_result"
+    },
+    {
+      "id": "link:result:atlas-builder",
+      "source": "actor:atlas-builder",
+      "target": "agency:principal:luke",
+      "kind": "returns_result"
+    },
+    {
+      "id": "link:result:rocket-manager",
+      "source": "actor:rocket-manager",
+      "target": "agency:principal:luke",
+      "kind": "returns_result"
+    },
+    {
+      "id": "link:result:groot-manager",
+      "source": "actor:groot-manager",
+      "target": "agency:principal:luke",
+      "kind": "returns_result"
+    },
+    {
+      "id": "link:result:intelligence-layer-manager",
+      "source": "actor:intelligence-layer-manager",
+      "target": "agency:principal:luke",
+      "kind": "returns_result"
+    },
+    {
+      "id": "link:boundary:control-plane:daily-runner",
+      "source": "actor:control-plane",
+      "target": "actor:daily-runner",
+      "kind": "coordinates_boundary"
+    },
+    {
+      "id": "link:evidence:daily-runner:control-plane",
+      "source": "actor:daily-runner",
+      "target": "actor:control-plane",
+      "kind": "returns_evidence"
+    },
+    {
+      "id": "link:evidence:atlas-builder:control-plane",
+      "source": "actor:atlas-builder",
+      "target": "actor:control-plane",
+      "kind": "returns_evidence"
+    },
+    {
+      "id": "link:evidence:rocket-manager:control-plane",
+      "source": "actor:rocket-manager",
+      "target": "actor:control-plane",
+      "kind": "returns_evidence"
+    },
+    {
+      "id": "link:evidence:groot-manager:control-plane",
+      "source": "actor:groot-manager",
+      "target": "actor:control-plane",
+      "kind": "returns_evidence"
+    },
+    {
+      "id": "link:evidence:intelligence-layer-manager:control-plane",
+      "source": "actor:intelligence-layer-manager",
+      "target": "actor:control-plane",
+      "kind": "returns_evidence"
+    }
+  ],
+  "transition": {
+    "id": "agency:transition:role-specialization",
+    "label": "단일 관리 세션 중심 → 역할별 세 지속 세션",
+    "kind": "responsibility_specialization",
+    "fromModel": "single_coordination",
+    "toActorIds": [
+      "actor:control-plane",
+      "actor:daily-runner",
+      "actor:atlas-builder"
+    ],
+    "evidenceStatus": "verified_operating_model"
+  },
+  "evidenceBoundary": "공개 Agency 투영은 기준일에 검증된 역할, 소유 표면, 결과와 증거 반환 구조만 설명합니다. 실시간 운영 정보는 제공하지 않습니다.",
+  "projectionDigest": "f247521c5b8b77a666b0481ad5c0b6dc2db9f563841d7686a4463311b6ae75c7"
+}

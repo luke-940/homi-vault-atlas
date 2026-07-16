@@ -8,8 +8,9 @@ import {
   useReducer,
   useRef,
 } from "react";
-import { atlasData, DEFAULT_DAILY_ROUTE_ID } from "./data";
-import type { ExploreLens, MatrixCell, RelationLayer, Workspace } from "./types";
+import { atlasData, DEFAULT_DAILY_ROUTE_ID } from "./data-runtime";
+import type { AgencyScene, ExploreLens, MatrixCell, RelationLayer, Workspace } from "./types";
+import { normalizeHomeSceneId } from "./agency/presentation";
 
 export type PanelState = "none" | "navigator" | "inspector" | "data";
 export type InspectorTab = "summary" | "relations" | "proof" | "history";
@@ -25,6 +26,7 @@ export interface SceneSnapshot {
   relationLayer: RelationLayer;
   routeId: string;
   eraId: number;
+  actorId: string | null;
 }
 
 export interface AtlasState {
@@ -39,6 +41,7 @@ export interface AtlasState {
   relationLayer: RelationLayer;
   routeId: string;
   eraId: number;
+  actorId: string | null;
   guideStep: number | null;
   filters: string[];
   camera: string | null;
@@ -65,6 +68,7 @@ export type Action =
   | { type: "relationLayer"; relationLayer: RelationLayer }
   | { type: "route"; routeId: string }
   | { type: "era"; eraId: number }
+  | { type: "actor"; actorId: string | null }
   | { type: "guide"; step: number | null }
   | { type: "filters"; filters: string[] }
   | { type: "camera"; camera: string | null }
@@ -84,7 +88,7 @@ export interface ResponsiveEnvironment {
 
 const createDefaultState = (environment: ResponsiveEnvironment): AtlasState => ({
   workspace: "home",
-  sceneId: "pulse-gateway",
+  sceneId: "system-overview",
   lens: "city",
   focusId: atlasData.bootstrap.defaultFocus,
   previewId: null,
@@ -94,6 +98,7 @@ const createDefaultState = (environment: ResponsiveEnvironment): AtlasState => (
   relationLayer: "wikilink",
   routeId: DEFAULT_DAILY_ROUTE_ID,
   eraId: atlasData.temporal.currentEra,
+  actorId: null,
   guideStep: null,
   filters: [],
   camera: null,
@@ -107,8 +112,8 @@ const createDefaultState = (environment: ResponsiveEnvironment): AtlasState => (
   mobileSibling: environment.mobileSibling,
 });
 
-const workspaces = new Set<Workspace>(["home", "explore", "observe", "flow", "time"]);
-const lenses = new Set<ExploreLens>(["city", "lineage", "constellation"]);
+const workspaces = new Set<Workspace>(["home", "explore", "observe", "flow", "time", "agency"]);
+const lenses = new Set<ExploreLens>(["city"]);
 const layers = new Set<RelationLayer>(["wikilink", "typed", "route"]);
 const availableLayers = new Set<RelationLayer>(atlasData.relation.availableLayers);
 const directions = new Set<RelationDirection>(["forward", "reverse"]);
@@ -119,24 +124,27 @@ const focusIds = new Set([
 const relationPairIds = new Set(atlasData.relation.matrix.map((pair) => pair.id));
 const routeIds = new Set(atlasData.flow.routes.map((route) => route.id));
 const eraIds = new Set(atlasData.temporal.eras.map((era) => era.id));
+const actorIds = new Set(atlasData.agency.actors.map((actor) => actor.id));
 const defaultSceneByWorkspace: Record<Workspace, string> = {
-  home: "pulse-gateway",
+  home: "system-overview",
   explore: "explore",
   observe: "observe",
   flow: "flow",
   time: "time",
+  agency: "system",
 };
 const sceneIdsByWorkspace: Record<Workspace, Set<string>> = {
-  home: new Set(["pulse-gateway"]),
+  home: new Set(["system-overview", "responsibility-partition", "independent-ownership", "knowledge-return"]),
   explore: new Set(["explore", "city-overview", "city-focus", "city-concentration", "attention-isolate"]),
   observe: new Set(["observe", "global-relation", "entity-relation"]),
   flow: new Set(["flow", "latest-pulse"]),
   time: new Set(["time"]),
+  agency: new Set(["system", "roles", "evolution"]),
 };
 for (const insight of atlasData.insight.items) {
   sceneIdsByWorkspace[insight.targetScene.workspace].add(insight.targetScene.scene);
 }
-export const mobileSiblingQuery = "(max-width: 820px), (max-height: 520px) and (pointer: coarse)";
+export const mobileSiblingQuery = "(max-width: 820px), (max-width: 900px) and (max-height: 520px)";
 
 function validScene(workspace: Workspace, sceneId: string | null | undefined) {
   return Boolean(sceneId && sceneIdsByWorkspace[workspace].has(sceneId));
@@ -201,6 +209,10 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
   const requestedRoute = params.get("route");
   const requestedEra = Number(params.get("era"));
   const requestedScene = params.get("scene");
+  const normalizedRequestedScene = workspace === "home"
+    ? normalizeHomeSceneId(requestedScene)
+    : requestedScene;
+  const requestedActor = params.get("actor");
   const guideParam = params.get("guide");
   const requestedGuide = guideParam === null ? Number.NaN : Number(guideParam);
   const rawCompare = (params.get("compare") ?? "").split(",").filter(Boolean);
@@ -213,46 +225,59 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
     : undefined;
   const fallbackReasons = [
     workspacePart && !workspaces.has(workspacePart as Workspace)
-      ? `요청한 화면 ${workspacePart}를 찾지 못해 대문을 열었습니다.`
+      ? "요청한 화면을 찾지 못해 대문을 열었습니다."
       : null,
     lensParam && !lenses.has(lensParam)
-      ? `요청한 지도 표현 ${lensParam}을 찾지 못해 기본 지도를 열었습니다.`
+      ? "요청한 이전 Explore 공개 화면은 v7.3에서 City로 통합되어 안전하게 이동했습니다."
       : null,
     layerParam && (!layers.has(layerParam) || !availableLayers.has(layerParam))
-      ? `요청한 관계층 ${layerParam}은 이 공개 범위에서 제공되지 않아 링크 출현 층을 열었습니다.`
+      ? "요청한 관계층은 이 공개 범위에서 제공되지 않아 링크 출현 층을 열었습니다."
       : null,
     directionParam && !directions.has(directionParam)
-      ? `요청한 관계 방향 ${directionParam}을 해석하지 못했습니다.`
+      ? "요청한 관계 방향을 해석하지 못했습니다."
       : null,
     panelParam && !["none", "navigator", "inspector", "data"].includes(panelParam)
-      ? `요청한 패널 ${panelParam}을 찾지 못해 기본 패널 상태를 사용했습니다.`
+      ? "요청한 패널을 찾지 못해 기본 패널 상태를 사용했습니다."
       : null,
     guideParam !== null && !(Number.isInteger(requestedGuide) && requestedGuide >= 0 && requestedGuide <= 2)
-      ? `요청한 가이드 단계 ${guideParam}을 찾지 못해 가이드를 닫았습니다.`
+      ? "요청한 가이드 단계를 찾지 못해 가이드를 닫았습니다."
       : null,
     ...rawCompare
       .filter((id) => !focusIds.has(id))
-      .map((id) => `비교할 객체 ${id}를 현재 스냅샷에서 찾지 못했습니다.`),
+      .map(() => "비교할 객체를 현재 스냅샷에서 찾지 못했습니다."),
     requestedFocus && !focusIds.has(requestedFocus)
-      ? `요청한 객체 ${requestedFocus}를 현재 스냅샷에서 찾지 못해 기본 선택을 열었습니다.`
+      ? "요청한 객체를 현재 스냅샷에서 찾지 못해 기본 선택을 열었습니다."
       : null,
     requestedPair && !relationPairIds.has(requestedPair)
-      ? `요청한 관계 ${requestedPair}를 현재 스냅샷에서 찾지 못했습니다.`
+      ? "요청한 관계를 현재 스냅샷에서 찾지 못했습니다."
       : null,
     requestedRoute && !routeIds.has(requestedRoute)
-      ? `요청한 흐름 ${requestedRoute}를 현재 스냅샷에서 찾지 못했습니다.`
+      ? "요청한 흐름을 현재 스냅샷에서 찾지 못했습니다."
       : null,
     params.has("era") && !eraIds.has(requestedEra)
-      ? `요청한 시대 ${params.get("era")}를 현재 스냅샷에서 찾지 못했습니다.`
+      ? "요청한 시대를 현재 스냅샷에서 찾지 못했습니다."
       : null,
-    requestedScene && !validScene(workspace, requestedScene)
-      ? `요청한 장면 ${requestedScene}을 ${workspace} 화면에서 찾지 못해 기본 장면을 열었습니다.`
+    requestedScene && !validScene(workspace, normalizedRequestedScene)
+      ? "요청한 장면을 현재 화면에서 찾지 못해 기본 장면을 열었습니다."
+      : null,
+    workspace === "agency" && requestedActor && !actorIds.has(requestedActor)
+      ? "요청한 역할을 찾지 못해 Agency System을 열었습니다."
+      : null,
+    workspace === "agency" && requestedScene === "roles" && !requestedActor
+      ? "역할 선택이 없어 Agency System을 열었습니다."
       : null,
   ].filter(Boolean);
+  const requestedAgencyScene = normalizedRequestedScene as AgencyScene | null;
+  const validRequestedActor = requestedActor && actorIds.has(requestedActor) ? requestedActor : null;
+  const agencyLocationValid = workspace !== "agency"
+    || (requestedActor ? Boolean(validRequestedActor) : requestedAgencyScene !== "roles");
+  const resolvedScene = validScene(workspace, normalizedRequestedScene) && agencyLocationValid
+    ? normalizedRequestedScene!
+    : defaultSceneByWorkspace[workspace];
   return {
     ...defaultState,
     workspace,
-    sceneId: validScene(workspace, requestedScene) ? requestedScene! : defaultSceneByWorkspace[workspace],
+    sceneId: resolvedScene,
     lens: lensParam && lenses.has(lensParam) ? lensParam : defaultState.lens,
     focusId: requestedFocus && focusIds.has(requestedFocus) ? requestedFocus : defaultState.focusId,
     compareIds: requestedCompare,
@@ -265,13 +290,14 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
     relationLayer,
     routeId: requestedRoute && routeIds.has(requestedRoute) ? requestedRoute : defaultState.routeId,
     eraId: eraIds.has(requestedEra) ? requestedEra : defaultState.eraId,
+    actorId: workspace === "agency" && resolvedScene === "roles" ? validRequestedActor : null,
     guideStep: Number.isInteger(requestedGuide) && requestedGuide >= 0 && requestedGuide <= 2 ? requestedGuide : null,
     filters: [...new Set((params.get("filters") ?? "").split(",").map((value) => value.trim()).filter(Boolean))].slice(0, 12),
     camera: params.get("cam") || null,
     panel:
       panelParam && ["none", "navigator", "inspector", "data"].includes(panelParam)
         ? panelParam
-        : workspace === "home" || environment.mobileSibling
+        : workspace === "home" || workspace === "agency" || environment.mobileSibling
           ? "none"
           : "inspector",
     theatre: params.get("theatre") === "1",
@@ -284,6 +310,12 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
 
 export function stateToHash(state: AtlasState) {
   const params = new URLSearchParams();
+  if (state.workspace === "agency") {
+    const scene = validScene("agency", state.sceneId) ? state.sceneId : "system";
+    params.set("scene", scene);
+    if (scene === "roles" && state.actorId && actorIds.has(state.actorId)) params.set("actor", state.actorId);
+    return `#agency?${params.toString()}`;
+  }
   params.set("focus", state.focusId);
   if (state.sceneId) params.set("scene", state.sceneId);
   if (state.workspace === "explore") params.set("lens", state.lens);
@@ -315,6 +347,7 @@ function semanticNavigationKey(state: AtlasState) {
     relationLayer: state.relationLayer,
     routeId: state.routeId,
     eraId: state.eraId,
+    actorId: state.actorId,
     compareIds: state.compareIds,
     filters: state.filters,
   });
@@ -331,6 +364,7 @@ function captureScene(state: AtlasState): SceneSnapshot {
     relationLayer: state.relationLayer,
     routeId: state.routeId,
     eraId: state.eraId,
+    actorId: state.actorId,
   };
 }
 
@@ -342,7 +376,8 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
         previousScene: captureScene(state),
         workspace: action.workspace,
         sceneId: defaultSceneByWorkspace[action.workspace],
-        panel: action.workspace === "home" || state.mobileSibling ? "none" : "inspector",
+        actorId: null,
+        panel: action.workspace === "home" || action.workspace === "agency" || state.mobileSibling ? "none" : "inspector",
         guideStep: action.workspace === "home" ? state.guideStep : null,
         fallbackReason: null,
       };
@@ -378,13 +413,19 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
               ? state.sceneId
               : defaultSceneByWorkspace[targetWorkspace],
         focusId: validFocus && requestedFocus ? requestedFocus : state.focusId,
-        lens: action.target.lens ?? state.lens,
+        lens: action.target.lens && lenses.has(action.target.lens) ? action.target.lens : "city",
         relationPairId: targetPair ?? null,
         relationLayer: targetLayer,
         relationDirection: normalizedRelationDirection(pair, targetLayer, action.target.relationDirection),
         routeId: action.target.routeId && routeIds.has(action.target.routeId) ? action.target.routeId : state.routeId,
         eraId: action.target.eraId && eraIds.has(action.target.eraId) ? action.target.eraId : state.eraId,
-        panel: targetWorkspace === "home" || state.mobileSibling ? "none" : "inspector",
+        actorId: targetWorkspace === "agency"
+          && (requestedScene ?? state.sceneId) === "roles"
+          && action.target.actorId
+          && actorIds.has(action.target.actorId)
+          ? action.target.actorId
+          : null,
+        panel: targetWorkspace === "home" || targetWorkspace === "agency" || state.mobileSibling ? "none" : "inspector",
         inspectorTab: "summary",
         guideStep: targetWorkspace === "home" ? state.guideStep : null,
         fallbackReason: !validFocus
@@ -404,12 +445,18 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
             ...state,
             ...state.previousScene,
             previousScene: null,
-            panel: state.previousScene.workspace === "home" || state.mobileSibling ? "none" : "inspector",
+            panel: state.previousScene.workspace === "home" || state.previousScene.workspace === "agency" || state.mobileSibling ? "none" : "inspector",
             fallbackReason: null,
           }
         : state;
     case "lens":
-      return { ...state, lens: action.lens };
+      return lenses.has(action.lens)
+        ? { ...state, lens: action.lens, fallbackReason: null }
+        : {
+            ...state,
+            lens: "city",
+            fallbackReason: `요청한 ${action.lens} 공개 화면은 v7.3에서 City로 통합되어 안전하게 이동했습니다.`,
+          };
     case "focus":
       return {
         ...state,
@@ -461,6 +508,26 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
       return { ...state, routeId: action.routeId, panel: state.mobileSibling ? "none" : "inspector" };
     case "era":
       return { ...state, eraId: action.eraId, panel: state.mobileSibling ? "none" : "inspector" };
+    case "actor":
+      return action.actorId && actorIds.has(action.actorId)
+        ? {
+            ...state,
+            workspace: "agency",
+            sceneId: "roles",
+            actorId: action.actorId,
+            panel: "none",
+            fallbackReason: null,
+          }
+        : {
+            ...state,
+            workspace: "agency",
+            sceneId: "system",
+            actorId: null,
+            panel: "none",
+            fallbackReason: action.actorId
+              ? `요청한 역할 ${action.actorId}을 찾지 못해 Agency System을 열었습니다.`
+              : null,
+          };
     case "guide":
       return { ...state, guideStep: action.step };
     case "filters":

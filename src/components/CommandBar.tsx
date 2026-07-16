@@ -6,33 +6,38 @@ import {
   GitBranch,
   Menu,
   Minimize2,
+  Network,
   Route,
   Search,
   X,
 } from "lucide-react";
 import type { KeyboardEvent } from "react";
-import { atlasData } from "../data";
 import { useAtlasState } from "../state";
 import type { Workspace } from "../types";
-import homiLockup from "../assets/brand/homi-ai-lockup-light-amber.svg";
+import homiMark from "../assets/brand/homi-mark-amber.svg";
 
-const workspaceItems: Array<{
-  id: Workspace;
+export const workspaceItems: Array<{
+  id: Exclude<Workspace, "home">;
   label: string;
   icon: typeof Compass;
 }> = [
-  { id: "explore", label: "탐색", icon: Compass },
-  { id: "observe", label: "관측", icon: Binoculars },
-  { id: "flow", label: "흐름", icon: Route },
-  { id: "time", label: "시간", icon: GitBranch },
+  { id: "explore", label: "Explore", icon: Compass },
+  { id: "observe", label: "Observe", icon: Binoculars },
+  { id: "flow", label: "Flow", icon: Route },
+  { id: "time", label: "Time", icon: GitBranch },
+  { id: "agency", label: "Agency", icon: Network },
 ];
+
+function HomiMark() {
+  return (
+    <span className="brand-mark-crop" aria-hidden="true">
+      <img className="brand-mark" src={homiMark} alt="" />
+    </span>
+  );
+}
 
 export function CommandBar() {
   const { state, dispatch } = useAtlasState();
-  const snapshot = atlasData.bootstrap.snapshot;
-  const isPublic = atlasData.publication.profile === "public";
-  const publicDocumentCount = atlasData.publication.redactionCounts.aggregatedSourceDocuments
-    ?? snapshot.activeMarkdownCount;
 
   const handleWorkspaceKey = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     const last = workspaceItems.length - 1;
@@ -55,45 +60,29 @@ export function CommandBar() {
         id="workspace-tab-home"
         type="button"
         onClick={() => dispatch({ type: "workspace", workspace: "home" })}
-        aria-label="지식 Pulse 대문으로 이동"
+        aria-label="Homi Vault Atlas Home"
         aria-current={state.workspace === "home" ? "page" : undefined}
         aria-controls="workspace-panel-home"
       >
-        <img className="brand-mark" src={homiLockup} alt="" aria-hidden="true" />
-        <span className="brand-copy">
-          <strong>호미 볼트 아틀라스</strong>
-          <small>Living Insight Gateway</small>
-        </span>
+        <HomiMark />
+        <strong>Homi Vault Atlas</strong>
       </button>
 
-      <div className="snapshot-ledger" role="group" aria-label="현재 스냅샷">
-        <span>{isPublic ? `공개 집계 ${publicDocumentCount}문서` : `활성 문서 ${snapshot.activeMarkdownCount}`}</span>
-        <span>기준 {new Date(atlasData.bootstrap.generatedAt).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
-      </div>
-
-      <nav className="workspace-tabs" role="tablist" aria-label="아틀라스 작업 공간">
-        {workspaceItems.map((item, index) => {
-          const Icon = item.icon;
-          return (
-            <button
-              key={item.id}
-              id={`workspace-tab-${item.id}`}
-              className={state.workspace === item.id ? "workspace-tab is-active" : "workspace-tab"}
-              type="button"
-              role="tab"
-              onClick={() => dispatch({ type: "workspace", workspace: item.id })}
-              onKeyDown={(event) => handleWorkspaceKey(event, index)}
-              aria-selected={state.workspace === item.id}
-              aria-controls={`workspace-panel-${item.id}`}
-              tabIndex={state.workspace === item.id || (state.workspace === "home" && index === 0) ? 0 : -1}
-              aria-label={`${item.label} 작업 공간`}
-              title={`${item.label} 작업 공간`}
-            >
-              <Icon size={16} strokeWidth={1.8} aria-hidden="true" />
-              <span>{item.label}</span>
-            </button>
-          );
-        })}
+      <nav className="workspace-tabs" aria-label="Atlas workspaces">
+        {workspaceItems.map((item, index) => (
+          <button
+            key={item.id}
+            id={`workspace-tab-${item.id}`}
+            className={state.workspace === item.id ? "workspace-tab is-active" : "workspace-tab"}
+            type="button"
+            onClick={() => dispatch({ type: "workspace", workspace: item.id })}
+            onKeyDown={(event) => handleWorkspaceKey(event, index)}
+            aria-current={state.workspace === item.id ? "page" : undefined}
+            aria-controls={`workspace-panel-${item.id}`}
+          >
+            {item.label}
+          </button>
+        ))}
       </nav>
 
       <div className="command-actions">
@@ -102,8 +91,8 @@ export function CommandBar() {
             className="icon-button theatre-exit is-active"
             type="button"
             onClick={() => dispatch({ type: "theatre", open: false })}
-            aria-label="큰 지도 보기 닫기"
-            title="큰 지도 보기 닫기 (Esc)"
+            aria-label="Close theatre view"
+            title="Close theatre view (Esc)"
           >
             <Minimize2 size={18} aria-hidden="true" />
           </button>
@@ -112,11 +101,11 @@ export function CommandBar() {
           className="tool-button search-trigger"
           type="button"
           onClick={() => dispatch({ type: "search", open: true })}
-          aria-label="문서와 구역 찾기"
-          title="문서와 구역 찾기 (⌘K)"
+          aria-label="Search knowledge and operating roles"
+          title="Search (⌘K)"
         >
           <Search size={17} aria-hidden="true" />
-          <span>찾기</span>
+          <span>Search</span>
           <kbd>⌘K</kbd>
         </button>
         <button
@@ -128,7 +117,7 @@ export function CommandBar() {
           aria-expanded={state.panel === "navigator"}
           aria-controls="atlas-navigator-tray"
           aria-haspopup="dialog"
-          title="탐색 패널"
+          title="Navigator"
         >
           {state.panel === "navigator" ? <X size={18} /> : <Menu size={18} />}
         </button>
@@ -141,7 +130,7 @@ export function CommandBar() {
           aria-expanded={state.panel === "inspector"}
           aria-controls="atlas-inspector-tray"
           aria-haspopup="dialog"
-          title="현재 선택 해석"
+          title="Focus"
         >
           <Focus size={18} />
         </button>
@@ -154,11 +143,31 @@ export function CommandBar() {
           aria-expanded={state.panel === "data"}
           aria-controls="atlas-inspector-tray"
           aria-haspopup="dialog"
-          title="데이터 기준"
+          title="Evidence"
         >
           <Database size={18} />
         </button>
       </div>
     </header>
+  );
+}
+
+export function MobileNavigation() {
+  const { state, dispatch } = useAtlasState();
+  return (
+    <nav className="mobile-navigation" aria-label="Atlas workspaces">
+      {workspaceItems.map(({ id, label, icon: Icon }) => (
+        <button
+          key={id}
+          type="button"
+          className={state.workspace === id ? "is-active" : ""}
+          onClick={() => dispatch({ type: "workspace", workspace: id })}
+          aria-current={state.workspace === id ? "page" : undefined}
+        >
+          <Icon size={18} strokeWidth={1.8} aria-hidden="true" />
+          <span>{label}</span>
+        </button>
+      ))}
+    </nav>
   );
 }

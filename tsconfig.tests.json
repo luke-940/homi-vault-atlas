@@ -1,0 +1,26 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "types": ["vite/client", "node", "vitest/globals"],
+    "allowJs": true,
+    "checkJs": false,
+    "noImplicitAny": false
+  },
+  "include": [
+    "src",
+    "tests/agency-*.test.ts",
+    "tests/agency-source-witness.test.ts",
+    "tests/use-element-size-contract.test.ts",
+    "tests/responsive-mode-contract.test.ts",
+    "tests/runtime-data-structural-contract.test.ts",
+    "tests/v7-3-qa-contract.test.ts",
+    "tests/visual-golden-contract.test.ts",
+    "tests/atlas-packs.fixture.ts",
+    "tests-public/agency-public-contract.test.ts",
+    "tests-public/public-field-contract.test.ts",
+    "tests-public/pretendard-subset-contract.test.ts",
+    "tests-public/release-delivery-contract.test.ts",
+    "tests-public/atlas-packs.fixture.ts"
+  ]
+}

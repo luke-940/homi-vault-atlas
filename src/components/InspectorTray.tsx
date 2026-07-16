@@ -10,12 +10,12 @@ import {
   ShieldCheck,
   X,
 } from "lucide-react";
-import { Fragment, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
-import { atlasData, entityById, hierarchyById } from "../data";
+import { Fragment, useLayoutEffect, useRef, type KeyboardEvent } from "react";
+import { atlasData, entityById, hierarchyById } from "../data-runtime";
 import { useAtlasState, type InspectorTab } from "../state";
 import type { Entity, MatrixCell, Workspace } from "../types";
 import { formatEraRange, lifecycleEvidenceSummary, lifecycleStateLabel } from "../views/time-model";
-import { trayDialogKeyIntent } from "./tray-accessibility";
+import { claimModalInert, releaseModalInert, trayDialogKeyIntent } from "./tray-accessibility";
 
 const roleMeaning: Record<string, string> = {
   control: "현재 상태와 작업 경계를 조율하는 운영 표면",
@@ -51,20 +51,18 @@ const evidenceClassLabels: Record<string, string> = {
 
 const atlasEvidenceIds = new Set(atlasData.entity.entities.map((entity) => entity.id));
 
-const mobileTrayQuery = "(max-width: 820px), (max-height: 520px) and (pointer: coarse)";
-
 function getFocusable(container: HTMLElement | null) {
   return [...(container?.querySelectorAll<HTMLElement>(
     "button:not([disabled]), a[href], input:not([disabled]), [tabindex]:not([tabindex='-1'])",
   ) ?? [])].filter((item) => item.offsetParent !== null);
 }
 
-function lineageFor(id: string) {
-  const result = [];
+function aggregateScopeLabelsFor(id: string) {
+  const result: string[] = [];
   let current = hierarchyById.get(id);
   if (!current && entityById.has(id)) current = hierarchyById.get(id);
   while (current) {
-    result.unshift(current);
+    result.unshift(current.label);
     current = current.parentId ? hierarchyById.get(current.parentId) : undefined;
   }
   return result;
@@ -102,17 +100,9 @@ export function InspectorTray() {
   const { state, dispatch } = useAtlasState();
   const trayRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
-  const [isMobile, setIsMobile] = useState(() => window.matchMedia(mobileTrayQuery).matches);
+  const isMobile = state.mobileSibling;
 
   const close = () => dispatch({ type: "panel", panel: state.panel });
-
-  useLayoutEffect(() => {
-    const media = window.matchMedia(mobileTrayQuery);
-    const sync = () => setIsMobile(media.matches);
-    sync();
-    media.addEventListener("change", sync);
-    return () => media.removeEventListener("change", sync);
-  }, []);
 
   useLayoutEffect(() => {
     returnFocusRef.current = document.activeElement as HTMLElement | null;
@@ -128,13 +118,14 @@ export function InspectorTray() {
     const background = [
       document.querySelector<HTMLElement>(".command-bar"),
       document.querySelector<HTMLElement>(".workspace-main"),
+      document.querySelector<HTMLElement>(".mobile-navigation"),
     ].filter(Boolean) as HTMLElement[];
     const previousOverflow = document.body.style.overflow;
     getFocusable(trayRef.current)[0]?.focus();
-    background.forEach((node) => node.setAttribute("inert", ""));
+    background.forEach((node) => claimModalInert(node, "tray"));
     document.body.style.overflow = "hidden";
     return () => {
-      background.forEach((node) => node.removeAttribute("inert"));
+      background.forEach((node) => releaseModalInert(node, "tray"));
       document.body.style.overflow = previousOverflow;
     };
   }, [isMobile]);
@@ -194,8 +185,8 @@ export function InspectorTray() {
           </dl>
         ) : (
           <dl className="evidence-ledger">
-            <div><dt>기준 버전</dt><dd>{snapshot.officialCursor}</dd></div>
-            <div><dt>현재 상태 스냅샷</dt><dd><code>{snapshot.stateSnapshot.slice(0, 12)}</code></dd></div>
+            <div><dt>기준 버전</dt><dd>{snapshot.officialCursor ?? "기록 없음"}</dd></div>
+            <div><dt>현재 상태 스냅샷</dt><dd><code>{snapshot.stateSnapshot?.slice(0, 12) ?? "기록 없음"}</code></dd></div>
             <div><dt>검색 색인 계약</dt><dd>{snapshot.memoryEngineSchema}</dd></div>
             <div><dt>활성 문서</dt><dd>{snapshot.activeMarkdownCount}</dd></div>
             <div><dt>보관 문서</dt><dd>{snapshot.archiveMarkdownCount}</dd></div>
@@ -223,11 +214,12 @@ export function InspectorTray() {
   const activePair = state.workspace === "observe" ? pair : undefined;
   const activeRoute = state.workspace === "flow" ? route : undefined;
   const activeEra = state.workspace === "time" ? era : undefined;
+  const isPublicProfile = atlasData.publication.profile === "public";
   const hasWorkspaceSelection = Boolean(activePair || activeRoute || activeEra);
   const selectionEntity = hasWorkspaceSelection ? undefined : entity;
   const selectionHierarchyNode = hasWorkspaceSelection ? undefined : hierarchyNode;
   const neighbors = selectionEntity ? atlasData.relation.neighborhoods[selectionEntity.id] ?? [] : [];
-  const lineage = hasWorkspaceSelection ? [] : lineageFor(state.focusId);
+  const scopeLabels = hasWorkspaceSelection ? [] : aggregateScopeLabelsFor(state.focusId);
   const directionalPairTitle = pair && state.relationLayer === "typed" && state.relationDirection
     ? state.relationDirection === "forward"
       ? `${pair.source} → ${pair.target}`
@@ -292,7 +284,7 @@ export function InspectorTray() {
         <span className="eyebrow">현재 선택</span>
         <h2 id="inspector-selection-title">{title}</h2>
         <p>{subtitle}</p>
-        {selectionEntity && <code className="selection-path">{selectionEntity.path}</code>}
+        {selectionEntity && !isPublicProfile && <code className="selection-path">{selectionEntity.path}</code>}
         <button className="mobile-tray-close icon-button" type="button" onClick={close} aria-label="현재 선택 해석 닫기">
           <X size={18} aria-hidden="true" />
         </button>
@@ -351,7 +343,7 @@ export function InspectorTray() {
         tabIndex={0}
       >
         {state.inspectorTab === "summary" && (
-          <SummaryContent entity={selectionEntity} pair={activePair} route={activeRoute} era={activeEra} lineage={lineage} />
+          <SummaryContent entity={selectionEntity} pair={activePair} route={activeRoute} era={activeEra} scopeLabels={scopeLabels} />
         )}
         {state.inspectorTab === "relations" && (
           <RelationsContent workspace={state.workspace} entity={selectionEntity} pair={activePair} route={activeRoute} era={activeEra} neighbors={neighbors} />
@@ -440,14 +432,15 @@ function SummaryContent({
   pair,
   route,
   era,
-  lineage,
+  scopeLabels,
 }: {
   entity?: Entity;
   pair?: MatrixCell;
   route?: (typeof atlasData.flow.routes)[number];
   era?: (typeof atlasData.temporal.eras)[number];
-  lineage: ReturnType<typeof lineageFor>;
+  scopeLabels: ReturnType<typeof aggregateScopeLabelsFor>;
 }) {
+  const isPublicProfile = atlasData.publication.profile === "public";
   if (pair) {
     return (
       <>
@@ -491,7 +484,7 @@ function SummaryContent({
     return (
       <section className="inspector-section">
         <h3>가지 범위</h3>
-        <p>{lineage.map((node) => node.label).join(" / ")}</p>
+        <p>{scopeLabels.join(" / ")}</p>
       </section>
     );
   }
@@ -507,10 +500,10 @@ function SummaryContent({
         <div><dt>{atlasData.publication.profile === "public" ? "반영 원문" : "문서량"}</dt><dd>{atlasData.publication.profile === "public" ? (entity.documentCount ?? 0).toLocaleString() : entity.wordCount.toLocaleString()}{atlasData.publication.profile === "public" ? "개 문서" : "단어"}</dd></div>
       </dl>
       <section className="inspector-section">
-        <h3>계보 경로</h3>
-        <ol className="lineage-list">
-          {lineage.map((node) => <li key={node.id}>{node.label}</li>)}
-        </ol>
+        <h3>{isPublicProfile ? "집계 구역" : "선택 경로"}</h3>
+        <p>{isPublicProfile
+          ? `${entity.district} · ${roleMeaning[entity.surfaceRole] ?? "공개 지식 집계"}`
+          : scopeLabels.join(" / ")}</p>
       </section>
     </>
   );
@@ -531,6 +524,7 @@ function RelationsContent({
   era?: (typeof atlasData.temporal.eras)[number];
   neighbors: ReturnType<typeof pairRepresentatives> | any[];
 }) {
+  const isPublicProfile = atlasData.publication.profile === "public";
   if (workspace === "flow" && route) {
     return (
       <section className="inspector-section">
@@ -554,7 +548,9 @@ function RelationsContent({
           {era.evidenceRefs.map((id) => (
             <div key={id}>
               <BookOpen size={14} />
-              <span><strong>{entityById.get(id)?.title ?? id}</strong><small>{entityById.get(id)?.path ?? "역사 근거"}</small></span>
+              <span><strong>{entityById.get(id)?.title ?? "공개 집계 근거"}</strong><small>{isPublicProfile
+                ? `${entityById.get(id)?.district ?? "지식 구역"} · 공개 집계 근거`
+                : entityById.get(id)?.path ?? "역사 근거"}</small></span>
             </div>
           ))}
         </div>
@@ -563,7 +559,11 @@ function RelationsContent({
   }
   const representatives = pair ? pairRepresentatives(pair) : [];
   const rows = pair
-    ? representatives.map((item) => ({ id: item.id, label: item.title, meta: item.path }))
+    ? representatives.map((item) => ({
+        id: item.id,
+        label: item.title,
+        meta: isPublicProfile ? `${item.district} · 공개 집계` : item.path,
+      }))
     : neighbors.slice(0, 10).map((neighbor) => ({
         id: neighbor.id,
         label: entityById.get(neighbor.id)?.title ?? neighbor.id,
@@ -571,7 +571,7 @@ function RelationsContent({
       }));
   return (
     <section className="inspector-section">
-      <h3>{pair ? "대표 문서" : "가까운 문서"}</h3>
+      <h3>{pair ? (isPublicProfile ? "대표 집계" : "대표 문서") : (isPublicProfile ? "가까운 지식" : "가까운 문서")}</h3>
       <div className="ledger-list">
         {rows.map((row) => (
           <div key={row.id}><Link2 size={14} /><span><strong>{row.label}</strong><small>{row.meta}</small></span></div>

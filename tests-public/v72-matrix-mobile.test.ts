@@ -1,11 +1,12 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { scaleBand } from "d3";
+import { scaleBand } from "d3-scale";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeAll, describe, expect, test, vi } from "vitest";
 
 const packNames = [
+  "agency",
   "bootstrap",
   "structure",
   "relation",
