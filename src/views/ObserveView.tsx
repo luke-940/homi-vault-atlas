@@ -54,6 +54,103 @@ function layerLabel(layer: RelationLayer) {
   return layer === "wikilink" ? "해결된 링크 출현 횟수" : layer === "typed" ? "명시 관계 건수" : "선별된 구역 경로쌍";
 }
 
+const matrixReadingGuideId = "relation-matrix-reading-guide";
+
+export interface MatrixReadingContract {
+  mode: "directed" | "comparison";
+  label: string;
+  description: string;
+  districts: string[];
+}
+
+export function matrixReadingContract(
+  layer: RelationLayer,
+  districts: string[],
+): MatrixReadingContract {
+  if (isDirectedRelationLayer(layer)) {
+    return {
+      mode: "directed",
+      label: "행 = 출발 구역 · 열 = 도착 구역",
+      description: "각 셀은 행의 출발 구역에서 열의 도착 구역으로 향하는 관계를 나타냅니다.",
+      districts: [],
+    };
+  }
+  return {
+    mode: "comparison",
+    label: "비교 구역 key",
+    description: "행과 열의 두 구역을 방향 없는 하나의 비교쌍으로 읽습니다.",
+    districts,
+  };
+}
+
+export function matrixTheatreMinimumCellSize(viewportWidth: number, theatre: boolean) {
+  if (!theatre || viewportWidth >= 600) return 0;
+  return viewportWidth <= 360 ? 24 : 32;
+}
+
+export function minimumMatrixPlotExtent(
+  bandCount: number,
+  minimumBand: number,
+  padding = 0.08,
+) {
+  if (bandCount <= 0 || minimumBand <= 0) return 0;
+  const safePadding = Math.min(0.95, Math.max(0, padding));
+  return Math.ceil(
+    ((bandCount - safePadding) + (safePadding * 2))
+      * minimumBand / (1 - safePadding),
+  );
+}
+
+export interface MatrixEntryViewportTarget {
+  focus(options?: FocusOptions): void;
+  scrollIntoView(options?: ScrollIntoViewOptions): void;
+}
+
+export function focusAndRevealMatrixEntry(target: MatrixEntryViewportTarget | null) {
+  if (!target) return false;
+  target.focus({ preventScroll: true });
+  target.scrollIntoView({ block: "nearest", inline: "nearest" });
+  return true;
+}
+
+export function MatrixReadingGuide({
+  layer,
+  districts,
+  theatre,
+}: {
+  layer: RelationLayer;
+  districts: string[];
+  theatre: boolean;
+}) {
+  const contract = matrixReadingContract(layer, districts);
+  return (
+    <div
+      className="matrix-reading-guide"
+      id={matrixReadingGuideId}
+      role="note"
+      data-reading-mode={contract.mode}
+      aria-label={`${contract.label}. ${contract.description}${contract.mode === "comparison" ? ` 비교 구역: ${contract.districts.map(shortDistrictLabel).join(", ")}.` : ""}`}
+    >
+      <strong>{contract.label}</strong>
+      {contract.mode === "comparison" && (
+        <span className="matrix-comparison-key" aria-hidden="true">
+          {contract.districts.map((district) => (
+            <span key={district}>
+              <i style={{ background: colorForDistrict(district) }} />
+              {shortDistrictLabel(district)}
+            </span>
+          ))}
+        </span>
+      )}
+      <span className="matrix-scroll-guidance">
+        {theatre
+          ? "표 안쪽을 가로·세로로 스크롤하고, 화살표 키로 활성 셀을 따라갑니다."
+          : "화살표 키로 셀을 이동하고 Enter로 선택합니다."}
+      </span>
+    </div>
+  );
+}
+
 export interface MatrixNavigationEntry {
   key: string;
   cell: MatrixCell;
@@ -366,9 +463,16 @@ function RelationMatrix() {
     : { top: 82, right: 18, bottom: 20, left: 98 };
   const bandPadding = 0.08;
   const minimumInteractiveBand = compactTheatre ? 24 : 0;
-  const minimumPlotExtent = minimumInteractiveBand
-    ? Math.ceil((order.length - bandPadding + (bandPadding * 2)) * minimumInteractiveBand / (1 - bandPadding))
-    : 0;
+  const theatreViewportWidth = typeof window.innerWidth === "number" ? window.innerWidth : width;
+  const targetInteractiveBand = Math.max(
+    minimumInteractiveBand,
+    matrixTheatreMinimumCellSize(theatreViewportWidth, state.theatre),
+  );
+  const minimumPlotExtent = minimumMatrixPlotExtent(
+    order.length,
+    targetInteractiveBand,
+    bandPadding,
+  );
   const renderWidth = Math.max(width, margin.left + margin.right + minimumPlotExtent);
   const renderHeight = Math.max(height, margin.top + margin.bottom + minimumPlotExtent);
   const x = scaleBand<string>()
@@ -389,23 +493,35 @@ function RelationMatrix() {
   );
   const color = scaleSequential(interpolateRgbBasis(["#edf4f1", relationColors[state.relationLayer]])).domain([0, max]);
   return (
-    <div className="matrix-canvas" ref={ref} data-testid="relation-matrix">
-      <svg
-        width={renderWidth}
-        height={renderHeight}
-        role={mobileSibling ? undefined : "group"}
-        aria-label={mobileSibling ? undefined : `${layerLabel(state.relationLayer)}의 구역 간 관계표`}
-        aria-hidden={mobileSibling ? "true" : undefined}
-        focusable="false"
+    <>
+      <MatrixReadingGuide
+        layer={state.relationLayer}
+        districts={order}
+        theatre={state.theatre}
+      />
+      <div
+        className="matrix-canvas"
+        ref={ref}
+        data-testid="relation-matrix"
+        data-minimum-cell-size={targetInteractiveBand || undefined}
       >
-        {order.map((district) => (
-          <g key={`labels-${district}`}>
-            <text className="matrix-row-label" x={margin.left - 10} y={(y(district) ?? 0) + (y.bandwidth() / 2) + 4} textAnchor="end">{shortDistrictLabel(district)}</text>
-            <text className="matrix-column-label" transform={`translate(${(x(district) ?? 0) + x.bandwidth() / 2},${margin.top - 10}) rotate(-48)`} textAnchor="start">{shortDistrictLabel(district)}</text>
-          </g>
-        ))}
-        {order.flatMap((source, row) =>
-          order.map((target, column) => {
+        <svg
+          width={renderWidth}
+          height={renderHeight}
+          role={mobileSibling ? undefined : "group"}
+          aria-label={mobileSibling ? undefined : `${layerLabel(state.relationLayer)}의 구역 간 관계표`}
+          aria-describedby={mobileSibling ? undefined : matrixReadingGuideId}
+          aria-hidden={mobileSibling ? "true" : undefined}
+          focusable="false"
+        >
+          {order.map((district) => (
+            <g key={`labels-${district}`}>
+              <text className="matrix-row-label" x={margin.left - 10} y={(y(district) ?? 0) + (y.bandwidth() / 2) + 4} textAnchor="end">{shortDistrictLabel(district)}</text>
+              <text className="matrix-column-label" transform={`translate(${(x(district) ?? 0) + x.bandwidth() / 2},${margin.top - 10}) rotate(-48)`} textAnchor="start">{shortDistrictLabel(district)}</text>
+            </g>
+          ))}
+          {order.flatMap((source, row) =>
+            order.map((target, column) => {
             const cell = cells.get(pairKey(source, target));
             const value = relationValue(cell, source, target, state.relationLayer);
             const direction = directionFor(cell, source, target);
@@ -426,6 +542,8 @@ function RelationMatrix() {
                 tabIndex={markInteractive ? (navigationEntry?.key === activeEntryKey ? 0 : -1) : undefined}
                 aria-current={markInteractive && selected ? "true" : undefined}
                 aria-label={markInteractive && navigationEntry ? `${navigationEntry.source}${isDirectedRelationLayer(state.relationLayer) ? "에서" : "와"} ${navigationEntry.target}${isDirectedRelationLayer(state.relationLayer) ? "로" : ""}: ${layerLabel(state.relationLayer)} ${navigationEntry.value}` : undefined}
+                aria-describedby={markInteractive ? matrixReadingGuideId : undefined}
+                aria-keyshortcuts={markInteractive ? "ArrowUp ArrowDown ArrowLeft ArrowRight Home End Enter Space" : undefined}
                 onFocus={() => navigationEntry && setActiveEntryKey(navigationEntry.key)}
                 onClick={() => navigationEntry && dispatch({ type: "relationPair", relationPairId: navigationEntry.cell.id, direction: navigationEntry.direction })}
                 onKeyDown={(event) => {
@@ -445,7 +563,9 @@ function RelationMatrix() {
                     const nextEntry = navigationEntries.find((entry) => entry.key === nextKey);
                     if (nextEntry) {
                       setActiveEntryKey(nextEntry.key);
-                      document.getElementById(matrixEntryDomId(nextEntry))?.focus();
+                      focusAndRevealMatrixEntry(
+                        document.getElementById(matrixEntryDomId(nextEntry)),
+                      );
                     }
                   }
                 }}
@@ -460,6 +580,8 @@ function RelationMatrix() {
                   fillOpacity={source === target ? 0.46 : value ? 0.92 : 0.5}
                   stroke={selected ? "#173c34" : focused ? "#7ea99d" : "#e3ebe7"}
                   strokeWidth={selected ? 2.5 : 1}
+                  data-hit-width={x.bandwidth()}
+                  data-hit-height={y.bandwidth()}
                   aria-hidden="true"
                 />
                 {value > 0 && x.bandwidth() > 28 && (
@@ -467,10 +589,11 @@ function RelationMatrix() {
                 )}
               </g>
             );
-          }),
-        )}
-      </svg>
-    </div>
+            }),
+          )}
+        </svg>
+      </div>
+    </>
   );
 }
 

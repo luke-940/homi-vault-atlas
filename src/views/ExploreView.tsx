@@ -61,6 +61,21 @@ function constellationDistrictLabel(label: string) {
   return label.split("/").at(-1) ?? label;
 }
 
+export function cityMapNodeAccessibility(depth: number) {
+  return {
+    role: "presentation" as const,
+    "aria-hidden": depth === 2 ? "true" as const : undefined,
+  };
+}
+
+export function cityDistrictAnchorAccessibility(label: string, documentCount: number) {
+  return {
+    role: "button" as const,
+    tabIndex: 0,
+    "aria-label": `${label}, ${documentCount}개 문서`,
+  };
+}
+
 const structureLenses = [
   { id: "city", label: "도시 블록", icon: LayoutGrid },
   { id: "lineage", label: "계보", icon: ListTree },
@@ -235,8 +250,7 @@ function CityBlocks() {
               onPointerEnter={node.depth === 2 ? () => dispatch({ type: "preview", focusId: node.id! }) : undefined}
               onPointerLeave={node.depth === 2 ? () => dispatch({ type: "preview", focusId: null }) : undefined}
               onClick={node.depth === 2 ? () => dispatch({ type: "focus", focusId: node.id! }) : undefined}
-              role="presentation"
-              aria-hidden={node.depth === 2 ? "true" : undefined}
+              {...cityMapNodeAccessibility(node.depth)}
               pointerEvents={node.depth === 1 ? "none" : undefined}
             >
               <rect data-authority-count={node.data.authorityL1L2} width={w} height={h} rx={node.depth === 1 ? 8 : 3} fill={colorFor(district)} fillOpacity={node.depth === 1 ? 0.82 : 0.96} stroke={selected ? "#183b33" : "#f9fbf9"} strokeWidth={selected ? 2.5 : node.depth === 1 ? 2 : 1} filter={selected && node.depth === 1 ? "url(#focus-shadow)" : undefined} />
@@ -263,9 +277,7 @@ function CityBlocks() {
                 onFocus={() => dispatch({ type: "preview", focusId: node.id! })}
                 onBlur={() => dispatch({ type: "preview", focusId: null })}
                 onClick={() => dispatch({ type: "focus", focusId: node.id! })}
-                role="button"
-                tabIndex={0}
-                aria-label={`${node.data.label}, ${node.data.documentCount}개 문서`}
+                {...cityDistrictAnchorAccessibility(node.data.label, node.data.documentCount)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
@@ -410,8 +422,10 @@ function LineageRadial() {
       .sort((a, b) => Number(b.id === state.focusId) - Number(a.id === state.focusId) || a.title.localeCompare(b.title));
   }, [documentQuery, localModel.anchor, state.focusId]);
   useEffect(() => setDocumentLimit(60), [documentQuery, localModel.anchor.id]);
-  const branchDocuments = filteredBranchDocuments.slice(0, documentLimit);
-  const remainingDocuments = Math.max(0, filteredBranchDocuments.length - branchDocuments.length);
+  const { visible: branchDocuments, remaining: remainingDocuments } = paginateBranchDocuments(
+    filteredBranchDocuments,
+    documentLimit,
+  );
   const isPublicProfile = atlasData.publication.profile === "public";
   const layout = useMemo(() => {
     if (!width || !height) return [];
@@ -596,6 +610,16 @@ function LineageRadial() {
       </div>
     </div>
   );
+}
+
+export function paginateBranchDocuments<T>(documents: readonly T[], limit: number) {
+  const safeLimit = Math.max(0, Math.floor(limit));
+  const visible = documents.slice(0, safeLimit);
+  return {
+    visible,
+    remaining: Math.max(0, documents.length - visible.length),
+    nextLimit: Math.min(documents.length, safeLimit + 60),
+  };
 }
 
 function Constellation() {

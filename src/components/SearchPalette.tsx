@@ -1,17 +1,17 @@
 import { CornerDownLeft, FileText, Folder, Search, X } from "lucide-react";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { atlasData, entityById } from "../data";
-import { useAtlasState } from "../state";
+import { useAtlasState, type Action } from "../state";
 import type { Workspace } from "../types";
 
-type SearchResult = {
+export type SearchResult = {
   id: string;
   label: string;
   meta: string;
   kind: "document" | "folder" | "district";
 };
 
-type SearchDestination = {
+export type SearchDestination = {
   workspace: Workspace;
   label: string;
   reason: string;
@@ -27,7 +27,7 @@ function strongestPairForDistrict(district: string, layer: "wikilink" | "typed" 
     .sort((a, b) => b[layer] - a[layer] || a.id.localeCompare(b.id))[0];
 }
 
-function destinationFor(result: SearchResult, workspace: Workspace, layer: "wikilink" | "typed" | "route"): SearchDestination {
+export function destinationFor(result: SearchResult, workspace: Workspace, layer: "wikilink" | "typed" | "route"): SearchDestination {
   if (result.kind !== "document") {
     return { workspace: "explore", label: "계보에서 위치 보기", reason: "폴더와 구역은 계보에서 정확한 상하 관계를 확인합니다." };
   }
@@ -53,6 +53,94 @@ function destinationFor(result: SearchResult, workspace: Workspace, layer: "wiki
   return { workspace: "explore", label: "탐색에서 위치 보기", reason: "현재 화면에 직접 대응하는 표식이 없어 정본 위치를 우선 엽니다." };
 }
 
+export function searchComboboxAccessibility(activeOptionId: string | undefined) {
+  return {
+    role: "combobox" as const,
+    "aria-autocomplete": "list" as const,
+    "aria-haspopup": "listbox" as const,
+    "aria-expanded": true,
+    "aria-controls": "atlas-search-results",
+    "aria-activedescendant": activeOptionId,
+  };
+}
+
+export function searchDialogAccessibility() {
+  return {
+    role: "dialog" as const,
+    "aria-modal": true,
+    "aria-label": "문서와 구역 찾기",
+  };
+}
+
+export function searchOptionAccessibility(index: number, activeIndex: number) {
+  return {
+    role: "option" as const,
+    tabIndex: -1,
+    "aria-selected": index === activeIndex,
+  };
+}
+
+export function createSearchSelectionPlan(
+  result: SearchResult,
+  workspace: Workspace,
+  layer: "wikilink" | "typed" | "route",
+) {
+  const destination = destinationFor(result, workspace, layer);
+  const actions: Action[] = [
+    { type: "workspace", workspace: destination.workspace },
+    ...(destination.workspace === "explore" ? [{ type: "lens", lens: "lineage" } as const] : []),
+    ...(destination.relationPairId ? [{ type: "relationPair", relationPairId: destination.relationPairId } as const] : []),
+    ...(destination.routeId ? [{ type: "route", routeId: destination.routeId } as const] : []),
+    ...(destination.eraId ? [{ type: "era", eraId: destination.eraId } as const] : []),
+    { type: "focus", focusId: result.id },
+    { type: "search", open: false },
+  ];
+  return {
+    destination,
+    destinationTitleId: `${destination.workspace}-title`,
+    actions,
+  };
+}
+
+export function lockDocumentScroll(style: Pick<CSSStyleDeclaration, "overflow">) {
+  const previousOverflow = style.overflow;
+  style.overflow = "hidden";
+  return () => {
+    style.overflow = previousOverflow;
+  };
+}
+
+export function focusCommittedSearchDestination(
+  destination: Pick<HTMLElement, "setAttribute" | "focus" | "scrollIntoView"> | null,
+) {
+  if (!destination) return false;
+  destination.setAttribute("tabindex", "-1");
+  destination.focus({ preventScroll: true });
+  destination.scrollIntoView({ block: "nearest" });
+  return true;
+}
+
+export function revealSearchOption(
+  option: Pick<HTMLElement, "scrollIntoView"> | null,
+) {
+  if (!option) return false;
+  option.scrollIntoView({ block: "nearest" });
+  return true;
+}
+
+export function wrappedSearchDialogFocusTarget<T>(
+  focusables: readonly T[],
+  activeElement: T | null,
+  shiftKey: boolean,
+) {
+  if (!focusables.length) return null;
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  if (shiftKey && activeElement === first) return last;
+  if (!shiftKey && activeElement === last) return first;
+  return null;
+}
+
 export function SearchPalette() {
   const { state, dispatch } = useAtlasState();
   const [query, setQuery] = useState("");
@@ -65,13 +153,16 @@ export function SearchPalette() {
 
   useLayoutEffect(() => {
     const previousOverflow = document.body.style.overflow;
+    let restoreDocumentScroll = () => {
+      document.body.style.overflow = previousOverflow;
+    };
     if (state.searchOpen) {
       returnFocusRef.current = document.activeElement as HTMLElement | null;
       setQuery("");
       setActiveIndex(0);
       document.querySelector<HTMLElement>(".command-bar")?.setAttribute("inert", "");
       document.querySelector<HTMLElement>(".workspace-shell")?.setAttribute("inert", "");
-      document.body.style.overflow = "hidden";
+      restoreDocumentScroll = lockDocumentScroll(document.body.style);
       requestAnimationFrame(() => inputRef.current?.focus());
     } else {
       document.querySelector<HTMLElement>(".command-bar")?.removeAttribute("inert");
@@ -82,10 +173,7 @@ export function SearchPalette() {
         selectionCommittedRef.current = false;
         requestAnimationFrame(() => {
           const destination = document.getElementById(destinationTitleRef.current);
-          if (!destination) return;
-          destination.setAttribute("tabindex", "-1");
-          destination.focus({ preventScroll: true });
-          destination.scrollIntoView({ block: "nearest" });
+          focusCommittedSearchDestination(destination);
         });
       } else {
         target?.focus();
@@ -94,7 +182,7 @@ export function SearchPalette() {
     return () => {
       document.querySelector<HTMLElement>(".command-bar")?.removeAttribute("inert");
       document.querySelector<HTMLElement>(".workspace-shell")?.removeAttribute("inert");
-      document.body.style.overflow = previousOverflow;
+      restoreDocumentScroll();
     };
   }, [state.searchOpen]);
 
@@ -152,24 +240,16 @@ export function SearchPalette() {
 
   useLayoutEffect(() => {
     if (!state.searchOpen || !results.length) return;
-    document
-      .getElementById(`atlas-search-option-${activeIndex}`)
-      ?.scrollIntoView({ block: "nearest" });
+    revealSearchOption(document.getElementById(`atlas-search-option-${activeIndex}`));
   }, [activeIndex, results, state.searchOpen]);
 
   if (!state.searchOpen) return null;
 
   const choose = (result: SearchResult) => {
-    const destination = destinationFor(result, state.workspace, state.relationLayer);
+    const plan = createSearchSelectionPlan(result, state.workspace, state.relationLayer);
     selectionCommittedRef.current = true;
-    destinationTitleRef.current = `${destination.workspace}-title`;
-    dispatch({ type: "workspace", workspace: destination.workspace });
-    if (destination.workspace === "explore") dispatch({ type: "lens", lens: "lineage" });
-    if (destination.relationPairId) dispatch({ type: "relationPair", relationPairId: destination.relationPairId });
-    if (destination.routeId) dispatch({ type: "route", routeId: destination.routeId });
-    if (destination.eraId) dispatch({ type: "era", eraId: destination.eraId });
-    dispatch({ type: "focus", focusId: result.id });
-    dispatch({ type: "search", open: false });
+    destinationTitleRef.current = plan.destinationTitleId;
+    plan.actions.forEach(dispatch);
   };
 
   const activeOptionId = results[activeIndex]
@@ -181,25 +261,21 @@ export function SearchPalette() {
       <div
         ref={dialogRef}
         className="search-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-label="문서와 구역 찾기"
+        {...searchDialogAccessibility()}
         onMouseDown={(event) => event.stopPropagation()}
         onKeyDown={(event) => {
           if (event.key !== "Tab") return;
           const focusables = [...(dialogRef.current?.querySelectorAll<HTMLElement>(
             "button:not([disabled]):not([tabindex='-1']), input:not([disabled]), [tabindex]:not([tabindex='-1'])",
           ) ?? [])].filter((item) => item.offsetParent !== null);
-          if (!focusables.length) return;
-          const first = focusables[0];
-          const last = focusables[focusables.length - 1];
-          if (event.shiftKey && document.activeElement === first) {
-            event.preventDefault();
-            last.focus();
-          } else if (!event.shiftKey && document.activeElement === last) {
-            event.preventDefault();
-            first.focus();
-          }
+          const wrappedTarget = wrappedSearchDialogFocusTarget(
+            focusables,
+            document.activeElement as HTMLElement | null,
+            event.shiftKey,
+          );
+          if (!wrappedTarget) return;
+          event.preventDefault();
+          wrappedTarget.focus();
         }}
       >
         <div className="search-input-row">
@@ -228,12 +304,7 @@ export function SearchPalette() {
             }}
             placeholder="제목, 경로, 별칭, 태그로 찾기"
             aria-label="검색어"
-            role="combobox"
-            aria-autocomplete="list"
-            aria-haspopup="listbox"
-            aria-expanded="true"
-            aria-controls="atlas-search-results"
-            aria-activedescendant={activeOptionId}
+            {...searchComboboxAccessibility(activeOptionId)}
           />
           <button className="icon-button" type="button" onClick={() => dispatch({ type: "search", open: false })} aria-label="검색 닫기">
             <X size={18} />
@@ -249,9 +320,7 @@ export function SearchPalette() {
                 key={result.id}
                 id={`atlas-search-option-${index}`}
                 type="button"
-                role="option"
-                tabIndex={-1}
-                aria-selected={index === activeIndex}
+                {...searchOptionAccessibility(index, activeIndex)}
                 className={index === activeIndex ? "search-result is-active" : "search-result"}
                 onMouseEnter={() => setActiveIndex(index)}
                 onClick={() => choose(result)}

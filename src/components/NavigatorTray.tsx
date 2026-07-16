@@ -2,6 +2,7 @@ import { ChevronRight, Clock3, FileText, FolderTree, Home, Route, Rows3, X } fro
 import { Fragment, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import { atlasData, hierarchyFocusForDistrict } from "../data";
 import { useAtlasState } from "../state";
+import { trayDialogKeyIntent } from "./tray-accessibility";
 
 const mobileTrayQuery = "(max-width: 820px), (max-height: 520px) and (pointer: coarse)";
 
@@ -48,14 +49,14 @@ export function NavigatorTray() {
   }, [isMobile]);
 
   const handleDialogKey = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (!isMobile) return;
-    if (event.key === "Escape") {
+    const intent = trayDialogKeyIntent(event.key, isMobile, false);
+    if (intent === "close") {
       event.preventDefault();
       event.stopPropagation();
       close();
       return;
     }
-    if (event.key !== "Tab") return;
+    if (intent !== "trap-focus") return;
     const focusables = getFocusable(trayRef.current);
     if (!focusables.length) return;
     const first = focusables[0];
