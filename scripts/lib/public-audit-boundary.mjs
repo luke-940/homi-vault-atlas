@@ -1,6 +1,25 @@
-import { realpath } from "node:fs/promises";
+import { lstat, realpath } from "node:fs/promises";
 import path from "node:path";
-import { resolvePathThroughExistingAncestor } from "./build-boundary.mjs";
+
+async function resolvePathThroughExistingAncestor(value) {
+  let cursor = path.resolve(value);
+  const suffix = [];
+  while (true) {
+    try {
+      await lstat(cursor);
+      const resolved = await realpath(cursor);
+      return path.join(resolved, ...suffix);
+    } catch (error) {
+      if (error?.code !== "ENOENT") throw error;
+    }
+    const parent = path.dirname(cursor);
+    if (parent === cursor) {
+      throw new Error(`Public audit blocked: no existing ancestor for ${value}.`);
+    }
+    suffix.unshift(path.basename(cursor));
+    cursor = parent;
+  }
+}
 
 function isOutsideProject(projectDir, candidate) {
   const relative = path.relative(projectDir, candidate);
