@@ -1,6 +1,6 @@
 import { realpath } from "node:fs/promises";
 import path from "node:path";
-import { resolvePathThroughExistingAncestor } from "./build-boundary.mjs";
+import { resolvePathThroughExistingAncestor } from "./path-boundary.mjs";
 
 function isOutsideProject(projectDir, candidate) {
   const relative = path.relative(projectDir, candidate);
