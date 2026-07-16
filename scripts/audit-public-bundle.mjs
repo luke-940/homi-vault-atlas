@@ -1,21 +1,29 @@
 import { createHash } from "node:crypto";
-import { execFile } from "node:child_process";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import { auditPublicFieldContract } from "./public-field-contract.mjs";
+import {
+  assertPublicAuditBoundary,
+  assertPublicAuditBoundaryPreflight,
+  resolvePublicAuditBoundary,
+} from "./lib/public-audit-boundary.mjs";
+import {
+  assertRepositorySourceManifestBinding,
+  collectRepositorySourceManifest,
+} from "./lib/repository-source-manifest.mjs";
 
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dataDir = path.resolve(process.env.ATLAS_PUBLIC_DATA_DIR ?? path.join(projectDir, "public-safe", "data"));
 const distDir = path.resolve(process.env.ATLAS_PUBLIC_OUTPUT_DIR ?? path.join(projectDir, "dist-public"));
-const artifactDir = path.resolve(process.env.ATLAS_PUBLIC_AUDIT_DIR ?? path.join(projectDir, "artifacts", "publication"));
+const auditBoundary = resolvePublicAuditBoundary({ projectDir });
+const { artifactDir, auditReceiptName, context: auditContext } = auditBoundary;
 const defaultPublicRepoDir = path.basename(projectDir) === "homi-vault-atlas"
   ? projectDir
   : path.join(projectDir, "..", "github", "homi-vault-atlas");
 const publicRepoDir = path.resolve(process.env.ATLAS_PUBLIC_REPO_DIR ?? defaultPublicRepoDir);
-const execFileAsync = promisify(execFile);
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
+const compareText = (left, right) => left < right ? -1 : left > right ? 1 : 0;
 const hardPatterns = [
   ["absolute-user-path", /\/Users\/[^/]+\//i],
   ["absolute-home-path", /\/home\/[^/]+\//i],
@@ -23,6 +31,10 @@ const hardPatterns = [
   ["file-url", /file:\/\//i],
   ["personal-email", /[\w.+-]+@(?:gmail|naver|kakao|hanmail)\.[\w.-]+/i],
 ];
+
+await assertPublicAuditBoundaryPreflight(auditBoundary);
+await mkdir(artifactDir, { recursive: true });
+await assertPublicAuditBoundary(auditBoundary);
 
 async function filesUnder(root) {
   const output = [];
@@ -49,17 +61,18 @@ for (const root of [dataDir, distDir]) {
     for (const [id, pattern] of patterns) if (pattern.test(text)) findings.push({ id, path: relative });
   }
 }
-let trackedSourceFiles = 0;
-try {
-  const { stdout } = await execFileAsync(
-    "git",
-    ["-C", publicRepoDir, "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
-    { encoding: "utf8" },
-  );
-  const tracked = stdout.split("\0").filter(Boolean);
-  trackedSourceFiles = tracked.length;
-  for (const relativePath of tracked) {
-    const text = (await readFile(path.join(publicRepoDir, relativePath))).toString("utf8");
+const repositorySource = await collectRepositorySourceManifest(publicRepoDir);
+if (auditContext === "public-ci"
+  && repositorySource.sourceManifest.entries.some((entry) => entry.path === "artifacts" || entry.path.startsWith("artifacts/"))) {
+  throw new Error("Public audit blocked: public-ci artifacts are included in the Git source manifest.");
+}
+for (const sourceEntry of repositorySource.sourceManifest.entries) {
+    const relativePath = sourceEntry.path;
+    const sourceBody = await readFile(path.join(publicRepoDir, relativePath));
+    if (sourceBody.length !== sourceEntry.bytes || sha256(sourceBody) !== sourceEntry.sha256) {
+      throw new Error(`Public audit blocked: repository source changed while scanning (${relativePath}).`);
+    }
+    const text = sourceBody.toString("utf8");
     const legalText = relativePath.includes("licenses/") || /(?:\.LEGAL\.txt|THIRD_PARTY_NOTICES\.md)$/.test(relativePath);
     const patterns = legalText
       ? hardPatterns.filter(([id]) => id !== "personal-email" && id !== "file-url")
@@ -67,9 +80,6 @@ try {
     for (const [id, pattern] of patterns) {
       if (pattern.test(text)) findings.push({ id: `tracked-${id}`, path: `github/homi-vault-atlas/${relativePath}` });
     }
-  }
-} catch (error) {
-  findings.push({ id: "tracked-repository-scan-unavailable", path: publicRepoDir, detail: String(error) });
 }
 const publication = JSON.parse(await readFile(path.join(dataDir, "publication.json"), "utf8"));
 const entities = JSON.parse(await readFile(path.join(dataDir, "entity.json"), "utf8"));
@@ -102,16 +112,25 @@ for (const route of flow.routes ?? []) {
 }
 const receipt = {
   schema: "atlas.publication_audit.v1",
+  auditContext,
   generatedAt: new Date().toISOString(),
   profile: publication.profile,
   snapshot: publication.publicSnapshotDigest,
-  files: manifests.sort((a, b) => a.path.localeCompare(b.path)),
-  trackedSourceFiles,
+  files: manifests.sort((a, b) => compareText(a.path, b.path)),
+  trackedSourceFiles: repositorySource.sourceManifest.files,
+  repository: {
+    target: "luke-940/homi-vault-atlas",
+    head: repositorySource.head,
+    tree: repositorySource.tree,
+    clean: repositorySource.clean,
+    sourceManifest: repositorySource.sourceManifest,
+  },
   redactionCounts: publication.redactionCounts,
   findings,
   pass: findings.length === 0,
 };
-await mkdir(artifactDir, { recursive: true });
-await writeFile(path.join(artifactDir, "v7-1-publication-audit.json"), `${JSON.stringify(receipt, null, 2)}\n`, "utf8");
+await writeFile(path.join(artifactDir, auditReceiptName), `${JSON.stringify(receipt, null, 2)}\n`, "utf8");
+const repositoryAfterReceipt = await collectRepositorySourceManifest(publicRepoDir);
+assertRepositorySourceManifestBinding(receipt.repository, repositoryAfterReceipt);
 if (findings.length) throw new Error(`Public bundle audit failed: ${findings.slice(0, 10).map((item) => `${item.id}:${item.path}`).join(", ")}`);
 console.log(JSON.stringify({ pass: true, files: manifests.length, entities: entities.entities.length, snapshot: publication.publicSnapshotDigest }, null, 2));

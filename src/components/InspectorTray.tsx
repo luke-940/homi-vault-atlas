@@ -14,6 +14,8 @@ import { Fragment, useLayoutEffect, useRef, useState, type KeyboardEvent } from 
 import { atlasData, entityById, hierarchyById } from "../data";
 import { useAtlasState, type InspectorTab } from "../state";
 import type { Entity, MatrixCell, Workspace } from "../types";
+import { formatEraRange, lifecycleEvidenceSummary, lifecycleStateLabel } from "../views/time-model";
+import { trayDialogKeyIntent } from "./tray-accessibility";
 
 const roleMeaning: Record<string, string> = {
   control: "현재 상태와 작업 경계를 조율하는 운영 표면",
@@ -41,19 +43,13 @@ const currentnessLabels: Record<string, string> = {
   public_snapshot: "공개 스냅샷",
 };
 
-const deltaLabels: Record<string, string> = {
-  born: "새로 생김",
-  persisted: "계속 유지",
-  weakened: "약해짐",
-  retired: "역사로 이동",
-  unknown: "판단 근거 부족",
-};
-
 const evidenceClassLabels: Record<string, string> = {
   canonical_and_history: "현재 기준과 역사 기록을 함께 확인",
   curated_synthesis: "검증된 기록을 바탕으로 재구성",
   historical_evidence: "역사 기록을 바탕으로 재구성",
 };
+
+const atlasEvidenceIds = new Set(atlasData.entity.entities.map((entity) => entity.id));
 
 const mobileTrayQuery = "(max-width: 820px), (max-height: 520px) and (pointer: coarse)";
 
@@ -144,14 +140,14 @@ export function InspectorTray() {
   }, [isMobile]);
 
   const handleDialogKey = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === "Escape") {
+    const intent = trayDialogKeyIntent(event.key, isMobile, true);
+    if (intent === "close") {
       event.preventDefault();
       event.stopPropagation();
       close();
       return;
     }
-    if (!isMobile) return;
-    if (event.key !== "Tab") return;
+    if (intent !== "trap-focus") return;
     const focusables = getFocusable(trayRef.current);
     if (!focusables.length) return;
     const first = focusables[0];
@@ -246,7 +242,7 @@ export function InspectorTray() {
       : state.workspace === "flow"
         ? route?.label ?? "작업 흐름"
         : state.workspace === "time"
-          ? `시대 ${era?.id}`
+          ? `시대 장면 ${era?.id}`
           : entity?.title ?? hierarchyNode?.label ?? "Homi Vault";
   const subtitle =
     state.workspace === "observe" && pair
@@ -403,9 +399,7 @@ function ComparisonLedger() {
       freshness: entity ? (currentnessLabels[entity.currentness] ?? entity.currentness) : "폴더 집계",
       connections: entity ? (atlasData.relation.neighborhoods[entity.id]?.length ?? 0) : node?.childrenCount ?? 0,
       size: entity
-        ? isPublicProfile
-          ? `${(entity.documentCount ?? 0).toLocaleString()}개 문서`
-          : `${entity.wordCount.toLocaleString()}단어`
+        ? comparisonEntitySize(entity, isPublicProfile)
         : `${node?.documentCount ?? 0}문서`,
       pulse: pulseTargets.has(id) ? "도달" : "미확인",
     };
@@ -430,6 +424,15 @@ function ComparisonLedger() {
       </div>
     </section>
   );
+}
+
+export function comparisonEntitySize(
+  entity: Pick<Entity, "documentCount" | "wordCount">,
+  isPublicProfile: boolean,
+) {
+  return isPublicProfile
+    ? `${(entity.documentCount ?? 0).toLocaleString()}개 문서`
+    : `${entity.wordCount.toLocaleString()}단어`;
 }
 
 function SummaryContent({
@@ -472,12 +475,14 @@ function SummaryContent({
     );
   }
   if (era) {
+    const lifecycle = lifecycleEvidenceSummary(era, atlasEvidenceIds);
     return (
       <>
-        <section className="inspector-section"><h3>{era.range}</h3><p>{era.thesis}</p></section>
+        <section className="inspector-section"><h3>{formatEraRange(era.range, era.id)}</h3><p>{era.thesis}</p></section>
         <dl className="metric-ledger">
-          <div><dt>시대</dt><dd>{era.id}/11</dd></div>
-          <div><dt>변화 표식</dt><dd>{era.deltas.length}</dd></div>
+          <div><dt>시대 장면</dt><dd>{era.id}/11</dd></div>
+          <div><dt>기록 확인 변화</dt><dd>{lifecycle.recordedDeltas.length}</dd></div>
+          <div><dt>미확정·미기록</dt><dd>{lifecycle.explicitUnknown.length + lifecycle.unrecordedDeltas.length}</dd></div>
         </dl>
       </>
     );
@@ -544,7 +549,7 @@ function RelationsContent({
   if (workspace === "time" && era) {
     return (
       <section className="inspector-section">
-        <h3>시대 근거 표면</h3>
+        <h3>시대 장면 근거 표면</h3>
         <div className="ledger-list">
           {era.evidenceRefs.map((id) => (
             <div key={id}>
@@ -593,7 +598,7 @@ function ProofContent({
   const { state } = useAtlasState();
   const layerCoverage = atlasData.relation.coverage.layers[state.relationLayer];
   const selectionProof = workspace === "time" && era
-    ? `${evidenceClassLabels[era.evidenceClass] ?? "기록 근거를 바탕으로 재구성"}. 세부 한계는 데이터 기준에서 확인할 수 있다.`
+    ? `${evidenceClassLabels[era.evidenceClass] ?? "기록 근거를 바탕으로 재구성"}. 근거 문서와 위치가 확인된 변화만 생애주기 상태로 센다.`
     : workspace === "flow" && route
       ? `${route.stations.length}개 경유점은 작업 절차를 읽기 위한 안내 경로다. 실제 문서 연결 횟수를 뜻하지 않는다.`
       : pair
@@ -628,14 +633,16 @@ function HistoryContent({
   route?: (typeof atlasData.flow.routes)[number];
   era?: (typeof atlasData.temporal.eras)[number];
 }) {
+  const lifecycle = era ? lifecycleEvidenceSummary(era, atlasEvidenceIds) : null;
   return (
     <section className="inspector-section">
-      <h3>{era ? "시대 근거" : pair ? "관계 범위" : route ? "경로 근거" : "현재 문서 시간"}</h3>
-      {era ? (
+      <h3>{era ? "시대 장면 근거" : pair ? "관계 범위" : route ? "경로 근거" : "현재 문서 시간"}</h3>
+      {era && lifecycle ? (
         <>
           <p>{evidenceClassLabels[era.evidenceClass] ?? "기록 근거를 바탕으로 재구성"}</p>
           <div className="ledger-list">
-            {era.deltas.map((delta) => <div key={delta.label}><GitBranch size={14} /><span><strong>{delta.label}</strong><small>{deltaLabels[delta.state] ?? delta.state}</small></span></div>)}
+            {lifecycle.recordedDeltas.map((delta) => <div key={`${delta.state}:${delta.label}`}><GitBranch size={14} /><span><strong>{delta.label}</strong><small>{lifecycleStateLabel(delta.state)} · 기록 확인</small></span></div>)}
+            {lifecycle.unrecordedDeltas.length > 0 && <div><Clock3 size={14} /><span><strong>근거 미기록 변화 {lifecycle.unrecordedDeltas.length}개</strong><small>생애주기 판정에서 제외</small></span></div>}
           </div>
         </>
       ) : pair ? (
@@ -661,7 +668,7 @@ function HistoryContent({
         ) : (
           <dl className="evidence-ledger">
             <div><dt>마지막 변경 거리</dt><dd>{entity.ageDays == null ? "공개 집계" : `${entity.ageDays}일`}</dd></div>
-            <div><dt>frontmatter Era</dt><dd>{String(entity.frontmatter.era ?? "미지정")}</dd></div>
+            <div><dt>문서 메타데이터 시대(Era)</dt><dd>{String(entity.frontmatter.era ?? "미지정")}</dd></div>
           </dl>
         )
       ) : null}

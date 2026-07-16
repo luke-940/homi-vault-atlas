@@ -1,6 +1,6 @@
 {
   "schema": "atlas.insight.v1",
-  "generatedAt": "2026-07-14T16:22:04.723Z",
+  "generatedAt": "2026-07-16T05:43:47.475Z",
   "evidenceBoundary": "공개 스냅샷의 집계 수량과 정제된 관계만 사용한다. 내부 문서 본문과 운영 영수증은 포함하지 않는다.",
   "items": [
     {
@@ -29,11 +29,11 @@
     {
       "id": "insight:strongest-relation",
       "kind": "strongest_relation",
-      "question": "어떤 지식 구역이 가장 강하게 이어져 있나",
-      "headline": "연구 논거 → 중심 지식 링크 출현이 가장 많다",
+      "question": "어떤 두 지식 구역의 양방향 해결 링크 합계가 가장 큰가",
+      "headline": "연구 논거 ↔ 중심 지식의 양방향 해결 링크 합계가 971회로 가장 많다",
       "metric": {
         "value": 971,
-        "label": "해결된 링크",
+        "label": "양방향 해결 링크 합계",
         "unit": "회"
       },
       "evidenceRefs": [
@@ -48,7 +48,7 @@
         "relationLayer": "wikilink"
       },
       "confidence": "high",
-      "caveat": "공개판은 방향을 보존한 정제 구역 간 wikilink 집계만 보여준다.",
+      "caveat": "합계 971회는 연구 논거 → 중심 지식 827회와 중심 지식 → 연구 논거 144회를 더한 값이며, 두 방향은 따로 보존한다.",
       "publicSafe": true
     },
     {
@@ -81,7 +81,7 @@
       "question": "공개판이 의도적으로 감춘 범위는 무엇인가",
       "headline": "문서 원문과 문서 단위 관계는 공개 지도에서 제외됐다",
       "metric": {
-        "value": 770,
+        "value": 803,
         "label": "제외된 원문",
         "unit": "개"
       },

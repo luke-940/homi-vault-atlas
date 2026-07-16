@@ -1,8 +1,8 @@
 {
   "schema": "atlas.publication.v1",
   "profile": "public",
-  "generatedAt": "2026-07-14T16:22:04.723Z",
-  "publicSnapshotDigest": "c847133c0bdd6cebe14137b266365d7b878cc6f06da59a65b831c24226b9d324",
+  "generatedAt": "2026-07-16T05:43:47.475Z",
+  "publicSnapshotDigest": "18b6182d0860cd17f0a188d8bd179661818adca6eb396f83e81c8cd8dc6c3aae",
   "allowedSurfaces": [
     "district_role_aggregate",
     "reference_boundary",
@@ -26,18 +26,18 @@
     "archive"
   ],
   "redactionCounts": {
-    "sourceEntities": 770,
+    "sourceEntities": 803,
     "publicEntities": 6,
     "aggregatedSourceDocuments": 382,
-    "excludedEntities": 770,
+    "excludedEntities": 803,
     "pathsReissued": 6,
     "aliasesRemoved": 1219,
     "tagsRemoved": 1352,
     "frontmatterRemoved": 382,
-    "typedRelationReceiptsRemoved": 39,
-    "documentLevelRelationsRemoved": 11653,
-    "rawDailyExcluded": 89,
-    "controlDocumentsExcluded": 53
+    "typedRelationReceiptsRemoved": 42,
+    "documentLevelRelationsRemoved": 11938,
+    "rawDailyExcluded": 91,
+    "controlDocumentsExcluded": 54
   },
   "blockers": []
 }

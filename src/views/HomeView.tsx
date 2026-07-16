@@ -274,7 +274,7 @@ export function HomeView() {
         <div className="home-snapshot-readout">
           <span><b>{homeDocumentCount}</b> {homeDocumentLabel}</span>
           <span><b>{homeRelationCount}</b> {homeRelationLabel}</span>
-          <span><b>{atlasData.temporal.eras.length}</b> Era</span>
+          <span><b>{atlasData.temporal.eras.length}</b> 시대 장면</span>
         </div>
       </header>
       <div className="home-desktop-stage">

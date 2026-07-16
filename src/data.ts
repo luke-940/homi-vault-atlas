@@ -5,6 +5,141 @@ const workspaceSchema = z.enum(["home", "explore", "observe", "flow", "time"]);
 const relationLayerSchema = z.enum(["wikilink", "typed", "route"]);
 export const DEFAULT_DAILY_ROUTE_ID = "daily";
 
+const neighborBaseShape = {
+  id: z.string(),
+  direction: z.enum(["incoming", "outgoing"]),
+  weight: z.number(),
+  evidence: z.string().nullable(),
+};
+
+const neighborSchema = z.discriminatedUnion("layer", [
+  z.object({
+    ...neighborBaseShape,
+    layer: z.literal("wikilink"),
+    relation: z.literal("wikilink"),
+  }).strict(),
+  z.object({
+    ...neighborBaseShape,
+    layer: z.literal("typed"),
+    relation: z.string().min(1),
+  }).strict(),
+  z.object({
+    ...neighborBaseShape,
+    layer: z.literal("route"),
+    relation: z.string().min(1),
+  }).strict(),
+]);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isJsonObject(value: unknown): value is Record<string, unknown> {
+  if (!isRecord(value)) return false;
+  return Object.getPrototypeOf(value) === Object.prototype;
+}
+
+function ownEnumerableDataDescriptor(record: Record<string, unknown>, key: string) {
+  const descriptor = Object.getOwnPropertyDescriptor(record, key);
+  return descriptor?.enumerable && "value" in descriptor ? descriptor : null;
+}
+
+const WIKILINK_WIRE_NEIGHBOR_KEYS = new Set(["id", "direction", "weight", "evidence", "w"]);
+
+function isExactWikilinkWireNeighbor(value: unknown): value is Record<string, unknown> {
+  if (!isJsonObject(value)) return false;
+  const ownKeys = Reflect.ownKeys(value);
+  if (
+    ownKeys.length !== WIKILINK_WIRE_NEIGHBOR_KEYS.size
+    || ownKeys.some((key) => typeof key !== "string" || !WIKILINK_WIRE_NEIGHBOR_KEYS.has(key))
+  ) {
+    return false;
+  }
+  for (const key of WIKILINK_WIRE_NEIGHBOR_KEYS) {
+    if (!ownEnumerableDataDescriptor(value, key)) return false;
+  }
+  return ownEnumerableDataDescriptor(value, "w")?.value === 1;
+}
+
+function jsonObjectOwnFieldFailure(record: Record<string, unknown>, location: string): string | null {
+  for (const key of Reflect.ownKeys(record)) {
+    if (typeof key !== "string") return `${location}.symbol`;
+    if (!ownEnumerableDataDescriptor(record, key)) return `${location}.${key}`;
+  }
+  return null;
+}
+
+function relationBrowserContainerFailure(candidate: unknown): string | null {
+  if (!isJsonObject(candidate)) return "candidate";
+  const candidateFieldFailure = jsonObjectOwnFieldFailure(candidate, "candidate");
+  if (candidateFieldFailure) return candidateFieldFailure;
+  const relation = ownEnumerableDataDescriptor(candidate, "relation")?.value;
+  if (!isJsonObject(relation)) return "candidate.relation";
+  const relationFieldFailure = jsonObjectOwnFieldFailure(relation, "candidate.relation");
+  if (relationFieldFailure) return relationFieldFailure;
+  const neighborhoods = ownEnumerableDataDescriptor(relation, "neighborhoods")?.value;
+  if (!isJsonObject(neighborhoods)) return "candidate.relation.neighborhoods";
+  const neighborhoodFieldFailure = jsonObjectOwnFieldFailure(
+    neighborhoods,
+    "candidate.relation.neighborhoods",
+  );
+  if (neighborhoodFieldFailure) return neighborhoodFieldFailure;
+  return null;
+}
+
+function relationBrowserJsonShapeFailure(candidate: unknown): string | null {
+  const containerFailure = relationBrowserContainerFailure(candidate);
+  if (containerFailure) return containerFailure;
+  const typedCandidate = candidate as Record<string, unknown>;
+  const relation = ownEnumerableDataDescriptor(typedCandidate, "relation")?.value as Record<string, unknown>;
+  const neighborhoods = ownEnumerableDataDescriptor(relation, "neighborhoods")?.value as Record<string, unknown>;
+  for (const [sourceId, neighbors] of Object.entries(neighborhoods)) {
+    if (!Array.isArray(neighbors)) return `candidate.relation.neighborhoods.${sourceId}`;
+    for (const [index, neighbor] of neighbors.entries()) {
+      const location = `candidate.relation.neighborhoods.${sourceId}.${index}`;
+      if (!isJsonObject(neighbor)) return location;
+      for (const key of Reflect.ownKeys(neighbor)) {
+        if (typeof key !== "string") return `${location}.symbol`;
+        if (!ownEnumerableDataDescriptor(neighbor, key)) return `${location}.${key}`;
+      }
+    }
+  }
+  return null;
+}
+
+export function restoreRelationBrowserWireDefaults(candidate: unknown): unknown {
+  if (relationBrowserJsonShapeFailure(candidate)) return candidate;
+  const typedCandidate = candidate as Record<string, unknown>;
+  const relation = ownEnumerableDataDescriptor(typedCandidate, "relation")?.value as Record<string, unknown>;
+  const neighborhoods = ownEnumerableDataDescriptor(relation, "neighborhoods")?.value as Record<string, unknown>;
+
+  let changed = false;
+  const restoredNeighborhoods = Object.fromEntries(
+    Object.entries(neighborhoods).map(([sourceId, neighbors]) => {
+      if (!Array.isArray(neighbors)) return [sourceId, neighbors];
+      const restoredNeighbors = neighbors.map((neighbor) => {
+        if (isExactWikilinkWireNeighbor(neighbor)) {
+          changed = true;
+          const restored = { ...neighbor };
+          delete restored.w;
+          return { ...restored, layer: "wikilink", relation: "wikilink" };
+        }
+        return neighbor;
+      });
+      return [sourceId, restoredNeighbors];
+    }),
+  );
+
+  if (!changed) return candidate;
+  return {
+    ...typedCandidate,
+    relation: {
+      ...relation,
+      neighborhoods: restoredNeighborhoods,
+    },
+  };
+}
+
 const entitySchema = z.object({
   id: z.string().startsWith("doc:"),
   fileId: z.number().int().positive().optional(),
@@ -181,10 +316,7 @@ const atlasSchema = z.object({
       evidence: z.string(), state: z.string(), layer: z.literal("typed"), proofState: z.string(),
     }).passthrough()),
     routeCoMembership: z.array(z.record(z.string(), z.unknown())),
-    neighborhoods: z.record(z.string(), z.array(z.object({
-      id: z.string(), direction: z.enum(["incoming", "outgoing"]), layer: relationLayerSchema,
-      relation: z.string(), weight: z.number(), evidence: z.string().nullable(),
-    }))),
+    neighborhoods: z.record(z.string(), z.array(neighborSchema)),
     layerDefinitions: z.array(z.object({ id: relationLayerSchema, label: z.string(), meaning: z.string() })),
     availableLayers: z.array(relationLayerSchema).min(1),
     redactedLayers: z.array(relationLayerSchema),
@@ -502,7 +634,13 @@ export function collectAtlasReferenceFailures(candidate: AtlasData): string[] {
 }
 
 export function validateAtlasPacks(candidate: unknown): AtlasData {
-  const parsed = atlasSchema.safeParse(candidate);
+  const jsonShapeFailure = relationBrowserJsonShapeFailure(candidate);
+  if (jsonShapeFailure) {
+    const message = `Atlas v7 데이터 계약 위반: ${jsonShapeFailure} must be a plain JSON object with own enumerable data fields.`;
+    showFatalDataError(message);
+    throw new Error(message);
+  }
+  const parsed = atlasSchema.safeParse(restoreRelationBrowserWireDefaults(candidate));
   if (!parsed.success) {
     const details = parsed.error.issues
       .slice(0, 5)

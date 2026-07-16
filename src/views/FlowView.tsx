@@ -43,12 +43,20 @@ function StationGlyph({ kind, active, focused, color }: { kind: RouteStationKind
   );
 }
 
+export function revealSelectedRoute(
+  target: Pick<HTMLElement, "scrollIntoView"> | null,
+) {
+  if (!target) return false;
+  target.scrollIntoView({ inline: "center", block: "nearest" });
+  return true;
+}
+
 export function FlowView() {
   const { state, dispatch } = useAtlasState();
   const route = atlasData.flow.routes.find((item) => item.id === state.routeId)!;
   const activeRouteRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    activeRouteRef.current?.scrollIntoView({ inline: "center", block: "nearest" });
+    revealSelectedRoute(activeRouteRef.current);
   }, [state.routeId]);
   return (
     <section className="workspace-view flow-view" aria-labelledby="flow-title">
@@ -221,7 +229,7 @@ function MobileFlow() {
   const route = atlasData.flow.routes.find((item) => item.id === state.routeId)!;
   const activeRouteRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    activeRouteRef.current?.scrollIntoView({ inline: "center", block: "nearest" });
+    revealSelectedRoute(activeRouteRef.current);
   }, [state.routeId]);
   return (
     <div className="mobile-sibling mobile-flow">
