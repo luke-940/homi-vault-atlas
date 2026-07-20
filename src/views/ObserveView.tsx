@@ -1,18 +1,12 @@
 import { Grid3X3, Link2, Route, Waypoints } from "lucide-react";
-import {
-  arc as d3Arc,
-  chord as d3Chord,
-  chordDirected,
-  descending,
-  interpolateRgbBasis,
-  ribbon as d3Ribbon,
-  ribbonArrow,
-  scaleBand,
-  scaleSequential,
-} from "d3";
+import { descending } from "d3-array";
+import { chord as d3Chord, chordDirected, ribbon as d3Ribbon, ribbonArrow } from "d3-chord";
+import { interpolateRgbBasis } from "d3-interpolate";
+import { scaleBand, scaleSequential } from "d3-scale";
+import { arc as d3Arc } from "d3-shape";
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
-import { atlasData, entityById } from "../data";
+import { atlasData, entityById } from "../data-runtime";
 import { useElementSize } from "../hooks/useElementSize";
 import {
   dominantRelationDirection,
@@ -35,20 +29,6 @@ const layerItems: Array<{ id: RelationLayer; label: string; icon: typeof Link2 }
   { id: "route", label: "작업 흐름", icon: Route },
 ];
 const availableLayerItems = layerItems.filter((item) => atlasData.relation.availableLayers.includes(item.id));
-
-const mobileSiblingQuery = "(max-width: 820px), (max-height: 520px) and (pointer: coarse)";
-
-function useMobileSibling() {
-  const [matches, setMatches] = useState(() => window.matchMedia(mobileSiblingQuery).matches);
-  useEffect(() => {
-    const media = window.matchMedia(mobileSiblingQuery);
-    const sync = () => setMatches(media.matches);
-    sync();
-    media.addEventListener("change", sync);
-    return () => media.removeEventListener("change", sync);
-  }, []);
-  return matches;
-}
 
 function layerLabel(layer: RelationLayer) {
   return layer === "wikilink" ? "해결된 링크 출현 횟수" : layer === "typed" ? "명시 관계 건수" : "선별된 구역 경로쌍";
@@ -428,7 +408,7 @@ function directionFor(cell: MatrixCell | undefined, source: string, target: stri
 
 function RelationMatrix() {
   const { state, dispatch } = useAtlasState();
-  const mobileSibling = useMobileSibling() && !state.theatre;
+  const mobileSibling = state.mobileSibling && !state.theatre;
   const { ref, width, height } = useElementSize<HTMLDivElement>();
   const order = atlasData.relation.districtOrder;
   const cells = useMemo(
@@ -599,7 +579,7 @@ function RelationMatrix() {
 
 function GlobalChord() {
   const { state, dispatch } = useAtlasState();
-  const mobileSibling = useMobileSibling() && !state.theatre;
+  const mobileSibling = state.mobileSibling && !state.theatre;
   const { ref, width, height } = useElementSize<HTMLDivElement>();
   const order = atlasData.relation.districtOrder;
   const layout = useMemo(() => {
@@ -807,7 +787,7 @@ function MobileObserve() {
           </svg>
         </section>
       )}
-      <section className="mobile-ranked-list" id="mobile-relation-results" role="tabpanel" aria-labelledby={`mobile-relation-tab-${state.relationLayer}`}>
+      <section className="mobile-ranked-list" id="mobile-relation-results" role="tabpanel" aria-labelledby={`mobile-relation-tab-${state.relationLayer}`} tabIndex={0}>
         <h3>상위 구역 간 관계</h3>
         {ranked.map((pair, index) => {
           const presentation = state.relationLayer === "typed"

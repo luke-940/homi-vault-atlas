@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { CommandBar } from "./components/CommandBar";
+import { CommandBar, MobileNavigation } from "./components/CommandBar";
 import { InspectorTray } from "./components/InspectorTray";
 import { NavigatorTray } from "./components/NavigatorTray";
 import { SearchPalette } from "./components/SearchPalette";
@@ -8,9 +8,11 @@ import { ObserveView } from "./views/ObserveView";
 import { FlowView } from "./views/FlowView";
 import { TimeView } from "./views/TimeView";
 import { HomeView } from "./views/HomeView";
+import { AgencyView } from "./views/AgencyView";
 import { useAtlasState } from "./state";
+import { atlasData, entityById, hierarchyById } from "./data-runtime";
 
-const workspaceIds = ["home", "explore", "observe", "flow", "time"] as const;
+const workspaceIds = ["home", "explore", "observe", "flow", "time", "agency"] as const;
 
 export function App() {
   const { state, dispatch } = useAtlasState();
@@ -108,7 +110,13 @@ export function App() {
     observe: <ObserveView />,
     flow: <FlowView />,
     time: <TimeView />,
+    agency: <AgencyView />,
   }[state.workspace];
+  const accessibleSelectionLabel = state.workspace === "agency"
+    ? atlasData.agency.actors.find((actor) => actor.id === state.actorId)?.label ?? "전체 역할"
+    : entityById.get(state.focusId)?.displayLabel
+      ?? hierarchyById.get(state.focusId)?.label
+      ?? "공개 지식";
 
   return (
     <div
@@ -148,8 +156,9 @@ export function App() {
         </main>
         {(state.panel === "inspector" || state.panel === "data") && <InspectorTray />}
       </div>
+      <MobileNavigation />
       <div className="sr-only" aria-live="polite" aria-atomic="true">
-        {({ home: "대문", explore: "탐색", observe: "관측", flow: "흐름", time: "시간" } as const)[state.workspace]} 화면, 현재 선택 {state.focusId}
+        {({ home: "대문", explore: "탐색", observe: "관측", flow: "흐름", time: "시간", agency: "협업 구조" } as const)[state.workspace]} 화면, 현재 선택 {accessibleSelectionLabel}
         {state.fallbackReason ? `, 이동 안내 ${state.fallbackReason}` : ""}
       </div>
       <SearchPalette />

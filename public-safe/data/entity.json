@@ -20,14 +20,13 @@
       "wordCount": 0,
       "documentCount": 21,
       "ageDays": null,
-      "sha256": "bcf9fd55f0712d4f9433a0d74e98157d1030cc9b74b4997026b9d268bc652283",
       "frontmatter": {}
     },
     {
       "id": "doc:pub:d2edeb88f1fb207d2e",
       "path": "public/중심-지식/knowledge.md",
-      "title": "중심 지식 · 중심 지식",
-      "displayLabel": "중심 지식 · 중심 지식",
+      "title": "중심 지식 집계",
+      "displayLabel": "중심 지식 집계",
       "aliases": [],
       "tags": [],
       "parentId": "tax:pub:group:중심-지식:knowledge",
@@ -43,14 +42,13 @@
       "wordCount": 0,
       "documentCount": 161,
       "ageDays": null,
-      "sha256": "559bc5c5e68831da77606752d1aa3f357488aba5c5be75e9e989ebe5ca8fbbad",
       "frontmatter": {}
     },
     {
       "id": "doc:pub:81d024b4d7d014815c",
       "path": "public/연구-논거/paper.md",
-      "title": "연구 논거 · 연구 논거",
-      "displayLabel": "연구 논거 · 연구 논거",
+      "title": "연구 논거 집계",
+      "displayLabel": "연구 논거 집계",
       "aliases": [],
       "tags": [],
       "parentId": "tax:pub:group:연구-논거:paper",
@@ -66,14 +64,13 @@
       "wordCount": 0,
       "documentCount": 148,
       "ageDays": null,
-      "sha256": "a21cdda5845c00eed676afb07933c45d486440bd691410b11ef192a584652fa3",
       "frontmatter": {}
     },
     {
       "id": "doc:pub:0c24e7fbc0aca2c4a9",
       "path": "public/신호/signal.md",
-      "title": "신호 · 신호",
-      "displayLabel": "신호 · 신호",
+      "title": "신호 집계",
+      "displayLabel": "신호 집계",
       "aliases": [],
       "tags": [],
       "parentId": "tax:pub:group:신호:signal",
@@ -89,14 +86,13 @@
       "wordCount": 0,
       "documentCount": 21,
       "ageDays": null,
-      "sha256": "3cab79126f1ac46f47acfa9d0e73b274327dc283e9057333534b97786fb6ae87",
       "frontmatter": {}
     },
     {
       "id": "doc:pub:1bffb5c1b821510923",
       "path": "public/전략/strategy.md",
-      "title": "전략 · 전략",
-      "displayLabel": "전략 · 전략",
+      "title": "전략 집계",
+      "displayLabel": "전략 집계",
       "aliases": [],
       "tags": [],
       "parentId": "tax:pub:group:전략:strategy",
@@ -112,7 +108,6 @@
       "wordCount": 0,
       "documentCount": 31,
       "ageDays": null,
-      "sha256": "a9611a47c506752ccb02936c5187a5aca1a62ad46cd6505b5e7ff43155936bde",
       "frontmatter": {}
     },
     {
@@ -135,7 +130,6 @@
       "wordCount": 0,
       "documentCount": 0,
       "ageDays": null,
-      "sha256": "efcc61c54b27d9fa523a97000e62a432f6265c759e6a816a8cfc07a478749d67",
       "frontmatter": {}
     }
   ],

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
 
-const names = ["bootstrap", "structure", "relation", "flow", "temporal", "entity", "health", "insight", "publication"] as const;
+const names = ["agency", "bootstrap", "structure", "relation", "flow", "temporal", "entity", "health", "insight", "publication"] as const;
 const dataDir = path.resolve("public-safe", "data");
 const packs = Object.fromEntries(names.map((name) => [name, JSON.parse(readFileSync(path.join(dataDir, `${name}.json`), "utf8"))]));
 
@@ -24,7 +24,30 @@ describe("public Atlas data contract", () => {
       expect(entity.wordCount).toBe(0);
       expect(entity.documentCount).toBeGreaterThanOrEqual(0);
       expect(entity.ageDays).toBeNull();
+      expect(entity).not.toHaveProperty("sha256");
     }
+    expect(packs.bootstrap.snapshot).not.toHaveProperty("officialCursor");
+    for (const field of [
+      "stateSnapshot",
+      "currentStateHash",
+      "candidateInputHash",
+      "activeManifestHash",
+      "memoryEngineCodeHash",
+      "memoryIndexHash",
+      "memoryCorpusDigest",
+      "graphConfigHash",
+    ]) expect(packs.bootstrap.snapshot).not.toHaveProperty(field);
+    const hashes: string[] = [];
+    const visit = (value: unknown) => {
+      if (typeof value === "string" && /^[a-f0-9]{64}$/.test(value)) hashes.push(value);
+      else if (Array.isArray(value)) value.forEach(visit);
+      else if (value && typeof value === "object") Object.values(value).forEach(visit);
+    };
+    visit(packs);
+    expect(hashes.sort()).toEqual([
+      packs.agency.projectionDigest,
+      packs.publication.publicSnapshotDigest,
+    ].sort());
   });
 
   test("contains four evidence-backed public insights", () => {

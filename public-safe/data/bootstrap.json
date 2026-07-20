@@ -1,19 +1,10 @@
 {
   "schema": "atlas.snapshot.v7",
-  "version": "7.2.0-public",
-  "generatedAt": "2026-07-16T05:43:47.475Z",
+  "version": "7.3.0-public",
+  "generatedAt": "2026-07-16T11:43:09.794Z",
   "snapshot": {
-    "officialCursor": 0,
-    "stateSnapshot": "18b6182d0860cd17f0a188d8bd179661818adca6eb396f83e81c8cd8dc6c3aae",
-    "currentStateHash": "18b6182d0860cd17f0a188d8bd179661818adca6eb396f83e81c8cd8dc6c3aae",
-    "candidateInputHash": "18b6182d0860cd17f0a188d8bd179661818adca6eb396f83e81c8cd8dc6c3aae",
-    "activeManifestHash": "18b6182d0860cd17f0a188d8bd179661818adca6eb396f83e81c8cd8dc6c3aae",
-    "memoryEngineCodeHash": "18b6182d0860cd17f0a188d8bd179661818adca6eb396f83e81c8cd8dc6c3aae",
-    "memoryIndexHash": "18b6182d0860cd17f0a188d8bd179661818adca6eb396f83e81c8cd8dc6c3aae",
     "memoryEngineSchema": "public-curated-snapshot.v1",
-    "memoryCorpusDigest": "18b6182d0860cd17f0a188d8bd179661818adca6eb396f83e81c8cd8dc6c3aae",
     "memoryFiles": 6,
-    "graphConfigHash": "18b6182d0860cd17f0a188d8bd179661818adca6eb396f83e81c8cd8dc6c3aae",
     "graphJsonUsedAsNodeEdgeSource": false,
     "activeMarkdownCount": 6,
     "archiveMarkdownCount": 0,
@@ -30,7 +21,8 @@
     "explore",
     "observe",
     "flow",
-    "time"
+    "time",
+    "agency"
   ],
   "defaultFocus": "doc:pub:d2edeb88f1fb207d2e"
 }

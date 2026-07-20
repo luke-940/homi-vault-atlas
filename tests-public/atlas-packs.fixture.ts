@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 const names = [
+  "agency",
   "bootstrap",
   "structure",
   "relation",

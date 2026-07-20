@@ -8,25 +8,6 @@
       "typedRelations": 0,
       "currentDocuments": 0,
       "authorityL1L2": 0,
-      "constellationComposition": {
-        "unit": "documents",
-        "folderGroupCount": 1,
-        "directDocumentCount": 0,
-        "directDocumentShare": 0,
-        "categoryCount": 1,
-        "largestCategoryId": "public-role:중심-지식:knowledge",
-        "largestCategoryShare": 1,
-        "categories": [
-          {
-            "id": "public-role:중심-지식:knowledge",
-            "label": "중심 지식",
-            "kind": "folder_group",
-            "documentCount": 161,
-            "share": 1
-          }
-        ],
-        "reconciled": true
-      },
       "topEntities": [
         "doc:pub:d2edeb88f1fb207d2e",
         "doc:pub:05496b59819cd2759f"
@@ -40,25 +21,6 @@
       "typedRelations": 0,
       "currentDocuments": 0,
       "authorityL1L2": 0,
-      "constellationComposition": {
-        "unit": "documents",
-        "folderGroupCount": 1,
-        "directDocumentCount": 0,
-        "directDocumentShare": 0,
-        "categoryCount": 1,
-        "largestCategoryId": "public-role:연구-논거:paper",
-        "largestCategoryShare": 1,
-        "categories": [
-          {
-            "id": "public-role:연구-논거:paper",
-            "label": "연구 논거",
-            "kind": "folder_group",
-            "documentCount": 148,
-            "share": 1
-          }
-        ],
-        "reconciled": true
-      },
       "topEntities": [
         "doc:pub:81d024b4d7d014815c"
       ]
@@ -71,25 +33,6 @@
       "typedRelations": 0,
       "currentDocuments": 0,
       "authorityL1L2": 0,
-      "constellationComposition": {
-        "unit": "documents",
-        "folderGroupCount": 1,
-        "directDocumentCount": 0,
-        "directDocumentShare": 0,
-        "categoryCount": 1,
-        "largestCategoryId": "public-role:전략:strategy",
-        "largestCategoryShare": 1,
-        "categories": [
-          {
-            "id": "public-role:전략:strategy",
-            "label": "전략",
-            "kind": "folder_group",
-            "documentCount": 31,
-            "share": 1
-          }
-        ],
-        "reconciled": true
-      },
       "topEntities": [
         "doc:pub:1bffb5c1b821510923"
       ]
@@ -102,25 +45,6 @@
       "typedRelations": 0,
       "currentDocuments": 0,
       "authorityL1L2": 0,
-      "constellationComposition": {
-        "unit": "documents",
-        "folderGroupCount": 1,
-        "directDocumentCount": 0,
-        "directDocumentShare": 0,
-        "categoryCount": 1,
-        "largestCategoryId": "public-role:운영-기반:identity",
-        "largestCategoryShare": 1,
-        "categories": [
-          {
-            "id": "public-role:운영-기반:identity",
-            "label": "정체성",
-            "kind": "folder_group",
-            "documentCount": 21,
-            "share": 1
-          }
-        ],
-        "reconciled": true
-      },
       "topEntities": [
         "doc:pub:fbf013c19a7edb91f7"
       ]
@@ -133,25 +57,6 @@
       "typedRelations": 0,
       "currentDocuments": 0,
       "authorityL1L2": 0,
-      "constellationComposition": {
-        "unit": "documents",
-        "folderGroupCount": 1,
-        "directDocumentCount": 0,
-        "directDocumentShare": 0,
-        "categoryCount": 1,
-        "largestCategoryId": "public-role:신호:signal",
-        "largestCategoryShare": 1,
-        "categories": [
-          {
-            "id": "public-role:신호:signal",
-            "label": "신호",
-            "kind": "folder_group",
-            "documentCount": 21,
-            "share": 1
-          }
-        ],
-        "reconciled": true
-      },
       "topEntities": [
         "doc:pub:0c24e7fbc0aca2c4a9"
       ]
@@ -197,7 +102,7 @@
     {
       "id": "doc:pub:d2edeb88f1fb207d2e",
       "path": "public/중심-지식/knowledge.md",
-      "label": "중심 지식 · 중심 지식",
+      "label": "중심 지식 집계",
       "parentId": "tax:pub:group:중심-지식:knowledge",
       "depth": 3,
       "kind": "document",
@@ -263,7 +168,7 @@
     {
       "id": "doc:pub:81d024b4d7d014815c",
       "path": "public/연구-논거/paper.md",
-      "label": "연구 논거 · 연구 논거",
+      "label": "연구 논거 집계",
       "parentId": "tax:pub:group:연구-논거:paper",
       "depth": 3,
       "kind": "document",
@@ -302,7 +207,7 @@
     {
       "id": "doc:pub:1bffb5c1b821510923",
       "path": "public/전략/strategy.md",
-      "label": "전략 · 전략",
+      "label": "전략 집계",
       "parentId": "tax:pub:group:전략:strategy",
       "depth": 3,
       "kind": "document",
@@ -380,7 +285,7 @@
     {
       "id": "doc:pub:0c24e7fbc0aca2c4a9",
       "path": "public/신호/signal.md",
-      "label": "신호 · 신호",
+      "label": "신호 집계",
       "parentId": "tax:pub:group:신호:signal",
       "depth": 3,
       "kind": "document",

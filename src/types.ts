@@ -1,6 +1,14 @@
-export type Workspace = "home" | "explore" | "observe" | "flow" | "time";
-export type ExploreLens = "city" | "lineage" | "constellation";
+export type Workspace = "home" | "explore" | "observe" | "flow" | "time" | "agency";
+export type ExploreLens = "city";
 export type RelationLayer = "wikilink" | "typed" | "route";
+export type AgencyScene = "system" | "roles" | "evolution";
+export type AgencyGroupKind = "core" | "independent";
+export type AgencyLinkKind =
+  | "sets_direction"
+  | "coordinates_boundary"
+  | "owns_surface"
+  | "returns_result"
+  | "returns_evidence";
 export type InsightKind = "latest_pulse" | "strongest_relation" | "knowledge_concentration" | "attention";
 export type InsightConfidence = "high" | "medium" | "low";
 
@@ -50,22 +58,83 @@ export interface PublicationPack {
   blockers: string[];
 }
 
+export interface AgencyGroup {
+  id: string;
+  label: string;
+  kind: AgencyGroupKind;
+  actorIds: string[];
+}
+
+export interface AgencyActor {
+  id: string;
+  label: string;
+  groupId: string;
+  purpose: string;
+  ownedSurfaceId: string;
+  publicOutput: string;
+  proof: string;
+  stopBoundary: string;
+}
+
+export interface AgencySurface {
+  id: string;
+  label: string;
+  actorId: string;
+}
+
+export interface AgencyLink {
+  id: string;
+  source: string;
+  target: string;
+  kind: AgencyLinkKind;
+}
+
+export interface AtlasAgencyV1 {
+  schema: "atlas.agency.v1";
+  generatedAt: string;
+  snapshot: {
+    asOfDate: string;
+    status: "current_at_release_capture";
+    live: false;
+    caveat: string;
+  };
+  principal: {
+    id: "agency:principal:luke";
+    label: "Luke";
+    kind: "human_principal";
+  };
+  groups: AgencyGroup[];
+  actors: AgencyActor[];
+  surfaces: AgencySurface[];
+  links: AgencyLink[];
+  transition: {
+    id: "agency:transition:role-specialization";
+    label: string;
+    kind: "responsibility_specialization";
+    fromModel: "single_coordination";
+    toActorIds: ["actor:control-plane", "actor:daily-runner", "actor:atlas-builder"];
+    evidenceStatus: "verified_operating_model";
+  };
+  evidenceBoundary: string;
+  projectionDigest: string;
+}
+
 export interface SnapshotPack {
   schema: "atlas.snapshot.v7";
   version: string;
   generatedAt: string;
   snapshot: {
-    officialCursor: number;
-    stateSnapshot: string;
-    currentStateHash: string;
-    candidateInputHash: string;
-    activeManifestHash: string;
-    memoryEngineCodeHash: string;
-    memoryIndexHash: string;
+    officialCursor?: number;
+    stateSnapshot?: string;
+    currentStateHash?: string;
+    candidateInputHash?: string;
+    activeManifestHash?: string;
+    memoryEngineCodeHash?: string;
+    memoryIndexHash?: string;
     memoryEngineSchema: string;
-    memoryCorpusDigest: string;
+    memoryCorpusDigest?: string;
     memoryFiles: number;
-    graphConfigHash: string;
+    graphConfigHash?: string;
     graphJsonUsedAsNodeEdgeSource: false;
     activeMarkdownCount: number;
     archiveMarkdownCount: number;
@@ -98,28 +167,8 @@ export interface Entity {
   documentCount?: number;
   mtimeNs?: string;
   ageDays: number | null;
-  sha256: string;
+  sha256?: string;
   frontmatter: Record<string, unknown>;
-}
-
-export interface ConstellationCategory {
-  id: string;
-  label: string;
-  kind: "folder_group" | "direct_documents";
-  documentCount: number;
-  share: number;
-}
-
-export interface ConstellationComposition {
-  unit: "documents";
-  folderGroupCount: number;
-  directDocumentCount: number;
-  directDocumentShare: number;
-  categoryCount: number;
-  largestCategoryId: string | null;
-  largestCategoryShare: number;
-  categories: ConstellationCategory[];
-  reconciled: boolean;
 }
 
 export interface HierarchyNode {
@@ -146,7 +195,6 @@ export interface District {
   typedRelations: number;
   currentDocuments: number;
   authorityL1L2: number;
-  constellationComposition: ConstellationComposition;
   topEntities: string[];
 }
 
@@ -293,6 +341,7 @@ export interface AtlasData {
   };
   insight: InsightPack;
   publication: PublicationPack;
+  agency: AtlasAgencyV1;
 }
 
 declare global {

@@ -1,34 +1,20 @@
-import { z } from "zod";
-import type { AtlasData, Entity } from "./types";
+import type { AtlasData } from "./types";
+import { agencyTruthFailures } from "./agency/presentation";
 
-const workspaceSchema = z.enum(["home", "explore", "observe", "flow", "time"]);
-const relationLayerSchema = z.enum(["wikilink", "typed", "route"]);
 export const DEFAULT_DAILY_ROUTE_ID = "daily";
-
-const neighborBaseShape = {
-  id: z.string(),
-  direction: z.enum(["incoming", "outgoing"]),
-  weight: z.number(),
-  evidence: z.string().nullable(),
-};
-
-const neighborSchema = z.discriminatedUnion("layer", [
-  z.object({
-    ...neighborBaseShape,
-    layer: z.literal("wikilink"),
-    relation: z.literal("wikilink"),
-  }).strict(),
-  z.object({
-    ...neighborBaseShape,
-    layer: z.literal("typed"),
-    relation: z.string().min(1),
-  }).strict(),
-  z.object({
-    ...neighborBaseShape,
-    layer: z.literal("route"),
-    relation: z.string().min(1),
-  }).strict(),
-]);
+const RELATION_LAYERS = ["wikilink", "typed", "route"] as const;
+const REQUIRED_RUNTIME_PACKS = [
+  "agency",
+  "bootstrap",
+  "structure",
+  "relation",
+  "flow",
+  "temporal",
+  "entity",
+  "health",
+  "insight",
+  "publication",
+] as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -140,259 +126,6 @@ export function restoreRelationBrowserWireDefaults(candidate: unknown): unknown 
   };
 }
 
-const entitySchema = z.object({
-  id: z.string().startsWith("doc:"),
-  fileId: z.number().int().positive().optional(),
-  path: z.string().min(1),
-  title: z.string().min(1),
-  displayLabel: z.string().min(1),
-  aliases: z.array(z.string()),
-  tags: z.array(z.string()),
-  parentId: z.string(),
-  district: z.string().min(1),
-  topLevel: z.string().min(1),
-  depth: z.number().int().nonnegative(),
-  authority: z.string().min(1),
-  currentness: z.string().min(1),
-  currentnessRaw: z.string(),
-  surfaceRole: z.string().min(1),
-  sourceRole: z.string(),
-  defaultPreload: z.boolean(),
-  wordCount: z.number().nonnegative(),
-  documentCount: z.number().int().nonnegative().optional(),
-  mtimeNs: z.string().optional(),
-  ageDays: z.number().nonnegative().nullable(),
-  sha256: z.string().length(64),
-  frontmatter: z.record(z.string(), z.unknown()),
-}).strict();
-
-const hierarchySchema = z.object({
-  id: z.string().min(1),
-  path: z.string(),
-  label: z.string().min(1),
-  parentId: z.string().nullable(),
-  depth: z.number().int().nonnegative(),
-  kind: z.enum(["vault", "district", "folder", "document"]),
-  authority: z.string().min(1).optional(),
-  currentness: z.string().min(1).optional(),
-  surfaceRole: z.string().min(1).optional(),
-  value: z.number().nonnegative().optional(),
-  childrenCount: z.number().int().nonnegative(),
-  documentCount: z.number().int().nonnegative(),
-  authorityL1L2: z.number().int().nonnegative(),
-}).strict();
-
-const constellationCompositionSchema = z.object({
-  unit: z.literal("documents"),
-  folderGroupCount: z.number().int().nonnegative(),
-  directDocumentCount: z.number().int().nonnegative(),
-  directDocumentShare: z.number().min(0).max(1),
-  categoryCount: z.number().int().nonnegative(),
-  largestCategoryId: z.string().nullable(),
-  largestCategoryShare: z.number().min(0).max(1),
-  categories: z.array(z.object({
-    id: z.string().min(1),
-    label: z.string().min(1),
-    kind: z.enum(["folder_group", "direct_documents"]),
-    documentCount: z.number().int().positive(),
-    share: z.number().positive().max(1),
-  }).strict()),
-  reconciled: z.literal(true),
-}).strict();
-
-const matrixSchema = z.object({
-  id: z.string().startsWith("pair:"),
-  source: z.string().min(1),
-  target: z.string().min(1),
-  wikilink: z.number().nonnegative(),
-  wikilinkForward: z.number().nonnegative(),
-  wikilinkReverse: z.number().nonnegative(),
-  typed: z.number().nonnegative(),
-  typedForward: z.number().nonnegative(),
-  typedReverse: z.number().nonnegative(),
-  route: z.number().nonnegative(),
-  total: z.number().nonnegative(),
-});
-
-const relationCoverageLayerSchema = z.object({
-  unit: z.enum(["resolved_link_occurrence", "typed_relation", "curated_cross_district_route_pair"]),
-  total: z.number().int().nonnegative(),
-  interDistrict: z.number().int().nonnegative(),
-  intraDistrict: z.number().int().nonnegative(),
-  displayed: z.number().int().nonnegative(),
-  reconciled: z.boolean(),
-  boundary: z.string().min(1),
-});
-
-const insightSchema = z.object({
-  schema: z.literal("atlas.insight.v1"),
-  generatedAt: z.string(),
-  evidenceBoundary: z.string().min(1),
-  items: z.array(z.object({
-    id: z.string().min(1),
-    kind: z.enum(["latest_pulse", "strongest_relation", "knowledge_concentration", "attention"]),
-    question: z.string().min(1),
-    headline: z.string().min(1),
-    metric: z.object({ value: z.union([z.number(), z.string()]), label: z.string(), unit: z.string().optional() }),
-    evidenceRefs: z.array(z.string()).min(1),
-    targetScene: z.object({
-      workspace: workspaceSchema,
-      scene: z.string().min(1),
-      focusId: z.string().optional(),
-      lens: z.enum(["city", "lineage", "constellation"]).optional(),
-      relationPairId: z.string().optional(),
-      relationLayer: relationLayerSchema.optional(),
-      routeId: z.string().optional(),
-      eraId: z.number().int().positive().optional(),
-    }),
-    confidence: z.enum(["high", "medium", "low"]),
-    caveat: z.string(),
-    publicSafe: z.boolean(),
-  })).length(4),
-});
-
-const publicationSchema = z.object({
-  schema: z.literal("atlas.publication.v1"),
-  profile: z.enum(["internal", "public"]),
-  generatedAt: z.string(),
-  publicSnapshotDigest: z.string().nullable(),
-  allowedSurfaces: z.array(z.string()),
-  excludedFields: z.array(z.string()),
-  redactionCounts: z.record(z.string(), z.number().int().nonnegative()),
-  blockers: z.array(z.string()),
-});
-
-const atlasSchema = z.object({
-  bootstrap: z.object({
-    schema: z.literal("atlas.snapshot.v7"),
-    version: z.string(),
-    generatedAt: z.string(),
-    snapshot: z.object({
-      officialCursor: z.number().int(),
-      stateSnapshot: z.string().min(16),
-      currentStateHash: z.string().length(64),
-      candidateInputHash: z.string().length(64),
-      activeManifestHash: z.string().length(64),
-      memoryEngineCodeHash: z.string().length(64),
-      memoryIndexHash: z.string().length(64),
-      memoryEngineSchema: z.string(),
-      memoryCorpusDigest: z.string().length(64),
-      memoryFiles: z.number().int().positive(),
-      graphConfigHash: z.string().length(64),
-      graphJsonUsedAsNodeEdgeSource: z.literal(false),
-      activeMarkdownCount: z.number().int().positive(),
-      archiveMarkdownCount: z.number().int().nonnegative(),
-      buildState: z.string(),
-    }),
-    proofBoundary: z.record(z.string(), z.string()),
-    workspaces: z.array(workspaceSchema).length(5),
-    defaultFocus: z.string(),
-  }),
-  structure: z.object({
-    districts: z.array(z.object({
-      id: z.string(),
-      name: z.string(),
-      documentCount: z.number().int().nonnegative(),
-      wordCount: z.number().nonnegative(),
-      typedRelations: z.number().int().nonnegative(),
-      currentDocuments: z.number().int().nonnegative(),
-      authorityL1L2: z.number().int().nonnegative(),
-      constellationComposition: constellationCompositionSchema,
-      topEntities: z.array(z.string()),
-    }).strict()),
-    hierarchyNodes: z.array(hierarchySchema).min(1),
-    rootId: z.string(),
-    archiveScope: z.object({
-      active: z.number().int().positive(),
-      archive: z.number().int().nonnegative(),
-      defaultState: z.string(),
-    }),
-  }),
-  relation: z.object({
-    districtOrder: z.array(z.string()).min(1),
-    matrix: z.array(matrixSchema),
-    typedRelations: z.array(z.object({
-      id: z.string(), source: z.string(), target: z.string(), relation: z.string(),
-      evidence: z.string(), state: z.string(), layer: z.literal("typed"), proofState: z.string(),
-    }).passthrough()),
-    routeCoMembership: z.array(z.record(z.string(), z.unknown())),
-    neighborhoods: z.record(z.string(), z.array(neighborSchema)),
-    layerDefinitions: z.array(z.object({ id: relationLayerSchema, label: z.string(), meaning: z.string() })),
-    availableLayers: z.array(relationLayerSchema).min(1),
-    redactedLayers: z.array(relationLayerSchema),
-    coverage: z.object({
-      resolvedLinkPairs: z.number().int().nonnegative(),
-      resolvedLinkWeight: z.number().int().nonnegative(),
-      unresolvedLinks: z.record(z.string(), z.number().int().nonnegative()),
-      unresolvedLinkTotal: z.number().int().nonnegative(),
-      ambiguousLinks: z.number().int().nonnegative(),
-      typedRelations: z.number().int().nonnegative(),
-      layers: z.object({
-        wikilink: relationCoverageLayerSchema,
-        typed: relationCoverageLayerSchema,
-        route: relationCoverageLayerSchema,
-      }),
-      boundary: z.string(),
-    }),
-  }),
-  flow: z.object({
-    coordinateContract: z.object({
-      mode: z.literal("route_local_small_multiples"),
-      sharedXAxis: z.literal(false),
-      xUnit: z.literal("route-local ordered station index"),
-      crossRouteAlignmentMeaning: z.literal("none"),
-      readerLabel: z.string().min(1),
-    }),
-    routes: z.array(z.object({
-      id: z.string(), label: z.string(), question: z.string(), members: z.array(z.string()),
-      provenance: z.literal("curated_operating_lens"), classifier: z.string(), sourceRefs: z.array(z.string()),
-      stations: z.array(z.object({
-        id: z.string(),
-        label: z.string(),
-        order: z.number().int(),
-        entityId: z.string().nullable(),
-        external: z.boolean(),
-        kind: z.enum(["standard", "proof_gate", "external"]).optional(),
-      })),
-    })).min(1),
-    pulse: z.object({
-      latestDailyId: z.string().nullable(), latestDailyDate: z.string().nullable(),
-      sourceItemCount: z.number().nullable(), chains: z.array(z.record(z.string(), z.unknown())),
-    }),
-  }),
-  temporal: z.object({
-    eras: z.array(z.object({
-      id: z.number().int().positive(), title: z.string(), range: z.string(), thesis: z.string(),
-      evidenceRefs: z.array(z.string()), evidenceClass: z.string(),
-      deltas: z.array(z.object({
-        state: z.enum(["born", "persisted", "weakened", "retired", "unknown"]),
-        label: z.string(), evidenceRef: z.string(), evidenceAnchor: z.string(), evidenceClass: z.string(),
-        evidenceStatus: z.literal("recorded"),
-      })),
-      unknown: z.array(z.string()), proofBoundary: z.string(),
-    })).min(1),
-    currentEra: z.number().int().positive(),
-  }),
-  entity: z.object({ entities: z.array(entitySchema).min(1), searchFields: z.array(z.string()) }),
-  health: z.object({
-    memoryEngine: z.record(z.string(), z.unknown()),
-    currentnessCounts: z.record(z.string(), z.number()),
-    authorityCounts: z.record(z.string(), z.number()),
-    unresolvedLinks: z.record(z.string(), z.number()),
-    ambiguousAutoSelections: z.literal(0),
-    unresolvedTypedRelations: z.literal(0),
-    activeIsolates: z.array(z.string()),
-    countReconciliation: z.object({
-      entities: z.number().int().positive(),
-      memoryFiles: z.number().int().positive(),
-      hierarchyDocuments: z.number().int().positive(),
-      pass: z.literal(true),
-    }),
-  }),
-  insight: insightSchema,
-  publication: publicationSchema,
-});
-
 export function showFatalDataError(message: string) {
   const root = document.getElementById("root");
   if (!root) return;
@@ -439,6 +172,7 @@ export function collectAtlasReferenceFailures(candidate: AtlasData): string[] {
     : activeEntityCount;
   const memoryEngineFiles = candidate.health.memoryEngine.files;
   const failures = [
+    ...agencyTruthFailures(candidate.agency).map((failure) => `agency:${failure}`),
     ...entityIdList
       .filter((id, index) => entityIdList.indexOf(id) !== index)
       .map((id) => `entity-duplicate:${id}`),
@@ -541,7 +275,7 @@ export function collectAtlasReferenceFailures(candidate: AtlasData): string[] {
       failures.push(`matrix-wikilink-direction:${cell.id}`);
     }
   }
-  for (const layer of relationLayerSchema.options) {
+  for (const layer of RELATION_LAYERS) {
     const coverage = candidate.relation.coverage.layers[layer];
     if (coverage.total !== coverage.interDistrict + coverage.intraDistrict) {
       failures.push(`coverage-total:${layer}`);
@@ -575,7 +309,7 @@ export function collectAtlasReferenceFailures(candidate: AtlasData): string[] {
   const redactedLayerSet = new Set(candidate.relation.redactedLayers);
   if (availableLayerSet.size !== candidate.relation.availableLayers.length) failures.push("available-layer-duplicate");
   if (redactedLayerSet.size !== candidate.relation.redactedLayers.length) failures.push("redacted-layer-duplicate");
-  for (const layer of relationLayerSchema.options) {
+  for (const layer of RELATION_LAYERS) {
     if (availableLayerSet.has(layer) === redactedLayerSet.has(layer)) failures.push(`relation-layer-boundary:${layer}`);
   }
 
@@ -640,39 +374,32 @@ export function validateAtlasPacks(candidate: unknown): AtlasData {
     showFatalDataError(message);
     throw new Error(message);
   }
-  const parsed = atlasSchema.safeParse(restoreRelationBrowserWireDefaults(candidate));
-  if (!parsed.success) {
-    const details = parsed.error.issues
-      .slice(0, 5)
-      .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
-      .join(" | ");
-    const message = `Atlas v7 데이터 계약 위반: ${details}`;
+
+  const restored = restoreRelationBrowserWireDefaults(candidate);
+  if (!isJsonObject(restored)) {
+    const message = "Atlas v7 데이터 계약 위반: atlas must be an aggregate JSON object.";
     showFatalDataError(message);
     throw new Error(message);
   }
-
-  const validated = parsed.data as unknown as AtlasData;
-  const referenceFailures = collectAtlasReferenceFailures(validated);
-  if (referenceFailures.length) {
-    const message = `Atlas v7 데이터 참조 무결성 실패: ${referenceFailures.slice(0, 8).join(", ")}`;
+  const missingPack = REQUIRED_RUNTIME_PACKS.find((name) => !isJsonObject(restored[name]));
+  if (missingPack) {
+    const message = `Atlas v7 데이터 계약 위반: atlas.${missingPack} is missing.`;
     showFatalDataError(message);
     throw new Error(message);
   }
-  return validated;
-}
-
-const atlas = validateAtlasPacks(window.__HOMI_ATLAS_V7_PACKS__);
-
-export const atlasData = atlas;
-export const entityById = new Map<string, Entity>(
-  atlasData.entity.entities.map((entity) => [entity.id, entity]),
-);
-export const hierarchyById = new Map(
-  atlasData.structure.hierarchyNodes.map((node) => [node.id, node]),
-);
-
-export function hierarchyFocusForDistrict(name: string) {
-  return atlasData.structure.hierarchyNodes.find(
-    (node) => node.kind === "district" && node.label === name,
-  )?.id ?? null;
+  const expectedPackNames = new Set<string>(REQUIRED_RUNTIME_PACKS);
+  const unknownPack = Object.keys(restored).find((name) => !expectedPackNames.has(name));
+  if (unknownPack) {
+    const message = `Atlas v7 데이터 계약 위반: atlas.${unknownPack} is not allowed.`;
+    showFatalDataError(message);
+    throw new Error(message);
+  }
+  if ((restored.agency as Record<string, unknown>).schema !== "atlas.agency.v1"
+    || (restored.bootstrap as Record<string, unknown>).schema !== "atlas.snapshot.v7"
+    || (restored.publication as Record<string, unknown>).schema !== "atlas.publication.v1") {
+    const message = "Atlas v7 데이터 계약 위반: public pack schema envelope mismatch.";
+    showFatalDataError(message);
+    throw new Error(message);
+  }
+  return restored as unknown as AtlasData;
 }

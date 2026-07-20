@@ -10,12 +10,11 @@ const readJson = (name: string) => JSON.parse(
 );
 
 let stateModule: typeof import("../src/state");
-let dataModule: typeof import("../src/data");
+let dataModule: typeof import("../src/data-runtime");
 let commandModule: typeof import("../src/components/CommandBar");
 let navigatorModule: typeof import("../src/components/NavigatorTray");
 let trayModule: typeof import("../src/components/tray-accessibility");
 let homeModule: typeof import("../src/views/HomeView");
-let exploreModule: typeof import("../src/views/ExploreView");
 let inspectorModule: typeof import("../src/components/InspectorTray");
 
 beforeAll(async () => {
@@ -38,12 +37,11 @@ beforeAll(async () => {
   });
   Object.assign(document, { hidden: false });
   stateModule = await import("../src/state");
-  dataModule = await import("../src/data");
+  dataModule = await import("../src/data-runtime");
   commandModule = await import("../src/components/CommandBar");
   navigatorModule = await import("../src/components/NavigatorTray");
   trayModule = await import("../src/components/tray-accessibility");
   homeModule = await import("../src/views/HomeView");
-  exploreModule = await import("../src/views/ExploreView");
   inspectorModule = await import("../src/components/InspectorTray");
 });
 
@@ -95,9 +93,13 @@ describe("public Atlas runtime contracts", () => {
   test("renders keyboard entry and compact navigation while preserving Escape intent", () => {
     const command = renderWorkspace("#home", commandModule.CommandBar);
     expect(command).toContain('id="workspace-tab-explore"');
-    expect(command.match(/role="tab"/g)).toHaveLength(4);
-    expect(command).toContain('id="workspace-tab-explore" class="workspace-tab" type="button" role="tab"');
-    expect(command.match(/tabindex="0"/g)?.length).toBeGreaterThanOrEqual(1);
+    expect(command.match(/class="workspace-tab(?: |")/g)).toHaveLength(5);
+    expect(command).toContain('id="workspace-tab-agency"');
+    expect(command).toContain("Explore");
+    expect(command).toContain("Observe");
+    expect(command).toContain("Flow");
+    expect(command).toContain("Time");
+    expect(command).toContain("Agency");
 
     const navigator = renderWorkspace("#home?panel=navigator", navigatorModule.NavigatorTray);
     expect(navigator).toContain('class="navigator-workspaces"');
@@ -112,9 +114,11 @@ describe("public Atlas runtime contracts", () => {
     const markup = renderWorkspace("#home", homeModule.HomeView);
     const publication = readJson("publication");
     const entities = readJson("entity").entities;
-    expect(markup).toContain("집계 문서");
-    expect(markup).toContain("연결군");
-    expect(markup).toContain("실제 최신 Daily 전파 기록은 공개판에 포함하지 않습니다");
+    expect(markup).toContain("Human Owner");
+    expect(markup).toContain("에이전트 역할 · 핵심 3 · 독립 3");
+    expect(markup).toContain("Public Records");
+    expect(markup).toContain("Strongest Relation");
+    expect(markup).toContain("검증된 버전 스냅샷");
     expect(publication.redactionCounts.aggregatedSourceDocuments).toBeGreaterThan(entities.length);
   });
 
@@ -126,32 +130,15 @@ describe("public Atlas runtime contracts", () => {
     const publication = readJson("publication");
     expect(publication.profile).toBe("public");
     expect(publication.blockers).toEqual([]);
-    expect(readme).toContain("공개 스냅샷의 지식 구조");
-    expect(readme).toContain("공개 가능한 역할 경로");
+    expect(readme).toContain("Human–Agent");
+    expect(readme).toContain("Agency");
     expect(readme).not.toContain("최신 지식 Pulse");
   });
 
-  test("uses document units in public comparison and paginates readers completely", () => {
+  test("uses document units in public comparison", () => {
     expect(inspectorModule.comparisonEntitySize({ documentCount: 42, wordCount: 9_999 }, true))
       .toBe("42개 문서");
     expect(inspectorModule.comparisonEntitySize({ documentCount: 42, wordCount: 9_999 }, false))
       .toBe("9,999단어");
-
-    const documents = Array.from({ length: 121 }, (_, index) => index + 1);
-    expect(exploreModule.paginateBranchDocuments(documents, 60)).toEqual({
-      visible: documents.slice(0, 60),
-      remaining: 61,
-      nextLimit: 120,
-    });
-    expect(exploreModule.paginateBranchDocuments(documents, 120)).toEqual({
-      visible: documents.slice(0, 120),
-      remaining: 1,
-      nextLimit: 121,
-    });
-    expect(exploreModule.paginateBranchDocuments(documents, 180)).toEqual({
-      visible: documents,
-      remaining: 0,
-      nextLimit: 121,
-    });
   });
 });

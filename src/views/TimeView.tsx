@@ -1,8 +1,8 @@
-import { ArrowRight, Clock3, GitBranch, Sparkles } from "lucide-react";
-import { area, curveCatmullRom } from "d3";
+import { ArrowRight, CheckCircle2, Clock3, GitBranch } from "lucide-react";
+import { area, curveCatmullRom } from "d3-shape";
 import { useEffect, useMemo, useRef } from "react";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
-import { atlasData, entityById } from "../data";
+import { atlasData, entityById } from "../data-runtime";
 import { useElementSize } from "../hooks/useElementSize";
 import { useAtlasState } from "../state";
 import {
@@ -104,6 +104,16 @@ export function TimeView() {
           <h2>{era.title}</h2>
           <p className="era-range">{formatEraRange(era.range, era.id)}</p>
           <p className="era-thesis">{era.thesis}</p>
+          {era.id === 11 && (
+            <aside className="agency-evolution-callout" aria-label="운영 모델 전문화 안내">
+              <span className="eyebrow">AGENCY · OPERATING MODEL</span>
+              <strong>단일 관리 세션 중심 → 역할별 세 지속 세션</strong>
+              <p>문서 생애주기 수치와 섞지 않은 운영 구조 스냅샷입니다.</p>
+              <button type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "agency", sceneId: "evolution" } })}>
+                Agency / Evolution 보기 <ArrowRight size="15" aria-hidden="true" />
+              </button>
+            </aside>
+          )}
           <div className="era-delta-ledger">
             {eraSummary.recordedDeltas.map((delta) => (
               <div key={`${delta.state}:${delta.label}`} title={`${delta.evidenceRef}#${delta.evidenceAnchor}`}><i style={{ background: eraStateColors[delta.state] }} /><span><strong>{delta.label}</strong><small>{lifecycleStateLabel(delta.state)} · 기록 확인 · {evidenceLabel(delta.evidenceClass)}</small></span></div>
@@ -265,13 +275,23 @@ function MobileTime() {
           선택 해석 보기
         </button>
       </section>
+      {era.id === 11 && (
+        <aside className="agency-evolution-callout is-mobile" aria-label="운영 모델 전문화 안내">
+          <span className="eyebrow">AGENCY · EVOLUTION</span>
+          <strong>역할별 세 지속 세션으로 전문화</strong>
+          <p>시간 변화 수치와 분리된 운영 구조 스냅샷입니다.</p>
+          <button type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "agency", sceneId: "evolution" } })}>
+            구조 보기 <ArrowRight size="15" aria-hidden="true" />
+          </button>
+        </aside>
+      )}
       <div className="mobile-era-scrubber" role="region" aria-label="시대 장면 선택, 가로로 스크롤 가능" tabIndex={0}>
         {atlasData.temporal.eras.map((item) => <button key={item.id} ref={item.id === state.eraId ? activeEraRef : undefined} type="button" aria-label={`시대 장면 ${item.id}: ${item.title}`} aria-pressed={item.id === state.eraId} className={item.id === state.eraId ? "is-active" : ""} onClick={() => dispatch({ type: "era", eraId: item.id })}>{item.id}</button>)}
       </div>
       <section className="mobile-ranked-list" role="region" aria-label="선택한 시대 장면의 변화 목록" tabIndex={0}>
         <h3>이 시대 장면의 변화</h3>
         {eraSummary.recordedDeltas.map((delta) => (
-          <div className="mobile-era-row" key={`${delta.state}:${delta.label}`}><i style={{ background: eraStateColors[delta.state] }} /><span><strong>{delta.label}</strong><small>{lifecycleStateLabel(delta.state)} · 기록 확인</small></span><Sparkles size={16} /></div>
+          <div className="mobile-era-row" key={`${delta.state}:${delta.label}`}><i style={{ background: eraStateColors[delta.state] }} /><span><strong>{delta.label}</strong><small>{lifecycleStateLabel(delta.state)} · 기록 확인</small></span><CheckCircle2 size={16} aria-hidden="true" /></div>
         ))}
         {eraSummary.unrecordedDeltas.length > 0 && (
           <div className="mobile-era-row"><i style={{ background: eraStateColors.unknown }} /><span><strong>근거 미기록 변화 {eraSummary.unrecordedDeltas.length}개</strong><small>생애주기 판정에서 제외</small></span><Clock3 size={16} /></div>

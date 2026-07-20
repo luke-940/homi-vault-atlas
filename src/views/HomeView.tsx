@@ -1,289 +1,535 @@
-import { ArrowRight, Compass, FastForward, Pause, Play, Sparkles } from "lucide-react";
-import homiLockup from "../assets/brand/homi-ai-lockup-light-amber.svg";
-import { atlasData, entityById } from "../data";
+import {
+  ArrowRight,
+  Box,
+  Layers3,
+  Link2,
+  Radio,
+  Rocket,
+  SearchCheck,
+  ShieldCheck,
+  Sprout,
+  UserRound,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useReducedMotion } from "motion/react";
+import * as m from "motion/react-m";
+import {
+  actorSurfaceLabel,
+  actorsByGroup,
+  currentHomeScene,
+  DISTRICT_COLORS,
+  HOME_SCENES,
+  MOTION_SECONDS,
+  publicDocumentCount,
+  strongestKnowledgeRelation,
+  type HomeSceneId,
+} from "../agency/presentation";
+import { atlasData } from "../data-runtime";
 import { useAtlasState } from "../state";
-import type { AtlasInsight, InsightTargetScene } from "../types";
+import type { AgencyActor, MatrixCell } from "../types";
 
-const publicProfile = atlasData.publication.profile === "public";
-const guideSteps = [
-  {
-    title: publicProfile ? "역할 경로를 먼저 읽기" : "Pulse를 먼저 읽기",
-    body: publicProfile
-      ? "왼쪽 경로는 공개 가능한 역할과 작업 순서를 요약합니다. 실제 최신 Daily 전파 기록은 공개판에 포함하지 않습니다."
-      : "왼쪽 경로는 최신 Daily 관계 영수증이 중심 지식과 terminal state까지 확인한 범위를 보여줍니다.",
-  },
-  {
-    title: "네 가지 인사이트 고르기",
-    body: "오른쪽 네 줄은 수량과 관계 근거가 있는 현재 답입니다. 누르면 해당 지도의 정확한 장면으로 이동합니다.",
-  },
-  {
-    title: "한 객체를 끝까지 따라가기",
-    body: "탐색, 관측, 흐름, 시간에서도 같은 선택을 유지합니다. 검색은 어디서든 Cmd+K로 열 수 있습니다.",
-  },
-] as const;
-const homeDocumentCount = publicProfile
-  ? atlasData.publication.redactionCounts.aggregatedSourceDocuments
-    ?? atlasData.bootstrap.snapshot.activeMarkdownCount
-  : atlasData.bootstrap.snapshot.activeMarkdownCount;
-const homeDocumentLabel = publicProfile ? "집계 문서" : "활성 문서";
-const homeRelationCount = publicProfile
-  ? atlasData.relation.matrix.length
-  : atlasData.relation.coverage.typedRelations;
-const homeRelationLabel = publicProfile ? "연결군" : "명시 관계";
+const actorIcons = {
+  "actor:control-plane": ShieldCheck,
+  "actor:daily-runner": Radio,
+  "actor:atlas-builder": Box,
+  "actor:rocket-manager": Rocket,
+  "actor:groot-manager": Sprout,
+  "actor:intelligence-layer-manager": Layers3,
+} as const;
 
-function targetToJourney(target: InsightTargetScene) {
-  return {
-    workspace: target.workspace,
-    sceneId: target.scene,
-    focusId: target.focusId,
-    lens: target.lens,
-    relationPairId: target.relationPairId,
-    relationLayer: target.relationLayer,
-    routeId: target.routeId,
-    eraId: target.eraId,
-  };
+const publicDistrictAliases: Record<string, string> = {
+  MOC: "중심 지식",
+  Papers: "연구 논거",
+  Strategy: "전략",
+  Signals: "신호",
+  "Console/Homi": "운영 기반",
+};
+
+const terrainPositions: Record<string, { x: number; y: number }> = {
+  "중심 지식": { x: 92, y: 154 },
+  "연구 논거": { x: 260, y: 92 },
+  전략: { x: 430, y: 164 },
+  "운영 기반": { x: 602, y: 100 },
+  신호: { x: 756, y: 166 },
+  "공개 근거 경계": { x: 858, y: 82 },
+};
+
+const terrainPositionsMobile: Record<string, { x: number; y: number }> = {
+  "중심 지식": { x: 150, y: 64 },
+  "연구 논거": { x: 460, y: 44 },
+  전략: { x: 770, y: 64 },
+  "운영 기반": { x: 150, y: 164 },
+  신호: { x: 460, y: 144 },
+  "공개 근거 경계": { x: 770, y: 164 },
+};
+
+function normalizeDistrict(name: string) {
+  return publicDistrictAliases[name] ?? name;
 }
 
-function insightLabel(insight: AtlasInsight) {
-  return ({
-    latest_pulse: publicProfile ? "공개 역할 경로" : "최신 Pulse",
-    strongest_relation: "가장 강한 연결",
-    knowledge_concentration: "지식 집중 구역",
-    attention: "주의 신호",
-  } as const)[insight.kind];
+function useOpeningScene() {
+  const shouldReduceMotion = useReducedMotion();
+  const [play, setPlay] = useState(() => {
+    if (shouldReduceMotion) return false;
+    try {
+      return window.sessionStorage.getItem("homi-atlas-v7-3-home-entry-seen") !== "1";
+    } catch {
+      return true;
+    }
+  });
+  useEffect(() => {
+    if (!play) return;
+    try { window.sessionStorage.setItem("homi-atlas-v7-3-home-entry-seen", "1"); } catch { /* session storage is optional */ }
+    const timer = window.setTimeout(() => setPlay(false), 800);
+    return () => window.clearTimeout(timer);
+  }, [play]);
+  return { play, shouldReduceMotion: Boolean(shouldReduceMotion) };
 }
 
-function shortPulseLabel(value: string) {
-  return value.length > 26 ? `${value.slice(0, 24).trimEnd()}…` : value;
-}
-
-function KnowledgePulseMap() {
-  const { state, dispatch } = useAtlasState();
-  const pulse = atlasData.flow.pulse;
-  const chains = pulse.chains.slice(0, 4);
-  const rows = [154, 254, 354, 454];
-
+function HomeSceneRail({ active }: { active: HomeSceneId }) {
+  const { dispatch } = useAtlasState();
   return (
-    <div className="home-pulse-map" aria-label={publicProfile ? "공개 가능한 지식 작업 역할 경로" : "최신 Daily 관계 영수증이 확인한 중심 지식과 terminal state"}>
-      <svg viewBox="0 0 1120 610" role="group" aria-labelledby="pulse-map-title pulse-map-desc">
-        <title id="pulse-map-title">{publicProfile ? "공개 역할 경로" : `${pulse.latestDailyDate ?? "최근 Daily"} 지식 Pulse`}</title>
-        <desc id="pulse-map-desc">{publicProfile ? "공개 가능한 역할과 작업 순서를 집계한 경로. 실제 최신 Daily 전파 완료를 주장하지 않는다." : "소스 창과 읽기용 표면은 경계로 표시하고, 움직이는 신호는 Daily 관계 영수증이 중심 지식과 terminal state까지 확인한 범위에만 사용한다."}</desc>
-        <defs>
-          <pattern id="pulse-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M40 0H0V40" fill="none" stroke="rgba(44,77,66,.075)" strokeWidth="1" />
-          </pattern>
-          <linearGradient id="pulse-trunk" x1="0" x2="1">
-            <stop offset="0" stopColor="#63a7a0" />
-            <stop offset=".55" stopColor="#6f8fd8" />
-            <stop offset="1" stopColor="#ed9840" />
-          </linearGradient>
-          <filter id="pulse-soft-shadow" x="-40%" y="-40%" width="180%" height="180%">
-            <feDropShadow dx="0" dy="6" stdDeviation="8" floodColor="#294c41" floodOpacity=".16" />
-          </filter>
-        </defs>
-        <rect width="1120" height="610" fill="url(#pulse-grid)" />
-        <path className="pulse-backbone" d="M92 304 C165 304 198 304 260 304 C330 304 350 304 414 304" />
-        {chains.map((chain, index) => {
-          const stages = chain.stages as Array<{ role: string; label: string; entityId: string | null }>;
-          const knowledge = stages.find((stage) => stage.role === "knowledge");
-          const decision = stages.find((stage) => stage.role === "decision");
-          const entity = knowledge?.entityId ? entityById.get(knowledge.entityId) : undefined;
-          const fullLabel = entity?.displayLabel ?? knowledge?.label ?? "중심 지식";
-          const y = rows[index];
-          const path = `M288 304 C398 304 430 ${y} 534 ${y} L620 ${y}`;
-          const selected = state.focusId === knowledge?.entityId;
-          const previewed = state.previewId === knowledge?.entityId;
-          const interactive = Boolean(knowledge?.entityId);
-          return (
-            <g key={String(chain.id)} className={`pulse-chain${selected ? " is-selected" : ""}${previewed ? " is-preview" : ""}`}>
-              <path id={`pulse-path-${index}`} className="pulse-branch" d={path} />
-              <g
-                className="pulse-knowledge-node"
-                transform={`translate(620 ${y})`}
-                role={interactive ? "button" : undefined}
-                tabIndex={interactive ? 0 : undefined}
-                aria-label={`${fullLabel}, ${decision?.label ?? "판단 상태"}`}
-                onPointerEnter={() => knowledge?.entityId && dispatch({ type: "preview", focusId: knowledge.entityId })}
-                onPointerLeave={() => dispatch({ type: "preview", focusId: null })}
-                onFocus={() => knowledge?.entityId && dispatch({ type: "preview", focusId: knowledge.entityId })}
-                onBlur={() => dispatch({ type: "preview", focusId: null })}
-                onClick={() => knowledge?.entityId && dispatch({ type: "focus", focusId: knowledge.entityId })}
-                onKeyDown={(event) => {
-                  if ((event.key === "Enter" || event.key === " ") && knowledge?.entityId) {
-                    event.preventDefault();
-                    dispatch({ type: "focus", focusId: knowledge.entityId });
-                  }
-                }}
-              >
-                <title>{`${fullLabel} · ${decision?.label ?? "판단 상태"}`}</title>
-                <circle r="44" fill="#f8fbf9" stroke={selected ? "#ed9840" : "#79aaa0"} strokeWidth={selected ? 4 : 2} filter="url(#pulse-soft-shadow)" />
-                <circle r="30" fill={index % 2 ? "#e7ecfb" : "#e4f1ed"} stroke="rgba(35,77,65,.2)" />
-                <circle r="5" fill={selected ? "#ed9840" : "#376e63"} />
-                <text y="62" textAnchor="middle" className="pulse-node-label">
-                  <tspan x="0">{shortPulseLabel(fullLabel)}</tspan>
-                  <tspan x="0" dy="15" className="pulse-node-state">{decision?.label ?? "판단 상태"}</tspan>
-                </text>
-              </g>
-              {!state.reducedMotion && !document.hidden && !publicProfile && knowledge?.entityId && (
-                <circle className="home-pulse-packet" r="5" fill="#ed9840" opacity="0">
-                  <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;.08;.88;1" dur={`${1.55 + index * 0.12}s`} begin={`${0.3 + index * 0.14}s`} fill="freeze" />
-                  <animateMotion dur={`${1.55 + index * 0.12}s`} begin={`${0.3 + index * 0.14}s`} repeatCount="1" fill="freeze" path={path} />
-                </circle>
-              )}
-            </g>
-          );
-        })}
-        <g className="pulse-origin" transform="translate(92 304)">
-          <circle r="47" fill="#e5f2ee" stroke="#5b9d93" strokeWidth="2" />
-          <circle r="10" fill="#5b9d93" />
-          <text y="73" textAnchor="middle"><tspan x="0">{publicProfile ? "역할 기준" : "소스 창"}</tspan><tspan x="0" dy="15" className="pulse-node-state">{publicProfile ? "공개 집계" : `${pulse.sourceItemCount ?? "확인"}건 검토`}</tspan></text>
-        </g>
-        <g className="pulse-daily" transform="translate(288 304)">
-          <path d="M0-54 46-27 46 27 0 54-46 27-46-27Z" fill="#e8edfb" stroke="#6d86c8" strokeWidth="2.5" />
-          <circle r="9" fill="#6d86c8" />
-          <text y="78" textAnchor="middle"><tspan x="0">{publicProfile ? "작업 경로" : "Daily"}</tspan><tspan x="0" dy="15" className="pulse-node-state">{publicProfile ? "대표 순서" : pulse.latestDailyDate ?? "최근"}</tspan></text>
-        </g>
-        <path className="pulse-outbound is-boundary" d="M842 304 C910 304 954 304 1020 304" />
-        <g className="pulse-readable" transform="translate(1020 304)">
-          <rect x="-54" y="-42" width="108" height="84" rx="8" fill="#fff2e4" stroke="#d98a3f" strokeWidth="2" />
-          <path d="M-29-14H29M-29 0H18M-29 14H8" stroke="#bd7130" strokeWidth="3" strokeLinecap="round" />
-          <text y="70" textAnchor="middle"><tspan x="0">팀 읽기 경계</tspan><tspan x="0" dy="15" className="pulse-node-state">별도 검증</tspan></text>
-        </g>
-        <text x="52" y="58" className="pulse-map-kicker">{publicProfile ? "PUBLIC ROLE PATHS" : `LIVE KNOWLEDGE PULSE · ${pulse.latestDailyDate ?? "LATEST"}`}</text>
-        <text x="52" y="88" className="pulse-map-headline">{publicProfile ? `${chains.length}개의 공개 역할 경로를 요약합니다` : `${chains.length}개의 Daily 관계가 중심 지식과 terminal state까지 확인됐습니다`}</text>
-      </svg>
+    <nav className="home-scene-rail" aria-label="Home editorial scenes">
+      {HOME_SCENES.map((scene) => (
+        <button
+          key={scene.id}
+          type="button"
+          className={active === scene.id ? "is-active" : ""}
+          onClick={() => dispatch({ type: "journey", target: { workspace: "home", sceneId: scene.id } })}
+          aria-current={active === scene.id ? "step" : undefined}
+          aria-label={`${scene.index} ${scene.label}: ${scene.headline}`}
+        >
+          <span>{scene.index}</span>
+          <strong>{scene.shortLabel}</strong>
+        </button>
+      ))}
+    </nav>
+  );
+}
+
+function ProofLedger({ recordCount, strongest }: { recordCount: number; strongest: MatrixCell | null }) {
+  const metrics = [
+    { value: "1", label: "사람 소유자 (Human Owner)", icon: UserRound },
+    { value: String(atlasData.agency.actors.length), label: "에이전트 역할 · 핵심 3 · 독립 3", icon: SearchCheck },
+    { value: recordCount.toLocaleString("ko-KR"), label: "공개 기록 (Public Records)", icon: Box },
+    { value: strongest ? strongest.wikilink.toLocaleString("ko-KR") : "—", label: "최강 관계 (Strongest Relation)", icon: Link2 },
+  ];
+  return (
+    <div className="home-proof-ledger" aria-label="공개 스냅샷 핵심 증거">
+      {metrics.map(({ value, label, icon: Icon }) => (
+        <div key={label}>
+          <Icon size={19} strokeWidth={1.65} aria-hidden="true" />
+          <strong>{value}</strong>
+          <span>{label}</span>
+        </div>
+      ))}
     </div>
   );
 }
 
-function InsightRail() {
+function HomeActions() {
   const { dispatch } = useAtlasState();
   return (
-    <aside className="home-insight-rail" aria-label="현재 스냅샷 인사이트">
-      <header>
-        <span className="eyebrow">지금 이 Vault에서 읽을 것</span>
-        <h2>네 가지 현재 답</h2>
-        <p>모든 문장은 동결된 스냅샷 수량과 관계 근거에 연결됩니다.</p>
-      </header>
-      <div className="home-insight-list">
-        {atlasData.insight.items.map((insight, index) => (
-          <button
-            key={insight.id}
-            type="button"
-            className={`home-insight-row insight-${insight.kind}`}
-            onClick={() => dispatch({ type: "journey", target: targetToJourney(insight.targetScene) })}
-          >
-            <span className="insight-index">{String(index + 1).padStart(2, "0")}</span>
-            <span className="insight-copy">
-              <small>{insightLabel(insight)}</small>
-              <strong>{insight.headline}</strong>
-              <em>{insight.metric.value}{insight.metric.unit ?? ""} · {insight.metric.label}</em>
-            </span>
-            <ArrowRight size={17} aria-hidden="true" />
-          </button>
-        ))}
-      </div>
-    </aside>
+    <div className="home-primary-actions">
+      <button type="button" className="is-primary" onClick={() => dispatch({ type: "workspace", workspace: "explore" })}>
+        아틀라스 탐색 <ArrowRight size={17} aria-hidden="true" />
+      </button>
+      <button type="button" onClick={() => dispatch({ type: "workspace", workspace: "agency" })}>
+        협업 구조 보기 <ArrowRight size={17} aria-hidden="true" />
+      </button>
+    </div>
   );
 }
 
-function GuideRail() {
-  const { state, dispatch } = useAtlasState();
-  const close = () => {
-    try { window.localStorage.setItem("homi-atlas-v7-1-guide-seen", "1"); } catch { /* noop */ }
-    dispatch({ type: "guide", step: null });
-  };
-  if (state.guideStep === null) {
-    return (
-      <button className="guide-replay" type="button" onClick={() => dispatch({ type: "guide", step: 0 })}>
-        <Play size={15} aria-hidden="true" /> 30초 가이드
-      </button>
-    );
-  }
-  const step = guideSteps[state.guideStep];
+function HomeNarrative({ recordCount, strongest, deferActions = false }: {
+  recordCount: number;
+  strongest: MatrixCell | null;
+  deferActions?: boolean;
+}) {
   return (
-    <section className="home-guide-rail" aria-live="polite" aria-label={`가이드 ${state.guideStep + 1}단계`}> 
-      <span className="guide-progress">0{state.guideStep + 1}<i style={{ width: `${((state.guideStep + 1) / guideSteps.length) * 100}%` }} /></span>
-      <div><strong>{step.title}</strong><p>{step.body}</p></div>
-      <div className="guide-actions">
-        <button type="button" onClick={close}><Pause size={14} /> 건너뛰기</button>
-        {state.guideStep < guideSteps.length - 1 ? (
-          <button type="button" className="is-primary" onClick={() => dispatch({ type: "guide", step: state.guideStep! + 1 })}>
-            다음 <FastForward size={14} />
-          </button>
-        ) : (
-          <button type="button" className="is-primary" onClick={() => {
-            close();
-            dispatch({ type: "journey", target: { workspace: "explore", sceneId: "city-overview", lens: "city" } });
-            requestAnimationFrame(() => {
-              const heading = document.getElementById("explore-title");
-              if (!heading) return;
-              heading.setAttribute("tabindex", "-1");
-              heading.focus({ preventScroll: true });
-              heading.scrollIntoView({ block: "nearest" });
-            });
-          }}>
-            자유 탐색 <Compass size={14} />
-          </button>
-        )}
-      </div>
+    <section className="home-narrative">
+      <span className="eyebrow">HUMAN × AGENT KNOWLEDGE SYSTEM</span>
+      <h1 id="home-title" aria-label="한 사람의 방향이 전문 에이전트와 지식 지형을 움직인다.">
+        <span>한 사람의 방향이</span>
+        <span>전문 에이전트와</span>
+        <span>지식 지형을 움직인다.</span>
+      </h1>
+      <p>
+        Luke가 방향을 정하고, 세 개의 Homi 핵심 역할과 세 개의 독립 프로젝트 에이전트가 분리된 책임으로 지식을 선별·검증·발행합니다. 현재 {recordCount.toLocaleString("ko-KR")}개의 공개 기록이 그 협업이 남긴 지식 관계를 보여줍니다.
+      </p>
+      {!deferActions && <HomeActions />}
+      <ProofLedger recordCount={recordCount} strongest={strongest} />
     </section>
   );
 }
 
-function MobileHome() {
+function ActorRow({ actor, selected }: { actor: AgencyActor; selected: boolean }) {
   const { dispatch } = useAtlasState();
+  const Icon = actorIcons[actor.id as keyof typeof actorIcons] ?? Box;
   return (
-    <div className="mobile-home-sibling">
-      <section className="mobile-home-intro">
-        <img src={homiLockup} alt="Homi AI" />
-        <span className="eyebrow">Living Insight Gateway</span>
-        <h1>{publicProfile ? "정제된 지식 구조와 역할 경로를 봅니다" : "지식이 들어와 판단으로 바뀌는 순간을 봅니다"}</h1>
-        <p>{publicProfile ? "공개 역할 지도" : `${atlasData.flow.pulse.latestDailyDate ?? "최근"} Pulse`} · {homeDocumentLabel} {homeDocumentCount}개</p>
-        {publicProfile && <p className="public-home-boundary">실제 최신 Daily 전파 기록은 공개판에 포함하지 않습니다.</p>}
-      </section>
-      <section className="mobile-home-insights" aria-label="현재 인사이트">
-        {atlasData.insight.items.map((insight, index) => (
-          <button key={insight.id} type="button" onClick={() => dispatch({ type: "journey", target: targetToJourney(insight.targetScene) })}>
-            <span>{String(index + 1).padStart(2, "0")}</span>
-            <strong>{insight.headline}</strong>
-            <ArrowRight size={16} />
-          </button>
+    <button
+      type="button"
+      className={selected ? "home-actor-row is-selected" : "home-actor-row"}
+      onClick={() => dispatch({ type: "actor", actorId: actor.id })}
+      aria-label={`${actor.label}, 책임 표면 ${actorSurfaceLabel(atlasData.agency, actor)}`}
+    >
+      <Icon size={18} strokeWidth={1.65} aria-hidden="true" />
+      <span><strong>{actor.label}</strong><small>{actorSurfaceLabel(atlasData.agency, actor)}</small></span>
+    </button>
+  );
+}
+
+function AgencyBand({ scene, playOpening, reducedMotion }: {
+  scene: HomeSceneId;
+  playOpening: boolean;
+  reducedMotion: boolean;
+}) {
+  const groups = actorsByGroup(atlasData.agency);
+  const showHistorical = scene === "responsibility-partition";
+  const selectedActor = scene === "knowledge-return" ? "actor:atlas-builder" : null;
+  return (
+    <m.section
+      className="home-agency-band"
+      data-scene={scene}
+      aria-label="Luke와 여섯 전문 역할"
+      animate={reducedMotion ? { opacity: 1 } : {
+        x: scene === "responsibility-partition" ? -10 : scene === "knowledge-return" ? 12 : 0,
+        scale: scene === "responsibility-partition" ? 1.012 : 1,
+      }}
+      transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : MOTION_SECONDS.scene }}
+    >
+      <m.div
+        className="home-principal"
+        initial={playOpening ? { y: -4 } : false}
+        animate={{ y: 0 }}
+        transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : MOTION_SECONDS.control, delay: playOpening ? 0.12 : 0 }}
+      >
+        <UserRound size={20} aria-hidden="true" />
+        <span><strong>Luke</strong><small>Human Owner</small></span>
+      </m.div>
+
+      {showHistorical && (
+        <m.div
+          className="home-historical-model"
+          initial={{ scaleX: 0.86 }}
+          animate={{ scaleX: 1 }}
+          transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : MOTION_SECONDS.emphasis }}
+        >
+          <span>HISTORICAL MODEL · NON-ACTOR</span>
+          <strong>단일 관리 세션 중심</strong>
+          <small>SCHEMATIC · NOT WORKLOAD</small>
+        </m.div>
+      )}
+
+      {showHistorical && (
+        <m.div
+          className="home-partition-flow"
+          initial={reducedMotion ? false : { y: -8 }}
+          animate={{ y: 0 }}
+          transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : MOTION_SECONDS.emphasis }}
+          aria-label="역사적 통합 역할에서 세 Homi Core 역할로 책임이 전문화됨"
+        >
+          <ArrowRight size={16} aria-hidden="true" />
+          <span>3 DURABLE CORE ROLES</span>
+        </m.div>
+      )}
+
+      <div className="home-authority-bus" aria-hidden="true">
+        {atlasData.agency.actors.map((actor, index) => (
+          <m.i
+            key={actor.id}
+            initial={playOpening ? { scaleY: 0, opacity: 0 } : false}
+            animate={{ scaleY: 1, opacity: 1 }}
+            transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : MOTION_SECONDS.control, delay: playOpening ? 0.2 + index * 0.036 : 0 }}
+          />
         ))}
-      </section>
-      <section className="mobile-home-pulse-mini" aria-label="Pulse 미니 지도">
-        <i>소스</i><b /><i>Daily</i><b /><i>중심 지식</i><b /><i>판단</i>
-      </section>
-      <button className="mobile-home-explore" type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "explore", sceneId: "city-overview", lens: "city" } })}>
-        지도를 직접 탐색하기 <ArrowRight size={17} />
-      </button>
+      </div>
+
+      <div className="home-agency-groups">
+        {groups.map((group) => (
+          <section key={group.id} className={`home-agency-group is-${group.kind}`}>
+            <header><span>{group.kind === "core" ? "HOMI CORE" : "INDEPENDENT PROJECT OWNERS"}</span><b>{group.actors.length}</b></header>
+            <div>
+              {group.actors.map((actor, index) => (
+                <m.div
+                  key={actor.id}
+                  initial={playOpening ? { y: 8 } : false}
+                  animate={{ y: 0 }}
+                  transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : 0.2, delay: playOpening ? 0.24 + index * 0.036 : 0 }}
+                >
+                  <ActorRow actor={actor} selected={actor.id === selectedActor} />
+                </m.div>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+      <p className="home-agency-note">직접 방향 6개 · 그룹은 권한 계층이 아닙니다.</p>
+    </m.section>
+  );
+}
+
+type TerrainNode = { name: string; documentCount: number; x: number; y: number; boundary?: boolean };
+
+function terrainNodes(mobile: boolean): TerrainNode[] {
+  const positions = mobile ? terrainPositionsMobile : terrainPositions;
+  const districts = atlasData.structure.districts
+    .map((district) => ({ ...district, publicName: normalizeDistrict(district.name) }))
+    .filter((district) => positions[district.publicName])
+    .filter((district, index, all) => all.findIndex((candidate) => candidate.publicName === district.publicName) === index)
+    .map((district) => ({
+      name: district.publicName,
+      documentCount: district.documentCount,
+      ...positions[district.publicName],
+    }));
+  return [
+    ...districts,
+    { name: "공개 근거 경계", documentCount: 0, ...positions["공개 근거 경계"], boundary: true },
+  ];
+}
+
+function relationPath(source: TerrainNode, target: TerrainNode, index: number) {
+  const midX = (source.x + target.x) / 2;
+  const lift = 26 + (index % 4) * 12;
+  const midY = Math.min(source.y, target.y) - lift;
+  return `M ${source.x} ${source.y} Q ${midX} ${midY} ${target.x} ${target.y}`;
+}
+
+function KnowledgeTerrain({ scene, playOpening, reducedMotion }: {
+  scene: HomeSceneId;
+  playOpening: boolean;
+  reducedMotion: boolean;
+}) {
+  const { state } = useAtlasState();
+  const nodes = useMemo(() => terrainNodes(state.mobileSibling), [state.mobileSibling]);
+  const byName = useMemo(() => new Map(nodes.map((node) => [node.name, node])), [nodes]);
+  const visibleRelations = useMemo(() => atlasData.relation.matrix
+    .map((relation) => ({
+      relation,
+      source: byName.get(normalizeDistrict(relation.source)),
+      target: byName.get(normalizeDistrict(relation.target)),
+    }))
+    .filter((item): item is { relation: MatrixCell; source: TerrainNode; target: TerrainNode } => Boolean(item.source && item.target))
+    .sort((left, right) => right.relation.wikilink - left.relation.wikilink), [byName]);
+  const strongest = visibleRelations[0] ?? null;
+  const maxDocuments = Math.max(1, ...nodes.map((node) => node.documentCount));
+  const independentOwnership = scene === "independent-ownership";
+  const knowledgeReturn = scene === "knowledge-return";
+  const selectedNames = new Set(strongest ? [strongest.source.name, strongest.target.name] : []);
+
+  return (
+    <m.section
+      className="home-knowledge-terrain"
+      aria-label="공개 지식 지형"
+      initial={playOpening && !reducedMotion ? { scale: 1.018, y: 4 } : false}
+      animate={{ scale: knowledgeReturn ? 1.018 : 1, x: knowledgeReturn ? -8 : 0 }}
+      transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : playOpening ? MOTION_SECONDS.entry : MOTION_SECONDS.scene }}
+      data-scene={scene}
+    >
+      <header>
+        <span>KNOWLEDGE TERRAIN</span>
+        <p className="terrain-legend">구역색은 의미, 크기는 공개 기록 수, 선 굵기는 실제 관계 가중치를 나타냅니다.</p>
+        {strongest && (
+          <p className="terrain-header-summary">
+            {strongest.source.name} ↔ {strongest.target.name} · <b>{strongest.relation.wikilink.toLocaleString("ko-KR")}</b>
+          </p>
+        )}
+      </header>
+      <div className="home-terrain-canvas">
+        <svg viewBox="0 0 920 240" aria-hidden="true" preserveAspectRatio="none">
+          {visibleRelations.map(({ relation, source, target }, index) => {
+            const isStrongest = relation.id === strongest?.relation.id;
+            const width = 1.25 + 4.75 * Math.sqrt(relation.wikilink / Math.max(1, strongest?.relation.wikilink ?? relation.wikilink));
+            const path = relationPath(source, target, index);
+            const relationColor = DISTRICT_COLORS[source.name] ?? "var(--district-research)";
+            return (
+              <g key={relation.id} className={isStrongest ? "is-strongest" : ""}>
+                {isStrongest && (
+                  <path
+                    d={path}
+                    className="terrain-relation-underlay"
+                    style={{ stroke: `color-mix(in srgb, ${relationColor} 22%, transparent)` }}
+                  />
+                )}
+                <m.path
+                  d={path}
+                  className="terrain-relation"
+                  style={{ stroke: relationColor, strokeWidth: width }}
+                  initial={playOpening && isStrongest ? { pathLength: 0, opacity: 0.2 } : false}
+                  animate={{
+                    pathLength: 1,
+                    opacity: independentOwnership ? 0.12 : knowledgeReturn ? (isStrongest ? 1 : 0.18) : isStrongest ? 0.9 : 0.3,
+                  }}
+                  transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : playOpening && isStrongest ? MOTION_SECONDS.control : MOTION_SECONDS.scene, delay: playOpening && isStrongest ? 0.62 : 0 }}
+                />
+              </g>
+            );
+          })}
+        </svg>
+        {nodes.map((node) => {
+          const size = node.boundary ? 58 : 52 + 34 * Math.sqrt(node.documentCount / maxDocuments);
+          const selected = knowledgeReturn && selectedNames.has(node.name);
+          return (
+            <div key={node.name}>
+              {!node.boundary && (
+                <m.i
+                  className="terrain-contour"
+                  aria-hidden="true"
+                  style={{
+                    left: `${(node.x / 920) * 100}%`,
+                    top: `${(node.y / 240) * 100}%`,
+                    width: size + 28,
+                    height: size + 28,
+                    color: DISTRICT_COLORS[node.name] ?? "var(--ink)",
+                  }}
+                  initial={playOpening && !reducedMotion ? { opacity: 0, scale: .84 } : false}
+                  animate={{ opacity: independentOwnership ? .08 : knowledgeReturn && !selected ? .1 : .2, scale: 1 }}
+                  transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : MOTION_SECONDS.scene, delay: playOpening ? .5 : 0 }}
+                />
+              )}
+              <m.div
+                className={`terrain-node${node.boundary ? " is-boundary" : ""}${selected ? " is-selected" : ""}`}
+                data-node={node.name}
+                style={{
+                  left: `${(node.x / 920) * 100}%`,
+                  top: `${(node.y / 240) * 100}%`,
+                  width: size,
+                  minHeight: size,
+                  color: DISTRICT_COLORS[node.name] ?? "var(--ink)",
+                }}
+                initial={playOpening && !reducedMotion ? { opacity: 0, scale: .84 } : false}
+                animate={{
+                  opacity: independentOwnership ? (node.boundary ? 0.72 : 0.34) : knowledgeReturn ? (selected ? 1 : 0.45) : 1,
+                  scale: selected ? 1.05 : 1,
+                }}
+                transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : MOTION_SECONDS.scene, delay: playOpening ? .5 : 0 }}
+              >
+                <strong>{node.name}</strong>
+                <span>{node.boundary ? "PUBLIC" : node.documentCount.toLocaleString("ko-KR")}</span>
+              </m.div>
+            </div>
+          );
+        })}
+        {strongest && (
+          <m.p
+            className="terrain-strongest-readout"
+            animate={{ opacity: independentOwnership ? 0.24 : 1, y: knowledgeReturn ? -2 : 0 }}
+            transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : MOTION_SECONDS.scene }}
+          >
+            {strongest.source.name} ↔ {strongest.target.name} · <b>{strongest.relation.wikilink.toLocaleString("ko-KR")}</b>
+          </m.p>
+        )}
+      </div>
+      <p className="sr-only">
+        {visibleRelations.map(({ relation, source, target }) => `${source.name}와 ${target.name} ${relation.wikilink}회`).join(", ")}
+      </p>
+    </m.section>
+  );
+}
+
+function KnowledgeReturnBoundary({ active, reducedMotion }: {
+  active: boolean;
+  reducedMotion: boolean;
+}) {
+  return (
+    <div
+      className={active ? "home-knowledge-return-boundary is-active" : "home-knowledge-return-boundary"}
+      aria-label="검증된 버전 스냅샷 경계"
+    >
+      <span className="snapshot-boundary-label">VERIFIED RELEASE SNAPSHOT</span>
+      {active && (
+        <m.aside
+          className="publication-crossing"
+          initial={reducedMotion ? false : { opacity: 0, x: -18 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : MOTION_SECONDS.emphasis }}
+          aria-label="Atlas Builder가 검증된 공개 경계를 지나 지식 지형으로 결과와 증거를 돌려주는 경로"
+        >
+          <Box size={16} aria-hidden="true" />
+          <span>ATLAS BUILDER</span>
+          <ArrowRight size={16} aria-hidden="true" />
+          <ShieldCheck size={16} aria-hidden="true" />
+          <strong>VERIFIED KNOWLEDGE RETURN</strong>
+        </m.aside>
+      )}
+    </div>
+  );
+}
+
+function HomeStage({ scene, playOpening, reducedMotion }: {
+  scene: HomeSceneId;
+  playOpening: boolean;
+  reducedMotion: boolean;
+}) {
+  const sceneCopy = HOME_SCENES.find((item) => item.id === scene)!;
+  return (
+    <section className="home-system-stage" data-scene={scene}>
+      <HomeSceneRail active={scene} />
+      <m.div
+        className="home-scene-copy"
+        key={scene}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : 0.42 }}
+        aria-live="polite"
+      >
+        <span>{sceneCopy.label}</span>
+        <strong>{sceneCopy.headline}</strong>
+        <p>{sceneCopy.body}</p>
+      </m.div>
+      <AgencyBand scene={scene} playOpening={playOpening} reducedMotion={reducedMotion} />
+      <KnowledgeReturnBoundary active={scene === "knowledge-return"} reducedMotion={reducedMotion} />
+      <KnowledgeTerrain scene={scene} playOpening={playOpening} reducedMotion={reducedMotion} />
+    </section>
+  );
+}
+
+function MobileHome({ scene, recordCount, strongest, playOpening, reducedMotion }: {
+  scene: HomeSceneId;
+  recordCount: number;
+  strongest: MatrixCell | null;
+  playOpening: boolean;
+  reducedMotion: boolean;
+}) {
+  return (
+    <div className="home-mobile-composition">
+      <HomeNarrative recordCount={recordCount} strongest={strongest} deferActions />
+      <HomeSceneRail active={scene} />
+      <AgencyBand scene={scene} playOpening={playOpening} reducedMotion={reducedMotion} />
+      <KnowledgeReturnBoundary active={scene === "knowledge-return"} reducedMotion={reducedMotion} />
+      <KnowledgeTerrain scene={scene} playOpening={playOpening} reducedMotion={reducedMotion} />
+      <HomeActions />
     </div>
   );
 }
 
 export function HomeView() {
+  const { state } = useAtlasState();
+  const scene = currentHomeScene(state.sceneId);
+  const recordCount = publicDocumentCount(atlasData);
+  const strongest = strongestKnowledgeRelation(atlasData);
+  const { play: playOpening, shouldReduceMotion } = useOpeningScene();
+
+  if (state.mobileSibling) {
+    return (
+      <section className="home-view-v73 is-mobile" aria-labelledby="home-title" data-scene={scene} data-opening={playOpening && !shouldReduceMotion}>
+        <MobileHome
+          scene={scene}
+          recordCount={recordCount}
+          strongest={strongest}
+          playOpening={playOpening && !shouldReduceMotion}
+          reducedMotion={shouldReduceMotion}
+        />
+        <p className="home-version-boundary"><ShieldCheck size={14} aria-hidden="true" /> {atlasData.agency.snapshot.caveat} · 기준일 {atlasData.agency.snapshot.asOfDate}</p>
+      </section>
+    );
+  }
+
   return (
-    <section className="home-view" aria-labelledby="home-title">
-      <header className="home-command-intro">
-        <div>
-          <img src={homiLockup} alt="Homi AI" />
-          <span className="eyebrow">Living Insight Gateway</span>
-          <h1 id="home-title">{publicProfile ? "정제된 지식 구조와 역할 경로를 봅니다" : "지식이 들어와 판단으로 바뀌는 순간을 봅니다"}</h1>
-          {publicProfile && <p className="public-home-boundary">실제 최신 Daily 전파 기록은 공개판에 포함하지 않습니다.</p>}
-        </div>
-        <div className="home-snapshot-readout">
-          <span><b>{homeDocumentCount}</b> {homeDocumentLabel}</span>
-          <span><b>{homeRelationCount}</b> {homeRelationLabel}</span>
-          <span><b>{atlasData.temporal.eras.length}</b> 시대 장면</span>
-        </div>
-      </header>
-      <div className="home-desktop-stage">
-        <KnowledgePulseMap />
-        <InsightRail />
-      </div>
-      <MobileHome />
-      <GuideRail />
-      <span className="home-evidence-boundary"><Sparkles size={13} /> {atlasData.insight.evidenceBoundary}</span>
+    <section className="home-view-v73" aria-labelledby="home-title" data-scene={scene} data-opening={playOpening && !shouldReduceMotion}>
+      <HomeNarrative recordCount={recordCount} strongest={strongest} />
+      <HomeStage scene={scene} playOpening={playOpening && !shouldReduceMotion} reducedMotion={shouldReduceMotion} />
+      <p className="home-version-boundary"><ShieldCheck size={14} aria-hidden="true" /> {atlasData.agency.snapshot.caveat} · 기준일 {atlasData.agency.snapshot.asOfDate}</p>
     </section>
   );
 }

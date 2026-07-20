@@ -1,25 +1,6 @@
-import { lstat, realpath } from "node:fs/promises";
+import { realpath } from "node:fs/promises";
 import path from "node:path";
-
-async function resolvePathThroughExistingAncestor(value) {
-  let cursor = path.resolve(value);
-  const suffix = [];
-  while (true) {
-    try {
-      await lstat(cursor);
-      const resolved = await realpath(cursor);
-      return path.join(resolved, ...suffix);
-    } catch (error) {
-      if (error?.code !== "ENOENT") throw error;
-    }
-    const parent = path.dirname(cursor);
-    if (parent === cursor) {
-      throw new Error(`Public audit blocked: no existing ancestor for ${value}.`);
-    }
-    suffix.unshift(path.basename(cursor));
-    cursor = parent;
-  }
-}
+import { resolvePathThroughExistingAncestor } from "./path-boundary.mjs";
 
 function isOutsideProject(projectDir, candidate) {
   const relative = path.relative(projectDir, candidate);
@@ -53,9 +34,9 @@ export function resolvePublicAuditBoundary({ projectDir, environment = process.e
     throw new Error(`Public audit blocked: ATLAS_PUBLIC_AUDIT_DIR must equal ${requiredAuditDir}.`);
   }
   const auditReceiptName = environment.ATLAS_PUBLIC_AUDIT_RECEIPT?.trim()
-    || "v7-2-publication-audit.json";
-  if (auditReceiptName !== "v7-2-publication-audit.json") {
-    throw new Error("Public audit blocked: receipt name must be v7-2-publication-audit.json.");
+    || "v7-3-publication-audit.json";
+  if (auditReceiptName !== "v7-3-publication-audit.json") {
+    throw new Error("Public audit blocked: receipt name must be v7-3-publication-audit.json.");
   }
   if (context === "internal-release" && !isOutsideProject(resolvedProjectDir, artifactDir)) {
     throw new Error("Public audit blocked: internal-release evidence must be lexically outside the source project.");
