@@ -11,6 +11,7 @@ import {
   Sprout,
   UserRound,
 } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
 import { atlasData } from "../data-runtime";
@@ -113,7 +114,7 @@ function CurrentSystem({ selectedActorId }: { selectedActorId: string | null }) 
   );
 }
 
-function RoleDetail({ actor, reducedMotion }: { actor: AgencyActor; reducedMotion: boolean }) {
+function RoleDetail({ actor, reducedMotion, animateEntry }: { actor: AgencyActor; reducedMotion: boolean; animateEntry: boolean }) {
   const surface = actorSurfaceLabel(atlasData.agency, actor);
   const items = [
     { label: "목적 (Purpose)", value: actor.purpose, icon: CheckCircle2 },
@@ -127,8 +128,8 @@ function RoleDetail({ actor, reducedMotion }: { actor: AgencyActor; reducedMotio
       key={actor.id}
       className="agency-role-detail"
       aria-labelledby="agency-role-detail-title"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={animateEntry && !reducedMotion ? { y: 12 } : false}
+      animate={{ y: 0 }}
       transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : 0.42 }}
     >
       <header>
@@ -231,9 +232,15 @@ export function AgencyView() {
   const { state } = useAtlasState();
   const scene = currentAgencyScene(state.sceneId);
   const shouldReduceMotion = useReducedMotion();
+  const initialViewCommittedRef = useRef(false);
   const selectedActor = atlasData.agency.actors.find((actor) => actor.id === state.actorId)
     ?? atlasData.agency.actors.find((actor) => actor.id === defaultActorId)
     ?? atlasData.agency.actors[0];
+  const directRolesEntry = !initialViewCommittedRef.current && scene === "roles";
+
+  useEffect(() => {
+    initialViewCommittedRef.current = true;
+  }, []);
 
   return (
     <section className="agency-view" aria-labelledby="agency-title" data-scene={scene}>
@@ -248,8 +255,8 @@ export function AgencyView() {
       <m.div
         className="agency-stage"
         key={scene}
-        initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: 24, scale: 0.995 }}
-        animate={{ opacity: 1, x: 0, scale: 1 }}
+        initial={directRolesEntry || shouldReduceMotion ? false : { x: 24, scale: 0.995 }}
+        animate={{ x: 0, scale: 1 }}
       transition={{ duration: shouldReduceMotion ? MOTION_SECONDS.fast : scene === "evolution" ? MOTION_SECONDS.emphasis : MOTION_SECONDS.scene }}
       >
         {scene === "system" && <CurrentSystem selectedActorId={null} />}
@@ -258,7 +265,7 @@ export function AgencyView() {
             {state.mobileSibling
               ? <MobileRolePicker selectedActorId={selectedActor.id} />
               : <CurrentSystem selectedActorId={selectedActor.id} />}
-            <RoleDetail actor={selectedActor} reducedMotion={Boolean(shouldReduceMotion)} />
+            <RoleDetail actor={selectedActor} reducedMotion={Boolean(shouldReduceMotion)} animateEntry={!directRolesEntry} />
           </div>
         )}
         {scene === "evolution" && <EvolutionScene />}

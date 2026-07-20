@@ -787,7 +787,7 @@ function MobileObserve() {
           </svg>
         </section>
       )}
-      <section className="mobile-ranked-list" id="mobile-relation-results" role="tabpanel" aria-labelledby={`mobile-relation-tab-${state.relationLayer}`}>
+      <section className="mobile-ranked-list" id="mobile-relation-results" role="tabpanel" aria-labelledby={`mobile-relation-tab-${state.relationLayer}`} tabIndex={0}>
         <h3>상위 구역 간 관계</h3>
         {ranked.map((pair, index) => {
           const presentation = state.relationLayer === "typed"

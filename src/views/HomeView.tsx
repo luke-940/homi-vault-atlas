@@ -200,8 +200,8 @@ function AgencyBand({ scene, playOpening, reducedMotion }: {
     >
       <m.div
         className="home-principal"
-        initial={playOpening ? { opacity: 0.72, y: -4 } : false}
-        animate={{ opacity: 1, y: 0 }}
+        initial={playOpening ? { y: -4 } : false}
+        animate={{ y: 0 }}
         transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : MOTION_SECONDS.control, delay: playOpening ? 0.12 : 0 }}
       >
         <UserRound size={20} aria-hidden="true" />
@@ -211,8 +211,8 @@ function AgencyBand({ scene, playOpening, reducedMotion }: {
       {showHistorical && (
         <m.div
           className="home-historical-model"
-          initial={{ opacity: 0, scaleX: 0.86 }}
-          animate={{ opacity: 1, scaleX: 1 }}
+          initial={{ scaleX: 0.86 }}
+          animate={{ scaleX: 1 }}
           transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : MOTION_SECONDS.emphasis }}
         >
           <span>HISTORICAL MODEL · NON-ACTOR</span>
@@ -224,8 +224,8 @@ function AgencyBand({ scene, playOpening, reducedMotion }: {
       {showHistorical && (
         <m.div
           className="home-partition-flow"
-          initial={reducedMotion ? false : { opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={reducedMotion ? false : { y: -8 }}
+          animate={{ y: 0 }}
           transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : MOTION_SECONDS.emphasis }}
           aria-label="역사적 통합 역할에서 세 Homi Core 역할로 책임이 전문화됨"
         >
@@ -253,8 +253,8 @@ function AgencyBand({ scene, playOpening, reducedMotion }: {
               {group.actors.map((actor, index) => (
                 <m.div
                   key={actor.id}
-                  initial={playOpening ? { opacity: 0, y: 8 } : false}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={playOpening ? { y: 8 } : false}
+                  animate={{ y: 0 }}
                   transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : 0.2, delay: playOpening ? 0.24 + index * 0.036 : 0 }}
                 >
                   <ActorRow actor={actor} selected={actor.id === selectedActor} />
@@ -321,7 +321,7 @@ function KnowledgeTerrain({ scene, playOpening, reducedMotion }: {
     <m.section
       className="home-knowledge-terrain"
       aria-label="공개 지식 지형"
-      initial={playOpening && !reducedMotion ? { scale: 1.018, y: 4, opacity: .9 } : false}
+      initial={playOpening && !reducedMotion ? { scale: 1.018, y: 4 } : false}
       animate={{ scale: knowledgeReturn ? 1.018 : 1, x: knowledgeReturn ? -8 : 0 }}
       transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : playOpening ? MOTION_SECONDS.entry : MOTION_SECONDS.scene }}
       data-scene={scene}
