@@ -1,117 +1,117 @@
 {
   "schema": "homi.atlas_v7_3.visual_golden_manifest.v1",
-  "status": "incomplete_pending_iab_and_ubuntu_review",
+  "status": "approved_iab_and_ubuntu_parity",
   "environment": {
     "runner": "ubuntu-24.04",
     "project": "chromium",
     "platform": "linux",
     "workers": 1
   },
-  "reviewEvidenceDigest": null,
+  "reviewEvidenceDigest": "950bc7faf215d0b5a35074e8113b90e2f0572fd0c1a4d58a9894923903731b0b",
   "cases": [
     {
       "id": "home-default",
       "viewport": { "width": 1440, "height": 920 },
       "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/home-default-1440x920-chromium-linux.png",
-      "baselineSha256": null,
-      "iabEvidenceSha256": null,
-      "verdict": "pending"
+      "baselineSha256": "a48229b4af178ea389b79ea3038c01b11ae036a62a2cc87dc21bae1be03e6582",
+      "iabEvidenceSha256": "aea1dc8b111f51493e9d2bbad3c8c2f0f0b92d3c01bace0841718318b9cc6e77",
+      "verdict": "approved_visual_parity"
     },
     {
       "id": "home-selected",
       "viewport": { "width": 1280, "height": 720 },
       "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/home-selected-1280x720-chromium-linux.png",
-      "baselineSha256": null,
-      "iabEvidenceSha256": null,
-      "verdict": "pending"
+      "baselineSha256": "825638fb11a44ce6ade2757a90bcfe9dd167d355c0bc1ec3f323be92cddf2ecc",
+      "iabEvidenceSha256": "8c6c80c0faf408a3fb72360f94c2b3169ba0bf1f89a806cb59a9d0613ff2d923",
+      "verdict": "approved_visual_parity"
     },
     {
       "id": "home-independent",
       "viewport": { "width": 768, "height": 1024 },
       "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/home-independent-768x1024-chromium-linux.png",
-      "baselineSha256": null,
-      "iabEvidenceSha256": null,
-      "verdict": "pending"
+      "baselineSha256": "7c5b37892dcf523d75480bee5370c1790a4970a3291669b60060cd90b42ec0f8",
+      "iabEvidenceSha256": "b75da14a4d2254eeff567705ae84e4170e8bb8cb069772c65b2c72c9e6a083a6",
+      "verdict": "approved_visual_parity"
     },
     {
       "id": "home-knowledge-return",
       "viewport": { "width": 390, "height": 844 },
       "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/home-knowledge-return-390x844-chromium-linux.png",
-      "baselineSha256": null,
-      "iabEvidenceSha256": null,
-      "verdict": "pending"
+      "baselineSha256": "e398739d52550d4c45aae061bc6351699919616593455df4e42e8ec66ea0f150",
+      "iabEvidenceSha256": "7e409577329bcdea64df0a68d874175aebb671ac7a673af8fa1f046779c96ad0",
+      "verdict": "approved_visual_parity"
     },
     {
       "id": "agency-default",
       "viewport": { "width": 768, "height": 1024 },
       "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/agency-default-768x1024-chromium-linux.png",
-      "baselineSha256": null,
-      "iabEvidenceSha256": null,
-      "verdict": "pending"
+      "baselineSha256": "b81131cc69c87981a1cb8b13d02e5c75fc028c5bf57c92ccc6eb72dcbc66c180",
+      "iabEvidenceSha256": "0f65ad7839770c7ee88ea26aadd4b1707fad79ee405d00b366bbbe8e40f133d0",
+      "verdict": "approved_visual_parity"
     },
     {
       "id": "agency-actor",
       "viewport": { "width": 390, "height": 844 },
       "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/agency-actor-390x844-chromium-linux.png",
-      "baselineSha256": null,
-      "iabEvidenceSha256": null,
-      "verdict": "pending"
+      "baselineSha256": "a45f07b55025b69bff587661df17fef4cbeab183d5b52dd14b01489c4516331e",
+      "iabEvidenceSha256": "8c78887a7670054e428fa6afcd53f8fb1bf5f8a0d337e54a2ae646bd049d8c94",
+      "verdict": "approved_visual_parity"
     },
     {
       "id": "agency-evolution",
       "viewport": { "width": 768, "height": 1024 },
       "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/agency-evolution-768x1024-chromium-linux.png",
-      "baselineSha256": null,
-      "iabEvidenceSha256": null,
-      "verdict": "pending"
+      "baselineSha256": "cba21453be2a009a5070b227fd284fc4b4e5408684255b40f01d312e2e50ce27",
+      "iabEvidenceSha256": "e6c372b05035a82b5334a57174d478f166bb142660f1381a357cda9ba4846491",
+      "verdict": "approved_visual_parity"
     },
     {
       "id": "explore",
       "viewport": { "width": 320, "height": 844 },
       "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/explore-320x844-chromium-linux.png",
-      "baselineSha256": null,
-      "iabEvidenceSha256": null,
-      "verdict": "pending"
+      "baselineSha256": "02061de32ce23d017456c06a2f74e098c0bace0cc1647d0c710a75eba9ae2661",
+      "iabEvidenceSha256": "d116995d3d6f1f84a815f2ac978f6233120bca483f69c3eb3984429068f225ac",
+      "verdict": "approved_visual_parity"
     },
     {
       "id": "observe",
       "viewport": { "width": 844, "height": 390 },
       "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/observe-844x390-chromium-linux.png",
-      "baselineSha256": null,
-      "iabEvidenceSha256": null,
-      "verdict": "pending"
+      "baselineSha256": "1bcd7c693ecb4b359ca929c655c671e8cbea5f3a1b5fc2927ca0ee597a094984",
+      "iabEvidenceSha256": "17729aa5c59264dc9d12a8afaae1203ee86916b72579ab70f07b8afd3365b6bc",
+      "verdict": "approved_visual_parity"
     },
     {
       "id": "flow",
       "viewport": { "width": 390, "height": 844 },
       "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/flow-390x844-chromium-linux.png",
-      "baselineSha256": null,
-      "iabEvidenceSha256": null,
-      "verdict": "pending"
+      "baselineSha256": "55dcf93fe32b2e860025d63ae007d9ec48ec77253d53b04b61f43b5203272ae1",
+      "iabEvidenceSha256": "474ad5d7510b422d9bd9c22b0be4018b7ac035c791d42b2ef0f7e6d5abe76420",
+      "verdict": "approved_visual_parity"
     },
     {
       "id": "time",
       "viewport": { "width": 320, "height": 844 },
       "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/time-320x844-chromium-linux.png",
-      "baselineSha256": null,
-      "iabEvidenceSha256": null,
-      "verdict": "pending"
+      "baselineSha256": "9b324fe1d34374b7eabb247f983712e60f8f59e546d0d76855d4f9db5e721d3e",
+      "iabEvidenceSha256": "ce62352e15d41fb566c1e63a03c556c3823c4e1499268668c7b463e214511721",
+      "verdict": "approved_visual_parity"
     },
     {
       "id": "search-overlay",
       "viewport": { "width": 1440, "height": 920 },
       "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/search-overlay-1440x920-chromium-linux.png",
-      "baselineSha256": null,
-      "iabEvidenceSha256": null,
-      "verdict": "pending"
+      "baselineSha256": "326956e6755a8cbc6150f2de76b5f1f6994797602a466920ba5eec85239e0ad2",
+      "iabEvidenceSha256": "935b0bd18d647ed7309bffc2e0138aa2a9e5f42d2002ec542da9ff35d872a67e",
+      "verdict": "approved_visual_parity"
     },
     {
       "id": "data-overlay",
       "viewport": { "width": 390, "height": 844 },
       "baselinePath": "tests-visual/__screenshots__/v7-3-golden.spec.mjs/data-overlay-390x844-chromium-linux.png",
-      "baselineSha256": null,
-      "iabEvidenceSha256": null,
-      "verdict": "pending"
+      "baselineSha256": "c1b23342ac3c113c4cbee2ba3bef62bbce3d52a03ef9582847ace4852c14e463",
+      "iabEvidenceSha256": "a5c31944c7eafec64abc9a5cad4ecbd03d933ba50a5473c39495ea41d492593c",
+      "verdict": "approved_visual_parity"
     }
   ]
 }
