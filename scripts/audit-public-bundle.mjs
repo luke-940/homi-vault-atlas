@@ -103,7 +103,12 @@ for (const sourceEntry of repositorySource.sourceManifest.entries) {
     if (!trackedText || relativePath === "scripts/lib/privacy-scanner.mjs") continue;
     const text = sourceBody.toString("utf8");
     const legalText = relativePath.includes("licenses/") || /(?:\.LEGAL\.txt|THIRD_PARTY_NOTICES\.md)$/.test(relativePath);
-    const toolingText = /^(?:\.github|scripts|tests|tests-public)\//.test(relativePath);
+    // Code, schemas, tests, and policy documentation necessarily name the
+    // forbidden concepts they enforce (for example CSS `cursor`, a receipt
+    // schema, or a privacy checklist). Treat those files as tooling while
+    // keeping authoritative public data, root product copy, and the emitted
+    // runtime under the strict scanner above.
+    const toolingText = /^(?:\.github|docs|scripts|src|tests|tests-public|tests-visual)\//.test(relativePath);
     for (const privacyFinding of scanPrivacyText(text, { path: `github/homi-vault-atlas/${relativePath}`, legalText, toolingText })) {
       findings.push({ ...privacyFinding, id: `tracked-${privacyFinding.id}` });
     }

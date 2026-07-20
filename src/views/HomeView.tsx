@@ -47,7 +47,7 @@ const HOME_SCENE_COPY: Record<HomeSceneId, { kicker: string; title: string; body
   "verified-activity": {
     kicker: "03 · Verified Activity Pulse",
     title: "날짜 근거가 확인된 변화만 한 번 맥동합니다.",
-    body: "mtime이나 현재 온라인 상태를 활동으로 추정하지 않습니다. 의미 있는 날짜가 없는 허브는 정적으로 남습니다.",
+    body: "mtime이나 실시간 신호를 활동으로 추정하지 않습니다. 의미 있는 날짜가 없는 허브는 정적으로 남습니다.",
   },
   "coverage-boundary": {
     kicker: "04 · Coverage Boundary",

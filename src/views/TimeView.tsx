@@ -74,7 +74,7 @@ function OwnerActivityTimeline({ activity }: { activity: AtlasActivityV1 }) {
         eyebrow="OWNER ACTIVITY LEDGER"
         title="검증된 운영 원장 집계를 날짜별로 읽습니다"
         question="Owner Atlas의 운영 활동과 문서 생애주기를 분리해 보여준다."
-        answer={`${rows.length}개 날짜에 기록된 생성·완료·안전 중지 집계다. 실시간 상태나 현재 작업으로 해석하지 않는다.`}
+        answer={`${rows.length}개 날짜에 기록된 생성·완료·안전 중지 집계다. 진행 중인 업무나 실시간 상태로 해석하지 않는다.`}
       />
       <div className="desktop-visual-surface temporal-surface">
         <section className="era-focus-panel" style={{ gridColumn: "1 / -1" }}>
