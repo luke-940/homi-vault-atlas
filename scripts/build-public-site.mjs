@@ -8,10 +8,13 @@ import { validatePublicPackShapes } from "./lib/public-shape-validation.mjs";
 
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outputDir = path.resolve(process.env.ATLAS_PUBLIC_OUTPUT_DIR ?? path.join(projectDir, "dist-public"));
-const dataDir = path.resolve(process.env.ATLAS_PUBLIC_DATA_DIR ?? path.join(projectDir, "public-safe", "data"));
+const defaultDataDir = process.env.GITHUB_ACTIONS === "true"
+  ? path.join(projectDir, "public-safe", "data")
+  : path.join(projectDir, ".generated", "public", "data");
+const dataDir = path.resolve(process.env.ATLAS_PUBLIC_DATA_DIR ?? defaultDataDir);
 const stagingDir = path.join(path.dirname(outputDir), `.${path.basename(outputDir)}-staging-${process.pid}`);
 const previousDir = path.join(path.dirname(outputDir), `.${path.basename(outputDir)}-previous-${process.pid}`);
-const packNames = ["agency", "bootstrap", "structure", "relation", "flow", "temporal", "entity", "health", "insight", "publication"];
+const packNames = ["agency", "bootstrap", "inventory", "structure", "relation", "flow", "temporal", "entity", "health", "insight", "publication"];
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 
 function packageNameFromInput(inputPath) {
@@ -142,7 +145,7 @@ const runtimeLicenseCount = await installRuntimeNotices(runtimePackages);
 
 const scripts = packNames.map((name) => `    <script src="./data/${name}.js"></script>`).join("\n");
 const html = `<!doctype html>
-<html lang="ko">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -151,6 +154,12 @@ const html = `<!doctype html>
     <meta property="og:title" content="Homi Vault Atlas" />
     <meta property="og:description" content="한 사람의 방향과 전문 에이전트의 책임이 지식 지형으로 이어지는 검증된 버전 스냅샷" />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://luke-940.github.io/homi-vault-atlas/" />
+    <meta property="og:image" content="https://luke-940.github.io/homi-vault-atlas/assets/brand/og-card.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Homi Vault Atlas" />
+    <meta name="twitter:description" content="검증된 지식 지형과 공개 커버리지 경계를 탐색합니다." />
+    <meta name="twitter:image" content="https://luke-940.github.io/homi-vault-atlas/assets/brand/og-card.png" />
     <link rel="icon" type="image/svg+xml" sizes="any" href="./assets/brand/homi-mark-amber.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="./assets/brand/homi-mark-amber-32.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="./assets/brand/homi-mark-amber-180.png" />

@@ -3,7 +3,7 @@ import path from "node:path";
 import { describe, expect, test } from "vitest";
 import { auditPublicFieldContract } from "../scripts/public-field-contract.mjs";
 
-const names = ["bootstrap", "structure", "relation", "flow", "temporal", "entity", "health", "insight", "publication"];
+const names = ["bootstrap", "inventory", "structure", "relation", "flow", "temporal", "entity", "health", "insight", "publication"];
 const loadPacks = () => Object.fromEntries(names.map((name) => [
   name,
   JSON.parse(readFileSync(path.resolve("public-safe", "data", `${name}.json`), "utf8")),

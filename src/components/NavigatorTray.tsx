@@ -1,8 +1,27 @@
 import { ChevronRight, Clock3, FileText, FolderTree, Home, Route, Rows3, UsersRound, X } from "lucide-react";
 import { Fragment, useLayoutEffect, useRef, type KeyboardEvent } from "react";
-import { atlasData, hierarchyFocusForDistrict } from "../data-runtime";
+import { atlasData } from "../data-runtime";
 import { useAtlasState } from "../state";
 import { trayDialogKeyIntent } from "./tray-accessibility";
+import { workspaceSceneRegistry } from "./workspaceSceneRegistry";
+
+export function navigatorDistricts() {
+  return atlasData.structure.nodes
+    .filter((node) => node.kind === "district")
+    .sort((left, right) => right.documentCount - left.documentCount || left.label.localeCompare(right.label, "ko"));
+}
+
+export function navigatorHomeScenes() {
+  return workspaceSceneRegistry.home.scenes;
+}
+
+export function navigatorHomeTarget(sceneId: string) {
+  return { workspace: "home" as const, sceneId };
+}
+
+export function navigatorDistrictTarget(districtId: string) {
+  return { workspace: "explore" as const, sceneId: "hubs", focusId: districtId };
+}
 
 function getFocusable(container: HTMLElement | null) {
   return [...(container?.querySelectorAll<HTMLElement>(
@@ -71,6 +90,7 @@ export function NavigatorTray() {
         ref={trayRef}
         id="atlas-navigator-tray"
         className="side-tray navigator-tray"
+        lang="ko"
         role={isMobile ? "dialog" : "complementary"}
         aria-modal={isMobile ? "true" : undefined}
         aria-labelledby="navigator-tray-title"
@@ -121,29 +141,22 @@ export function NavigatorTray() {
 
         {state.workspace === "home" && (
           <div className="navigator-list">
-            {atlasData.insight.items.map((insight) => (
+            {navigatorHomeScenes().map((scene) => (
               <button
-                key={insight.id}
+                key={scene.id}
                 type="button"
+                className={state.sceneId === scene.id ? "is-active" : ""}
+                aria-current={state.sceneId === scene.id ? "true" : undefined}
                 onClick={() => {
                   dispatch({
                     type: "journey",
-                    target: {
-                      workspace: insight.targetScene.workspace,
-                      sceneId: insight.targetScene.scene,
-                      focusId: insight.targetScene.focusId,
-                      lens: insight.targetScene.lens,
-                      relationPairId: insight.targetScene.relationPairId,
-                      relationLayer: insight.targetScene.relationLayer,
-                      routeId: insight.targetScene.routeId,
-                      eraId: insight.targetScene.eraId,
-                    },
+                    target: navigatorHomeTarget(scene.id),
                   });
                   finishMobileSelection();
                 }}
               >
                 <FileText size={16} aria-hidden="true" />
-                <span><strong>{insight.headline}</strong><small>{insight.metric.value}{insight.metric.unit ?? ""} · {insight.metric.label}</small></span>
+                <span><strong>{scene.label}</strong><small>{scene.title}</small></span>
                 <ChevronRight size={15} aria-hidden="true" />
               </button>
             ))}
@@ -152,25 +165,22 @@ export function NavigatorTray() {
 
         {state.workspace === "explore" && (
           <div className="navigator-list">
-            {atlasData.structure.districts.map((district) => {
-              const focusId = hierarchyFocusForDistrict(district.name) ?? atlasData.structure.rootId;
-              return (
+            {navigatorDistricts().map((district) => (
                 <button
                   key={district.id}
                   type="button"
-                  className={state.focusId === focusId ? "is-active" : ""}
-                  aria-current={state.focusId === focusId ? "true" : undefined}
+                  className={state.focusId === district.id ? "is-active" : ""}
+                  aria-current={state.focusId === district.id ? "true" : undefined}
                   onClick={() => {
-                    dispatch({ type: "focus", focusId });
+                    dispatch({ type: "journey", target: navigatorDistrictTarget(district.id) });
                     finishMobileSelection();
                   }}
                 >
                   <FolderTree size={16} aria-hidden="true" />
-                  <span><strong>{district.name}</strong><small>{district.documentCount}개 문서</small></span>
+                  <span><strong>{district.label}</strong><small>{district.documentCount}개 표현 기록</small></span>
                   <ChevronRight size={15} aria-hidden="true" />
                 </button>
-              );
-            })}
+              ))}
           </div>
         )}
 

@@ -1,11 +1,14 @@
 import type { AtlasData } from "./types";
 import { agencyTruthFailures } from "./agency/presentation";
+import { resolveWorkspaceScene } from "./components/workspaceSceneRegistry";
+import { isStructuralHub, isStructureSourceLevel } from "./structure-navigation";
 
 export const DEFAULT_DAILY_ROUTE_ID = "daily";
 const RELATION_LAYERS = ["wikilink", "typed", "route"] as const;
 const REQUIRED_RUNTIME_PACKS = [
   "agency",
   "bootstrap",
+  "inventory",
   "structure",
   "relation",
   "flow",
@@ -169,8 +172,14 @@ export function collectAtlasReferenceFailures(candidate: AtlasData): string[] {
   const activeEntityCount = candidate.entity.entities.length;
   const districtDocumentExpected = candidate.publication.profile === "public"
     ? candidate.publication.redactionCounts.aggregatedSourceDocuments ?? activeEntityCount
-    : activeEntityCount;
+    : candidate.publication.profile === "owner"
+      ? districtDocumentCount
+      : activeEntityCount;
   const memoryEngineFiles = candidate.health.memoryEngine.files;
+  const structureNodeIds = new Set(candidate.structure.nodes.map((node) => node.id));
+  const inventoryClassifiedTotal = candidate.inventory.namedCount
+    + candidate.inventory.aggregateCount
+    + candidate.inventory.excludedCount;
   const failures = [
     ...agencyTruthFailures(candidate.agency).map((failure) => `agency:${failure}`),
     ...entityIdList
@@ -192,7 +201,7 @@ export function collectAtlasReferenceFailures(candidate: AtlasData): string[] {
         ...route.sourceRefs,
         ...route.stations.map((station) => station.entityId).filter(Boolean) as string[],
       ])
-      .filter((id) => !entityIds.has(id))
+      .filter((id) => !entityIds.has(id) && !structureNodeIds.has(id))
       .map((id) => `flow:${id}`),
     ...Object.entries(candidate.relation.neighborhoods)
       .filter(([sourceId]) => !entityIds.has(sourceId))
@@ -227,10 +236,16 @@ export function collectAtlasReferenceFailures(candidate: AtlasData): string[] {
         .map((delta) => `era-delta-evidence:${era.id}:${delta.evidenceRef}`),
     ]),
     ...candidate.insight.items.flatMap((insight) => [
+      ...(!resolveWorkspaceScene(insight.targetScene.workspace, insight.targetScene.scene)
+        ? [`insight-scene:${insight.id}:${insight.targetScene.workspace}:${insight.targetScene.scene}`]
+        : []),
       ...insight.evidenceRefs
         .filter((reference) => !entityIds.has(reference))
         .map((reference) => `insight-evidence:${insight.id}:${reference}`),
-      ...(insight.targetScene.focusId && !entityIds.has(insight.targetScene.focusId) && !hierarchyIds.has(insight.targetScene.focusId)
+      ...(insight.targetScene.focusId
+        && !entityIds.has(insight.targetScene.focusId)
+        && !hierarchyIds.has(insight.targetScene.focusId)
+        && !structureNodeIds.has(insight.targetScene.focusId)
         ? [`insight-focus:${insight.id}:${insight.targetScene.focusId}`]
         : []),
       ...(insight.targetScene.relationPairId && !candidate.relation.matrix.some((pair) => pair.id === insight.targetScene.relationPairId)
@@ -243,7 +258,97 @@ export function collectAtlasReferenceFailures(candidate: AtlasData): string[] {
         ? [`insight-era:${insight.id}:${insight.targetScene.eraId}`]
         : []),
     ]),
+    ...candidate.structure.nodes
+      .filter((node, index, nodes) => nodes.findIndex((item) => item.id === node.id) !== index)
+      .map((node) => `structure-v2-duplicate:${node.id}`),
+    ...candidate.structure.nodes
+      .filter((node) => node.parentId !== null && !structureNodeIds.has(node.parentId))
+      .map((node) => `structure-v2-parent:${node.id}:${node.parentId}`),
+    ...candidate.structure.associations
+      .filter((association) => !structureNodeIds.has(association.source) || !structureNodeIds.has(association.target))
+      .map((association) => `structure-v2-association:${association.id}`),
   ];
+  if (candidate.inventory.profile !== candidate.structure.profile) {
+    failures.push(`profile-mismatch:${candidate.inventory.profile}:${candidate.structure.profile}`);
+  }
+  if (candidate.inventory.unclassifiedCount !== 0) failures.push("inventory-unclassified");
+  if (inventoryClassifiedTotal !== candidate.inventory.physicalMarkdownCount) {
+    failures.push(`inventory-reconciliation:${inventoryClassifiedTotal}:${candidate.inventory.physicalMarkdownCount}`);
+  }
+  if (candidate.inventory.reconciliation.classifiedTotal !== inventoryClassifiedTotal
+    || candidate.inventory.reconciliation.pass !== true) {
+    failures.push("inventory-reconciliation-evidence");
+  }
+  const coveragePhysical = candidate.inventory.coverage.reduce((total, row) => total + row.physical, 0);
+  const coverageNamed = candidate.inventory.coverage.reduce((total, row) => total + row.named, 0);
+  const coverageAggregate = candidate.inventory.coverage.reduce((total, row) => total + row.aggregate, 0);
+  const coverageExcluded = candidate.inventory.coverage.reduce((total, row) => total + row.excluded, 0);
+  if (coveragePhysical !== candidate.inventory.physicalMarkdownCount
+    || coverageNamed !== candidate.inventory.namedCount
+    || coverageAggregate !== candidate.inventory.aggregateCount
+    || coverageExcluded !== candidate.inventory.excludedCount) {
+    failures.push("inventory-coverage-reconciliation");
+  }
+  if (candidate.structure.nodes.some((node) => node.id.startsWith("actor:"))) {
+    failures.push("structure-v2-actor-contamination");
+  }
+  const structureNodeById = new Map(candidate.structure.nodes.map((node) => [node.id, node]));
+  const primaryMembershipCounts = new Map<string, number>();
+  for (const association of candidate.structure.associations.filter((edge) => edge.kind === "member_of")) {
+    primaryMembershipCounts.set(association.source, (primaryMembershipCounts.get(association.source) ?? 0) + 1);
+  }
+  if (candidate.inventory.profile === "atlas-owner") {
+    const ownerDocumentNodes = candidate.structure.nodes.filter((node) =>
+      node.kind !== "district" && node.nameMode === "owner_name");
+    const ownerNonDistrictNodes = candidate.structure.nodes.filter((node) => node.kind !== "district");
+    const represented = ownerDocumentNodes.reduce((total, node) => total + node.documentCount, 0);
+    if (ownerDocumentNodes.length !== candidate.inventory.namedCount || represented !== candidate.inventory.namedCount) {
+      failures.push(`owner-primary-count:${ownerDocumentNodes.length}:${represented}:${candidate.inventory.namedCount}`);
+    }
+    if (ownerNonDistrictNodes.some((node) => node.parentId === null || primaryMembershipCounts.get(node.id) !== 1)) {
+      failures.push("owner-primary-parent-not-exactly-one");
+    }
+  }
+  if (candidate.inventory.profile === "atlas-public") {
+    const publicRepresented = candidate.structure.nodes
+      .filter((node) => node.kind !== "district" && node.nameMode !== "public_alias")
+      .reduce((total, node) => total + node.documentCount, 0);
+    const expectedRepresented = candidate.inventory.namedCount + candidate.inventory.aggregateCount;
+    if (publicRepresented !== expectedRepresented) {
+      failures.push(`public-primary-count:${publicRepresented}:${expectedRepresented}`);
+    }
+    if (candidate.structure.nodes.some((node) => node.nameMode === "aggregate"
+      && (node.parentId === null || structureNodeById.get(node.parentId)?.kind === "district" || node.documentCount <= 0))) {
+      failures.push("public-aggregate-child-invalid");
+    }
+  }
+  for (const node of candidate.structure.nodes) {
+    if (!isStructureSourceLevel(node)) continue;
+    const visited = new Set([node.id]);
+    let parent = node.parentId === null ? undefined : structureNodeById.get(node.parentId);
+    let hasHubAncestor = false;
+    while (parent && !visited.has(parent.id)) {
+      if (isStructuralHub(parent)) {
+        hasHubAncestor = true;
+        break;
+      }
+      visited.add(parent.id);
+      parent = parent.parentId === null ? undefined : structureNodeById.get(parent.parentId);
+    }
+    if (!hasHubAncestor) failures.push(`structure-v2-source-without-hub:${node.id}`);
+  }
+  for (const node of candidate.structure.nodes) {
+    const visited = new Set<string>();
+    let cursor: string | null = node.id;
+    while (cursor !== null) {
+      if (visited.has(cursor)) {
+        failures.push(`structure-v2-cycle:${node.id}:${cursor}`);
+        break;
+      }
+      visited.add(cursor);
+      cursor = structureNodeById.get(cursor)?.parentId ?? null;
+    }
+  }
   for (const node of candidate.structure.hierarchyNodes) {
     const visited = new Set<string>();
     let cursor: string | null = node.id;
@@ -344,6 +449,12 @@ export function collectAtlasReferenceFailures(candidate: AtlasData): string[] {
       `count-archive:${candidate.bootstrap.snapshot.archiveMarkdownCount}:${candidate.structure.archiveScope.archive}`,
     );
   }
+  if (candidate.publication.profile === "public" && candidate.activity) {
+    failures.push("owner-activity:public-profile");
+  }
+  if (candidate.publication.profile === "owner" && !candidate.activity) {
+    failures.push("owner-activity:missing");
+  }
   if (candidate.health.ambiguousAutoSelections !== 0) {
     failures.push(`ambiguous-auto-selection:${candidate.health.ambiguousAutoSelections}`);
   }
@@ -362,8 +473,11 @@ export function collectAtlasReferenceFailures(candidate: AtlasData): string[] {
     failures.push(`root-parent:${candidate.structure.rootId}`);
   }
   if (!entityIds.has(candidate.bootstrap.defaultFocus)) failures.push(`default-focus:${candidate.bootstrap.defaultFocus}`);
-  if (!eraIds.has(candidate.temporal.currentEra)) failures.push(`current-era:${candidate.temporal.currentEra}`);
-  if (!routeIds.has(DEFAULT_DAILY_ROUTE_ID)) failures.push(`default-route:${DEFAULT_DAILY_ROUTE_ID}`);
+  if (candidate.temporal.currentEra === null) {
+    if (candidate.temporal.eras.length > 0) failures.push("current-era:null-with-recorded-eras");
+  } else if (!eraIds.has(candidate.temporal.currentEra)) {
+    failures.push(`current-era:${candidate.temporal.currentEra}`);
+  }
   return [...new Set(failures)];
 }
 
@@ -388,6 +502,9 @@ export function validateAtlasPacks(candidate: unknown): AtlasData {
     throw new Error(message);
   }
   const expectedPackNames = new Set<string>(REQUIRED_RUNTIME_PACKS);
+  if ((restored.publication as Record<string, unknown>).profile === "owner") {
+    expectedPackNames.add("activity");
+  }
   const unknownPack = Object.keys(restored).find((name) => !expectedPackNames.has(name));
   if (unknownPack) {
     const message = `Atlas v7 데이터 계약 위반: atlas.${unknownPack} is not allowed.`;
@@ -396,6 +513,8 @@ export function validateAtlasPacks(candidate: unknown): AtlasData {
   }
   if ((restored.agency as Record<string, unknown>).schema !== "atlas.agency.v1"
     || (restored.bootstrap as Record<string, unknown>).schema !== "atlas.snapshot.v7"
+    || (restored.inventory as Record<string, unknown>).schema !== "atlas.inventory.v1"
+    || (restored.structure as Record<string, unknown>).schema !== "atlas.structure.v2"
     || (restored.publication as Record<string, unknown>).schema !== "atlas.publication.v1") {
     const message = "Atlas v7 데이터 계약 위반: public pack schema envelope mismatch.";
     showFatalDataError(message);

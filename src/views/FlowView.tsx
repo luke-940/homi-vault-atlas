@@ -1,21 +1,25 @@
-import { ArrowRight, CircleCheck } from "lucide-react";
+import { ArrowRight, CircleCheck, ShieldCheck } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
-import { atlasData, entityById } from "../data-runtime";
+import { atlasData, entityById, structureNodeById } from "../data-runtime";
 import { useElementSize } from "../hooks/useElementSize";
 import { useAtlasState } from "../state";
 import type { RouteStation, RouteStationKind } from "../types";
 
 const publicProfile = atlasData.publication.profile === "public";
 
-const routeColors: Record<string, string> = {
-  daily: "#338f80",
-  batch: "#517db3",
-  provider: "#8a6cc2",
-  paper: "#89a94f",
-  chronicle: "#c88652",
-  graph: "#cf6767",
-};
+const routeColors = ["#338f80", "#517db3", "#8a6cc2", "#89a94f", "#c88652", "#cf6767"];
+
+function verifiedRoutes() {
+  return atlasData.flow.routes.filter((route) => (
+    route.members.length > 0 && route.stations.some((station) => Boolean(station.entityId))
+  ));
+}
+
+function routeColor(routeId: string) {
+  const index = atlasData.flow.routes.findIndex((route) => route.id === routeId);
+  return routeColors[Math.max(0, index) % routeColors.length];
+}
 
 function stationKind(station: RouteStation): RouteStationKind {
   if (station.kind) return station.kind;
@@ -53,7 +57,8 @@ export function revealSelectedRoute(
 
 export function FlowView() {
   const { state, dispatch } = useAtlasState();
-  const route = atlasData.flow.routes.find((item) => item.id === state.routeId)!;
+  const routes = verifiedRoutes();
+  const route = routes.find((item) => item.id === state.routeId) ?? routes[0];
   const activeRouteRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     revealSelectedRoute(activeRouteRef.current);
@@ -64,18 +69,27 @@ export function FlowView() {
         titleId="flow-title"
         eyebrow="볼트 경로 · 지식 전파"
         title="근거가 어떤 경로를 지나 판단과 설명이 되는가"
-        question={`선 폭은 수량을 뜻하지 않는다. ${atlasData.flow.coordinateContract.readerLabel}`}
-        answer={publicProfile
-          ? `${route.label}은 ${route.stations.length}개 안내 정거장으로 구성된 공개 역할 경로다. 실제 최신 실행 기록은 공개판에 포함하지 않는다.`
-          : `${route.label}은 ${route.stations.length}개 안내 정거장으로 구성된다. 최신 Daily 영수증은 ${atlasData.flow.pulse.chains.length}개 Daily → 중심 지식 관계를 확인했다.`}
+        question={`경로는 실제로 해석된 허브 간 위키링크이며, 선 폭은 link occurrence를 뜻한다. ${atlasData.flow.coordinateContract.readerLabel}`}
+        answer={!route
+          ? "현재 프로필에서 구성원이 확인된 공개 경로가 없다. 빈 상태는 0건이나 활동 부재를 뜻하지 않는다."
+          : publicProfile
+          ? `${route.label}은 ${route.stations.length}개 공개 허브를 잇는 검증된 지식 경로다. 실제 최신 실행 기록은 공개판에 포함하지 않는다.`
+          : `${route.label}은 ${route.stations.length}개 지식 허브를 잇는다. 검증된 Daily 관계 집계는 ${atlasData.flow.pulse.chains.length}개다.`}
         keyItems={[
           { label: "선택 경로", className: "key-focus" },
           { label: "검증 관문", className: "key-proof" },
           { label: "외부 읽기면", className: "key-readable" },
         ]}
       />
+      {!route ? (
+        <div className="workspace-honest-empty flow-honest-empty" role="note">
+          <ShieldCheck size={24} aria-hidden="true" />
+          <h2>공개 가능한 검증 경로가 없습니다.</h2>
+          <p>검증된 구성원이 없는 안내 요소는 경로처럼 그리지 않습니다. Owner Atlas의 내부 경로도 공개판에 추정해 넣지 않습니다.</p>
+        </div>
+      ) : <>
       <nav className="route-rail" aria-label="작업 흐름 선택">
-        {atlasData.flow.routes.map((item) => (
+        {routes.map((item) => (
           <button
             key={item.id}
             ref={item.id === state.routeId ? activeRouteRef : undefined}
@@ -84,8 +98,8 @@ export function FlowView() {
             aria-pressed={item.id === state.routeId}
             onClick={() => dispatch({ type: "route", routeId: item.id })}
           >
-            <i style={{ background: routeColors[item.id] }} aria-hidden="true" />
-            <span><strong>{item.label}</strong><small>{item.stations.length}개 안내 정거장</small></span>
+            <i style={{ background: routeColor(item.id) }} aria-hidden="true" />
+            <span><strong>{item.label}</strong><small>{item.stations.length}개 연결 허브 · link occurrence {item.weight}</small></span>
           </button>
         ))}
       </nav>
@@ -95,6 +109,7 @@ export function FlowView() {
       </div>
       <MobileFlow />
       <div className="sr-only" aria-live="polite">선택 경로 {route.label}: {route.question}</div>
+      </>}
     </section>
   );
 }
@@ -129,20 +144,23 @@ function VaultMetro() {
   const top = 54;
   const laneGap = Math.max(72, (height - 90) / Math.max(1, atlasData.flow.routes.length));
   const geometries = useMemo(
-    () => atlasData.flow.routes.map((route, index) => ({
+    () => verifiedRoutes().map((route, index) => ({
       route,
       ...routeGeometry(width, top + laneGap * index, route.stations.length),
     })),
     [laneGap, width],
   );
+  const maxWeight = Math.max(1, ...geometries.map(({ route }) => route.weight));
   return (
     <div className="metro-canvas" ref={ref} data-testid="vault-metro">
-      <svg width={width} height={height} role="group" aria-label="여섯 작업 흐름이 검증 관문을 지나는 볼트 경로 지도">
+      <svg width={width} height={height} role="group" aria-label="확인된 허브 간 위키링크 경로 지도">
         <defs>
           <filter id="metro-focus-glow" x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation="5" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
         </defs>
         {geometries.map(({ route, path, points }) => {
           const active = route.id === state.routeId;
+          const weightRatio = Math.sqrt(route.weight / maxWeight);
+          const strokeWidth = active ? 3.2 + weightRatio * 3.8 : 1.2 + weightRatio * 2.2;
           return (
             <g key={route.id} className={`metro-route${active ? " is-active" : ""}`}>
               <rect
@@ -154,27 +172,29 @@ function VaultMetro() {
                 rx="5"
                 aria-hidden="true"
               />
-              <path d={path} fill="none" stroke={active ? routeColors[route.id] : "#cad8d2"} strokeWidth={active ? 5 : 2} strokeOpacity={active ? 1 : 0.46} strokeLinecap="round" filter={active ? "url(#metro-focus-glow)" : undefined} />
+              <path d={path} fill="none" stroke={active ? routeColor(route.id) : "#91aaa1"} strokeWidth={strokeWidth} strokeOpacity={active ? 1 : 0.52} strokeLinecap="round" filter={active ? "url(#metro-focus-glow)" : undefined} />
               <text x={18} y={(points[0]?.y ?? 0) + 4} className={active ? "metro-route-label is-active" : "metro-route-label"}>{route.label}</text>
               {route.stations.map((station, index) => {
                 const point = points[index];
                 const entity = station.entityId ? entityById.get(station.entityId) : undefined;
+                const structureNode = station.entityId ? structureNodeById.get(station.entityId) : undefined;
+                const resolvedLabel = entity?.displayLabel ?? structureNode?.label ?? station.label;
                 const focused = station.entityId === state.focusId;
                 const previewed = station.entityId === state.previewId;
                 const pulseReached = !publicProfile && Boolean(station.entityId && pulseEntityIds.has(station.entityId));
                 const kind = stationKind(station);
                 return (
-                  <g key={station.id} transform={`translate(${point.x},${point.y})`} className={`metro-station kind-${kind}${focused ? " is-focused" : ""}${previewed ? " is-preview" : ""}${pulseReached ? " has-pulse" : ""}`} role={station.entityId ? "button" : undefined} aria-label={station.entityId ? `${station.label}${kind === "proof_gate" ? ", 검증 관문" : ""}${pulseReached ? ", 최신 Daily 관계 영수증에 포함" : ""}: ${entity?.displayLabel ?? station.entityId}` : undefined} tabIndex={station.entityId ? 0 : -1} onPointerEnter={() => station.entityId && dispatch({ type: "preview", focusId: station.entityId })} onPointerLeave={() => dispatch({ type: "preview", focusId: null })} onFocus={() => station.entityId && dispatch({ type: "preview", focusId: station.entityId })} onBlur={() => dispatch({ type: "preview", focusId: null })} onClick={() => station.entityId && dispatch({ type: "focus", focusId: station.entityId })} onKeyDown={(event) => {
+                  <g key={station.id} transform={`translate(${point.x},${point.y})`} className={`metro-station kind-${kind}${focused ? " is-focused" : ""}${previewed ? " is-preview" : ""}${pulseReached ? " has-pulse" : ""}`} role={station.entityId ? "button" : undefined} aria-label={station.entityId ? `${station.label}${kind === "proof_gate" ? ", 검증 관문" : ""}${pulseReached ? ", 검증된 Daily 관계 집계에 포함" : ""}: ${resolvedLabel}` : undefined} tabIndex={station.entityId ? 0 : -1} onPointerEnter={() => station.entityId && dispatch({ type: "preview", focusId: station.entityId })} onPointerLeave={() => dispatch({ type: "preview", focusId: null })} onFocus={() => station.entityId && dispatch({ type: "preview", focusId: station.entityId })} onBlur={() => dispatch({ type: "preview", focusId: null })} onClick={() => station.entityId && dispatch({ type: "focus", focusId: station.entityId })} onKeyDown={(event) => {
                     if (station.entityId && (event.key === "Enter" || event.key === " ")) dispatch({ type: "focus", focusId: station.entityId });
                   }}>
                     {pulseReached && <circle className="pulse-station-ring" r={active ? 16 : 12} />}
-                    <StationGlyph kind={kind} active={active} focused={focused} color={routeColors[route.id]} />
+                    <StationGlyph kind={kind} active={active} focused={focused} color={routeColor(route.id)} />
                     {(active || index === 0 || index === route.stations.length - 1) && (
                       <text x={0} y={index % 2 === 0 ? -17 : 27} textAnchor="middle" className="station-label">
                         <tspan>{station.label}</tspan>
-                        {active && entity && (
+                        {active && (entity || structureNode) && (
                           <tspan x={0} dy={12} className="station-path">
-                            {entity.displayLabel.length > 24 ? `${entity.displayLabel.slice(0, 22)}…` : entity.displayLabel}
+                            {resolvedLabel.length > 24 ? `${resolvedLabel.slice(0, 22)}…` : resolvedLabel}
                           </tspan>
                         )}
                       </text>
@@ -193,23 +213,24 @@ function VaultMetro() {
 function PulseRail() {
   const pulse = atlasData.flow.pulse;
   const chain = pulse.chains[0] as any | undefined;
-  const stages = chain?.stages ?? [
-    { role: "source", label: "소스 창" },
-    { role: "daily", label: "Daily" },
-    { role: "knowledge", label: "중심 지식" },
-    { role: "decision", label: "판단·행동" },
-    { role: "readable", label: "읽기용 사본" },
-  ];
+  if (!chain) {
+    return (
+      <section className="pulse-rail flow-pulse-empty" role="note" aria-label="기록된 활동 연결 없음">
+        <div className="pulse-heading">
+          <span className="eyebrow">Verified activity boundary</span>
+          <strong>표시할 활동 연결이 없습니다.</strong>
+          <small>근거가 없는 단계나 진행 상태를 경로처럼 만들지 않습니다.</small>
+        </div>
+      </section>
+    );
+  }
+  const stages = chain.stages ?? [];
   return (
-    <section className="pulse-rail" aria-label={publicProfile ? "공개 역할 경로" : "최신 Daily 관계 영수증"}>
+    <section className="pulse-rail" aria-label="검증된 Daily 관계 집계">
       <div className="pulse-heading">
-        <span className="eyebrow">{publicProfile ? "공개 역할 순서" : "Daily 관계 영수증"}</span>
-        <strong>{publicProfile ? "대표 작업 경계" : pulse.latestDailyDate ?? "최신 Daily"}</strong>
-        <small>{publicProfile
-          ? `${pulse.chains.length}개 역할 경로 · 최신 실행 완료를 주장하지 않음`
-          : pulse.chains.length
-            ? `Daily → 중심 지식 직접 관계 ${pulse.chains.length}개 확인 · 소스와 읽기면은 경계 표시`
-            : "기록된 직접 관계 없음"}</small>
+        <span className="eyebrow">Verified activity relation</span>
+        <strong>{pulse.latestDailyDate ?? "날짜 미기록"}</strong>
+        <small>Daily → 중심 지식 직접 관계 {pulse.chains.length}개 · 실행 상태가 아닌 버전 스냅샷</small>
       </div>
       <ol>
         {stages.map((stage: any, index: number) => (
@@ -226,11 +247,13 @@ function PulseRail() {
 
 function MobileFlow() {
   const { state, dispatch } = useAtlasState();
-  const route = atlasData.flow.routes.find((item) => item.id === state.routeId)!;
+  const routes = verifiedRoutes();
+  const route = routes.find((item) => item.id === state.routeId) ?? routes[0];
   const activeRouteRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     revealSelectedRoute(activeRouteRef.current);
   }, [state.routeId]);
+  if (!route) return null;
   return (
     <div className="mobile-sibling mobile-flow">
       <section className="mobile-selection">
@@ -248,20 +271,20 @@ function MobileFlow() {
         </button>
       </section>
       <div className="mobile-route-switch">
-        {atlasData.flow.routes.map((item) => <button key={item.id} ref={item.id === state.routeId ? activeRouteRef : undefined} type="button" aria-pressed={item.id === state.routeId} className={item.id === state.routeId ? "is-active" : ""} onClick={() => dispatch({ type: "route", routeId: item.id })}><i style={{ background: routeColors[item.id] }} />{item.label}</button>)}
+        {routes.map((item) => <button key={item.id} ref={item.id === state.routeId ? activeRouteRef : undefined} type="button" aria-pressed={item.id === state.routeId} className={item.id === state.routeId ? "is-active" : ""} onClick={() => dispatch({ type: "route", routeId: item.id })}><i style={{ background: routeColor(item.id) }} />{item.label}</button>)}
       </div>
       <ol className="mobile-stepper">
         {route.stations.map((station, index) => (
           <li key={station.id}>
-            <span style={{ borderColor: routeColors[route.id] }}>{stationKind(station) === "proof_gate" ? "◇" : String(index + 1).padStart(2, "0")}</span>
+            <span style={{ borderColor: routeColor(route.id) }}>{stationKind(station) === "proof_gate" ? "◇" : String(index + 1).padStart(2, "0")}</span>
             <button type="button" disabled={!station.entityId} onClick={() => station.entityId && dispatch({ type: "focus", focusId: station.entityId })}>
               <strong>{station.label}</strong>
-              <small>{stationKind(station) === "proof_gate" ? "검증 관문 · " : ""}{station.entityId ? entityById.get(station.entityId)?.displayLabel : station.external ? "공개 경계 단계" : "역할 단계"}</small>
+              <small>{stationKind(station) === "proof_gate" ? "검증 관문 · " : ""}{station.entityId ? (entityById.get(station.entityId)?.displayLabel ?? structureNodeById.get(station.entityId)?.label ?? station.label) : station.external ? "공개 경계 단계" : "관계 단계"}</small>
             </button>
           </li>
         ))}
       </ol>
-      <div className="mobile-flow-proof"><CircleCheck size={18} /><span>이 안내 경로에는 {route.members.length}개 문서가 연결되어 있다. 실제 실행 완료·진행량·연결 횟수를 뜻하지 않는다.</span></div>
+      <div className="mobile-flow-proof"><CircleCheck size={18} /><span>이 지식 경로에는 {route.members.length}개 허브와 link occurrence {route.weight}건이 연결되어 있다. 실행 완료나 진행 상태를 뜻하지 않는다.</span></div>
       <button className="mobile-theatre-action" type="button" onClick={() => dispatch({ type: "theatre", open: true })}>경로 읽기 집중 보기</button>
     </div>
   );

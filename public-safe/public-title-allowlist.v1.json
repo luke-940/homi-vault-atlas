@@ -1,0 +1,41 @@
+{
+  "schema": "public-title-allowlist.v1",
+  "mode": "safe_hybrid",
+  "titles": [
+    "AI 신뢰성",
+    "에이전트",
+    "Anthropic",
+    "Claude",
+    "MCP",
+    "Tool Atlas",
+    "Agent Papers",
+    "AI and Society Papers",
+    "Foundation Model Papers",
+    "Video Papers",
+    "Image Papers",
+    "VLM Papers",
+    "World and 3D Papers",
+    "Commerce Papers",
+    "Audio Papers"
+  ],
+  "districtLabels": {
+    "Console": "운영 기반",
+    "Groot": "Independent Projects",
+    "Intelligence Layer": "Independent Projects",
+    "MOC": "중심 지식",
+    "Papers": "연구 논거",
+    "Research": "연구 기록",
+    "Rocket": "Independent Projects",
+    "Signals": "신호",
+    "Strategy": "전략"
+  },
+  "aliases": [
+    { "id": "operating-foundation", "sourceKey": "Console", "label": "운영 기반", "kind": "aggregate_boundary" },
+    { "id": "independent-projects", "sourceKey": "Independent Projects", "label": "Independent Projects", "kind": "aggregate_boundary" },
+    { "id": "knowledge-hubs", "sourceKey": "MOC", "label": "중심 지식 허브", "kind": "moc_hub" },
+    { "id": "paper-gateways", "sourceKey": "Papers", "label": "연구 논거 게이트웨이", "kind": "paper_gateway" },
+    { "id": "research-records", "sourceKey": "Research", "label": "연구 기록", "kind": "aggregate_boundary" },
+    { "id": "signal-domains", "sourceKey": "Signals", "label": "신호 도메인", "kind": "signal_domain" },
+    { "id": "strategy-portfolio", "sourceKey": "Strategy", "label": "전략 포트폴리오", "kind": "aggregate_boundary" }
+  ]
+}

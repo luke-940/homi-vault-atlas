@@ -1,4 +1,5 @@
 import {
+  ArrowLeft,
   Binoculars,
   Compass,
   Database,
@@ -28,6 +29,8 @@ export const workspaceItems: Array<{
   { id: "agency", label: "Agency", icon: Network },
 ];
 
+const rovingWorkspaceIds: Workspace[] = ["home", ...workspaceItems.map((item) => item.id)];
+
 function HomiMark() {
   return (
     <span className="brand-mark-crop" aria-hidden="true">
@@ -39,8 +42,9 @@ function HomiMark() {
 export function CommandBar() {
   const { state, dispatch } = useAtlasState();
 
-  const handleWorkspaceKey = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
-    const last = workspaceItems.length - 1;
+  const handleWorkspaceKey = (event: KeyboardEvent<HTMLButtonElement>, workspace: Workspace) => {
+    const index = rovingWorkspaceIds.indexOf(workspace);
+    const last = rovingWorkspaceIds.length - 1;
     let nextIndex = index;
     if (event.key === "ArrowRight") nextIndex = index === last ? 0 : index + 1;
     else if (event.key === "ArrowLeft") nextIndex = index === 0 ? last : index - 1;
@@ -48,18 +52,20 @@ export function CommandBar() {
     else if (event.key === "End") nextIndex = last;
     else return;
     event.preventDefault();
-    const next = workspaceItems[nextIndex];
-    dispatch({ type: "workspace", workspace: next.id });
-    requestAnimationFrame(() => document.getElementById(`workspace-tab-${next.id}`)?.focus());
+    const next = rovingWorkspaceIds[nextIndex];
+    dispatch({ type: "workspace", workspace: next });
+    requestAnimationFrame(() => document.getElementById(`workspace-tab-${next}`)?.focus());
   };
 
   return (
-    <header className="command-bar">
+    <header className="command-bar" lang="en">
       <button
         className={state.workspace === "home" ? "brand-lockup is-current" : "brand-lockup"}
         id="workspace-tab-home"
         type="button"
         onClick={() => dispatch({ type: "workspace", workspace: "home" })}
+        onKeyDown={(event) => handleWorkspaceKey(event, "home")}
+        tabIndex={state.workspace === "home" ? 0 : -1}
         aria-label="Homi Vault Atlas Home"
         aria-current={state.workspace === "home" ? "page" : undefined}
         aria-controls="workspace-panel-home"
@@ -69,14 +75,15 @@ export function CommandBar() {
       </button>
 
       <nav className="workspace-tabs" aria-label="Atlas workspaces">
-        {workspaceItems.map((item, index) => (
+        {workspaceItems.map((item) => (
           <button
             key={item.id}
             id={`workspace-tab-${item.id}`}
             className={state.workspace === item.id ? "workspace-tab is-active" : "workspace-tab"}
             type="button"
             onClick={() => dispatch({ type: "workspace", workspace: item.id })}
-            onKeyDown={(event) => handleWorkspaceKey(event, index)}
+            onKeyDown={(event) => handleWorkspaceKey(event, item.id)}
+            tabIndex={state.workspace === item.id ? 0 : -1}
             aria-current={state.workspace === item.id ? "page" : undefined}
             aria-controls={`workspace-panel-${item.id}`}
           >
@@ -86,6 +93,17 @@ export function CommandBar() {
       </nav>
 
       <div className="command-actions">
+        {state.navigationHistory.length > 0 && (
+          <button
+            className="icon-button semantic-back"
+            type="button"
+            onClick={() => dispatch({ type: "back" })}
+            aria-label="Go back to the previous Atlas scene"
+            title="Back (Esc)"
+          >
+            <ArrowLeft size={18} aria-hidden="true" />
+          </button>
+        )}
         {state.theatre && (
           <button
             className="icon-button theatre-exit is-active"
@@ -113,7 +131,7 @@ export function CommandBar() {
           className={state.panel === "navigator" ? "icon-button panel-trigger is-active" : "icon-button panel-trigger"}
           type="button"
           onClick={() => dispatch({ type: "panel", panel: "navigator" })}
-          aria-label={state.panel === "navigator" ? "탐색 패널 닫기" : "탐색 패널 열기"}
+          aria-label={state.panel === "navigator" ? "Close navigator" : "Open navigator"}
           aria-expanded={state.panel === "navigator"}
           aria-controls="atlas-navigator-tray"
           aria-haspopup="dialog"
@@ -126,7 +144,7 @@ export function CommandBar() {
           className={state.panel === "inspector" ? "icon-button panel-trigger is-active" : "icon-button panel-trigger"}
           type="button"
           onClick={() => dispatch({ type: "panel", panel: "inspector" })}
-          aria-label={state.panel === "inspector" ? "현재 선택 해석 닫기" : "현재 선택 해석 열기"}
+          aria-label={state.panel === "inspector" ? "Close selection details" : "Open selection details"}
           aria-expanded={state.panel === "inspector"}
           aria-controls="atlas-inspector-tray"
           aria-haspopup="dialog"
@@ -139,7 +157,7 @@ export function CommandBar() {
           className={state.panel === "data" ? "icon-button panel-trigger data-trigger is-active" : "icon-button panel-trigger data-trigger"}
           type="button"
           onClick={() => dispatch({ type: "panel", panel: "data" })}
-          aria-label={state.panel === "data" ? "데이터 기준 닫기" : "데이터 기준 열기"}
+          aria-label={state.panel === "data" ? "Close evidence boundary" : "Open evidence boundary"}
           aria-expanded={state.panel === "data"}
           aria-controls="atlas-inspector-tray"
           aria-haspopup="dialog"

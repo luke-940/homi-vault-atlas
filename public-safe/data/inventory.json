@@ -1,0 +1,97 @@
+{
+  "schema": "atlas.inventory.v1",
+  "profile": "atlas-public",
+  "generatedAt": "2026-07-20T11:04:42.674Z",
+  "asOfDate": "2026-07-20",
+  "physicalMarkdownCount": 866,
+  "namedCount": 15,
+  "aggregateCount": 611,
+  "excludedCount": 240,
+  "unclassifiedCount": 0,
+  "reconciliation": {
+    "classifiedTotal": 866,
+    "pass": true
+  },
+  "coverage": [
+    {
+      "id": "coverage:bmfohnipgjoniceo",
+      "label": "Independent Projects",
+      "physical": 225,
+      "named": 0,
+      "aggregate": 225,
+      "excluded": 0
+    },
+    {
+      "id": "coverage:ebgmlojhnbdnpham",
+      "label": "신호",
+      "physical": 21,
+      "named": 0,
+      "aggregate": 21,
+      "excluded": 0
+    },
+    {
+      "id": "coverage:bnpdeghebdmopjhn",
+      "label": "연구 기록",
+      "physical": 111,
+      "named": 0,
+      "aggregate": 19,
+      "excluded": 92
+    },
+    {
+      "id": "coverage:gdoehndnngjokinc",
+      "label": "연구 논거",
+      "physical": 148,
+      "named": 9,
+      "aggregate": 139,
+      "excluded": 0
+    },
+    {
+      "id": "coverage:gcjmfjnihkncgmcf",
+      "label": "운영 기반",
+      "physical": 169,
+      "named": 0,
+      "aggregate": 21,
+      "excluded": 148
+    },
+    {
+      "id": "coverage:mdbopkghhgbcjimo",
+      "label": "전략",
+      "physical": 31,
+      "named": 0,
+      "aggregate": 31,
+      "excluded": 0
+    },
+    {
+      "id": "coverage:iifenbocdbbaijbj",
+      "label": "중심 지식",
+      "physical": 161,
+      "named": 6,
+      "aggregate": 155,
+      "excluded": 0
+    }
+  ],
+  "exclusions": {
+    "priority": [
+      "archive",
+      "scaffolding",
+      "control_internal",
+      "raw_daily",
+      "explicit_policy",
+      "public_name_not_approved"
+    ],
+    "byReason": {
+      "archive": 54,
+      "scaffolding": 24,
+      "control_internal": 70,
+      "raw_daily": 92,
+      "explicit_policy": 0,
+      "public_name_not_approved": 0
+    }
+  },
+  "publicTitlePolicy": {
+    "schema": "public-title-allowlist.v1",
+    "mode": "safe_hybrid",
+    "fallback": "alias_or_aggregate",
+    "projectCountDisclosure": "combined_non_attributable"
+  }
+}

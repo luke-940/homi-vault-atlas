@@ -1,4 +1,4 @@
-import { Grid3X3, Link2, Route, Waypoints } from "lucide-react";
+import { ArrowRight, CircleDot, Grid3X3, Link2, Route, ShieldCheck, Waypoints } from "lucide-react";
 import { descending } from "d3-array";
 import { chord as d3Chord, chordDirected, ribbon as d3Ribbon, ribbonArrow } from "d3-chord";
 import { interpolateRgbBasis } from "d3-interpolate";
@@ -6,7 +6,7 @@ import { scaleBand, scaleSequential } from "d3-scale";
 import { arc as d3Arc } from "d3-shape";
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
-import { atlasData, entityById } from "../data-runtime";
+import { atlasData, entityById, structureNodeById } from "../data-runtime";
 import { useElementSize } from "../hooks/useElementSize";
 import {
   dominantRelationDirection,
@@ -334,7 +334,11 @@ export function ObserveView() {
             : relationAnswer(strongestPair, state.relationLayer, null, false)}
         keyItems={availableLayerItems.map((item) => ({ label: item.label, className: `key-${item.id}` }))}
         controls={
-          <div className="view-switch relation-layer-switch" role="tablist" aria-label="관계층">
+          availableLayerItems.length <= 1 ? (() => {
+            const item = availableLayerItems[0];
+            const Icon = item.icon;
+            return <div className="relation-layer-static" aria-label={`관계층: ${item.label}`}><Icon size={16} aria-hidden="true" /><span>{item.label}</span></div>;
+          })() : <div className="view-switch relation-layer-switch" role="tablist" aria-label="관계층">
             {availableLayerItems.map((item, index) => {
               const Icon = item.icon;
               return (
@@ -357,28 +361,99 @@ export function ObserveView() {
           </div>
         }
       />
-      <div
-        className="desktop-visual-surface observation-surface"
-        id="observe-relation-panel"
-        role="tabpanel"
-        aria-labelledby={`relation-layer-tab-${state.relationLayer}`}
-      >
-        <section className="matrix-panel" aria-label="구역 간 관계표">
-          <div className="panel-title-row">
-            <div><span className="eyebrow">확인된 관계</span><h2>구역 간 관계표</h2></div>
-            <span className="panel-readout">{relationCoverageReadout(state.relationLayer)}</span>
-          </div>
-          <RelationMatrix />
-        </section>
-        <section className="chord-panel" aria-label="선택한 연결쌍">
-          <div className="panel-title-row">
-            <div><span className="eyebrow">선택 연결</span><h2>{pairHeading(selectedPair, state.relationLayer, state.relationDirection)}</h2></div>
-          </div>
-          <GlobalChord />
-          <PairReadout pair={selectedPair} />
-        </section>
-      </div>
+      {state.sceneId === "hub-relations" ? <HubRelations /> : (
+        <div
+          className="desktop-visual-surface observation-surface"
+          id="observe-relation-panel"
+          role={availableLayerItems.length > 1 ? "tabpanel" : "region"}
+          aria-labelledby={availableLayerItems.length > 1 ? `relation-layer-tab-${state.relationLayer}` : undefined}
+          aria-label={availableLayerItems.length <= 1 ? `${availableLayerItems[0].label} 관계 관측` : undefined}
+        >
+          <section className="matrix-panel" aria-label="구역 간 관계표">
+            <div className="panel-title-row">
+              <div><span className="eyebrow">확인된 관계</span><h2>구역 간 관계표</h2></div>
+              <span className="panel-readout">{relationCoverageReadout(state.relationLayer)}</span>
+            </div>
+            <RelationMatrix />
+          </section>
+          <section className="chord-panel" aria-label="선택한 연결쌍">
+            <div className="panel-title-row">
+              <div><span className="eyebrow">선택 연결</span><h2>{pairHeading(selectedPair, state.relationLayer, state.relationDirection)}</h2></div>
+            </div>
+            <GlobalChord />
+            <PairReadout pair={selectedPair} />
+          </section>
+        </div>
+      )}
       <MobileObserve />
+    </section>
+  );
+}
+
+function HubRelations() {
+  const { state, dispatch } = useAtlasState();
+  const hubKinds = new Set(["moc_hub", "paper_gateway", "project", "signal_domain", "strategy_insight", "strategy_request"]);
+  const fallbackNode = atlasData.structure.nodes.find((node) => hubKinds.has(node.kind));
+  const selectedNode = structureNodeById.get(state.focusId) ?? fallbackNode;
+  const entity = selectedNode ? undefined : entityById.get(state.focusId);
+  const structuralNeighbors = selectedNode
+    ? atlasData.structure.associations
+      .filter((edge) => edge.kind !== "member_of" && (edge.source === selectedNode.id || edge.target === selectedNode.id))
+      .map((edge) => {
+        const outgoing = edge.source === selectedNode.id;
+        const target = structureNodeById.get(outgoing ? edge.target : edge.source);
+        return target ? { id: target.id, label: target.label, direction: outgoing ? "outgoing" : "incoming", weight: edge.weight } : null;
+      })
+      .filter((neighbor): neighbor is NonNullable<typeof neighbor> => Boolean(neighbor))
+    : [];
+  const neighbors = (selectedNode
+    ? structuralNeighbors
+    : entity
+      ? (atlasData.relation.neighborhoods[entity.id] ?? [])
+        .filter((neighbor) => neighbor.layer === state.relationLayer)
+        .map((neighbor) => ({ ...neighbor, label: entityById.get(neighbor.id)?.displayLabel ?? "공개 집계 관계" }))
+      : [])
+    .sort((a, b) => b.weight - a.weight || a.id.localeCompare(b.id))
+    .slice(0, 14);
+  const max = Math.max(1, ...neighbors.map((neighbor) => neighbor.weight));
+  const label = selectedNode?.label ?? entity?.displayLabel ?? "선택된 허브 없음";
+  const district = selectedNode ? structureNodeById.get(selectedNode.districtId)?.label : entity?.district;
+  return (
+    <section className="hub-relations-surface" id="observe-relation-panel" aria-labelledby="observe-title">
+      <header>
+        <div><span className="eyebrow" lang="en">Hub Relations</span><h2>{label}</h2></div>
+        <p>{selectedNode ? `${district ?? "지식 구역"} · 공개 구조 association 기준 ego 관계` : entity ? `${entity.district} · ${layerLabel(state.relationLayer)} 기준 ego 관계` : "허브를 선택하면 실제 이웃 관계를 표시합니다."}</p>
+      </header>
+      {(selectedNode || entity) && neighbors.length ? (
+        <div className="hub-relations-grid">
+          <div className="hub-ego-node">
+            <CircleDot size={22} aria-hidden="true" />
+            <strong>{label}</strong>
+            <span>{district}</span>
+          </div>
+          <ol>
+            {neighbors.map((neighbor) => {
+              const target = structureNodeById.get(neighbor.id) ?? entityById.get(neighbor.id);
+              return (
+                <li key={`${neighbor.id}:${neighbor.direction}`}>
+                  <button type="button" disabled={!target} onClick={() => target && dispatch({ type: "focus", focusId: target.id })}>
+                    <i style={{ width: `${Math.max(8, (neighbor.weight / max) * 100)}%` }} aria-hidden="true" />
+                    <span><strong>{neighbor.label}</strong><small>{neighbor.direction === "incoming" ? "들어오는 관계" : "나가는 관계"} · {neighbor.weight}</small></span>
+                    <ArrowRight size={15} aria-hidden="true" />
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      ) : (
+        <div className="workspace-honest-empty" role="note">
+          <ShieldCheck size={22} aria-hidden="true" />
+          <h2>공개할 허브 관계가 없습니다.</h2>
+          <p>관계가 0이라고 단정하지 않습니다. 현재 프로필에서 검증·공개 가능한 이웃 관계만 비어 있습니다.</p>
+          <button type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "observe", sceneId: "global-relations" } })}>Global Relations 보기</button>
+        </div>
+      )}
     </section>
   );
 }
@@ -675,7 +750,7 @@ function PairReadout({ pair }: { pair?: MatrixCell }) {
     return (
       <div className="pair-readout">
         <span className="eyebrow">읽는 순서</span>
-        <p>왼쪽 관계표에서 한 칸을 고르면 오른쪽 링이 같은 연결쌍을 강조하고, 해석 패널에서 대표 문서를 보여준다.</p>
+        <p>왼쪽 관계표에서 한 칸을 고르면 오른쪽 링이 같은 연결쌍을 강조하고, 해석 패널에서 두 구역의 fresh 집계와 방향별 출현을 보여준다.</p>
       </div>
     );
   }
@@ -741,7 +816,9 @@ function MobileObserve() {
           선택 해석 보기
         </button>
       </section>
-      <div className="mobile-layer-switch" role="tablist" aria-label="관계 보기 기준">
+      {availableLayerItems.length <= 1 ? (
+        <div className="mobile-layer-static" aria-label={`관계 보기 기준: ${availableLayerItems[0].label}`}>{availableLayerItems[0].label}</div>
+      ) : <div className="mobile-layer-switch" role="tablist" aria-label="관계 보기 기준">
         {availableLayerItems.map((item, index) => (
           <button
             key={item.id}
@@ -758,7 +835,7 @@ function MobileObserve() {
             {item.label}
           </button>
         ))}
-      </div>
+      </div>}
       {previewPair && (
         <section
           className="mobile-relation-preview"

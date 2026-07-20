@@ -10,7 +10,7 @@ import { TimeView } from "./views/TimeView";
 import { HomeView } from "./views/HomeView";
 import { AgencyView } from "./views/AgencyView";
 import { useAtlasState } from "./state";
-import { atlasData, entityById, hierarchyById } from "./data-runtime";
+import { atlasData, entityById, hierarchyById, structureNodeById } from "./data-runtime";
 
 const workspaceIds = ["home", "explore", "observe", "flow", "time", "agency"] as const;
 
@@ -57,7 +57,7 @@ export function App() {
         else if (state.theatre) dispatch({ type: "theatre", open: false });
         else if (state.workspace === "home" && state.guideStep !== null) dispatch({ type: "guide", step: null });
         else if (state.panel !== "none") dispatch({ type: "panel", panel: state.panel });
-        else if (state.previousScene) dispatch({ type: "back" });
+        else if (state.navigationHistory.length) dispatch({ type: "back" });
       } else if (!typing && event.key.toLowerCase() === "f") {
         if (!state.theatre) {
           theatreReturnFocusRef.current = document.activeElement as HTMLElement | null;
@@ -71,7 +71,7 @@ export function App() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [dispatch, state.guideStep, state.panel, state.previousScene, state.searchOpen, state.theatre, state.workspace]);
+  }, [dispatch, state.guideStep, state.navigationHistory.length, state.panel, state.searchOpen, state.theatre, state.workspace]);
 
   useEffect(() => {
     const wasOpen = previousTheatreRef.current;
@@ -116,6 +116,7 @@ export function App() {
     ? atlasData.agency.actors.find((actor) => actor.id === state.actorId)?.label ?? "전체 역할"
     : entityById.get(state.focusId)?.displayLabel
       ?? hierarchyById.get(state.focusId)?.label
+      ?? structureNodeById.get(state.focusId)?.label
       ?? "공개 지식";
 
   return (
@@ -124,11 +125,12 @@ export function App() {
       data-panel={state.panel}
       data-document-hidden={documentHidden ? "true" : "false"}
       data-workspace={state.workspace}
+      data-scene={state.sceneId}
     >
       <CommandBar />
       <div className="workspace-shell" id="atlas-workspace-shell">
         {state.panel === "navigator" && <NavigatorTray />}
-        <main className="workspace-main" id="workspace-main" tabIndex={-1}>
+        <main className="workspace-main" id="workspace-main" tabIndex={-1} lang="ko">
           {state.fallbackReason && (
             <p className="journey-fallback global-journey-fallback" role="status">
               {state.fallbackReason}
@@ -157,7 +159,7 @@ export function App() {
         {(state.panel === "inspector" || state.panel === "data") && <InspectorTray />}
       </div>
       <MobileNavigation />
-      <div className="sr-only" aria-live="polite" aria-atomic="true">
+      <div className="sr-only" aria-live="polite" aria-atomic="true" lang="ko">
         {({ home: "대문", explore: "탐색", observe: "관측", flow: "흐름", time: "시간", agency: "협업 구조" } as const)[state.workspace]} 화면, 현재 선택 {accessibleSelectionLabel}
         {state.fallbackReason ? `, 이동 안내 ${state.fallbackReason}` : ""}
       </div>

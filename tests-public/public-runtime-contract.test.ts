@@ -16,6 +16,10 @@ let navigatorModule: typeof import("../src/components/NavigatorTray");
 let trayModule: typeof import("../src/components/tray-accessibility");
 let homeModule: typeof import("../src/views/HomeView");
 let inspectorModule: typeof import("../src/components/InspectorTray");
+let searchModule: typeof import("../src/components/SearchPalette");
+let exploreModule: typeof import("../src/views/ExploreView");
+let agencyModule: typeof import("../src/views/AgencyView");
+let paletteModule: typeof import("../src/viz/palette");
 
 beforeAll(async () => {
   installPublicAtlasDomFixture();
@@ -43,6 +47,10 @@ beforeAll(async () => {
   trayModule = await import("../src/components/tray-accessibility");
   homeModule = await import("../src/views/HomeView");
   inspectorModule = await import("../src/components/InspectorTray");
+  searchModule = await import("../src/components/SearchPalette");
+  exploreModule = await import("../src/views/ExploreView");
+  agencyModule = await import("../src/views/AgencyView");
+  paletteModule = await import("../src/viz/palette");
 });
 
 function renderWorkspace(hash: string, View: React.ComponentType) {
@@ -110,16 +118,109 @@ describe("public Atlas runtime contracts", () => {
     expect(trayModule.trayDialogKeyIntent("Tab", false, false)).toBe("ignore");
   });
 
-  test("renders aggregate vocabulary for public home metrics", () => {
+  test("uses canonical v7.4 scenes and every public-safe v2 district in Navigator journeys", () => {
+    const environment = { reducedMotion: false, mobileSibling: false };
+    const initial = stateModule.createAtlasState("#home", environment);
+    const expectedHomeScenes = ["living-terrain", "knowledge-gravity", "verified-activity", "coverage-boundary"];
+    expect(navigatorModule.navigatorHomeScenes().map((scene) => scene.id)).toEqual(expectedHomeScenes);
+    for (const scene of navigatorModule.navigatorHomeScenes()) {
+      const next = stateModule.reduceAtlasState(initial, {
+        type: "journey",
+        target: navigatorModule.navigatorHomeTarget(scene.id),
+      });
+      expect(next.workspace).toBe("home");
+      expect(next.sceneId).toBe(scene.id);
+    }
+
+    const districts = navigatorModule.navigatorDistricts();
+    expect(districts).toHaveLength(readJson("inventory").coverage.length);
+    for (const district of districts) {
+      const next = stateModule.reduceAtlasState(initial, {
+        type: "journey",
+        target: navigatorModule.navigatorDistrictTarget(district.id),
+      });
+      expect(next).toMatchObject({ workspace: "explore", sceneId: "hubs", focusId: district.id });
+    }
+  });
+
+  test("canonicalizes internal scene aliases before URL and history state", () => {
+    const environment = { reducedMotion: false, mobileSibling: false };
+    const initial = stateModule.createAtlasState("#home", environment);
+    const explore = stateModule.reduceAtlasState(initial, {
+      type: "journey",
+      target: { workspace: "explore", sceneId: "city-focus" },
+    });
+    expect(explore.sceneId).toBe("hubs");
+    expect(stateModule.stateToHash(explore)).toContain("scene=hubs");
+
+    const observe = stateModule.reduceAtlasState(explore, {
+      type: "journey",
+      target: { workspace: "observe", sceneId: "entity-relation" },
+    });
+    expect(observe.sceneId).toBe("hub-relations");
+    expect(stateModule.stateToHash(observe)).toContain("scene=hub-relations");
+    expect(stateModule.createAtlasState("#explore?scene=unknown", environment).fallbackReason)
+      .toContain("기본 장면");
+  });
+
+  test("links every public-safe Agency knowledge district into canonical Explore journeys", () => {
+    const environment = { reducedMotion: false, mobileSibling: false };
+    const initial = stateModule.createAtlasState("#agency?scene=evolution", environment);
+    const districts = agencyModule.agencyKnowledgeDistricts();
+    expect(districts).toHaveLength(readJson("inventory").coverage.length);
+    for (const district of districts) {
+      const next = stateModule.reduceAtlasState(initial, {
+        type: "journey",
+        target: agencyModule.agencyKnowledgeTarget(district.id),
+      });
+      expect(next).toMatchObject({ workspace: "explore", sceneId: "hubs", focusId: district.id });
+      expect(stateModule.createAtlasState(stateModule.stateToHash(next), environment))
+        .toMatchObject({ workspace: "explore", sceneId: "hubs", focusId: district.id });
+    }
+  });
+
+  test("assigns one shared non-neutral color role to every current district", () => {
+    const districts = agencyModule.agencyKnowledgeDistricts();
+    expect(districts).toHaveLength(readJson("inventory").coverage.length);
+    const fills = districts.map((district) => paletteModule.colorForDistrict(district.label));
+    const strokes = districts.map((district) => paletteModule.strokeColorForDistrict(district.label));
+    expect(fills.every((color) => color !== "var(--district-neutral-fill)")).toBe(true);
+    expect(strokes.every((color) => color !== "var(--district-neutral)")).toBe(true);
+    expect(new Set(fills)).toHaveLength(districts.length);
+    expect(new Set(strokes)).toHaveLength(districts.length);
+  });
+
+  test("renders reconciled coverage and Living Terrain vocabulary for public home metrics", () => {
     const markup = renderWorkspace("#home", homeModule.HomeView);
     const publication = readJson("publication");
+    const inventory = readJson("inventory");
+    const relation = readJson("relation");
     const entities = readJson("entity").entities;
+    const strongestDistrictRelation = Math.max(...relation.matrix.map((pair: { wikilink: number }) => pair.wikilink));
     expect(markup).toContain("Human Owner");
-    expect(markup).toContain("에이전트 역할 · 핵심 3 · 독립 3");
-    expect(markup).toContain("Public Records");
-    expect(markup).toContain("Strongest Relation");
+    expect(markup).toContain("Homi Core");
+    expect(markup).toContain("Independent Owners");
+    expect(markup).toContain("Living Terrain");
+    expect(markup).toContain("표현 범위");
+    expect(markup).toContain(String(inventory.physicalMarkdownCount));
+    expect(markup).toContain(String(inventory.aggregateCount));
+    expect(markup).toContain(strongestDistrictRelation.toLocaleString("ko-KR"));
+    expect(markup).toContain("district link occurrences");
     expect(markup).toContain("검증된 버전 스냅샷");
     expect(publication.redactionCounts.aggregatedSourceDocuments).toBeGreaterThan(entities.length);
+    expect(inventory.reconciliation.pass).toBe(true);
+  });
+
+  test("binds the highlighted Home district edge to the same strongest relation readout", () => {
+    const strongest = homeModule.strongestDistrictRelation();
+    expect(strongest).toBeTruthy();
+    const markup = renderWorkspace("#home?scene=knowledge-gravity", homeModule.HomeView);
+    const dominantSource = strongest.wikilinkReverse > strongest.wikilinkForward ? strongest.target : strongest.source;
+    const dominantTarget = dominantSource === strongest.source ? strongest.target : strongest.source;
+    expect(markup).toContain(`data-relation-source="${dominantSource}"`);
+    expect(markup).toContain(`data-relation-target="${dominantTarget}"`);
+    expect(markup).toContain(`data-relation-value="${strongest.wikilink}"`);
+    expect(markup).toContain(strongest.wikilink.toLocaleString("ko-KR"));
   });
 
   test("declares a public snapshot without claiming a private latest pulse", () => {
@@ -130,7 +231,8 @@ describe("public Atlas runtime contracts", () => {
     const publication = readJson("publication");
     expect(publication.profile).toBe("public");
     expect(publication.blockers).toEqual([]);
-    expect(readme).toContain("Human–Agent");
+    expect(readme).toContain("Living Terrain");
+    expect(readme).toContain("Dual-profile boundary");
     expect(readme).toContain("Agency");
     expect(readme).not.toContain("최신 지식 Pulse");
   });
@@ -140,5 +242,69 @@ describe("public Atlas runtime contracts", () => {
       .toBe("42개 문서");
     expect(inspectorModule.comparisonEntitySize({ documentCount: 42, wordCount: 9_999 }, false))
       .toBe("9,999단어");
+  });
+
+  test("explains a selected fresh relation with district aggregates, not invented documents", () => {
+    const relation = readJson("relation");
+    const strongest = [...relation.matrix].sort((left, right) => right.wikilink - left.wikilink)[0];
+    const rows = inspectorModule.pairAggregateEvidenceRows(strongest, readJson("structure").nodes);
+    expect(rows).toHaveLength(2);
+    expect(rows.map((row) => row.label)).toEqual([strongest.source, strongest.target]);
+    expect(rows.every((row) => /표현 기록 · 나감 .*회 · 들어옴 .*회/.test(row.meta))).toBe(true);
+    expect(rows.some((row) => /대표 문서|대표 집계/.test(row.meta))).toBe(false);
+  });
+
+  test("routes every third-level structure kind to its actual Explore hub", () => {
+    const structure = readJson("structure");
+    const aggregateHubs = structure.nodes.filter((node: { kind: string; documentCount: number }) =>
+      node.kind === "aggregate_boundary" && node.documentCount === 0);
+    expect(aggregateHubs.length).toBeGreaterThanOrEqual(3);
+    for (const hub of aggregateHubs) {
+      expect(searchModule.structureResultKind(hub)).toBe("hub");
+      const sources = exploreModule.sourceNodesForHub(structure.nodes, hub.id);
+      expect(sources.length).toBeGreaterThan(0);
+      for (const source of sources) {
+        expect(searchModule.structureResultKind(source)).toBe("source");
+        expect(exploreModule.resolveExploreStructureFocus(structure.nodes, source.id))
+          .toMatchObject({ sourceId: source.id, hubId: hub.id });
+      }
+    }
+  });
+
+  test("resolves a nested owner source through source-level ancestors", () => {
+    const nodes = [
+      { id: "district:owner:project", kind: "district", label: "Project", parentId: null, districtId: "district:owner:project", documentCount: 3, uniqueInboundDocuments: 0, inboundLinkOccurrences: 0, lastMeaningfulDate: null, nameMode: "owner_name" },
+      { id: "node:owner:project", kind: "project", label: "Project Hub", parentId: "district:owner:project", districtId: "district:owner:project", documentCount: 1, uniqueInboundDocuments: 3, inboundLinkOccurrences: 4, lastMeaningfulDate: null, nameMode: "owner_name" },
+      { id: "node:owner:stage", kind: "project_stage", label: "Stage", parentId: "node:owner:project", districtId: "district:owner:project", documentCount: 1, uniqueInboundDocuments: 1, inboundLinkOccurrences: 2, lastMeaningfulDate: null, nameMode: "owner_name" },
+      { id: "node:owner:source", kind: "source_document", label: "Source", parentId: "node:owner:stage", districtId: "district:owner:project", documentCount: 1, uniqueInboundDocuments: 0, inboundLinkOccurrences: 0, lastMeaningfulDate: null, nameMode: "owner_name" },
+    ] as const;
+    const resolved = exploreModule.resolveExploreStructureFocus(nodes, "node:owner:source");
+    expect(resolved).toEqual({
+      districtId: "district:owner:project",
+      hubId: "node:owner:project",
+      sourceId: "node:owner:source",
+    });
+    expect(exploreModule.sourceNodesForHub(nodes, "node:owner:project").map((node) => node.id))
+      .toEqual(["node:owner:stage", "node:owner:source"]);
+    expect(exploreModule.sourceTreeRowsForHub(nodes, "node:owner:project").map((row) => ({
+      id: row.node.id,
+      depth: row.depth,
+    }))).toEqual([
+      { id: "node:owner:stage", depth: 0 },
+      { id: "node:owner:source", depth: 1 },
+    ]);
+  });
+
+  test("treats a zero-count owner aggregate boundary as a structural hub", () => {
+    const nodes = [
+      { id: "district:owner:research", kind: "district", label: "Research", parentId: null, districtId: "district:owner:research", documentCount: 1, uniqueInboundDocuments: 0, inboundLinkOccurrences: 0, lastMeaningfulDate: null, nameMode: "owner_name" },
+      { id: "node:owner:safe-hub", kind: "aggregate_boundary", label: "Safe hub", parentId: "district:owner:research", districtId: "district:owner:research", documentCount: 0, uniqueInboundDocuments: 0, inboundLinkOccurrences: 0, lastMeaningfulDate: null, nameMode: "aggregate" },
+      { id: "node:owner:source", kind: "source_document", label: "Source", parentId: "node:owner:safe-hub", districtId: "district:owner:research", documentCount: 1, uniqueInboundDocuments: 0, inboundLinkOccurrences: 0, lastMeaningfulDate: null, nameMode: "owner_name" },
+    ] as const;
+    expect(searchModule.structureResultKind(nodes[1])).toBe("hub");
+    expect(exploreModule.resolveExploreStructureFocus(nodes, nodes[2].id))
+      .toEqual({ districtId: nodes[0].id, hubId: nodes[1].id, sourceId: nodes[2].id });
+    expect(exploreModule.sourceNodesForHub(nodes, nodes[1].id).map((node) => node.id))
+      .toEqual([nodes[2].id]);
   });
 });

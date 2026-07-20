@@ -4,138 +4,88 @@
     "연구 논거",
     "전략",
     "운영 기반",
-    "신호"
+    "신호",
+    "연구 기록",
+    "Independent Projects"
   ],
   "matrix": [
-    {
-      "id": "pair:%EC%9A%B4%EC%98%81%20%EA%B8%B0%EB%B0%98:%EC%A4%91%EC%8B%AC%20%EC%A7%80%EC%8B%9D",
-      "source": "운영 기반",
-      "target": "중심 지식",
-      "wikilink": 444,
-      "wikilinkForward": 316,
-      "wikilinkReverse": 128,
-      "typed": 0,
-      "typedForward": 0,
-      "typedReverse": 0,
-      "route": 0,
-      "total": 444
-    },
-    {
-      "id": "pair:%EC%9A%B4%EC%98%81%20%EA%B8%B0%EB%B0%98:%EC%97%B0%EA%B5%AC%20%EB%85%BC%EA%B1%B0",
-      "source": "운영 기반",
-      "target": "연구 논거",
-      "wikilink": 355,
-      "wikilinkForward": 154,
-      "wikilinkReverse": 201,
-      "typed": 0,
-      "typedForward": 0,
-      "typedReverse": 0,
-      "route": 0,
-      "total": 355
-    },
-    {
-      "id": "pair:%EC%9A%B4%EC%98%81%20%EA%B8%B0%EB%B0%98:%EC%8B%A0%ED%98%B8",
-      "source": "운영 기반",
-      "target": "신호",
-      "wikilink": 77,
-      "wikilinkForward": 36,
-      "wikilinkReverse": 41,
-      "typed": 0,
-      "typedForward": 0,
-      "typedReverse": 0,
-      "route": 0,
-      "total": 77
-    },
-    {
-      "id": "pair:%EC%9A%B4%EC%98%81%20%EA%B8%B0%EB%B0%98:%EC%A0%84%EB%9E%B5",
-      "source": "운영 기반",
-      "target": "전략",
-      "wikilink": 122,
-      "wikilinkForward": 65,
-      "wikilinkReverse": 57,
-      "typed": 0,
-      "typedForward": 0,
-      "typedReverse": 0,
-      "route": 0,
-      "total": 122
-    },
     {
       "id": "pair:%EC%A4%91%EC%8B%AC%20%EC%A7%80%EC%8B%9D:%EC%97%B0%EA%B5%AC%20%EB%85%BC%EA%B1%B0",
       "source": "중심 지식",
       "target": "연구 논거",
-      "wikilink": 971,
-      "wikilinkForward": 144,
-      "wikilinkReverse": 827,
+      "wikilink": 395,
+      "wikilinkForward": 8,
+      "wikilinkReverse": 387,
       "typed": 0,
       "typedForward": 0,
       "typedReverse": 0,
       "route": 0,
-      "total": 971
-    },
-    {
-      "id": "pair:%EC%A4%91%EC%8B%AC%20%EC%A7%80%EC%8B%9D:%EC%8B%A0%ED%98%B8",
-      "source": "중심 지식",
-      "target": "신호",
-      "wikilink": 327,
-      "wikilinkForward": 65,
-      "wikilinkReverse": 262,
-      "typed": 0,
-      "typedForward": 0,
-      "typedReverse": 0,
-      "route": 0,
-      "total": 327
+      "total": 395
     },
     {
       "id": "pair:%EC%A4%91%EC%8B%AC%20%EC%A7%80%EC%8B%9D:%EC%A0%84%EB%9E%B5",
       "source": "중심 지식",
       "target": "전략",
-      "wikilink": 489,
-      "wikilinkForward": 167,
-      "wikilinkReverse": 322,
+      "wikilink": 1133,
+      "wikilinkForward": 379,
+      "wikilinkReverse": 754,
       "typed": 0,
       "typedForward": 0,
       "typedReverse": 0,
       "route": 0,
-      "total": 489
+      "total": 1133
     },
     {
-      "id": "pair:%EC%97%B0%EA%B5%AC%20%EB%85%BC%EA%B1%B0:%EC%8B%A0%ED%98%B8",
-      "source": "연구 논거",
+      "id": "pair:%EC%A4%91%EC%8B%AC%20%EC%A7%80%EC%8B%9D:%EC%8B%A0%ED%98%B8",
+      "source": "중심 지식",
       "target": "신호",
-      "wikilink": 50,
-      "wikilinkForward": 34,
-      "wikilinkReverse": 16,
+      "wikilink": 672,
+      "wikilinkForward": 152,
+      "wikilinkReverse": 520,
       "typed": 0,
       "typedForward": 0,
       "typedReverse": 0,
       "route": 0,
-      "total": 50
+      "total": 672
     },
     {
       "id": "pair:%EC%97%B0%EA%B5%AC%20%EB%85%BC%EA%B1%B0:%EC%A0%84%EB%9E%B5",
       "source": "연구 논거",
       "target": "전략",
-      "wikilink": 248,
-      "wikilinkForward": 182,
-      "wikilinkReverse": 66,
+      "wikilink": 57,
+      "wikilinkForward": 53,
+      "wikilinkReverse": 4,
       "typed": 0,
       "typedForward": 0,
       "typedReverse": 0,
       "route": 0,
-      "total": 248
+      "total": 57
     },
     {
-      "id": "pair:%EC%8B%A0%ED%98%B8:%EC%A0%84%EB%9E%B5",
-      "source": "신호",
-      "target": "전략",
-      "wikilink": 71,
-      "wikilinkForward": 41,
-      "wikilinkReverse": 30,
+      "id": "pair:%EC%97%B0%EA%B5%AC%20%EB%85%BC%EA%B1%B0:%EC%8B%A0%ED%98%B8",
+      "source": "연구 논거",
+      "target": "신호",
+      "wikilink": 8,
+      "wikilinkForward": 7,
+      "wikilinkReverse": 1,
       "typed": 0,
       "typedForward": 0,
       "typedReverse": 0,
       "route": 0,
-      "total": 71
+      "total": 8
+    },
+    {
+      "id": "pair:%EC%A0%84%EB%9E%B5:%EC%8B%A0%ED%98%B8",
+      "source": "전략",
+      "target": "신호",
+      "wikilink": 141,
+      "wikilinkForward": 67,
+      "wikilinkReverse": 74,
+      "typed": 0,
+      "typedForward": 0,
+      "typedReverse": 0,
+      "route": 0,
+      "total": 141
     }
   ],
   "typedRelations": [],
@@ -145,18 +95,20 @@
     {
       "id": "wikilink",
       "label": "링크 출현 횟수",
-      "meaning": "해결된 Markdown wikilink가 문서쌍 사이에 나타난 횟수. 고유 문서쌍 수와 구분한다.",
+      "meaning": "fresh release capture에서 유일하게 해결된 Markdown wikilink occurrence. 고유 문서쌍과 구분한다.",
       "unit": "resolved_link_occurrence"
     },
     {
       "id": "typed",
       "label": "명시 관계",
-      "meaning": "relation receipt로 증명된 방향성 관계"
+      "meaning": "공개 승인된 명시 관계",
+      "unit": "typed_relation"
     },
     {
       "id": "route",
       "label": "작업 경로 렌즈",
-      "meaning": "경로·제목 규칙으로 분류한 운영 참여 렌즈이며 canonical relation이 아님"
+      "meaning": "공개 승인된 경로 공동 소속",
+      "unit": "curated_cross_district_route_pair"
     }
   ],
   "availableLayers": [
@@ -167,8 +119,8 @@
     "route"
   ],
   "coverage": {
-    "resolvedLinkPairs": 10,
-    "resolvedLinkWeight": 3154,
+    "resolvedLinkPairs": 6,
+    "resolvedLinkWeight": 8245,
     "unresolvedLinks": {},
     "unresolvedLinkTotal": 0,
     "ambiguousLinks": 0,
@@ -176,12 +128,12 @@
     "layers": {
       "wikilink": {
         "unit": "resolved_link_occurrence",
-        "total": 3154,
-        "interDistrict": 3154,
-        "intraDistrict": 0,
-        "displayed": 3154,
+        "total": 8245,
+        "interDistrict": 2406,
+        "intraDistrict": 5839,
+        "displayed": 2406,
         "reconciled": true,
-        "boundary": "공개 가능한 구역 간 resolved wikilink occurrence 집계"
+        "boundary": "fresh capture에서 유일하게 해결된 represented hub 사이의 wikilink occurrence 집계"
       },
       "typed": {
         "unit": "typed_relation",
@@ -190,7 +142,7 @@
         "intraDistrict": 0,
         "displayed": 0,
         "reconciled": true,
-        "boundary": "내부 relation receipt는 공개판에서 제외"
+        "boundary": "내부 방향성 관계 증거는 공개판에서 제외"
       },
       "route": {
         "unit": "curated_cross_district_route_pair",
@@ -202,6 +154,6 @@
         "boundary": "내부 route membership은 공개판에서 제외"
       }
     },
-    "boundary": "공개판은 허용된 지식 표면의 구역 집계와 정제된 wikilink만 보여준다."
+    "boundary": "공개판은 represented hub 사이에서 유일하게 해결된 fresh wikilink만 구역 단위로 보여주며 미해결 후보는 투영 전에 제외한다."
   }
 }

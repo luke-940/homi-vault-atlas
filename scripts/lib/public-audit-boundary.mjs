@@ -34,9 +34,9 @@ export function resolvePublicAuditBoundary({ projectDir, environment = process.e
     throw new Error(`Public audit blocked: ATLAS_PUBLIC_AUDIT_DIR must equal ${requiredAuditDir}.`);
   }
   const auditReceiptName = environment.ATLAS_PUBLIC_AUDIT_RECEIPT?.trim()
-    || "v7-3-publication-audit.json";
-  if (auditReceiptName !== "v7-3-publication-audit.json") {
-    throw new Error("Public audit blocked: receipt name must be v7-3-publication-audit.json.");
+    || "v7-4-publication-audit.json";
+  if (auditReceiptName !== "v7-4-publication-audit.json") {
+    throw new Error("Public audit blocked: receipt name must be v7-4-publication-audit.json.");
   }
   if (context === "internal-release" && !isOutsideProject(resolvedProjectDir, artifactDir)) {
     throw new Error("Public audit blocked: internal-release evidence must be lexically outside the source project.");

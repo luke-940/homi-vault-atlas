@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
-import { Database, Maximize2, Minimize2 } from "lucide-react";
+import { ChevronRight, Database, Maximize2, Minimize2 } from "lucide-react";
 import { useAtlasState } from "../state";
+import { atlasData, entityById, hierarchyById, structureNodeById } from "../data-runtime";
+import { workspaceScene, workspaceSceneRegistry } from "./workspaceSceneRegistry";
 
 export function WorkspaceHeader({
   titleId,
@@ -20,14 +22,42 @@ export function WorkspaceHeader({
   keyItems?: Array<{ label: string; className: string }>;
 }) {
   const { state, dispatch } = useAtlasState();
+  const definition = workspaceSceneRegistry[state.workspace];
+  const currentScene = workspaceScene(state.workspace, state.sceneId);
+  const selection = state.workspace === "agency"
+    ? atlasData.agency.actors.find((actor) => actor.id === state.actorId)?.label
+    : entityById.get(state.focusId)?.displayLabel ?? hierarchyById.get(state.focusId)?.label ?? structureNodeById.get(state.focusId)?.label;
   return (
     <header className="workspace-header">
       <div className="workspace-title">
-        <span className="eyebrow">{eyebrow}</span>
-        <h1 id={titleId} tabIndex={-1}>{title}</h1>
-        <p className="workspace-answer"><span className="sr-only">{question} 현재 데이터의 답: </span>{answer}</p>
+        <nav className="workspace-breadcrumb" aria-label="Atlas location" lang="en">
+          <button type="button" onClick={() => dispatch({ type: "workspace", workspace: "home" })}>Home</button>
+          {state.workspace !== "home" && <><ChevronRight size={12} aria-hidden="true" /><span>{definition.label}</span></>}
+          <ChevronRight size={12} aria-hidden="true" />
+          <span>{currentScene.label}</span>
+          {selection && <><ChevronRight size={12} aria-hidden="true" /><span lang="ko">{selection}</span></>}
+        </nav>
+        <span className="eyebrow" lang={/[가-힣]/.test(eyebrow) ? "ko" : "en"}>{eyebrow}</span>
+        <h1 id={titleId} tabIndex={-1} lang="ko">{title}</h1>
+        <p className="workspace-answer" lang="ko"><span className="sr-only">{question} 현재 데이터의 답: </span>{answer}</p>
       </div>
       <div className="workspace-header-tools">
+        {definition.scenes.length > 1 && (
+          <div className="workspace-scene-switch" role="tablist" aria-label={`${definition.label} scenes`} lang="en">
+            {definition.scenes.map((scene) => (
+              <button
+                key={scene.id}
+                type="button"
+                role="tab"
+                aria-selected={scene.id === currentScene.id}
+                className={scene.id === currentScene.id ? "is-active" : ""}
+                onClick={() => dispatch({ type: "journey", target: { workspace: state.workspace, sceneId: scene.id } })}
+              >
+                {scene.label}
+              </button>
+            ))}
+          </div>
+        )}
         {keyItems && (
           <div className="inline-map-key" role="group" aria-label="지도 표식">
             {keyItems.map((item) => (

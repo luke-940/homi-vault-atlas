@@ -1,4 +1,4 @@
-name: Build and deploy Atlas
+name: Deploy validated Atlas v7.4 artifact
 
 on:
   push:
@@ -6,51 +6,142 @@ on:
 
 permissions:
   contents: read
+  actions: read
+  pull-requests: read
 
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  prepare:
+    name: Resolve and stage validated PR artifact
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
     permissions:
       contents: read
+      actions: read
+      pull-requests: read
       pages: read
+    outputs:
+      pr_number: ${{ steps.resolve.outputs.pr_number }}
+      head_sha: ${{ steps.resolve.outputs.head_sha }}
+      run_id: ${{ steps.resolve.outputs.run_id }}
+      artifact_name: ${{ steps.resolve.outputs.artifact_name }}
+      artifact_digest: ${{ steps.resolve.outputs.artifact_digest }}
+      release_artifact_name: ${{ steps.release-artifact-name.outputs.name }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Check out the exact main commit without running product code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+      - name: Resolve the merged PR, successful CI run, and immutable artifact digest
+        id: resolve
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          pulls="$(gh api -H 'Accept: application/vnd.github+json' "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls")"
+          pr_number="$(jq -er '[.[] | select(.merged_at != null and .base.ref == "main")] | sort_by(.merged_at) | last | .number' <<<"${pulls}")"
+          head_sha="$(jq -er --argjson pr "${pr_number}" '.[] | select(.number == $pr) | .head.sha' <<<"${pulls}")"
+          [[ "${head_sha}" =~ ^[0-9a-f]{40}$ ]]
+
+          git fetch --no-tags origin "${head_sha}"
+          main_tree="$(git rev-parse "${GITHUB_SHA}^{tree}")"
+          head_tree="$(git rev-parse "${head_sha}^{tree}")"
+          if [[ "${main_tree}" != "${head_tree}" ]]; then
+            echo "Pages blocked: squash commit tree ${main_tree} differs from tested PR head tree ${head_tree}" >&2
+            exit 1
+          fi
+
+          runs="$(gh api --method GET "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs" \
+            -f head_sha="${head_sha}" -f status=success -f event=pull_request -f per_page=100)"
+          run_id="$(jq -er --arg head "${head_sha}" '[.workflow_runs[] | select(.head_sha == $head and .conclusion == "success")] | sort_by(.run_started_at) | last | .id' <<<"${runs}")"
+          artifact_name="atlas-v7-4-public-${head_sha}"
+          artifacts="$(gh api --method GET "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts" -f per_page=100)"
+          artifact="$(jq -ec --arg name "${artifact_name}" '.artifacts[] | select(.name == $name and .expired == false)' <<<"${artifacts}")"
+          artifact_digest="$(jq -er '.digest | select(test("^sha256:[0-9a-f]{64}$"))' <<<"${artifact}")"
+
+          {
+            echo "pr_number=${pr_number}"
+            echo "head_sha=${head_sha}"
+            echo "run_id=${run_id}"
+            echo "artifact_name=${artifact_name}"
+            echo "artifact_digest=${artifact_digest}"
+            echo "tested_tree=${head_tree}"
+          } >> "${GITHUB_OUTPUT}"
+      - name: Download the exact successful PR artifact with digest validation
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ steps.resolve.outputs.artifact_name }}
+          path: validated-artifact
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.resolve.outputs.run_id }}
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run typecheck
-      - run: npm test
-      - run: npm run build
+      - name: Verify tested-tree binding, public byte manifest, and owner exclusion
+        shell: bash
         env:
-          ATLAS_PUBLIC_AUDIT_CONTEXT: public-ci
-          ATLAS_PUBLIC_AUDIT_DIR: artifacts/publication
-          ATLAS_PUBLIC_AUDIT_RECEIPT: v7-3-publication-audit.json
-      - name: Create and verify the commit-bound release bundle
-        run: npm run release:package && npm run release:verify
+          EXPECTED_HEAD_SHA: ${{ steps.resolve.outputs.head_sha }}
+          EXPECTED_TREE: ${{ steps.resolve.outputs.tested_tree }}
+          EXPECTED_ARTIFACT_DIGEST: ${{ steps.resolve.outputs.artifact_digest }}
+          EXPECTED_PR_NUMBER: ${{ steps.resolve.outputs.pr_number }}
+        run: |
+          set -euo pipefail
+          [[ "${EXPECTED_ARTIFACT_DIGEST}" =~ ^sha256:[0-9a-f]{64}$ ]]
+          test -f validated-artifact/artifacts/ci-binding/binding.json
+          test -f validated-artifact/artifacts/ci-binding/DIST_PUBLIC_SHA256SUMS
+          test -d validated-artifact/dist-public
+          jq -e \
+            --arg head "${EXPECTED_HEAD_SHA}" \
+            --arg tree "${EXPECTED_TREE}" \
+            --argjson pr "${EXPECTED_PR_NUMBER}" \
+            '.schema == "homi.atlas_v7_4.ci_artifact_binding.v1" and .headSha == $head and .testedTree == $tree and .pullRequest == $pr and .publicRoot == "dist-public"' \
+            validated-artifact/artifacts/ci-binding/binding.json >/dev/null
+          (
+            cd validated-artifact/dist-public
+            sha256sum --check ../artifacts/ci-binding/DIST_PUBLIC_SHA256SUMS
+          )
+          ATLAS_PUBLIC_OUTPUT_DIR=validated-artifact/dist-public node scripts/verify-v7-4-public-artifact-exclusion.mjs
+      - name: Bind release packaging to the squash commit without rebuilding or retesting
+        run: |
+          set -euo pipefail
+          node scripts/package-release-artifact.mjs
+          node scripts/package-release-artifact.mjs --verify
+          mkdir -p artifacts/main-release/evidence
+          cp validated-artifact/artifacts/ci-binding/RELEASE_EVIDENCE.json artifacts/main-release/evidence/
+          cp validated-artifact/artifacts/ci-binding/RELEASE_EVIDENCE_SHA256SUMS artifacts/main-release/evidence/
+          cp validated-artifact/artifacts/publication/v7-4-publication-audit.json artifacts/main-release/evidence/
+          cp validated-artifact/artifacts/v7-4-browser-qa/v7-4-ci-browser-qa.json artifacts/main-release/evidence/
+          cp validated-artifact/artifacts/v7-4-browser-qa/server-shutdown.json artifacts/main-release/evidence/
+          cp validated-artifact/tests-visual/approved-baselines.json artifacts/main-release/evidence/
+          cp validated-artifact/tests-visual/independent-visual-qa-receipt.json artifacts/main-release/evidence/
+          cp validated-artifact/tests-visual/independent-visual-qa-receipt.v1.schema.json artifacts/main-release/evidence/
         env:
+          ATLAS_PUBLIC_OUTPUT_DIR: ${{ github.workspace }}/validated-artifact/dist-public
+          ATLAS_RELEASE_ARTIFACT_DIR: ${{ github.workspace }}/artifacts/main-release
           ATLAS_SOURCE_COMMIT: ${{ github.sha }}
-      - name: Retain the exact Pages build and release evidence
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - name: Name the main-bound release artifact
+        id: release-artifact-name
+        run: echo "name=atlas-v7-4-main-release-${GITHUB_SHA}" >> "${GITHUB_OUTPUT}"
+      - name: Retain the deterministic main-bound release package
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: atlas-v7-3-pages-build-${{ github.sha }}
-          path: |
-            dist-public
-            artifacts/publication
-            artifacts/release
+          name: ${{ steps.release-artifact-name.outputs.name }}
+          path: artifacts/main-release
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 90
       - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
-      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+      - name: Upload the unchanged validated public bytes to Pages
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
-          path: dist-public
+          path: validated-artifact/dist-public
 
   deploy:
+    name: Deploy unchanged validated artifact
     outputs:
       page_url: ${{ steps.deployment.outputs.page_url }}
     permissions:
@@ -59,8 +150,8 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
+    runs-on: ubuntu-24.04
+    needs: prepare
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
@@ -68,35 +159,48 @@ jobs:
 
   production-readback:
     name: Production byte readback
-    runs-on: ubuntu-latest
-    needs: [build, deploy]
+    runs-on: ubuntu-24.04
+    needs: [prepare, deploy]
     timeout-minutes: 12
     permissions:
       contents: read
+      actions: read
       pages: read
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - name: Download the same successful PR artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          node-version: 22
-      - name: Download the commit-bound Pages build
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+          name: ${{ needs.prepare.outputs.artifact_name }}
+          path: validated-artifact
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ needs.prepare.outputs.run_id }}
+      - name: Download the squash-commit release package
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: atlas-v7-3-pages-build-${{ github.sha }}
-          path: readback-evidence
-      - name: Compare production JSON, JavaScript, snapshot digest, and Agency route shell
+          name: ${{ needs.prepare.outputs.release_artifact_name }}
+          path: main-release
+      - name: Recheck the exact public byte manifest before production comparison
+        run: |
+          set -euo pipefail
+          (
+            cd validated-artifact/dist-public
+            sha256sum --check ../artifacts/ci-binding/DIST_PUBLIC_SHA256SUMS
+          )
+      - name: Compare production JSON, JavaScript, digest, and workspace shells
         run: node scripts/readback-production.mjs
         env:
           ATLAS_PRODUCTION_URL: ${{ needs.deploy.outputs.page_url }}
           ATLAS_SOURCE_COMMIT: ${{ github.sha }}
-          ATLAS_PUBLIC_OUTPUT_DIR: ${{ github.workspace }}/readback-evidence/dist-public
-          ATLAS_RELEASE_ARTIFACT_DIR: ${{ github.workspace }}/readback-evidence/artifacts/release
-          ATLAS_READBACK_RECEIPT: ${{ github.workspace }}/artifacts/production-readback/v7-3-production-readback.json
+          ATLAS_PUBLIC_OUTPUT_DIR: ${{ github.workspace }}/validated-artifact/dist-public
+          ATLAS_RELEASE_ARTIFACT_DIR: ${{ github.workspace }}/main-release
+          ATLAS_READBACK_RECEIPT: ${{ github.workspace }}/artifacts/production-readback/v7-4-production-readback.json
       - name: Retain the production readback receipt
         if: ${{ always() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: atlas-v7-3-production-readback-${{ github.sha }}
-          path: artifacts/production-readback/v7-3-production-readback.json
+          name: atlas-v7-4-production-readback-${{ github.sha }}
+          path: artifacts/production-readback/v7-4-production-readback.json
           if-no-files-found: warn
           retention-days: 90

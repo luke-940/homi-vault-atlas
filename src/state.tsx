@@ -10,7 +10,11 @@ import {
 } from "react";
 import { atlasData, DEFAULT_DAILY_ROUTE_ID } from "./data-runtime";
 import type { AgencyScene, ExploreLens, MatrixCell, RelationLayer, Workspace } from "./types";
-import { normalizeHomeSceneId } from "./agency/presentation";
+import {
+  resolveWorkspaceScene,
+  workspaceDocumentTitle,
+  workspaceSceneRegistry,
+} from "./components/workspaceSceneRegistry";
 
 export type PanelState = "none" | "navigator" | "inspector" | "data";
 export type InspectorTab = "summary" | "relations" | "proof" | "history";
@@ -27,6 +31,8 @@ export interface SceneSnapshot {
   routeId: string;
   eraId: number;
   actorId: string | null;
+  compareIds: string[];
+  filters: string[];
 }
 
 export interface AtlasState {
@@ -47,6 +53,7 @@ export interface AtlasState {
   camera: string | null;
   fallbackReason: string | null;
   previousScene: SceneSnapshot | null;
+  navigationHistory: SceneSnapshot[];
   panel: PanelState;
   inspectorTab: InspectorTab;
   searchOpen: boolean;
@@ -88,7 +95,7 @@ export interface ResponsiveEnvironment {
 
 const createDefaultState = (environment: ResponsiveEnvironment): AtlasState => ({
   workspace: "home",
-  sceneId: "system-overview",
+  sceneId: workspaceSceneRegistry.home.defaultScene,
   lens: "city",
   focusId: atlasData.bootstrap.defaultFocus,
   previewId: null,
@@ -96,14 +103,15 @@ const createDefaultState = (environment: ResponsiveEnvironment): AtlasState => (
   relationPairId: null,
   relationDirection: null,
   relationLayer: "wikilink",
-  routeId: DEFAULT_DAILY_ROUTE_ID,
-  eraId: atlasData.temporal.currentEra,
+  routeId: atlasData.flow.routes[0]?.id ?? DEFAULT_DAILY_ROUTE_ID,
+  eraId: atlasData.temporal.eras[0]?.id ?? atlasData.temporal.currentEra ?? 0,
   actorId: null,
   guideStep: null,
   filters: [],
   camera: null,
   fallbackReason: null,
   previousScene: null,
+  navigationHistory: [],
   panel: "none",
   inspectorTab: "summary",
   searchOpen: false,
@@ -120,34 +128,20 @@ const directions = new Set<RelationDirection>(["forward", "reverse"]);
 const focusIds = new Set([
   ...atlasData.entity.entities.map((entity) => entity.id),
   ...atlasData.structure.hierarchyNodes.map((node) => node.id),
+  ...atlasData.structure.nodes.map((node) => node.id),
 ]);
+const comparableIds = new Set(atlasData.entity.entities.map((entity) => entity.id));
 const relationPairIds = new Set(atlasData.relation.matrix.map((pair) => pair.id));
 const routeIds = new Set(atlasData.flow.routes.map((route) => route.id));
 const eraIds = new Set(atlasData.temporal.eras.map((era) => era.id));
 const actorIds = new Set(atlasData.agency.actors.map((actor) => actor.id));
-const defaultSceneByWorkspace: Record<Workspace, string> = {
-  home: "system-overview",
-  explore: "explore",
-  observe: "observe",
-  flow: "flow",
-  time: "time",
-  agency: "system",
-};
-const sceneIdsByWorkspace: Record<Workspace, Set<string>> = {
-  home: new Set(["system-overview", "responsibility-partition", "independent-ownership", "knowledge-return"]),
-  explore: new Set(["explore", "city-overview", "city-focus", "city-concentration", "attention-isolate"]),
-  observe: new Set(["observe", "global-relation", "entity-relation"]),
-  flow: new Set(["flow", "latest-pulse"]),
-  time: new Set(["time"]),
-  agency: new Set(["system", "roles", "evolution"]),
-};
-for (const insight of atlasData.insight.items) {
-  sceneIdsByWorkspace[insight.targetScene.workspace].add(insight.targetScene.scene);
-}
+const defaultSceneByWorkspace = Object.fromEntries(
+  Object.entries(workspaceSceneRegistry).map(([workspace, definition]) => [workspace, definition.defaultScene]),
+) as Record<Workspace, string>;
 export const mobileSiblingQuery = "(max-width: 820px), (max-width: 900px) and (max-height: 520px)";
 
 function validScene(workspace: Workspace, sceneId: string | null | undefined) {
-  return Boolean(sceneId && sceneIdsByWorkspace[workspace].has(sceneId));
+  return Boolean(resolveWorkspaceScene(workspace, sceneId));
 }
 
 export function isDirectedRelationLayer(layer: RelationLayer) {
@@ -209,14 +203,12 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
   const requestedRoute = params.get("route");
   const requestedEra = Number(params.get("era"));
   const requestedScene = params.get("scene");
-  const normalizedRequestedScene = workspace === "home"
-    ? normalizeHomeSceneId(requestedScene)
-    : requestedScene;
+  const normalizedRequestedScene = resolveWorkspaceScene(workspace, requestedScene);
   const requestedActor = params.get("actor");
   const guideParam = params.get("guide");
   const requestedGuide = guideParam === null ? Number.NaN : Number(guideParam);
   const rawCompare = (params.get("compare") ?? "").split(",").filter(Boolean);
-  const requestedCompare = [...new Set(rawCompare.filter((id) => focusIds.has(id)))].slice(0, 2);
+  const requestedCompare = [...new Set(rawCompare.filter((id) => comparableIds.has(id)))].slice(0, 2);
   const relationLayer = layerParam && layers.has(layerParam) && availableLayers.has(layerParam)
     ? layerParam
     : defaultState.relationLayer;
@@ -243,8 +235,8 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
       ? "요청한 가이드 단계를 찾지 못해 가이드를 닫았습니다."
       : null,
     ...rawCompare
-      .filter((id) => !focusIds.has(id))
-      .map(() => "비교할 객체를 현재 스냅샷에서 찾지 못했습니다."),
+      .filter((id) => !comparableIds.has(id))
+      .map(() => "비교는 공개 지식 엔터티에만 제공됩니다."),
     requestedFocus && !focusIds.has(requestedFocus)
       ? "요청한 객체를 현재 스냅샷에서 찾지 못해 기본 선택을 열었습니다."
       : null,
@@ -257,7 +249,7 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
     params.has("era") && !eraIds.has(requestedEra)
       ? "요청한 시대를 현재 스냅샷에서 찾지 못했습니다."
       : null,
-    requestedScene && !validScene(workspace, normalizedRequestedScene)
+    requestedScene && normalizedRequestedScene === null
       ? "요청한 장면을 현재 화면에서 찾지 못해 기본 장면을 열었습니다."
       : null,
     workspace === "agency" && requestedActor && !actorIds.has(requestedActor)
@@ -271,8 +263,8 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
   const validRequestedActor = requestedActor && actorIds.has(requestedActor) ? requestedActor : null;
   const agencyLocationValid = workspace !== "agency"
     || (requestedActor ? Boolean(validRequestedActor) : requestedAgencyScene !== "roles");
-  const resolvedScene = validScene(workspace, normalizedRequestedScene) && agencyLocationValid
-    ? normalizedRequestedScene!
+  const resolvedScene = normalizedRequestedScene && agencyLocationValid
+    ? normalizedRequestedScene
     : defaultSceneByWorkspace[workspace];
   return {
     ...defaultState,
@@ -305,6 +297,7 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
     fallbackReason: fallbackReasons.join(" ") || null,
     reducedMotion: environment.reducedMotion,
     mobileSibling: environment.mobileSibling,
+    navigationHistory: [],
   };
 }
 
@@ -324,8 +317,8 @@ export function stateToHash(state: AtlasState) {
     if (state.relationPairId) params.set("pair", state.relationPairId);
     if (isDirectedRelationLayer(state.relationLayer) && state.relationDirection) params.set("dir", state.relationDirection);
   }
-  if (state.workspace === "flow") params.set("route", state.routeId);
-  if (state.workspace === "time") params.set("era", String(state.eraId));
+  if (state.workspace === "flow" && routeIds.has(state.routeId)) params.set("route", state.routeId);
+  if (state.workspace === "time" && eraIds.has(state.eraId)) params.set("era", String(state.eraId));
   if (state.compareIds.length) params.set("compare", state.compareIds.join(","));
   if (state.guideStep !== null) params.set("guide", String(state.guideStep));
   if (state.filters.length) params.set("filters", state.filters.join(","));
@@ -365,22 +358,36 @@ function captureScene(state: AtlasState): SceneSnapshot {
     routeId: state.routeId,
     eraId: state.eraId,
     actorId: state.actorId,
+    compareIds: state.compareIds,
+    filters: state.filters,
   };
+}
+
+function historyFor(state: AtlasState) {
+  return [...state.navigationHistory, captureScene(state)].slice(-20);
+}
+
+function previousFrom(history: SceneSnapshot[]) {
+  return history.at(-1) ?? null;
 }
 
 export function reduceAtlasState(state: AtlasState, action: Action): AtlasState {
   switch (action.type) {
     case "workspace":
-      return {
+      return (() => {
+        const navigationHistory = historyFor(state);
+        return {
         ...state,
-        previousScene: captureScene(state),
+        previousScene: previousFrom(navigationHistory),
+        navigationHistory,
         workspace: action.workspace,
         sceneId: defaultSceneByWorkspace[action.workspace],
         actorId: null,
         panel: action.workspace === "home" || action.workspace === "agency" || state.mobileSibling ? "none" : "inspector",
         guideStep: action.workspace === "home" ? state.guideStep : null,
         fallbackReason: null,
-      };
+        };
+      })();
     case "journey": {
       const requestedFocus = action.target.focusId;
       const validFocus = requestedFocus ? focusIds.has(requestedFocus) : true;
@@ -388,7 +395,11 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
       const validPair = requestedPair ? relationPairIds.has(requestedPair) : true;
       const targetWorkspace = action.target.workspace ?? state.workspace;
       const requestedScene = action.target.sceneId;
-      const validRequestedScene = requestedScene ? validScene(targetWorkspace, requestedScene) : true;
+      const resolvedRequestedScene = requestedScene
+        ? resolveWorkspaceScene(targetWorkspace, requestedScene)
+        : null;
+      const validRequestedScene = requestedScene ? resolvedRequestedScene !== null : true;
+      const resolvedCurrentScene = resolveWorkspaceScene(targetWorkspace, state.sceneId);
       const pairWasRequested = Object.prototype.hasOwnProperty.call(action.target, "relationPairId");
       const targetPair = validPair
         ? pairWasRequested
@@ -401,16 +412,18 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
       const requestedLayer = action.target.relationLayer;
       const validLayer = requestedLayer ? availableLayers.has(requestedLayer) : true;
       const targetLayer = validLayer && requestedLayer ? requestedLayer : state.relationLayer;
+      const navigationHistory = historyFor(state);
       return {
         ...state,
-        previousScene: captureScene(state),
+        previousScene: previousFrom(navigationHistory),
+        navigationHistory,
         workspace: targetWorkspace,
-        sceneId: validRequestedScene && requestedScene
-          ? requestedScene
+        sceneId: validRequestedScene && resolvedRequestedScene
+          ? resolvedRequestedScene
           : action.target.workspace
             ? defaultSceneByWorkspace[targetWorkspace]
-            : validScene(targetWorkspace, state.sceneId)
-              ? state.sceneId
+            : resolvedCurrentScene
+              ? resolvedCurrentScene
               : defaultSceneByWorkspace[targetWorkspace],
         focusId: validFocus && requestedFocus ? requestedFocus : state.focusId,
         lens: action.target.lens && lenses.has(action.target.lens) ? action.target.lens : "city",
@@ -420,7 +433,7 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
         routeId: action.target.routeId && routeIds.has(action.target.routeId) ? action.target.routeId : state.routeId,
         eraId: action.target.eraId && eraIds.has(action.target.eraId) ? action.target.eraId : state.eraId,
         actorId: targetWorkspace === "agency"
-          && (requestedScene ?? state.sceneId) === "roles"
+          && (resolvedRequestedScene ?? resolvedCurrentScene) === "roles"
           && action.target.actorId
           && actorIds.has(action.target.actorId)
           ? action.target.actorId
@@ -440,26 +453,34 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
       };
     }
     case "back":
-      return state.previousScene
-        ? {
+      if (!state.navigationHistory.length) return state;
+      {
+        const navigationHistory = state.navigationHistory.slice(0, -1);
+        const destination = state.navigationHistory.at(-1)!;
+        return {
             ...state,
-            ...state.previousScene,
-            previousScene: null,
-            panel: state.previousScene.workspace === "home" || state.previousScene.workspace === "agency" || state.mobileSibling ? "none" : "inspector",
+            ...destination,
+            previousScene: previousFrom(navigationHistory),
+            navigationHistory,
+            panel: destination.workspace === "home" || destination.workspace === "agency" || state.mobileSibling ? "none" : "inspector",
             fallbackReason: null,
-          }
-        : state;
+          };
+      }
     case "lens":
       return lenses.has(action.lens)
-        ? { ...state, lens: action.lens, fallbackReason: null }
+        ? { ...state, lens: action.lens, navigationHistory: historyFor(state), fallbackReason: null }
         : {
             ...state,
             lens: "city",
             fallbackReason: `요청한 ${action.lens} 공개 화면은 v7.3에서 City로 통합되어 안전하게 이동했습니다.`,
           };
     case "focus":
+      if (!focusIds.has(action.focusId)) {
+        return { ...state, fallbackReason: `요청한 객체 ${action.focusId}를 현재 스냅샷에서 찾지 못했습니다.` };
+      }
       return {
         ...state,
+        navigationHistory: historyFor(state),
         focusId: action.focusId,
         panel: action.openInspector === false || state.mobileSibling ? state.panel : "inspector",
         inspectorTab: "summary",
@@ -467,8 +488,8 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
     case "preview":
       return { ...state, previewId: action.focusId };
     case "compare": {
-      if (!focusIds.has(action.focusId)) {
-        return { ...state, fallbackReason: `비교할 객체 ${action.focusId}를 현재 스냅샷에서 찾지 못했습니다.` };
+      if (!comparableIds.has(action.focusId)) {
+        return { ...state, fallbackReason: "비교는 공개 지식 엔터티에만 제공됩니다." };
       }
       const compareIds = state.compareIds.includes(action.focusId)
         ? state.compareIds.filter((id) => id !== action.focusId)
@@ -483,6 +504,7 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
         : undefined;
       return {
         ...state,
+        navigationHistory: historyFor(state),
         relationPairId: pair?.id ?? null,
         relationDirection: normalizedRelationDirection(pair, state.relationLayer, action.direction),
         panel: state.mobileSibling ? "none" : "inspector",
@@ -500,18 +522,20 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
         : undefined;
       return {
         ...state,
+        navigationHistory: historyFor(state),
         relationLayer: action.relationLayer,
         relationDirection: normalizedRelationDirection(selectedPair, action.relationLayer, state.relationDirection),
       };
     }
     case "route":
-      return { ...state, routeId: action.routeId, panel: state.mobileSibling ? "none" : "inspector" };
+      return { ...state, navigationHistory: historyFor(state), routeId: action.routeId, panel: state.mobileSibling ? "none" : "inspector" };
     case "era":
-      return { ...state, eraId: action.eraId, panel: state.mobileSibling ? "none" : "inspector" };
+      return { ...state, navigationHistory: historyFor(state), eraId: action.eraId, panel: state.mobileSibling ? "none" : "inspector" };
     case "actor":
       return action.actorId && actorIds.has(action.actorId)
         ? {
             ...state,
+            navigationHistory: historyFor(state),
             workspace: "agency",
             sceneId: "roles",
             actorId: action.actorId,
@@ -520,6 +544,7 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
           }
         : {
             ...state,
+            navigationHistory: historyFor(state),
             workspace: "agency",
             sceneId: "system",
             actorId: null,
@@ -604,6 +629,10 @@ export function AtlasStateProvider({ children }: PropsWithChildren) {
     previousNavigationKeyRef.current = nextNavigationKey;
     observedLocationRef.current = window.location.href;
   }, [state]);
+
+  useEffect(() => {
+    document.title = workspaceDocumentTitle(state.workspace, state.sceneId);
+  }, [state.sceneId, state.workspace]);
 
   useEffect(() => {
     const onHistoryNavigation = () => {

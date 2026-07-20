@@ -1,10 +1,11 @@
-import { ArrowRight, CheckCircle2, Clock3, GitBranch } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock3, GitBranch, ShieldCheck } from "lucide-react";
 import { area, curveCatmullRom } from "d3-shape";
 import { useEffect, useMemo, useRef } from "react";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { atlasData, entityById } from "../data-runtime";
 import { useElementSize } from "../hooks/useElementSize";
 import { useAtlasState } from "../state";
+import type { AtlasActivityV1 } from "../types";
 import {
   formatEraRange,
   lifecycleEvidenceSummary,
@@ -43,8 +44,6 @@ function evidenceLabel(value: string) {
     l4_historical_synthesis: "역사 기록 기반 해석",
     l4_event_record: "사건 기록",
     l4_event_record_interpretive: "사건 기록 기반 해석",
-    l4_batch_retrospective: "배치 회고",
-    l4_batch_retrospective_interpretive: "배치 회고 기반 해석",
     l4_same_era_event_record: "같은 시대 사건 기록",
     l2_canonical_current_state: "현재 상태 정본",
     "canonical current plus same era history": "현재 정본과 같은 시대 기록",
@@ -55,9 +54,67 @@ function evidenceLabel(value: string) {
 const atlasEvidenceIds = new Set(atlasData.entity.entities.map((entity) => entity.id));
 const plottedLifecycleStates = recordedLifecycleStates(atlasData.temporal.eras, atlasEvidenceIds);
 
+function OwnerActivityTimeline({ activity }: { activity: AtlasActivityV1 }) {
+  const rows = activity.lifecycle.filter((row) => row.created + row.completed + row.stopped > 0);
+  const activityRows = (className: string) => (
+    <div className={className}>
+      {rows.map((row) => (
+        <div className={className === "mobile-ranked-list" ? "mobile-era-row" : undefined} key={row.date}>
+          <i style={{ background: eraStateColors.persisted }} aria-hidden="true" />
+          <span><strong>{row.date}</strong><small>생성 {row.created} · 완료 {row.completed} · 안전 중지 {row.stopped}</small></span>
+          {className === "mobile-ranked-list" && <CheckCircle2 size={16} aria-hidden="true" />}
+        </div>
+      ))}
+    </div>
+  );
+  return (
+    <section className="workspace-view time-view" aria-labelledby="time-title">
+      <WorkspaceHeader
+        titleId="time-title"
+        eyebrow="OWNER ACTIVITY LEDGER"
+        title="검증된 운영 원장 집계를 날짜별로 읽습니다"
+        question="Owner Atlas의 운영 활동과 문서 생애주기를 분리해 보여준다."
+        answer={`${rows.length}개 날짜에 기록된 생성·완료·안전 중지 집계다. 실시간 상태나 현재 작업으로 해석하지 않는다.`}
+      />
+      <div className="desktop-visual-surface temporal-surface">
+        <section className="era-focus-panel" style={{ gridColumn: "1 / -1" }}>
+          <span className="eyebrow" lang="en">Versioned owner evidence</span>
+          <h2>운영 활동 원장</h2>
+          <p className="era-thesis">문서 lifecycle과 분리된 Owner 전용 검증 집계입니다. 원문 운영 식별자는 포함하지 않습니다.</p>
+          {rows.length ? activityRows("era-delta-ledger") : <p>날짜가 확인된 활동 집계가 없습니다.</p>}
+        </section>
+      </div>
+      <div className="mobile-sibling mobile-time">
+        <section className="mobile-selection"><span className="eyebrow">Owner activity</span><h2>운영 활동 원장</h2><p>실시간 작업 상태가 아닌 버전 스냅샷입니다.</p></section>
+        {rows.length ? activityRows("mobile-ranked-list") : <p className="empty-state">날짜가 확인된 활동 집계가 없습니다.</p>}
+      </div>
+    </section>
+  );
+}
+
 export function TimeView() {
   const { state, dispatch } = useAtlasState();
-  const era = atlasData.temporal.eras.find((item) => item.id === state.eraId)!;
+  const era = atlasData.temporal.eras.find((item) => item.id === state.eraId) ?? atlasData.temporal.eras[0];
+  const activity = (atlasData as typeof atlasData & { activity?: AtlasActivityV1 }).activity;
+  if (!era && activity) return <OwnerActivityTimeline activity={activity} />;
+  if (!era) {
+    return (
+      <section className="workspace-view time-view" aria-labelledby="time-title">
+        <WorkspaceHeader
+          titleId="time-title"
+          eyebrow="RECORDED CHRONOLOGY"
+          title="공개할 수 있는 시간 증거가 아직 없습니다"
+          question="공개판에서 날짜와 생애주기 증거가 확인된 사건만 시간 장면으로 보여준다."
+          answer="현재 공개 프로필에는 검증된 chronology가 없다. 빈 상태는 변화 0이나 활동 부재를 뜻하지 않는다."
+        />
+        <div className="workspace-honest-empty time-honest-empty" role="note">
+          <ShieldCheck size={24} aria-hidden="true" />
+          <h2>검증된 공개 chronology가 없습니다.</h2>
+          <p>날짜 근거가 없는 변화를 새로 생김·약화·소멸로 추정하지 않습니다. Owner Atlas의 내부 시간 증거도 공개판에 복제하지 않습니다.</p>
+        </div>
+      </section>
+    );
+  }
   const eraSummary = lifecycleEvidenceSummary(era, atlasEvidenceIds);
   const activeEraRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {

@@ -1,15 +1,16 @@
-import { CornerDownLeft, FileText, Folder, Network, Search, X } from "lucide-react";
+import { CircleDot, CornerDownLeft, FileText, Folder, Network, Search, X } from "lucide-react";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
-import { atlasData, entityById } from "../data-runtime";
+import { atlasData, entityById, structureNodeById } from "../data-runtime";
 import { useAtlasState, type Action } from "../state";
-import type { Workspace } from "../types";
+import { isStructuralHub, isStructureSourceLevel } from "../structure-navigation";
+import type { AtlasStructureNodeV2, Workspace } from "../types";
 import { claimModalInert, releaseModalInert } from "./tray-accessibility";
 
 export type SearchResult = {
   id: string;
   label: string;
   meta: string;
-  kind: "actor" | "document" | "folder" | "district";
+  kind: "actor" | "document" | "folder" | "district" | "hub" | "source";
   section: "roles" | "knowledge";
 };
 
@@ -21,6 +22,7 @@ export type SearchDestination = {
   eraId?: number;
   relationPairId?: string;
   actorId?: string;
+  sceneId?: string;
 };
 
 function strongestPairForDistrict(district: string, layer: "wikilink" | "typed" | "route") {
@@ -37,6 +39,20 @@ export function destinationFor(result: SearchResult, workspace: Workspace, layer
       actorId: result.id,
       label: "Agency에서 역할 보기",
       reason: "운영 역할은 지식 문서와 분리된 Agency 책임 지도에서 엽니다.",
+    };
+  }
+  const structureNode = structureNodeById.get(result.id);
+  if (structureNode) {
+    const sceneId = structureNode.kind === "district"
+      ? "hubs"
+      : structureNode.kind === "source_document"
+        ? "sources"
+        : "sources";
+    return {
+      workspace: "explore",
+      sceneId,
+      label: structureNode.kind === "district" ? "허브 탐색 열기" : "구조에서 위치 보기",
+      reason: "v7.4 구조 투영의 구역 → 허브 → 원천 위치로 이동합니다.",
     };
   }
   if (result.kind !== "document") {
@@ -100,12 +116,14 @@ export function createSearchSelectionPlan(
   const actions: Action[] = [
     ...(destination.actorId
       ? [{ type: "actor", actorId: destination.actorId } as const]
-      : [{ type: "workspace", workspace: destination.workspace } as const]),
+      : destination.workspace === "explore"
+        ? [{ type: "journey", target: { workspace: "explore", sceneId: destination.sceneId ?? "districts", focusId: result.id } } as const]
+        : [{ type: "workspace", workspace: destination.workspace } as const]),
     ...(destination.workspace === "explore" ? [{ type: "lens", lens: "city" } as const] : []),
     ...(destination.relationPairId ? [{ type: "relationPair", relationPairId: destination.relationPairId } as const] : []),
     ...(destination.routeId ? [{ type: "route", routeId: destination.routeId } as const] : []),
     ...(destination.eraId ? [{ type: "era", eraId: destination.eraId } as const] : []),
-    ...(result.kind === "actor" ? [] : [{ type: "focus", focusId: result.id } as const]),
+    ...(result.kind === "actor" || destination.workspace === "explore" ? [] : [{ type: "focus", focusId: result.id } as const]),
     { type: "search", open: false },
   ];
   return {
@@ -154,9 +172,31 @@ export function wrappedSearchDialogFocusTarget<T>(
   return null;
 }
 
+export function structureResultKind(node: AtlasStructureNodeV2): SearchResult["kind"] {
+  if (node.kind === "district") return "district";
+  if (isStructureSourceLevel(node)) return "source";
+  return "hub";
+}
+
+function structureResultMeta(node: (typeof atlasData.structure.nodes)[number]) {
+  const district = structureNodeById.get(node.districtId)?.label ?? "지식 구역";
+  if (node.kind === "district") return `${node.documentCount}개 기록 · 구역`;
+  if (isStructureSourceLevel(node)) return `${district} · ${node.nameMode === "public_alias" ? "안전 별칭" : node.nameMode === "aggregate" ? "공개 안전 집계" : "승인 이름"}`;
+  return `${district} · 고유 inbound ${node.uniqueInboundDocuments} · 출현 ${node.inboundLinkOccurrences}`;
+}
+
+function dedupeKnowledge(results: SearchResult[]) {
+  const labels = new Set<string>();
+  return results.filter((result) => {
+    const key = result.label.trim().toLocaleLowerCase("ko-KR");
+    if (!key || labels.has(key)) return false;
+    labels.add(key);
+    return true;
+  });
+}
+
 export function SearchPalette() {
   const { state, dispatch } = useAtlasState();
-  const isPublicProfile = atlasData.publication.profile === "public";
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -225,67 +265,29 @@ export function SearchPalette() {
         };
       });
     if (!normalized) {
-      const knowledgeResults = atlasData.entity.entities
-        .filter((entity) => entity.defaultPreload || entity.authority === "L1" || entity.authority === "L2")
-        .slice(0, 10)
-        .map<SearchResult>((entity) => ({
-          id: entity.id,
-          label: entity.title,
-          meta: isPublicProfile
-            ? `${entity.district} · ${entity.authority}`
-            : `${entity.path} · ${entity.authority}`,
-          kind: "document",
-          section: "knowledge",
-        }));
+      const knowledgeResults = [...atlasData.structure.nodes]
+        .filter((node) => node.kind === "district" || isStructuralHub(node))
+        .sort((a, b) => (a.kind === "district" ? -1 : 0) - (b.kind === "district" ? -1 : 0) || b.uniqueInboundDocuments - a.uniqueInboundDocuments || a.label.localeCompare(b.label, "ko"))
+        .slice(0, 12)
+        .map<SearchResult>((node) => ({ id: node.id, label: node.label, meta: structureResultMeta(node), kind: structureResultKind(node), section: "knowledge" }));
       return [...roleResults, ...knowledgeResults].slice(0, 16);
     }
     const tokens = normalized.split(/\s+/).filter(Boolean);
-    const documents = atlasData.entity.entities
-      .map((entity) => {
-        const searchableFields = isPublicProfile
-          ? [entity.title, entity.displayLabel, entity.district]
-          : [entity.title, entity.path, ...entity.aliases, ...entity.tags];
-        const haystack = searchableFields
-          .join(" ")
-          .toLocaleLowerCase("ko-KR");
-        const score = tokens.reduce((total, token) => {
-          if (entity.title.toLocaleLowerCase("ko-KR").startsWith(token)) return total + 8;
-          if (entity.title.toLocaleLowerCase("ko-KR").includes(token)) return total + 5;
-          if (entity.district.toLocaleLowerCase("ko-KR").includes(token)) return total + 3;
-          return total + Number(haystack.includes(token));
-        }, 0);
-        return { entity, score };
+    const structureResults = atlasData.structure.nodes
+      .map((node) => {
+        const district = structureNodeById.get(node.districtId)?.label ?? "";
+        const label = node.label.toLocaleLowerCase("ko-KR");
+        const haystack = `${label} ${district.toLocaleLowerCase("ko-KR")} ${node.kind}`;
+        const score = tokens.reduce((total, token) => total + (label.startsWith(token) ? 8 : label.includes(token) ? 5 : haystack.includes(token) ? 2 : 0), 0);
+        return { node, score };
       })
       .filter((item) => item.score >= tokens.length)
-      .sort((a, b) => b.score - a.score || a.entity.title.localeCompare(b.entity.title))
-      .slice(0, 12)
-      .map<SearchResult>(({ entity }) => ({
-        id: entity.id,
-        label: entity.title,
-        meta: isPublicProfile
-          ? `${entity.district} · ${entity.authority}`
-          : `${entity.path} · ${entity.authority}`,
-        kind: "document",
-        section: "knowledge",
-      }));
-    const folders = atlasData.structure.hierarchyNodes
-      .filter(
-        (node) =>
-          node.kind !== "document" &&
-          node.label.toLocaleLowerCase("ko-KR").includes(normalized),
-      )
-      .slice(0, 4)
-      .map<SearchResult>((node) => ({
-        id: node.id,
-        label: node.label,
-        meta: isPublicProfile
-          ? `${node.documentCount}개 공개 기록 · 집계 구역`
-          : `${node.documentCount}개 문서 · ${node.path || "Homi Vault"}`,
-        kind: node.kind === "district" ? "district" : "folder",
-        section: "knowledge",
-      }));
-    return [...roleResults, ...documents, ...folders].slice(0, 18);
-  }, [isPublicProfile, query]);
+      .sort((a, b) => b.score - a.score || b.node.uniqueInboundDocuments - a.node.uniqueInboundDocuments || a.node.label.localeCompare(b.node.label, "ko"))
+      .slice(0, 18)
+      .map<SearchResult>(({ node }) => ({ id: node.id, label: node.label, meta: structureResultMeta(node), kind: structureResultKind(node), section: "knowledge" }));
+    const knowledgeResults = dedupeKnowledge(structureResults);
+    return [...roleResults, ...knowledgeResults].slice(0, 18);
+  }, [query]);
 
   useLayoutEffect(() => {
     if (!state.searchOpen || !results.length) return;
@@ -310,6 +312,7 @@ export function SearchPalette() {
       <div
         ref={dialogRef}
         className="search-dialog"
+        lang="ko"
         {...searchDialogAccessibility()}
         onMouseDown={(event) => event.stopPropagation()}
         onKeyDown={(event) => {
@@ -362,7 +365,7 @@ export function SearchPalette() {
         <div className="search-context">Operating Roles와 Knowledge를 분리해 찾습니다. 역할은 Agency로, 공개 지식은 해당 workspace로 이동합니다.</div>
         <div className="search-results" id="atlas-search-results" role="listbox" aria-label="검색 결과">
           {results.map((result, index) => {
-            const Icon = result.kind === "actor" ? Network : result.kind === "document" ? FileText : Folder;
+            const Icon = result.kind === "actor" ? Network : result.kind === "hub" ? CircleDot : result.kind === "document" || result.kind === "source" ? FileText : Folder;
             const destination = destinationFor(result, state.workspace, state.relationLayer);
             return (
               <div className="search-result-group" key={result.id}>

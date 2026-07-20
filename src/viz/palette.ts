@@ -1,25 +1,47 @@
+const canonicalDistrict = (district: string) => ({
+  MOC: "중심 지식",
+  Papers: "연구 논거",
+  Strategy: "전략",
+  Signals: "신호",
+  Research: "연구 기록",
+  "Console/Homi": "운영 기반",
+  "Console/Agent": "운영 기반",
+  "Console/Templates": "운영 기반",
+}[district] ?? district);
+
 export const districtColorRoles = Object.freeze({
   "중심 지식": "var(--district-knowledge-fill)",
-  MOC: "var(--district-knowledge-fill)",
   "연구 논거": "var(--district-research-fill)",
-  Papers: "var(--district-research-fill)",
-  Research: "var(--district-research-fill)",
-  Rocket: "var(--district-research-fill)",
   전략: "var(--district-strategy-fill)",
-  Strategy: "var(--district-strategy-fill)",
-  Groot: "var(--district-strategy-fill)",
   신호: "var(--district-signal-fill)",
-  Signals: "var(--district-signal-fill)",
   "운영 기반": "var(--district-operations-fill)",
-  "Console/Homi": "var(--district-operations-fill)",
-  "Console/Agent": "var(--district-operations-fill)",
-  "Console/Templates": "var(--district-operations-fill)",
-  "Intelligence Layer": "var(--district-operations-fill)",
+  Rocket: "var(--district-rocket-fill)",
+  Groot: "var(--district-groot-fill)",
+  "Intelligence Layer": "var(--district-intelligence-fill)",
+  "Independent Projects": "var(--district-independent-fill)",
+  "연구 기록": "var(--district-research-records-fill)",
   "공개 근거 경계": "var(--public-boundary-fill)",
 } as const);
 
+export const districtStrokeColorRoles = Object.freeze({
+  "중심 지식": "var(--district-knowledge)",
+  "연구 논거": "var(--district-research)",
+  전략: "var(--district-strategy)",
+  신호: "var(--district-signal)",
+  "운영 기반": "var(--district-operations)",
+  Rocket: "var(--district-rocket)",
+  Groot: "var(--district-groot)",
+  "Intelligence Layer": "var(--district-intelligence)",
+  "Independent Projects": "var(--district-independent)",
+  "연구 기록": "var(--district-research-records)",
+  "공개 근거 경계": "var(--public-boundary)",
+} as const);
+
 export const colorForDistrict = (district: string) =>
-  districtColorRoles[district as keyof typeof districtColorRoles] ?? "var(--district-neutral-fill)";
+  districtColorRoles[canonicalDistrict(district) as keyof typeof districtColorRoles] ?? "var(--district-neutral-fill)";
+
+export const strokeColorForDistrict = (district: string) =>
+  districtStrokeColorRoles[canonicalDistrict(district) as keyof typeof districtStrokeColorRoles] ?? "var(--district-neutral)";
 
 export const shortDistrictLabel = (district: string) => {
   const leaf = district.split("/").at(-1) ?? district;

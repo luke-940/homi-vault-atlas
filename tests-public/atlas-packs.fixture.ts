@@ -4,6 +4,7 @@ import path from "node:path";
 const names = [
   "agency",
   "bootstrap",
+  "inventory",
   "structure",
   "relation",
   "flow",

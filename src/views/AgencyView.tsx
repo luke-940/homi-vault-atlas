@@ -20,12 +20,12 @@ import {
   actorsByGroup,
   AGENCY_SCENES,
   currentAgencyScene,
-  DISTRICT_COLORS,
   MOTION_SECONDS,
   strongestKnowledgeRelation,
 } from "../agency/presentation";
 import { useAtlasState } from "../state";
 import type { AgencyActor, AgencyScene } from "../types";
+import { strokeColorForDistrict } from "../viz/palette";
 
 const actorIcons = {
   "actor:control-plane": ShieldCheck,
@@ -37,6 +37,16 @@ const actorIcons = {
 } as const;
 
 const defaultActorId = "actor:atlas-builder";
+
+export function agencyKnowledgeDistricts() {
+  return atlasData.structure.nodes
+    .filter((node) => node.kind === "district")
+    .sort((left, right) => right.documentCount - left.documentCount || left.label.localeCompare(right.label, "ko"));
+}
+
+export function agencyKnowledgeTarget(districtId: string) {
+  return { workspace: "explore" as const, sceneId: "hubs", focusId: districtId };
+}
 
 function AgencySceneRail({ scene }: { scene: AgencyScene }) {
   const { state, dispatch } = useAtlasState();
@@ -166,22 +176,11 @@ function MobileRolePicker({ selectedActorId }: { selectedActorId: string }) {
 }
 
 function EvolutionScene() {
+  const { dispatch } = useAtlasState();
   const core = atlasData.agency.actors.filter((actor) => actor.groupId === "agency:group:homi-core");
   const independent = atlasData.agency.actors.filter((actor) => actor.groupId === "agency:group:independent");
   const strongest = strongestKnowledgeRelation(atlasData);
-  const knowledgeItems = atlasData.publication.profile === "public"
-    ? atlasData.entity.entities.map((entity) => ({
-      id: entity.id,
-      label: entity.title,
-      documentCount: entity.documentCount ?? 0,
-      district: entity.district,
-    }))
-    : atlasData.structure.districts.slice(0, 6).map((district) => ({
-      id: district.id,
-      label: district.name,
-      documentCount: district.documentCount,
-      district: district.name,
-    }));
+  const knowledgeItems = agencyKnowledgeDistricts();
   return (
     <section className="agency-evolution" aria-label="역할 전문화 전환">
       <div className="agency-principal">
@@ -217,9 +216,15 @@ function EvolutionScene() {
         <header><span>KNOWLEDGE TERRAIN · UNCHANGED CONTEXT</span><strong>{strongest ? `가장 강한 관계 ${strongest.wikilink.toLocaleString("ko-KR")}회` : "공개 집계"}</strong></header>
         <div>
           {knowledgeItems.map((item) => (
-            <span key={item.id} style={{ color: DISTRICT_COLORS[item.district] ?? "var(--district-neutral)" }}>
+            <button
+              key={item.id}
+              type="button"
+              style={{ color: strokeColorForDistrict(item.label) }}
+              aria-label={`${item.label} ${item.documentCount.toLocaleString("ko-KR")}개 표현 기록, Explore에서 열기`}
+              onClick={() => dispatch({ type: "journey", target: agencyKnowledgeTarget(item.id) })}
+            >
               <b>{item.label}</b><small>{item.documentCount.toLocaleString("ko-KR")}개</small>
-            </span>
+            </button>
           ))}
         </div>
       </section>

@@ -10,7 +10,7 @@ export async function productionReadbackCommand({
   productionUrl = process.env.ATLAS_PRODUCTION_URL,
   distDir = path.resolve(process.env.ATLAS_PUBLIC_OUTPUT_DIR ?? path.join(projectDir, "dist-public")),
   releaseArtifactDir = path.resolve(process.env.ATLAS_RELEASE_ARTIFACT_DIR ?? path.join(projectDir, "artifacts", "release")),
-  receiptPath = path.resolve(process.env.ATLAS_READBACK_RECEIPT ?? path.join(projectDir, "artifacts", "production-readback", "v7-3-production-readback.json")),
+  receiptPath = path.resolve(process.env.ATLAS_READBACK_RECEIPT ?? path.join(projectDir, "artifacts", "production-readback", "v7-4-production-readback.json")),
   sourceCommit = process.env.ATLAS_SOURCE_COMMIT,
   attempts = Number.parseInt(process.env.ATLAS_READBACK_ATTEMPTS ?? "12", 10),
   retryDelayMs = Number.parseInt(process.env.ATLAS_READBACK_RETRY_MS ?? "5000", 10),

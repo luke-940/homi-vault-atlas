@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
 
-const names = ["agency", "bootstrap", "structure", "relation", "flow", "temporal", "entity", "health", "insight", "publication"] as const;
+const names = ["agency", "bootstrap", "inventory", "structure", "relation", "flow", "temporal", "entity", "health", "insight", "publication"] as const;
 const dataDir = path.resolve("public-safe", "data");
 const packs = Object.fromEntries(names.map((name) => [name, JSON.parse(readFileSync(path.join(dataDir, `${name}.json`), "utf8"))]));
 
@@ -67,10 +67,10 @@ describe("public Atlas data contract", () => {
     expect(packs.publication.allowedSurfaces).toEqual(expect.arrayContaining(["district_role_aggregate", "district_relation_aggregate"]));
     expect(packs.publication.excludedFields).toContain("document_level_relation");
     const publicStageIds = packs.flow.routes.flatMap((route: { stations: Array<{ id: string }> }) => route.stations.map((station) => station.id));
-    expect(publicStageIds.every((id: string) => /^stage:[a-z]+:\d+$/.test(id))).toBe(true);
+    expect(publicStageIds.every((id: string) => /^station:[a-p]+:\d+$/.test(id))).toBe(true);
     expect(packs.flow.routes.every((route: { sourceRefs: string[] }) => route.sourceRefs.length === 0)).toBe(true);
     const stationEntityIds = packs.flow.routes.flatMap((route: { stations: Array<{ entityId: string | null }> }) => route.stations.map((station) => station.entityId).filter(Boolean));
-    expect(stationEntityIds.every((id: string) => /^doc:pub:[a-f0-9]{18}$/.test(id))).toBe(true);
+    expect(stationEntityIds.every((id: string) => /^(?:hub|district):pub:[a-p]{18}$/.test(id))).toBe(true);
   });
 
   test("uses one represented-document unit across public insight, hierarchy, city, and inspector data", () => {
@@ -84,26 +84,40 @@ describe("public Atlas data contract", () => {
       expect(childCount).toBe(node.documentCount);
     }
     const concentration = packs.insight.items.find((item: { kind: string }) => item.kind === "knowledge_concentration");
-    const focusedNode = packs.structure.hierarchyNodes.find((node: { id: string }) => node.id === concentration.targetScene.focusId);
+    const focusedNode = packs.structure.nodes.find((node: { id: string }) => node.id === concentration.targetScene.focusId);
+    expect(focusedNode.kind).toBe("district");
     expect(focusedNode.documentCount).toBe(concentration.metric.value);
   });
 
-  test("keeps public route semantics and pulse counts explicit", () => {
-    const daily = packs.flow.routes.find((route: { id: string }) => route.id === "daily");
-    expect(daily.stations.map((station: { label: string }) => station.label)).toEqual([
-      "소스 수집", "Daily", "중심 지식", "판단·행동", "검증", "팀 읽기면",
-    ]);
+  test("publishes only verified structure paths and keeps pulse and chronology honest-empty", () => {
     const pulse = packs.insight.items.find((item: { kind: string }) => item.kind === "latest_pulse");
-    const publicPulseEntityIds = packs.flow.pulse.chains
-      .flatMap((chain: { stages: Array<{ entityId: string | null }> }) => chain.stages)
-      .map((stage: { entityId: string | null }) => stage.entityId)
-      .filter(Boolean);
-    expect(publicPulseEntityIds).toEqual([]);
-    expect(pulse.metric.value).toBe(packs.flow.pulse.chains.length);
-    expect(pulse.metric.label).toBe("공개 역할 경로");
-    expect(pulse.headline).toContain(`공개 역할 경로 ${packs.flow.pulse.chains.length}개`);
-    expect(pulse.headline).not.toContain("확인된 전파");
-    expect(pulse.confidence).toBe("medium");
+    const structureNodeIds = new Set(packs.structure.nodes.map((node: { id: string }) => node.id));
+    expect(packs.flow.routes.length).toBeGreaterThan(0);
+    for (const route of packs.flow.routes) {
+      const reference = packs.structure.associations.find((edge: { kind: string; source: string; target: string }) =>
+        edge.kind === "references" && edge.source === route.members[0] && edge.target === route.members[1]);
+      expect(route.provenance).toBe("resolved_wikilink_path");
+      expect(Number.isInteger(route.weight) && route.weight > 0).toBe(true);
+      expect(route.weight).toBe(reference?.weight);
+      expect(route.classifier).toContain("weight 단위는 link occurrence");
+      expect(route.members.length).toBeGreaterThanOrEqual(2);
+      expect(route.sourceRefs).toEqual([]);
+      expect(route.stations.length).toBeGreaterThanOrEqual(2);
+      expect(route.stations.every((station: { entityId: string | null }) =>
+        station.entityId !== null && structureNodeIds.has(station.entityId))).toBe(true);
+    }
+    expect(packs.flow.pulse).toEqual({
+      latestDailyId: null,
+      latestDailyDate: null,
+      sourceItemCount: null,
+      chains: [],
+    });
+    expect(packs.temporal).toEqual({ eras: [], currentEra: null });
+    expect(pulse.metric).toEqual({ value: packs.flow.routes.length, label: "검증된 공개 경로", unit: "개" });
+    expect(pulse.targetScene).toEqual({ workspace: "flow", scene: "routes", routeId: packs.flow.routes[0].id });
+    expect(pulse.headline).toContain(`경로 ${packs.flow.routes.length}개`);
+    expect(pulse.confidence).toBe("high");
+    expect(JSON.stringify([packs.flow, packs.temporal])).not.toMatch(/역할 경계 \d+|새로 생김 집계 \d+|미확정 변화 \d+/);
   });
 
   test("exposes only relation layers supported by the public evidence boundary", () => {
@@ -111,14 +125,8 @@ describe("public Atlas data contract", () => {
     expect(packs.relation.redactedLayers).toEqual(["typed", "route"]);
   });
 
-  test("uses aggregate-safe Korean Era labels without invented calibration", () => {
-    for (const era of packs.temporal.eras) {
-      for (const delta of era.deltas) {
-        expect(delta.label).toMatch(/(?:새로 생김|계속 유지|약해짐|역사로 이동|판단 근거 부족|변화) 집계 \d+/);
-        expect(delta.label).not.toMatch(/\b(?:born|persisted|weakened|retired|unknown)\b/i);
-        expect(delta.evidenceStatus).toBe("recorded");
-        expect(delta).not.toHaveProperty("confidence");
-      }
-    }
+  test("does not publish invented lifecycle calibration", () => {
+    expect(packs.temporal.eras).toEqual([]);
+    expect(packs.temporal.currentEra).toBeNull();
   });
 });

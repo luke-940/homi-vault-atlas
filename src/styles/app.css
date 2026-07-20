@@ -270,6 +270,20 @@
   & button.is-active { background: #dcece7; color: var(--fo); box-shadow: inset 0 -2px var(--md); }
 }
 
+.relation-layer-static,
+.mobile-layer-static {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 11px;
+  border: var(--bd);
+  border-radius: var(--cr);
+  background: #edf4ef;
+  color: var(--fo);
+  font-weight: 700;
+}
+
 .desktop-visual-surface {
   min-width: 0;
   min-height: 0;
@@ -631,7 +645,6 @@
 
 .matrix-panel,
 .chord-panel,
-.era-overview-panel,
 .era-focus-panel,
 .entity-time-readout {
   min-width: 0;
@@ -675,8 +688,7 @@
 
 .matrix-canvas,
 .chord-canvas,
-.metro-canvas,
-.era-plot {
+.metro-canvas {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -959,111 +971,11 @@
   background: var(--mb);
 }
 
-.era-overview-panel {
-  display: grid;
-  grid-template-rows: 54px var(--mi);
-  border-right: var(--bd);
-}
-
-.era-plot-shell {
-  min-width: 0;
-  min-height: 0;
-  display: grid;
-  grid-template-rows: var(--mi) 34px;
-}
-
-.era-strata svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
-.era-current-column {
-  fill: rgba(111, 159, 148, .09);
-  stroke: rgba(111, 159, 148, .22);
-}
-
-.era-strata-baseline {
-  stroke: #d8e2dd;
-  stroke-width: 1;
-  stroke-dasharray: 2 5;
-}
-
-.era-stratum path {
-  fill-opacity: .18;
-  stroke-width: 1.4;
-  stroke-opacity: .68;
-}
-
-.era-strata-label {
-  fill: #52665e;
-  font-weight: 750;
-}
-
-.era-strata-mark {
-  stroke: #fff;
-  stroke-width: 2;
-}
-
-.era-strata-mark.is-selected {
-  stroke: #173c34;
-  stroke-width: 2.5;
-}
-
-.era-strata-count {
-  fill: #fff;
-  font-weight: 800;
-  pointer-events: none;
-}
-
-.era-unknown-rail line {
-  stroke: #aab5b0;
-  stroke-width: 1;
-  stroke-dasharray: 3 5;
-}
-
-.era-unknown-rail circle {
-  fill: #aab5b0;
-  stroke: #fff;
-  stroke-width: 1.5;
-}
-
-.era-axis-stop text {
-  fill: #708078;
-  font-weight: 700;
-}
-
-.era-axis-stop rect {
-  cursor: pointer;
-}
-
-.era-axis-stop rect:focus-visible {
-  outline: none;
-  stroke: var(--pulse-blue);
-  stroke-width: 2;
-}
-
-.era-unknown-boundary {
-  display: flex;
-  align-items: center;
-  padding: 0 14px;
-  border-top: var(--bd);
-  background: #f4f7f5;
-  color: var(--if);
-}
-
 .era-focus-panel {
   overflow: auto;
   padding: 24px 20px;
   border-right: var(--bd);
   background: rgba(248, 251, 248, 0.7);
-}
-
-.era-focus-index {
-  color: var(--md);
-  font-family: var(--fm);
-  font-weight: 760;
 }
 
 .era-focus-panel h2 {
@@ -1350,6 +1262,7 @@
   .mobile-layer-switch,
   .mobile-route-switch,
   .mobile-era-scrubber { display: flex; overflow-x: auto; border-bottom: var(--bd); background: #f8faf8; scrollbar-color: #8eb2a7 #edf3f0; scrollbar-gutter: stable; scrollbar-width: thin; }
+  .mobile-layer-static { min-height: 46px; border: 0; border-bottom: var(--bd); border-radius: 0; }
   .mobile-layer-switch button,
   .mobile-route-switch button,
   .mobile-era-scrubber button { min-width: 92px; min-height: 46px; padding: 0 12px; border-right: var(--bd); background: transparent; color: var(--is); cursor: pointer; }

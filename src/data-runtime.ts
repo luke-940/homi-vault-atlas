@@ -11,6 +11,10 @@ export const entityById = new Map<string, Entity>(
 export const hierarchyById = new Map(
   atlasData.structure.hierarchyNodes.map((node) => [node.id, node]),
 );
+export const structureNodeById = new Map(
+  atlasData.structure.nodes.map((node) => [node.id, node]),
+);
+export const inventoryData = atlasData.inventory;
 
 export function hierarchyFocusForDistrict(name: string) {
   return atlasData.structure.hierarchyNodes.find(
