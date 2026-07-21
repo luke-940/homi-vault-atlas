@@ -1,8 +1,8 @@
 {
   "schema": "atlas.publication.v1",
   "profile": "public",
-  "generatedAt": "2026-07-20T11:04:42.674Z",
-  "publicSnapshotDigest": "c97f082e8bbb7b36634d9e4da510a75f0e619f4a25dd3511408defcbef72a221",
+  "generatedAt": "2026-07-21T07:34:02.262Z",
+  "publicSnapshotDigest": "46a0ecdb646a58a1be12c58b76fec24d053c233d2b6f610e0335a642b9c3ceac",
   "allowedSurfaces": [
     "district_role_aggregate",
     "reference_boundary",
@@ -30,18 +30,18 @@
     "archive"
   ],
   "redactionCounts": {
-    "sourceEntities": 866,
+    "sourceEntities": 869,
     "publicEntities": 6,
     "namedSourceDocuments": 15,
-    "aggregateSourceDocuments": 611,
-    "aggregatedSourceDocuments": 626,
-    "representedSourceDocuments": 626,
-    "excludedEntities": 240,
-    "excludedSourceDocuments": 240,
+    "aggregateSourceDocuments": 613,
+    "aggregatedSourceDocuments": 628,
+    "representedSourceDocuments": 628,
+    "excludedEntities": 241,
+    "excludedSourceDocuments": 241,
     "archiveExcluded": 54,
     "scaffoldingExcluded": 24,
     "controlDocumentsExcluded": 70,
-    "rawDailyExcluded": 92,
+    "rawDailyExcluded": 93,
     "explicitPolicyExcluded": 0,
     "publicNameNotApproved": 0
   },

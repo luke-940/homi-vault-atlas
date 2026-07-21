@@ -11,10 +11,10 @@ import {
   X,
 } from "lucide-react";
 import { Fragment, useLayoutEffect, useRef, type KeyboardEvent } from "react";
-import { atlasData, entityById, hierarchyById, structureNodeById } from "../data-runtime";
-import { isStructuralHub, resolveStructureNodeContext } from "../structure-navigation";
+import { atlasData, entityById, graphNodeById } from "../data-runtime";
+import { isGraphHub, resolveGraphNodeContext } from "../graph-navigation";
 import { useAtlasState, type InspectorTab } from "../state";
-import type { AtlasStructureNodeV2, Entity, MatrixCell, Workspace } from "../types";
+import type { AtlasGraphNodeV1, Entity, MatrixCell, Workspace } from "../types";
 import { formatEraRange, lifecycleEvidenceSummary, lifecycleStateLabel } from "../views/time-model";
 import { claimModalInert, releaseModalInert, trayDialogKeyIntent } from "./tray-accessibility";
 
@@ -60,18 +60,17 @@ function getFocusable(container: HTMLElement | null) {
 
 function aggregateScopeLabelsFor(id: string) {
   const result: string[] = [];
-  let current = hierarchyById.get(id);
-  if (!current && entityById.has(id)) current = hierarchyById.get(id);
+  let current = graphNodeById.get(id);
   while (current) {
     result.unshift(current.label);
-    current = current.parentId ? hierarchyById.get(current.parentId) : undefined;
+    current = current.parentId ? graphNodeById.get(current.parentId) : undefined;
   }
   return result;
 }
 
 export function pairAggregateEvidenceRows(
   pair: MatrixCell | undefined,
-  nodes: readonly AtlasStructureNodeV2[] = atlasData.structure.nodes,
+  nodes: readonly AtlasGraphNodeV1[] = atlasData.graph.nodes,
 ) {
   if (!pair) return [];
   return [
@@ -83,7 +82,7 @@ export function pairAggregateEvidenceRows(
       id: district?.id ?? `district-missing:${side.label}`,
       label: side.label,
       meta: district
-        ? `${district.documentCount.toLocaleString("ko-KR")}개 표현 기록 · 나감 ${side.outgoing.toLocaleString("ko-KR")}회 · 들어옴 ${side.incoming.toLocaleString("ko-KR")}회`
+        ? `${district.representedDocuments.toLocaleString("ko-KR")}개 표현 기록 · 나감 ${side.outgoing.toLocaleString("ko-KR")}회 · 들어옴 ${side.incoming.toLocaleString("ko-KR")}회`
         : `구역 집계 누락 · 나감 ${side.outgoing.toLocaleString("ko-KR")}회 · 들어옴 ${side.incoming.toLocaleString("ko-KR")}회`,
     };
   });
@@ -201,8 +200,7 @@ export function InspectorTray() {
   }
 
   const entity = entityById.get(state.focusId);
-  const hierarchyNode = hierarchyById.get(state.focusId);
-  const structureNode = structureNodeById.get(state.focusId);
+  const graphNode = graphNodeById.get(state.focusId);
   const pair = atlasData.relation.matrix.find((candidate) => candidate.id === state.relationPairId);
   const route = atlasData.flow.routes.find((candidate) => candidate.id === state.routeId);
   const era = atlasData.temporal.eras.find((candidate) => candidate.id === state.eraId);
@@ -212,8 +210,7 @@ export function InspectorTray() {
   const isPublicProfile = atlasData.publication.profile === "public";
   const hasWorkspaceSelection = Boolean(activePair || activeRoute || activeEra);
   const selectionEntity = hasWorkspaceSelection ? undefined : entity;
-  const selectionHierarchyNode = hasWorkspaceSelection ? undefined : hierarchyNode;
-  const selectionStructureNode = hasWorkspaceSelection ? undefined : structureNode;
+  const selectionGraphNode = hasWorkspaceSelection ? undefined : graphNode;
   const neighbors = selectionEntity ? atlasData.relation.neighborhoods[selectionEntity.id] ?? [] : [];
   const scopeLabels = hasWorkspaceSelection ? [] : aggregateScopeLabelsFor(state.focusId);
   const directionalPairTitle = pair && state.relationLayer === "typed" && state.relationDirection
@@ -231,7 +228,7 @@ export function InspectorTray() {
         ? route?.label ?? "작업 흐름"
         : state.workspace === "time"
           ? `시대 장면 ${era?.id}`
-          : entity?.title ?? hierarchyNode?.label ?? structureNode?.label ?? "Homi Vault";
+          : entity?.title ?? graphNode?.label ?? "Homi Vault";
   const subtitle =
     state.workspace === "observe" && pair
       ? "선택한 구역 간 관계"
@@ -241,9 +238,9 @@ export function InspectorTray() {
           ? era?.title ?? ""
           : entity
             ? roleMeaning[entity.surfaceRole] ?? "Vault 안의 현재 선택"
-            : structureNode
-              ? `${structureNode.documentCount}개 기록 · 고유 inbound ${structureNode.uniqueInboundDocuments} · 링크 출현 ${structureNode.inboundLinkOccurrences}`
-              : `${hierarchyNode?.documentCount ?? 0}개 문서를 품은 가지`;
+            : graphNode
+              ? `${graphNode.representedDocuments}개 기록 · 고유 inbound ${graphNode.gravity} · 링크 출현 ${graphNode.occurrences}`
+              : "공개 지식 선택";
 
   const tabs: Array<{ id: InspectorTab; label: string; icon: typeof Compass }> = [
     { id: "summary", label: "요약", icon: Compass },
@@ -289,7 +286,7 @@ export function InspectorTray() {
         </button>
       </div>
 
-      {(selectionEntity || selectionHierarchyNode || selectionStructureNode) && (
+      {(selectionEntity || selectionGraphNode) && (
         <div className="inspector-actions">
           <button
             type="button"
@@ -301,7 +298,7 @@ export function InspectorTray() {
             <Scale size={16} /> {selectionEntity ? (state.compareIds.includes(state.focusId) ? "비교에서 빼기" : "비교에 추가") : "엔터티 비교 전용"}
           </button>
           {selectionEntity && (() => {
-            const districtNode = atlasData.structure.nodes.find((node) =>
+            const districtNode = atlasData.graph.nodes.find((node) =>
               node.kind === "district" && node.label === selectionEntity.district);
             const strongestPair = [...atlasData.relation.matrix]
               .filter((pair) => pair.source === selectionEntity.district || pair.target === selectionEntity.district)
@@ -310,17 +307,17 @@ export function InspectorTray() {
             <button type="button" onClick={() => dispatch({
               type: "journey",
               target: state.workspace === "observe"
-                ? { workspace: "explore", sceneId: "hubs", focusId: districtNode?.id ?? state.focusId, lens: "city" }
+                ? { workspace: "explore", sceneId: "graph", focusId: districtNode?.id ?? state.focusId, districtId: districtNode?.id ?? null }
                 : { workspace: "observe", sceneId: "global-relations", relationPairId: strongestPair?.id ?? null, focusId: selectionEntity.id },
             })}>
               {state.workspace === "observe" ? <Compass size={16} /> : <Link2 size={16} />} {state.workspace === "observe" ? "도시에서 보기" : "관계에서 보기"}
             </button>
             );
           })()}
-          {selectionStructureNode && selectionStructureNode.kind !== "district" && (() => {
-            const context = resolveStructureNodeContext(atlasData.structure.nodes, selectionStructureNode.id);
+          {selectionGraphNode && selectionGraphNode.kind !== "district" && (() => {
+            const context = resolveGraphNodeContext(atlasData.graph.nodes, selectionGraphNode.id);
             const hubId = context.hubId;
-            return hubId && isStructuralHub(structureNodeById.get(hubId)) ? (
+            return hubId && isGraphHub(graphNodeById.get(hubId)) ? (
             <button type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "observe", sceneId: "hub-relations", focusId: hubId } })}>
               <Link2 size={16} /> 허브 관계 보기
             </button>
@@ -362,7 +359,7 @@ export function InspectorTray() {
         tabIndex={0}
       >
         {state.inspectorTab === "summary" && (
-          <SummaryContent entity={selectionEntity} structureNode={selectionStructureNode} pair={activePair} route={activeRoute} era={activeEra} scopeLabels={scopeLabels} />
+          <SummaryContent entity={selectionEntity} graphNode={selectionGraphNode} pair={activePair} route={activeRoute} era={activeEra} scopeLabels={scopeLabels} />
         )}
         {state.inspectorTab === "relations" && (
           <RelationsContent workspace={state.workspace} entity={selectionEntity} pair={activePair} route={activeRoute} era={activeEra} neighbors={neighbors} />
@@ -402,16 +399,16 @@ function ComparisonLedger() {
   );
   const items = state.compareIds.map((id) => {
     const entity = entityById.get(id);
-    const node = hierarchyById.get(id);
+    const node = graphNodeById.get(id);
     return {
       id,
       label: entity?.displayLabel ?? node?.label ?? id,
-      authority: entity?.authority ?? `${node?.authorityL1L2 ?? 0}개 L1/L2`,
-      freshness: entity ? (currentnessLabels[entity.currentness] ?? entity.currentness) : "폴더 집계",
-      connections: entity ? (atlasData.relation.neighborhoods[entity.id]?.length ?? 0) : node?.childrenCount ?? 0,
+      authority: entity?.authority ?? node?.kind ?? "graph node",
+      freshness: entity ? (currentnessLabels[entity.currentness] ?? entity.currentness) : node?.freshness ?? "날짜 미기록",
+      connections: entity ? (atlasData.relation.neighborhoods[entity.id]?.length ?? 0) : node ? atlasData.graph.edges.filter((edge) => edge.source === node.id || edge.target === node.id).length : 0,
       size: entity
         ? comparisonEntitySize(entity, isPublicProfile)
-        : `${node?.documentCount ?? 0}문서`,
+        : `${node?.representedDocuments ?? 0}문서`,
       pulse: pulseTargets.has(id) ? "도달" : "미확인",
     };
   });
@@ -448,14 +445,14 @@ export function comparisonEntitySize(
 
 function SummaryContent({
   entity,
-  structureNode,
+  graphNode,
   pair,
   route,
   era,
   scopeLabels,
 }: {
   entity?: Entity;
-  structureNode?: AtlasStructureNodeV2;
+  graphNode?: AtlasGraphNodeV1;
   pair?: MatrixCell;
   route?: (typeof atlasData.flow.routes)[number];
   era?: (typeof atlasData.temporal.eras)[number];
@@ -501,15 +498,15 @@ function SummaryContent({
       </>
     );
   }
-  if (structureNode) {
+  if (graphNode) {
     return (
       <>
-        <section className="inspector-section"><h3>구조에서의 역할</h3><p>이 선택은 v7.4 구조 투영의 {structureNode.kind} 객체다. 문서 엔터티와 관계 수치에 중복 합산하지 않는다.</p></section>
+        <section className="inspector-section"><h3>그래프에서의 역할</h3><p>이 선택은 v7.5 방향 그래프의 {graphNode.kind} 객체다. 문서 엔터티와 관계 수치에 중복 합산하지 않는다.</p></section>
         <dl className="metric-ledger">
-          <div><dt>포함 기록</dt><dd>{structureNode.documentCount}</dd></div>
-          <div><dt>고유 inbound 문서</dt><dd>{structureNode.uniqueInboundDocuments}</dd></div>
-          <div><dt>링크 출현</dt><dd>{structureNode.inboundLinkOccurrences}</dd></div>
-          <div><dt>표현 방식</dt><dd>{structureNode.nameMode === "public_alias" ? "공개 안전 별칭" : structureNode.nameMode === "aggregate" ? "집계" : "승인 이름"}</dd></div>
+          <div><dt>포함 기록</dt><dd>{graphNode.representedDocuments}</dd></div>
+          <div><dt>고유 inbound 문서</dt><dd>{graphNode.gravity}</dd></div>
+          <div><dt>링크 출현</dt><dd>{graphNode.occurrences}</dd></div>
+          <div><dt>표현 방식</dt><dd>{graphNode.nameMode === "public_alias" ? "공개 안전 별칭" : graphNode.nameMode === "aggregate" ? "집계" : "승인 이름"}</dd></div>
         </dl>
       </>
     );

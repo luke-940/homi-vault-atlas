@@ -1,6 +1,6 @@
 {
   "name": "homi-vault-atlas",
-  "version": "7.4.0",
+  "version": "7.5.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.tests.json && tsc --noEmit -p tsconfig.scripts.json",
     "test": "npm run test:public",
     "test:public": "ATLAS_TEST_PROFILE=public-ci vitest run tests-public tests/v7-4-qa-contract.test.ts tests/visual-golden-contract.test.ts --maxWorkers=1",
-    "test:owner": "ATLAS_TEST_PROFILE=owner-local vitest run tests-public/v74-data-boundary.test.ts --maxWorkers=1",
+    "test:owner": "ATLAS_TEST_PROFILE=owner-local vitest run tests-public/v75-data-boundary.test.ts --maxWorkers=1",
     "build": "node scripts/build-public-site.mjs && node scripts/audit-public-bundle.mjs",
     "audit": "node scripts/audit-public-bundle.mjs",
     "release:package": "node scripts/package-release-artifact.mjs",
@@ -29,7 +29,6 @@
   "dependencies": {
     "d3-array": "^3.2.4",
     "d3-chord": "^3.0.1",
-    "d3-hierarchy": "^3.1.2",
     "d3-interpolate": "^3.0.1",
     "d3-scale": "^4.0.2",
     "d3-shape": "^3.2.0",
@@ -47,6 +46,8 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
+    "d3-contour": "^4.0.2",
+    "d3-force": "^3.0.0",
     "es-module-lexer": "^2.3.1",
     "esbuild": "^0.28.1",
     "typescript": "^7.0.2",

@@ -1,9 +1,9 @@
 import { CircleDot, CornerDownLeft, FileText, Folder, Network, Search, X } from "lucide-react";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
-import { atlasData, entityById, structureNodeById } from "../data-runtime";
+import { atlasData, entityById, graphNodeById } from "../data-runtime";
 import { useAtlasState, type Action } from "../state";
-import { isStructuralHub, isStructureSourceLevel } from "../structure-navigation";
-import type { AtlasStructureNodeV2, Workspace } from "../types";
+import { isGraphHub, isGraphSource } from "../graph-navigation";
+import type { AtlasGraphNodeV1, Workspace } from "../types";
 import { claimModalInert, releaseModalInert } from "./tray-accessibility";
 
 export type SearchResult = {
@@ -41,18 +41,13 @@ export function destinationFor(result: SearchResult, workspace: Workspace, layer
       reason: "운영 역할은 지식 문서와 분리된 Agency 책임 지도에서 엽니다.",
     };
   }
-  const structureNode = structureNodeById.get(result.id);
-  if (structureNode) {
-    const sceneId = structureNode.kind === "district"
-      ? "hubs"
-      : structureNode.kind === "source_document"
-        ? "sources"
-        : "sources";
+  const graphNode = graphNodeById.get(result.id);
+  if (graphNode) {
     return {
       workspace: "explore",
-      sceneId,
-      label: structureNode.kind === "district" ? "허브 탐색 열기" : "구조에서 위치 보기",
-      reason: "v7.4 구조 투영의 구역 → 허브 → 원천 위치로 이동합니다.",
+      sceneId: "graph",
+      label: graphNode.kind === "district" ? "구역 그래프 열기" : "그래프에서 위치 보기",
+      reason: "v7.5 방향 그래프에서 실제 위치와 관계를 엽니다.",
     };
   }
   if (result.kind !== "document") {
@@ -117,7 +112,7 @@ export function createSearchSelectionPlan(
     ...(destination.actorId
       ? [{ type: "actor", actorId: destination.actorId } as const]
       : destination.workspace === "explore"
-        ? [{ type: "journey", target: { workspace: "explore", sceneId: destination.sceneId ?? "districts", focusId: result.id } } as const]
+        ? [{ type: "journey", target: { workspace: "explore", sceneId: destination.sceneId ?? "graph", focusId: result.id } } as const]
         : [{ type: "workspace", workspace: destination.workspace } as const]),
     ...(destination.workspace === "explore" ? [{ type: "lens", lens: "city" } as const] : []),
     ...(destination.relationPairId ? [{ type: "relationPair", relationPairId: destination.relationPairId } as const] : []),
@@ -172,17 +167,17 @@ export function wrappedSearchDialogFocusTarget<T>(
   return null;
 }
 
-export function structureResultKind(node: AtlasStructureNodeV2): SearchResult["kind"] {
+export function graphResultKind(node: AtlasGraphNodeV1): SearchResult["kind"] {
   if (node.kind === "district") return "district";
-  if (isStructureSourceLevel(node)) return "source";
+  if (isGraphSource(node)) return "source";
   return "hub";
 }
 
-function structureResultMeta(node: (typeof atlasData.structure.nodes)[number]) {
-  const district = structureNodeById.get(node.districtId)?.label ?? "지식 구역";
-  if (node.kind === "district") return `${node.documentCount}개 기록 · 구역`;
-  if (isStructureSourceLevel(node)) return `${district} · ${node.nameMode === "public_alias" ? "안전 별칭" : node.nameMode === "aggregate" ? "공개 안전 집계" : "승인 이름"}`;
-  return `${district} · 고유 inbound ${node.uniqueInboundDocuments} · 출현 ${node.inboundLinkOccurrences}`;
+function structureResultMeta(node: (typeof atlasData.graph.nodes)[number]) {
+  const district = graphNodeById.get(node.districtId)?.label ?? "지식 구역";
+  if (node.kind === "district") return `${node.representedDocuments}개 기록 · 구역`;
+  if (isGraphSource(node)) return `${district} · ${node.nameMode === "public_alias" ? "안전 별칭" : node.nameMode === "aggregate" ? "공개 안전 집계" : "승인 이름"}`;
+  return `${district} · 고유 inbound ${node.gravity} · 출현 ${node.occurrences}`;
 }
 
 function dedupeKnowledge(results: SearchResult[]) {
@@ -265,26 +260,26 @@ export function SearchPalette() {
         };
       });
     if (!normalized) {
-      const knowledgeResults = [...atlasData.structure.nodes]
-        .filter((node) => node.kind === "district" || isStructuralHub(node))
-        .sort((a, b) => (a.kind === "district" ? -1 : 0) - (b.kind === "district" ? -1 : 0) || b.uniqueInboundDocuments - a.uniqueInboundDocuments || a.label.localeCompare(b.label, "ko"))
+      const knowledgeResults = [...atlasData.graph.nodes]
+        .filter((node) => node.kind === "district" || isGraphHub(node))
+        .sort((a, b) => (a.kind === "district" ? -1 : 0) - (b.kind === "district" ? -1 : 0) || b.gravity - a.gravity || a.label.localeCompare(b.label, "ko"))
         .slice(0, 12)
-        .map<SearchResult>((node) => ({ id: node.id, label: node.label, meta: structureResultMeta(node), kind: structureResultKind(node), section: "knowledge" }));
+        .map<SearchResult>((node) => ({ id: node.id, label: node.label, meta: structureResultMeta(node), kind: graphResultKind(node), section: "knowledge" }));
       return [...roleResults, ...knowledgeResults].slice(0, 16);
     }
     const tokens = normalized.split(/\s+/).filter(Boolean);
-    const structureResults = atlasData.structure.nodes
+    const structureResults = atlasData.graph.nodes
       .map((node) => {
-        const district = structureNodeById.get(node.districtId)?.label ?? "";
+        const district = graphNodeById.get(node.districtId)?.label ?? "";
         const label = node.label.toLocaleLowerCase("ko-KR");
         const haystack = `${label} ${district.toLocaleLowerCase("ko-KR")} ${node.kind}`;
         const score = tokens.reduce((total, token) => total + (label.startsWith(token) ? 8 : label.includes(token) ? 5 : haystack.includes(token) ? 2 : 0), 0);
         return { node, score };
       })
       .filter((item) => item.score >= tokens.length)
-      .sort((a, b) => b.score - a.score || b.node.uniqueInboundDocuments - a.node.uniqueInboundDocuments || a.node.label.localeCompare(b.node.label, "ko"))
+      .sort((a, b) => b.score - a.score || b.node.gravity - a.node.gravity || a.node.label.localeCompare(b.node.label, "ko"))
       .slice(0, 18)
-      .map<SearchResult>(({ node }) => ({ id: node.id, label: node.label, meta: structureResultMeta(node), kind: structureResultKind(node), section: "knowledge" }));
+      .map<SearchResult>(({ node }) => ({ id: node.id, label: node.label, meta: structureResultMeta(node), kind: graphResultKind(node), section: "knowledge" }));
     const knowledgeResults = dedupeKnowledge(structureResults);
     return [...roleResults, ...knowledgeResults].slice(0, 18);
   }, [query]);

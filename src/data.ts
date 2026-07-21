@@ -1,15 +1,14 @@
-import type { AtlasData } from "./types";
 import { agencyTruthFailures } from "./agency/presentation";
+import { collectAtlasShapeFailures } from "./data-contract";
 import { resolveWorkspaceScene } from "./components/workspaceSceneRegistry";
-import { isStructuralHub, isStructureSourceLevel } from "./structure-navigation";
+import type { AtlasData } from "./types";
 
 export const DEFAULT_DAILY_ROUTE_ID = "daily";
-const RELATION_LAYERS = ["wikilink", "typed", "route"] as const;
 const REQUIRED_RUNTIME_PACKS = [
   "agency",
   "bootstrap",
   "inventory",
-  "structure",
+  "graph",
   "relation",
   "flow",
   "temporal",
@@ -19,114 +18,40 @@ const REQUIRED_RUNTIME_PACKS = [
   "publication",
 ] as const;
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
-}
-
 function isJsonObject(value: unknown): value is Record<string, unknown> {
-  if (!isRecord(value)) return false;
-  return Object.getPrototypeOf(value) === Object.prototype;
-}
-
-function ownEnumerableDataDescriptor(record: Record<string, unknown>, key: string) {
-  const descriptor = Object.getOwnPropertyDescriptor(record, key);
-  return descriptor?.enumerable && "value" in descriptor ? descriptor : null;
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return false;
+  if (Object.getPrototypeOf(value) !== Object.prototype) return false;
+  return Reflect.ownKeys(value).every((key) => {
+    if (typeof key !== "string") return false;
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    return descriptor?.enumerable === true && "value" in descriptor;
+  });
 }
 
 const WIKILINK_WIRE_NEIGHBOR_KEYS = new Set(["id", "direction", "weight", "evidence", "w"]);
 
 function isExactWikilinkWireNeighbor(value: unknown): value is Record<string, unknown> {
   if (!isJsonObject(value)) return false;
-  const ownKeys = Reflect.ownKeys(value);
-  if (
-    ownKeys.length !== WIKILINK_WIRE_NEIGHBOR_KEYS.size
-    || ownKeys.some((key) => typeof key !== "string" || !WIKILINK_WIRE_NEIGHBOR_KEYS.has(key))
-  ) {
-    return false;
-  }
-  for (const key of WIKILINK_WIRE_NEIGHBOR_KEYS) {
-    if (!ownEnumerableDataDescriptor(value, key)) return false;
-  }
-  return ownEnumerableDataDescriptor(value, "w")?.value === 1;
-}
-
-function jsonObjectOwnFieldFailure(record: Record<string, unknown>, location: string): string | null {
-  for (const key of Reflect.ownKeys(record)) {
-    if (typeof key !== "string") return `${location}.symbol`;
-    if (!ownEnumerableDataDescriptor(record, key)) return `${location}.${key}`;
-  }
-  return null;
-}
-
-function relationBrowserContainerFailure(candidate: unknown): string | null {
-  if (!isJsonObject(candidate)) return "candidate";
-  const candidateFieldFailure = jsonObjectOwnFieldFailure(candidate, "candidate");
-  if (candidateFieldFailure) return candidateFieldFailure;
-  const relation = ownEnumerableDataDescriptor(candidate, "relation")?.value;
-  if (!isJsonObject(relation)) return "candidate.relation";
-  const relationFieldFailure = jsonObjectOwnFieldFailure(relation, "candidate.relation");
-  if (relationFieldFailure) return relationFieldFailure;
-  const neighborhoods = ownEnumerableDataDescriptor(relation, "neighborhoods")?.value;
-  if (!isJsonObject(neighborhoods)) return "candidate.relation.neighborhoods";
-  const neighborhoodFieldFailure = jsonObjectOwnFieldFailure(
-    neighborhoods,
-    "candidate.relation.neighborhoods",
-  );
-  if (neighborhoodFieldFailure) return neighborhoodFieldFailure;
-  return null;
-}
-
-function relationBrowserJsonShapeFailure(candidate: unknown): string | null {
-  const containerFailure = relationBrowserContainerFailure(candidate);
-  if (containerFailure) return containerFailure;
-  const typedCandidate = candidate as Record<string, unknown>;
-  const relation = ownEnumerableDataDescriptor(typedCandidate, "relation")?.value as Record<string, unknown>;
-  const neighborhoods = ownEnumerableDataDescriptor(relation, "neighborhoods")?.value as Record<string, unknown>;
-  for (const [sourceId, neighbors] of Object.entries(neighborhoods)) {
-    if (!Array.isArray(neighbors)) return `candidate.relation.neighborhoods.${sourceId}`;
-    for (const [index, neighbor] of neighbors.entries()) {
-      const location = `candidate.relation.neighborhoods.${sourceId}.${index}`;
-      if (!isJsonObject(neighbor)) return location;
-      for (const key of Reflect.ownKeys(neighbor)) {
-        if (typeof key !== "string") return `${location}.symbol`;
-        if (!ownEnumerableDataDescriptor(neighbor, key)) return `${location}.${key}`;
-      }
-    }
-  }
-  return null;
+  const keys = Object.keys(value);
+  return keys.length === WIKILINK_WIRE_NEIGHBOR_KEYS.size
+    && keys.every((key) => WIKILINK_WIRE_NEIGHBOR_KEYS.has(key))
+    && value.w === 1;
 }
 
 export function restoreRelationBrowserWireDefaults(candidate: unknown): unknown {
-  if (relationBrowserJsonShapeFailure(candidate)) return candidate;
-  const typedCandidate = candidate as Record<string, unknown>;
-  const relation = ownEnumerableDataDescriptor(typedCandidate, "relation")?.value as Record<string, unknown>;
-  const neighborhoods = ownEnumerableDataDescriptor(relation, "neighborhoods")?.value as Record<string, unknown>;
-
+  if (!isJsonObject(candidate) || !isJsonObject(candidate.relation)
+    || !isJsonObject(candidate.relation.neighborhoods)) return candidate;
   let changed = false;
-  const restoredNeighborhoods = Object.fromEntries(
-    Object.entries(neighborhoods).map(([sourceId, neighbors]) => {
-      if (!Array.isArray(neighbors)) return [sourceId, neighbors];
-      const restoredNeighbors = neighbors.map((neighbor) => {
-        if (isExactWikilinkWireNeighbor(neighbor)) {
-          changed = true;
-          const restored = { ...neighbor };
-          delete restored.w;
-          return { ...restored, layer: "wikilink", relation: "wikilink" };
-        }
-        return neighbor;
-      });
-      return [sourceId, restoredNeighbors];
-    }),
-  );
-
-  if (!changed) return candidate;
-  return {
-    ...typedCandidate,
-    relation: {
-      ...relation,
-      neighborhoods: restoredNeighborhoods,
-    },
-  };
+  const neighborhoods = Object.fromEntries(Object.entries(candidate.relation.neighborhoods).map(([id, rows]) => {
+    if (!Array.isArray(rows)) return [id, rows];
+    return [id, rows.map((row) => {
+      if (!isExactWikilinkWireNeighbor(row)) return row;
+      changed = true;
+      const { w: _wire, ...neighbor } = row;
+      return { ...neighbor, layer: "wikilink", relation: "wikilink" };
+    })];
+  }));
+  return changed ? { ...candidate, relation: { ...candidate.relation, neighborhoods } } : candidate;
 }
 
 export function showFatalDataError(message: string) {
@@ -152,373 +77,109 @@ export function showFatalDataError(message: string) {
 }
 
 export function collectAtlasReferenceFailures(candidate: AtlasData): string[] {
-  const entityIdList = candidate.entity.entities.map((entity) => entity.id);
-  const hierarchyIdList = candidate.structure.hierarchyNodes.map((node) => node.id);
-  const entityIds = new Set(entityIdList);
-  const hierarchyIds = new Set(hierarchyIdList);
-  const hierarchyCandidateById = new Map(
-    candidate.structure.hierarchyNodes.map((node) => [node.id, node]),
-  );
-  const eraIds = new Set(candidate.temporal.eras.map((era) => era.id));
+  const failures: string[] = [];
+  const entityIds = new Set(candidate.entity.entities.map((entity) => entity.id));
+  const nodeIds = new Set(candidate.graph.nodes.map((node) => node.id));
+  const clusterIds = new Set(candidate.graph.clusters.map((cluster) => cluster.id));
+  const coordinateIds = new Set(candidate.graph.layout.coordinates.map((coordinate) => coordinate.id));
+  const edgeIds = new Set(candidate.graph.edges.map((edge) => edge.id));
   const routeIds = new Set(candidate.flow.routes.map((route) => route.id));
-  const districtNames = candidate.structure.districts.map((district) => district.name);
-  const districtNameSet = new Set(districtNames);
-  const districtOrderSet = new Set(candidate.relation.districtOrder);
-  const hierarchyDocumentCount = candidate.structure.hierarchyNodes.filter((node) => node.kind === "document").length;
-  const districtDocumentCount = candidate.structure.districts.reduce(
-    (total, district) => total + district.documentCount,
-    0,
-  );
-  const activeEntityCount = candidate.entity.entities.length;
-  const districtDocumentExpected = candidate.publication.profile === "public"
-    ? candidate.publication.redactionCounts.aggregatedSourceDocuments ?? activeEntityCount
-    : candidate.publication.profile === "owner"
-      ? districtDocumentCount
-      : activeEntityCount;
-  const memoryEngineFiles = candidate.health.memoryEngine.files;
-  const structureNodeIds = new Set(candidate.structure.nodes.map((node) => node.id));
-  const inventoryClassifiedTotal = candidate.inventory.namedCount
-    + candidate.inventory.aggregateCount
-    + candidate.inventory.excludedCount;
-  const failures = [
-    ...agencyTruthFailures(candidate.agency).map((failure) => `agency:${failure}`),
-    ...entityIdList
-      .filter((id, index) => entityIdList.indexOf(id) !== index)
-      .map((id) => `entity-duplicate:${id}`),
-    ...hierarchyIdList
-      .filter((id, index) => hierarchyIdList.indexOf(id) !== index)
-      .map((id) => `hierarchy-duplicate:${id}`),
-    ...candidate.structure.hierarchyNodes
-      .filter((node) => node.parentId !== null && !hierarchyIds.has(node.parentId))
-      .map((node) => `hierarchy-parent:${node.id}:${node.parentId}`),
-    ...candidate.relation.typedRelations
-      .flatMap((relation) => [relation.source, relation.target])
-      .filter((id) => !entityIds.has(id))
-      .map((id) => `relation:${id}`),
-    ...candidate.flow.routes
-      .flatMap((route) => [
-        ...route.members,
-        ...route.sourceRefs,
-        ...route.stations.map((station) => station.entityId).filter(Boolean) as string[],
-      ])
-      .filter((id) => !entityIds.has(id) && !structureNodeIds.has(id))
-      .map((id) => `flow:${id}`),
-    ...Object.entries(candidate.relation.neighborhoods)
-      .filter(([sourceId]) => !entityIds.has(sourceId))
-      .map(([sourceId]) => `neighborhood-source:${sourceId}`),
-    ...Object.entries(candidate.relation.neighborhoods)
-      .flatMap(([sourceId, neighbors]) => neighbors
-        .filter((neighbor) => !entityIds.has(neighbor.id))
-        .map((neighbor) => `neighborhood-target:${sourceId}:${neighbor.id}`)),
-    ...candidate.relation.districtOrder
-      .filter((name, index, order) => order.indexOf(name) !== index)
-      .map((name) => `district-order-duplicate:${name}`),
-    ...candidate.relation.districtOrder
-      .filter((name) => !districtNameSet.has(name))
-      .map((name) => `district-order-unknown:${name}`),
-    ...districtNames
-      .filter((name) => !districtOrderSet.has(name))
-      .map((name) => `district-order-missing:${name}`),
-    ...candidate.relation.matrix.flatMap((cell) => [
-      ...(!districtNameSet.has(cell.source) || !districtOrderSet.has(cell.source)
-        ? [`matrix-source:${cell.id}:${cell.source}`]
-        : []),
-      ...(!districtNameSet.has(cell.target) || !districtOrderSet.has(cell.target)
-        ? [`matrix-target:${cell.id}:${cell.target}`]
-        : []),
-    ]),
-    ...candidate.temporal.eras.flatMap((era) => [
-      ...era.evidenceRefs
-        .filter((reference) => !entityIds.has(reference))
-        .map((reference) => `era-evidence:${era.id}:${reference}`),
-      ...era.deltas
-        .filter((delta) => !entityIds.has(delta.evidenceRef))
-        .map((delta) => `era-delta-evidence:${era.id}:${delta.evidenceRef}`),
-    ]),
-    ...candidate.insight.items.flatMap((insight) => [
-      ...(!resolveWorkspaceScene(insight.targetScene.workspace, insight.targetScene.scene)
-        ? [`insight-scene:${insight.id}:${insight.targetScene.workspace}:${insight.targetScene.scene}`]
-        : []),
-      ...insight.evidenceRefs
-        .filter((reference) => !entityIds.has(reference))
-        .map((reference) => `insight-evidence:${insight.id}:${reference}`),
-      ...(insight.targetScene.focusId
-        && !entityIds.has(insight.targetScene.focusId)
-        && !hierarchyIds.has(insight.targetScene.focusId)
-        && !structureNodeIds.has(insight.targetScene.focusId)
-        ? [`insight-focus:${insight.id}:${insight.targetScene.focusId}`]
-        : []),
-      ...(insight.targetScene.relationPairId && !candidate.relation.matrix.some((pair) => pair.id === insight.targetScene.relationPairId)
-        ? [`insight-relation:${insight.id}:${insight.targetScene.relationPairId}`]
-        : []),
-      ...(insight.targetScene.routeId && !routeIds.has(insight.targetScene.routeId)
-        ? [`insight-route:${insight.id}:${insight.targetScene.routeId}`]
-        : []),
-      ...(insight.targetScene.eraId && !eraIds.has(insight.targetScene.eraId)
-        ? [`insight-era:${insight.id}:${insight.targetScene.eraId}`]
-        : []),
-    ]),
-    ...candidate.structure.nodes
-      .filter((node, index, nodes) => nodes.findIndex((item) => item.id === node.id) !== index)
-      .map((node) => `structure-v2-duplicate:${node.id}`),
-    ...candidate.structure.nodes
-      .filter((node) => node.parentId !== null && !structureNodeIds.has(node.parentId))
-      .map((node) => `structure-v2-parent:${node.id}:${node.parentId}`),
-    ...candidate.structure.associations
-      .filter((association) => !structureNodeIds.has(association.source) || !structureNodeIds.has(association.target))
-      .map((association) => `structure-v2-association:${association.id}`),
-  ];
-  if (candidate.inventory.profile !== candidate.structure.profile) {
-    failures.push(`profile-mismatch:${candidate.inventory.profile}:${candidate.structure.profile}`);
-  }
-  if (candidate.inventory.unclassifiedCount !== 0) failures.push("inventory-unclassified");
-  if (inventoryClassifiedTotal !== candidate.inventory.physicalMarkdownCount) {
-    failures.push(`inventory-reconciliation:${inventoryClassifiedTotal}:${candidate.inventory.physicalMarkdownCount}`);
-  }
-  if (candidate.inventory.reconciliation.classifiedTotal !== inventoryClassifiedTotal
-    || candidate.inventory.reconciliation.pass !== true) {
-    failures.push("inventory-reconciliation-evidence");
-  }
-  const coveragePhysical = candidate.inventory.coverage.reduce((total, row) => total + row.physical, 0);
-  const coverageNamed = candidate.inventory.coverage.reduce((total, row) => total + row.named, 0);
-  const coverageAggregate = candidate.inventory.coverage.reduce((total, row) => total + row.aggregate, 0);
-  const coverageExcluded = candidate.inventory.coverage.reduce((total, row) => total + row.excluded, 0);
-  if (coveragePhysical !== candidate.inventory.physicalMarkdownCount
-    || coverageNamed !== candidate.inventory.namedCount
-    || coverageAggregate !== candidate.inventory.aggregateCount
-    || coverageExcluded !== candidate.inventory.excludedCount) {
-    failures.push("inventory-coverage-reconciliation");
-  }
-  if (candidate.structure.nodes.some((node) => node.id.startsWith("actor:"))) {
-    failures.push("structure-v2-actor-contamination");
-  }
-  const structureNodeById = new Map(candidate.structure.nodes.map((node) => [node.id, node]));
-  const primaryMembershipCounts = new Map<string, number>();
-  for (const association of candidate.structure.associations.filter((edge) => edge.kind === "member_of")) {
-    primaryMembershipCounts.set(association.source, (primaryMembershipCounts.get(association.source) ?? 0) + 1);
-  }
-  if (candidate.inventory.profile === "atlas-owner") {
-    const ownerDocumentNodes = candidate.structure.nodes.filter((node) =>
-      node.kind !== "district" && node.nameMode === "owner_name");
-    const ownerNonDistrictNodes = candidate.structure.nodes.filter((node) => node.kind !== "district");
-    const represented = ownerDocumentNodes.reduce((total, node) => total + node.documentCount, 0);
-    if (ownerDocumentNodes.length !== candidate.inventory.namedCount || represented !== candidate.inventory.namedCount) {
-      failures.push(`owner-primary-count:${ownerDocumentNodes.length}:${represented}:${candidate.inventory.namedCount}`);
-    }
-    if (ownerNonDistrictNodes.some((node) => node.parentId === null || primaryMembershipCounts.get(node.id) !== 1)) {
-      failures.push("owner-primary-parent-not-exactly-one");
-    }
-  }
-  if (candidate.inventory.profile === "atlas-public") {
-    const publicRepresented = candidate.structure.nodes
-      .filter((node) => node.kind !== "district" && node.nameMode !== "public_alias")
-      .reduce((total, node) => total + node.documentCount, 0);
-    const expectedRepresented = candidate.inventory.namedCount + candidate.inventory.aggregateCount;
-    if (publicRepresented !== expectedRepresented) {
-      failures.push(`public-primary-count:${publicRepresented}:${expectedRepresented}`);
-    }
-    if (candidate.structure.nodes.some((node) => node.nameMode === "aggregate"
-      && (node.parentId === null || structureNodeById.get(node.parentId)?.kind === "district" || node.documentCount <= 0))) {
-      failures.push("public-aggregate-child-invalid");
-    }
-  }
-  for (const node of candidate.structure.nodes) {
-    if (!isStructureSourceLevel(node)) continue;
-    const visited = new Set([node.id]);
-    let parent = node.parentId === null ? undefined : structureNodeById.get(node.parentId);
-    let hasHubAncestor = false;
-    while (parent && !visited.has(parent.id)) {
-      if (isStructuralHub(parent)) {
-        hasHubAncestor = true;
-        break;
-      }
-      visited.add(parent.id);
-      parent = parent.parentId === null ? undefined : structureNodeById.get(parent.parentId);
-    }
-    if (!hasHubAncestor) failures.push(`structure-v2-source-without-hub:${node.id}`);
-  }
-  for (const node of candidate.structure.nodes) {
-    const visited = new Set<string>();
-    let cursor: string | null = node.id;
-    while (cursor !== null) {
-      if (visited.has(cursor)) {
-        failures.push(`structure-v2-cycle:${node.id}:${cursor}`);
-        break;
-      }
-      visited.add(cursor);
-      cursor = structureNodeById.get(cursor)?.parentId ?? null;
-    }
-  }
-  for (const node of candidate.structure.hierarchyNodes) {
-    const visited = new Set<string>();
-    let cursor: string | null = node.id;
-    while (cursor !== null) {
-      if (visited.has(cursor)) {
-        failures.push(`hierarchy-cycle:${node.id}:${cursor}`);
-        break;
-      }
-      visited.add(cursor);
-      cursor = hierarchyCandidateById.get(cursor)?.parentId ?? null;
-    }
-  }
-  const matrixLayerTotals = candidate.relation.matrix.reduce(
-    (totals, cell) => ({
-      wikilink: totals.wikilink + cell.wikilink,
-      typed: totals.typed + cell.typed,
-      route: totals.route + cell.route,
-    }),
-    { wikilink: 0, typed: 0, route: 0 },
-  );
-  for (const cell of candidate.relation.matrix) {
-    if (cell.total !== cell.wikilink + cell.typed + cell.route) {
-      failures.push(`matrix-total:${cell.id}`);
-    }
-    if (cell.typed !== cell.typedForward + cell.typedReverse) {
-      failures.push(`matrix-typed-direction:${cell.id}`);
-    }
-    if (cell.wikilink !== cell.wikilinkForward + cell.wikilinkReverse) {
-      failures.push(`matrix-wikilink-direction:${cell.id}`);
-    }
-  }
-  for (const layer of RELATION_LAYERS) {
-    const coverage = candidate.relation.coverage.layers[layer];
-    if (coverage.total !== coverage.interDistrict + coverage.intraDistrict) {
-      failures.push(`coverage-total:${layer}`);
-    }
-    if (coverage.displayed !== coverage.interDistrict || matrixLayerTotals[layer] !== coverage.displayed) {
-      failures.push(`coverage-displayed:${layer}`);
-    }
-    if (!coverage.reconciled) failures.push(`coverage-flag:${layer}`);
-  }
-  const unresolvedLinkCount = Object.values(candidate.relation.coverage.unresolvedLinks)
-    .reduce((total, count) => total + count, 0);
-  if (candidate.relation.coverage.unresolvedLinkTotal !== unresolvedLinkCount) {
-    failures.push("coverage-unresolved-total");
-  }
-  if (candidate.relation.coverage.ambiguousLinks !== (candidate.relation.coverage.unresolvedLinks.ambiguous ?? 0)) {
-    failures.push("coverage-ambiguous-total");
-  }
-  if (candidate.relation.coverage.resolvedLinkWeight !== candidate.relation.coverage.layers.wikilink.total) {
-    failures.push("coverage-wikilink-weight");
-  }
-  if (
-    candidate.relation.coverage.typedRelations !== candidate.relation.typedRelations.length
-    || candidate.relation.coverage.layers.typed.total !== candidate.relation.typedRelations.length
-  ) {
-    failures.push("coverage-typed-count");
-  }
-  if (candidate.relation.coverage.layers.route.total !== candidate.relation.routeCoMembership.length) {
-    failures.push("coverage-route-count");
-  }
-  const availableLayerSet = new Set(candidate.relation.availableLayers);
-  const redactedLayerSet = new Set(candidate.relation.redactedLayers);
-  if (availableLayerSet.size !== candidate.relation.availableLayers.length) failures.push("available-layer-duplicate");
-  if (redactedLayerSet.size !== candidate.relation.redactedLayers.length) failures.push("redacted-layer-duplicate");
-  for (const layer of RELATION_LAYERS) {
-    if (availableLayerSet.has(layer) === redactedLayerSet.has(layer)) failures.push(`relation-layer-boundary:${layer}`);
-  }
+  const eraIds = new Set(candidate.temporal.eras.map((era) => era.id));
 
-  const reconciledCounts: Array<[string, number]> = [
-    ["snapshot-active", candidate.bootstrap.snapshot.activeMarkdownCount],
-    ["snapshot-memory", candidate.bootstrap.snapshot.memoryFiles],
-    ["archive-active", candidate.structure.archiveScope.active],
-    ["hierarchy-documents", hierarchyDocumentCount],
-  ];
-  const healthReconciliationCounts: Array<[string, number | boolean]> = [
-    ["health-entities", candidate.health.countReconciliation.entities],
-    ["health-memory", candidate.health.countReconciliation.memoryFiles],
-    ["health-hierarchy", candidate.health.countReconciliation.hierarchyDocuments],
-  ];
-  for (const [label, count] of healthReconciliationCounts) {
-    if (typeof count === "number") reconciledCounts.push([label, count]);
-    else failures.push(`count-${label}:not-numeric`);
+  failures.push(...agencyTruthFailures(candidate.agency).map((failure) => `agency:${failure}`));
+  if (nodeIds.size !== candidate.graph.nodes.length) failures.push("graph-node-duplicate");
+  if (edgeIds.size !== candidate.graph.edges.length) failures.push("graph-edge-duplicate");
+  if (clusterIds.size !== candidate.graph.clusters.length) failures.push("graph-cluster-duplicate");
+  if (coordinateIds.size !== nodeIds.size || [...nodeIds].some((id) => !coordinateIds.has(id))) {
+    failures.push("graph-coordinate-coverage");
   }
-  if (typeof memoryEngineFiles === "number") {
-    reconciledCounts.push(["memory-engine-files", memoryEngineFiles]);
-  } else {
-    failures.push("count-memory-engine-files:not-numeric");
+  if (candidate.graph.nodes.some((node) => !clusterIds.has(node.clusterId)
+    || node.districtId !== node.clusterId
+    || (node.parentId !== null && !nodeIds.has(node.parentId)))) failures.push("graph-node-reference");
+  if (candidate.graph.nodes.some((node) => node.id.startsWith("actor:"))) failures.push("graph-actor-contamination");
+  if (candidate.graph.edges.some((edge) => !nodeIds.has(edge.source) || !nodeIds.has(edge.target)
+    || edge.kind !== "references" || edge.direction !== "forward" || edge.occurrenceCount <= 0)) {
+    failures.push("graph-edge-truth");
   }
-  for (const [label, count] of reconciledCounts) {
-    if (count !== activeEntityCount) failures.push(`count-${label}:${count}:${activeEntityCount}`);
+  if (candidate.graph.layout.coordinates.some((coordinate) => coordinate.x < 0 || coordinate.y < 0 || coordinate.z < 0
+    || coordinate.depthLevel < 0 || coordinate.depthLevel > 4
+    || coordinate.x > candidate.graph.layout.bounds.width || coordinate.y > candidate.graph.layout.bounds.height
+    || coordinate.z > candidate.graph.layout.bounds.depth)) {
+    failures.push("graph-coordinate-bounds");
   }
-  if (districtDocumentCount !== districtDocumentExpected) {
-    failures.push(`count-district-documents:${districtDocumentCount}:${districtDocumentExpected}`);
+  if (candidate.graph.layout.defaultNodeIds.length > 60
+    || candidate.graph.layout.defaultEdgeIds.length > 48
+    || candidate.graph.layout.defaultNodeIds.some((id) => !nodeIds.has(id))
+    || candidate.graph.layout.defaultEdgeIds.some((id) => !edgeIds.has(id))) failures.push("graph-default-budget");
+  if (candidate.graph.manifest.nodeCount !== candidate.graph.nodes.length
+    || candidate.graph.manifest.edgeCount !== candidate.graph.edges.length
+    || candidate.graph.manifest.clusterCount !== candidate.graph.clusters.length) failures.push("graph-manifest-count");
+  if (candidate.inventory.profile !== candidate.graph.profile) failures.push("graph-profile-mismatch");
+
+  const inventoryTotal = candidate.inventory.namedCount + candidate.inventory.aggregateCount + candidate.inventory.excludedCount;
+  if (candidate.inventory.unclassifiedCount !== 0
+    || inventoryTotal !== candidate.inventory.physicalMarkdownCount
+    || candidate.inventory.reconciliation.classifiedTotal !== inventoryTotal
+    || candidate.inventory.reconciliation.pass !== true) failures.push("inventory-reconciliation");
+  const coverage = candidate.inventory.coverage.reduce((total, row) => ({
+    physical: total.physical + row.physical,
+    named: total.named + row.named,
+    aggregate: total.aggregate + row.aggregate,
+    excluded: total.excluded + row.excluded,
+  }), { physical: 0, named: 0, aggregate: 0, excluded: 0 });
+  if (coverage.physical !== candidate.inventory.physicalMarkdownCount
+    || coverage.named !== candidate.inventory.namedCount
+    || coverage.aggregate !== candidate.inventory.aggregateCount
+    || coverage.excluded !== candidate.inventory.excludedCount) failures.push("inventory-coverage");
+
+  for (const cell of candidate.relation.matrix) {
+    if (cell.total !== cell.wikilink + cell.typed + cell.route) failures.push(`matrix-total:${cell.id}`);
+    if (cell.wikilink !== cell.wikilinkForward + cell.wikilinkReverse) failures.push(`matrix-direction:${cell.id}`);
   }
-  if (candidate.bootstrap.snapshot.archiveMarkdownCount !== candidate.structure.archiveScope.archive) {
-    failures.push(
-      `count-archive:${candidate.bootstrap.snapshot.archiveMarkdownCount}:${candidate.structure.archiveScope.archive}`,
-    );
+  for (const route of candidate.flow.routes) {
+    if (route.members.some((id) => !entityIds.has(id) && !nodeIds.has(id))) failures.push(`flow-member:${route.id}`);
   }
-  if (candidate.publication.profile === "public" && candidate.activity) {
-    failures.push("owner-activity:public-profile");
+  for (const insight of candidate.insight.items) {
+    if (!resolveWorkspaceScene(insight.targetScene.workspace, insight.targetScene.scene)) failures.push(`insight-scene:${insight.id}`);
+    if (insight.targetScene.focusId && !entityIds.has(insight.targetScene.focusId) && !nodeIds.has(insight.targetScene.focusId)) {
+      failures.push(`insight-focus:${insight.id}`);
+    }
+    if (insight.targetScene.routeId && !routeIds.has(insight.targetScene.routeId)) failures.push(`insight-route:${insight.id}`);
+    if (insight.targetScene.eraId && !eraIds.has(insight.targetScene.eraId)) failures.push(`insight-era:${insight.id}`);
   }
-  if (candidate.publication.profile === "owner" && !candidate.activity) {
-    failures.push("owner-activity:missing");
-  }
-  if (candidate.health.ambiguousAutoSelections !== 0) {
-    failures.push(`ambiguous-auto-selection:${candidate.health.ambiguousAutoSelections}`);
-  }
-  if (candidate.health.unresolvedTypedRelations !== 0) {
-    failures.push(`unresolved-typed-relation:${candidate.health.unresolvedTypedRelations}`);
-  }
-  if (candidate.health.countReconciliation.pass !== true) failures.push("count-reconciliation-flag:false");
-  const currentnessCount = Object.values(candidate.health.currentnessCounts)
-    .reduce((total, count) => total + count, 0);
-  const authorityCount = Object.values(candidate.health.authorityCounts)
-    .reduce((total, count) => total + count, 0);
-  if (currentnessCount !== activeEntityCount) failures.push(`count-currentness:${currentnessCount}:${activeEntityCount}`);
-  if (authorityCount !== activeEntityCount) failures.push(`count-authority:${authorityCount}:${activeEntityCount}`);
-  if (!hierarchyIds.has(candidate.structure.rootId)) failures.push(`root:${candidate.structure.rootId}`);
-  if (hierarchyCandidateById.get(candidate.structure.rootId)?.parentId !== null) {
-    failures.push(`root-parent:${candidate.structure.rootId}`);
-  }
-  if (!entityIds.has(candidate.bootstrap.defaultFocus)) failures.push(`default-focus:${candidate.bootstrap.defaultFocus}`);
-  if (candidate.temporal.currentEra === null) {
-    if (candidate.temporal.eras.length > 0) failures.push("current-era:null-with-recorded-eras");
-  } else if (!eraIds.has(candidate.temporal.currentEra)) {
-    failures.push(`current-era:${candidate.temporal.currentEra}`);
+  if (candidate.temporal.currentEra === null && candidate.temporal.eras.length > 0) failures.push("temporal-current-null");
+  if (candidate.temporal.currentEra !== null && !eraIds.has(candidate.temporal.currentEra)) failures.push("temporal-current-unknown");
+  if (!entityIds.has(candidate.bootstrap.defaultFocus)) failures.push("bootstrap-default-focus");
+  if (candidate.publication.profile === "public" && candidate.activity) failures.push("owner-activity:public-profile");
+  if (candidate.publication.profile === "owner" && !candidate.activity) failures.push("owner-activity:missing");
+  if (candidate.publication.profile === "public") {
+    if (candidate.graph.nodes.some((node) => node.nameMode === "owner_name" || node.kind === "project_stage")) {
+      failures.push("public-owner-node");
+    }
   }
   return [...new Set(failures)];
 }
 
 export function validateAtlasPacks(candidate: unknown): AtlasData {
-  const jsonShapeFailure = relationBrowserJsonShapeFailure(candidate);
-  if (jsonShapeFailure) {
-    const message = `Atlas v7 데이터 계약 위반: ${jsonShapeFailure} must be a plain JSON object with own enumerable data fields.`;
-    showFatalDataError(message);
-    throw new Error(message);
-  }
-
   const restored = restoreRelationBrowserWireDefaults(candidate);
-  if (!isJsonObject(restored)) {
-    const message = "Atlas v7 데이터 계약 위반: atlas must be an aggregate JSON object.";
+  const shapeFailures = collectAtlasShapeFailures(restored);
+  if (shapeFailures.length) {
+    const message = `Atlas v7 데이터 계약 위반: ${shapeFailures.slice(0, 8).map((issue) => `${issue.path} ${issue.message}`).join(" | ")}`;
     showFatalDataError(message);
     throw new Error(message);
   }
-  const missingPack = REQUIRED_RUNTIME_PACKS.find((name) => !isJsonObject(restored[name]));
-  if (missingPack) {
-    const message = `Atlas v7 데이터 계약 위반: atlas.${missingPack} is missing.`;
+  const validated = restored as AtlasData;
+  const required = REQUIRED_RUNTIME_PACKS.find((name) => !isJsonObject((restored as Record<string, unknown>)[name]));
+  if (required) throw new Error(`Atlas v7 데이터 계약 위반: atlas.${required} is missing.`);
+  const expected = new Set<string>(REQUIRED_RUNTIME_PACKS);
+  if (validated.publication.profile === "owner") expected.add("activity");
+  const unknown = Object.keys(restored as Record<string, unknown>).find((name) => !expected.has(name));
+  if (unknown) throw new Error(`Atlas v7 데이터 계약 위반: atlas.${unknown} is not allowed.`);
+  const referenceFailures = collectAtlasReferenceFailures(validated);
+  if (referenceFailures.length) {
+    const message = `Atlas v7 데이터 참조 무결성 실패: ${referenceFailures.slice(0, 12).join(", ")}`;
     showFatalDataError(message);
     throw new Error(message);
   }
-  const expectedPackNames = new Set<string>(REQUIRED_RUNTIME_PACKS);
-  if ((restored.publication as Record<string, unknown>).profile === "owner") {
-    expectedPackNames.add("activity");
-  }
-  const unknownPack = Object.keys(restored).find((name) => !expectedPackNames.has(name));
-  if (unknownPack) {
-    const message = `Atlas v7 데이터 계약 위반: atlas.${unknownPack} is not allowed.`;
-    showFatalDataError(message);
-    throw new Error(message);
-  }
-  if ((restored.agency as Record<string, unknown>).schema !== "atlas.agency.v1"
-    || (restored.bootstrap as Record<string, unknown>).schema !== "atlas.snapshot.v7"
-    || (restored.inventory as Record<string, unknown>).schema !== "atlas.inventory.v1"
-    || (restored.structure as Record<string, unknown>).schema !== "atlas.structure.v2"
-    || (restored.publication as Record<string, unknown>).schema !== "atlas.publication.v1") {
-    const message = "Atlas v7 데이터 계약 위반: public pack schema envelope mismatch.";
-    showFatalDataError(message);
-    throw new Error(message);
-  }
-  return restored as unknown as AtlasData;
+  return validated;
 }

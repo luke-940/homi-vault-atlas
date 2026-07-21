@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createPublicPackArtifacts } from "./lib/public-data-wire.mjs";
 import { computePublicSnapshotDigest } from "./lib/public-snapshot-digest.mjs";
+import { buildAtlasGraphV1, verifyAtlasGraphV1 } from "./lib/atlas-graph-v1.mjs";
 import {
   aggregateLinkMetrics,
   assertOwnerPublicSeparation,
@@ -39,7 +40,7 @@ const packNames = [
   "agency",
   "bootstrap",
   "inventory",
-  "structure",
+  "graph",
   "relation",
   "flow",
   "temporal",
@@ -911,23 +912,37 @@ async function ownerActivity() {
   };
 }
 
+const legacyPackNames = packNames.filter((name) => name !== "inventory" && name !== "graph");
 const legacyPacks = Object.fromEntries(await Promise.all(
-  packNames.filter((name) => name !== "inventory")
+  legacyPackNames
     .map(async (name) => [name, JSON.parse(await readFile(path.join(publicSafeDataRoot, `${name}.json`), "utf8"))]),
 ));
 const publicEntityPack = refreshPublicEntityPack(legacyPacks.entity);
-const publicLegacyStructure = refreshPublicLegacyStructure(legacyPacks.structure, publicEntityPack);
+// atlas.structure.v2 is now a build-boundary intermediate generated from the
+// fresh canonical capture. No legacy structure pack is needed or published.
+const publicLegacyStructure = {
+  rootId: "tax:pub:vault",
+  districts: [],
+  hierarchyNodes: [],
+};
 const publicStructurePack = publicStructure(publicLegacyStructure);
 assertSourceHubAncestry(publicStructurePack);
 const ownerStructurePack = ownerStructure(publicLegacyStructure);
 assertSourceHubAncestry(ownerStructurePack);
+const publicGraphPack = buildAtlasGraphV1(publicStructurePack, { profile: "atlas-public" });
+const ownerGraphPack = buildAtlasGraphV1(ownerStructurePack, { profile: "atlas-owner" });
+const publicGraphFailures = verifyAtlasGraphV1(publicGraphPack);
+const ownerGraphFailures = verifyAtlasGraphV1(ownerGraphPack);
+if (publicGraphFailures.length || ownerGraphFailures.length) {
+  throw new Error(`Graph projection blocked: ${[...publicGraphFailures, ...ownerGraphFailures].join(", ")}.`);
+}
 const publicFlowPack = verifiedFlowForStructure(publicStructurePack, "atlas-public");
 const publicRelationPack = buildFreshPublicRelation(legacyPacks.relation, ownerStructurePack);
 const publicPacks = {
   ...legacyPacks,
   bootstrap: {
     ...legacyPacks.bootstrap,
-    version: "7.4.0-public",
+    version: "7.5.0-public",
     generatedAt,
     proofBoundary: {
       ...legacyPacks.bootstrap.proofBoundary,
@@ -936,7 +951,7 @@ const publicPacks = {
     },
   },
   inventory: publicReconciliation.inventory,
-  structure: publicStructurePack,
+  graph: publicGraphPack,
   entity: publicEntityPack,
   flow: publicFlowPack,
   relation: publicRelationPack,
@@ -1092,15 +1107,11 @@ function assertPublicProjectCountBoundary() {
   if (publicPacks.inventory.publicTitlePolicy.projectCountDisclosure !== "combined_non_attributable") {
     throw new Error("Public project count boundary blocked: disclosure policy is not combined_non_attributable.");
   }
-  const structureLabels = [
-    ...publicPacks.structure.districts.map((row) => row.name),
-    ...publicPacks.structure.hierarchyNodes.map((row) => row.label),
-    ...publicPacks.structure.nodes.map((row) => row.label),
-  ];
+  const structureLabels = publicPacks.graph.nodes.map((row) => row.label);
   if (structureLabels.some((label) => [...projectNames].some((name) => label === name || label.startsWith(`${name} `)))) {
     throw new Error("Public project count boundary blocked: project-specific structure label found.");
   }
-  if (publicPacks.structure.nodes.some((node) => node.kind === "project_stage")) {
+  if (publicPacks.graph.nodes.some((node) => node.kind === "project_stage")) {
     throw new Error("Public project count boundary blocked: project-stage count surface found.");
   }
 }
@@ -1117,7 +1128,7 @@ const ownerProjection = {
   profile: "atlas-owner",
   generatedAt,
   inventory: ownerReconciliation.inventory,
-  structure: ownerStructurePack,
+  graph: ownerGraphPack,
   paperDimension: ownerPaperDimension,
   activity: ownerActivityPack,
   sourceIndex: ownerReconciliation.classified
@@ -1130,10 +1141,10 @@ const ownerProjection = {
       disposition: record.classification.disposition,
     })),
 };
-const publicV2DistrictLabelById = new Map(publicStructurePack.nodes
+const publicV2DistrictLabelById = new Map(publicGraphPack.nodes
   .filter((node) => node.kind === "district")
   .map((node) => [node.id, node.label]));
-const ownerV2DistrictIdByPublicLabel = new Map(ownerStructurePack.nodes
+const ownerV2DistrictIdByPublicLabel = new Map(ownerGraphPack.nodes
   .filter((node) => node.kind === "district")
   .map((node) => [allowlist.districtLabels[node.label] ?? node.label, node.id]));
 const retargetOwnerInsightFocus = (item) => {
@@ -1147,14 +1158,14 @@ const ownerRuntimePacks = {
   ...publicPacks,
   bootstrap: {
     ...publicPacks.bootstrap,
-    version: "7.4.0-owner",
+    version: "7.5.0-owner",
     proofBoundary: {
       ...publicPacks.bootstrap.proofBoundary,
       inventory: "Owner 전용 전체 구조와 공개 제외 사유를 포함하는 로컬 투영",
     },
   },
   inventory: ownerProjection.inventory,
-  structure: ownerStructurePack,
+  graph: ownerGraphPack,
   flow: ownerFlowPack,
   insight: {
     ...publicPacks.insight,
@@ -1180,7 +1191,7 @@ const ownerRuntimePacks = {
     publicSnapshotDigest: null,
     allowedSurfaces: [
       "owner_inventory",
-      "owner_structure",
+      "owner_graph",
       "owner_activity_aggregate",
       "owner_verified_hub_path",
     ],
@@ -1188,7 +1199,7 @@ const ownerRuntimePacks = {
       sourceEntities: records.length,
       representedSourceDocuments: ownerReconciliation.inventory.namedCount,
       excludedSourceDocuments: ownerReconciliation.inventory.excludedCount,
-      structureNodes: ownerStructurePack.nodes.length,
+      graphNodes: ownerGraphPack.nodes.length,
       activityAggregates: ownerActivityPack.aggregates.length,
     },
     blockers: [],
@@ -1211,7 +1222,7 @@ await writeFile(path.join(ownerRoot, "paper-dimension-receipt.json"), `${JSON.st
 }, null, 2)}\n`, "utf8");
 for (const [name, value] of Object.entries({
   inventory: ownerProjection.inventory,
-  structure: ownerProjection.structure,
+  graph: ownerProjection.graph,
   activity: ownerProjection.activity,
 })) {
   await writeFile(path.join(ownerRoot, `${name}.json`), `${JSON.stringify(value, null, 2)}\n`, "utf8");
@@ -1254,8 +1265,10 @@ const receipt = {
     root: ownerRoot,
     runtimeDataRoot: ownerDataRoot,
     inventory: ownerProjection.inventory,
-    structureNodes: ownerProjection.structure.nodes.length,
-    referenceAssociations: ownerProjection.structure.associations.filter((edge) => edge.kind === "references").length,
+    graphNodes: ownerProjection.graph.nodes.length,
+    referenceEdges: ownerProjection.graph.edges.length,
+    semanticDigest: ownerProjection.graph.manifest.semanticDigest,
+    layoutDigest: ownerProjection.graph.manifest.layoutDigest,
     paperDimension: ownerPaperDimension,
     verifiedFlowRoutes: ownerRuntimePacks.flow.routes.length,
     activityAggregates: ownerProjection.activity.aggregates.length,
@@ -1264,8 +1277,10 @@ const receipt = {
     root: publicRoot,
     promotedToPublicSafe: promotePublicSafe,
     inventory: publicPacks.inventory,
-    structureNodes: publicPacks.structure.nodes.length,
-    referenceAssociations: publicPacks.structure.associations.filter((edge) => edge.kind === "references").length,
+    graphNodes: publicPacks.graph.nodes.length,
+    referenceEdges: publicPacks.graph.edges.length,
+    semanticDigest: publicPacks.graph.manifest.semanticDigest,
+    layoutDigest: publicPacks.graph.manifest.layoutDigest,
     verifiedFlowRoutes: publicPacks.flow.routes.length,
     publicKnowledgeEntities: publicPacks.entity.entities.length,
     activityPackPresent: false,

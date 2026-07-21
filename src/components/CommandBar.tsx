@@ -14,10 +14,11 @@ import {
 } from "lucide-react";
 import type { KeyboardEvent } from "react";
 import { useAtlasState } from "../state";
+import { atlasData } from "../data-runtime";
 import type { Workspace } from "../types";
 import homiMark from "../assets/brand/homi-mark-amber.svg";
 
-export const workspaceItems: Array<{
+const allWorkspaceItems: Array<{
   id: Exclude<Workspace, "home">;
   label: string;
   icon: typeof Compass;
@@ -28,6 +29,8 @@ export const workspaceItems: Array<{
   { id: "time", label: "Time", icon: GitBranch },
   { id: "agency", label: "Agency", icon: Network },
 ];
+
+export const workspaceItems = allWorkspaceItems.filter((item) => item.id !== "time" || atlasData.temporal.eras.length > 0);
 
 const rovingWorkspaceIds: Workspace[] = ["home", ...workspaceItems.map((item) => item.id)];
 

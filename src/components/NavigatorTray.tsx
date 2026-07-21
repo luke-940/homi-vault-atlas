@@ -6,9 +6,9 @@ import { trayDialogKeyIntent } from "./tray-accessibility";
 import { workspaceSceneRegistry } from "./workspaceSceneRegistry";
 
 export function navigatorDistricts() {
-  return atlasData.structure.nodes
+  return atlasData.graph.nodes
     .filter((node) => node.kind === "district")
-    .sort((left, right) => right.documentCount - left.documentCount || left.label.localeCompare(right.label, "ko"));
+    .sort((left, right) => right.representedDocuments - left.representedDocuments || left.label.localeCompare(right.label, "ko"));
 }
 
 export function navigatorHomeScenes() {
@@ -20,7 +20,7 @@ export function navigatorHomeTarget(sceneId: string) {
 }
 
 export function navigatorDistrictTarget(districtId: string) {
-  return { workspace: "explore" as const, sceneId: "hubs", focusId: districtId };
+  return { workspace: "explore" as const, sceneId: "graph", focusId: districtId, districtId };
 }
 
 function getFocusable(container: HTMLElement | null) {
@@ -100,7 +100,7 @@ export function NavigatorTray() {
           <span className="eyebrow">NAVIGATOR</span>
           <h2 id="navigator-tray-title">{({
             home: "Home insights",
-            explore: "Explore City",
+            explore: "Explore graph",
             observe: "Observe relations",
             flow: "Flow routes",
             time: "Time evidence",
@@ -119,7 +119,7 @@ export function NavigatorTray() {
             { id: "flow", label: "Flow", icon: Route },
             { id: "time", label: "Time", icon: Clock3 },
             { id: "agency", label: "Agency", icon: UsersRound },
-          ].map((item) => {
+          ].filter((item) => item.id !== "time" || atlasData.temporal.eras.length > 0).map((item) => {
             const Icon = item.icon;
             return (
               <button
@@ -177,7 +177,7 @@ export function NavigatorTray() {
                   }}
                 >
                   <FolderTree size={16} aria-hidden="true" />
-                  <span><strong>{district.label}</strong><small>{district.documentCount}개 표현 기록</small></span>
+                  <span><strong>{district.label}</strong><small>{district.representedDocuments}개 표현 기록</small></span>
                   <ChevronRight size={15} aria-hidden="true" />
                 </button>
               ))}

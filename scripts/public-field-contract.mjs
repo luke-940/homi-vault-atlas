@@ -41,13 +41,20 @@ const exactRules = new Map([
   ["relation.coverage.layers.wikilink", fields("unit total interDistrict intraDistrict displayed reconciled boundary")],
   ["relation.coverage.layers.typed", fields("unit total interDistrict intraDistrict displayed reconciled boundary")],
   ["relation.coverage.layers.route", fields("unit total interDistrict intraDistrict displayed reconciled boundary")],
-  ["structure", fields("schema profile generatedAt districts hierarchyNodes rootId archiveScope nodes associations measurement")],
-  ["structure.districts[]", fields("id name documentCount wordCount typedRelations currentDocuments authorityL1L2 topEntities")],
-  ["structure.hierarchyNodes[]", fields("id path label parentId depth kind authority currentness surfaceRole value childrenCount documentCount authorityL1L2")],
-  ["structure.archiveScope", fields("active archive defaultState")],
-  ["structure.nodes[]", fields("id kind label parentId districtId documentCount uniqueInboundDocuments inboundLinkOccurrences lastMeaningfulDate nameMode")],
-  ["structure.associations[]", fields("id source target kind weight")],
-  ["structure.measurement", fields("gravityMetric occurrenceMetric freshnessSource")],
+  ["graph", fields("schema profile generatedAt nodes edges clusters layout manifest")],
+  ["graph.nodes[]", fields("id kind label parentId districtId clusterId representedDocuments gravity occurrences freshness nameMode")],
+  ["graph.edges[]", fields("id source target kind direction occurrenceCount defaultVisible")],
+  ["graph.clusters[]", fields("id districtId label nodeCount representedDocumentCount representativeNodeCount summary contour")],
+  ["graph.clusters[].contour", fields("type coordinates")],
+  ["graph.layout", fields("algorithm seed ticks axes bounds undatedRail coordinates defaultNodeIds defaultEdgeIds labelBudget")],
+  ["graph.layout.axes", fields("x y z")],
+  ["graph.layout.axes.x", fields("field kind direction")],
+  ["graph.layout.axes.y", fields("field kind direction scale")],
+  ["graph.layout.axes.z", fields("field kind direction")],
+  ["graph.layout.bounds", fields("x y z width height depth")],
+  ["graph.layout.undatedRail", fields("y label")],
+  ["graph.layout.coordinates[]", fields("id x y z depthLevel radius dated clusterIndex")],
+  ["graph.manifest", fields("nodeCount edgeCount clusterCount semanticDigest layoutDigest projectionDigest")],
   ["temporal", fields("currentEra eras")],
   ["temporal.eras[]", fields("id title range thesis evidenceRefs evidenceClass deltas unknown proofBoundary")],
   ["temporal.eras[].deltas[]", fields("state label evidenceRef evidenceAnchor evidenceClass evidenceStatus")],
@@ -99,4 +106,4 @@ export function auditPublicFieldContract(packs) {
 }
 
 export const publicEntityFields = exactRules.get("entity.entities[]");
-export const publicHierarchyFields = exactRules.get("structure.hierarchyNodes[]");
+export const publicGraphNodeFields = exactRules.get("graph.nodes[]");

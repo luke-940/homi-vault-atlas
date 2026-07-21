@@ -96,7 +96,7 @@ export function currentAgencyScene(sceneId: string): AgencyScene {
 
 export function publicDocumentCount(data: AtlasData) {
   return data.publication.redactionCounts.aggregatedSourceDocuments
-    ?? data.structure.districts.reduce((sum, district) => sum + district.documentCount, 0);
+    ?? data.inventory.namedCount + data.inventory.aggregateCount;
 }
 
 export function strongestKnowledgeRelation(data: AtlasData): MatrixCell | null {

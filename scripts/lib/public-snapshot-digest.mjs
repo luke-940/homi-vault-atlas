@@ -9,7 +9,7 @@ export const publicSnapshotSemanticPackNames = Object.freeze([
   "inventory",
   "insight",
   "relation",
-  "structure",
+  "graph",
   "temporal",
 ]);
 

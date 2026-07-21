@@ -6,7 +6,7 @@ import { scaleBand, scaleSequential } from "d3-scale";
 import { arc as d3Arc } from "d3-shape";
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
-import { atlasData, entityById, structureNodeById } from "../data-runtime";
+import { atlasData, entityById, graphNodeById } from "../data-runtime";
 import { useElementSize } from "../hooks/useElementSize";
 import {
   dominantRelationDirection,
@@ -393,16 +393,16 @@ export function ObserveView() {
 function HubRelations() {
   const { state, dispatch } = useAtlasState();
   const hubKinds = new Set(["moc_hub", "paper_gateway", "project", "signal_domain", "strategy_insight", "strategy_request"]);
-  const fallbackNode = atlasData.structure.nodes.find((node) => hubKinds.has(node.kind));
-  const selectedNode = structureNodeById.get(state.focusId) ?? fallbackNode;
+  const fallbackNode = atlasData.graph.nodes.find((node) => hubKinds.has(node.kind));
+  const selectedNode = graphNodeById.get(state.focusId) ?? fallbackNode;
   const entity = selectedNode ? undefined : entityById.get(state.focusId);
   const structuralNeighbors = selectedNode
-    ? atlasData.structure.associations
-      .filter((edge) => edge.kind !== "member_of" && (edge.source === selectedNode.id || edge.target === selectedNode.id))
+    ? atlasData.graph.edges
+      .filter((edge) => edge.source === selectedNode.id || edge.target === selectedNode.id)
       .map((edge) => {
         const outgoing = edge.source === selectedNode.id;
-        const target = structureNodeById.get(outgoing ? edge.target : edge.source);
-        return target ? { id: target.id, label: target.label, direction: outgoing ? "outgoing" : "incoming", weight: edge.weight } : null;
+        const target = graphNodeById.get(outgoing ? edge.target : edge.source);
+        return target ? { id: target.id, label: target.label, direction: outgoing ? "outgoing" : "incoming", weight: edge.occurrenceCount } : null;
       })
       .filter((neighbor): neighbor is NonNullable<typeof neighbor> => Boolean(neighbor))
     : [];
@@ -417,12 +417,15 @@ function HubRelations() {
     .slice(0, 14);
   const max = Math.max(1, ...neighbors.map((neighbor) => neighbor.weight));
   const label = selectedNode?.label ?? entity?.displayLabel ?? "선택된 허브 없음";
-  const district = selectedNode ? structureNodeById.get(selectedNode.districtId)?.label : entity?.district;
+  const district = selectedNode ? graphNodeById.get(selectedNode.districtId)?.label : entity?.district;
   return (
     <section className="hub-relations-surface" id="observe-relation-panel" aria-labelledby="observe-title">
       <header>
         <div><span className="eyebrow" lang="en">Hub Relations</span><h2>{label}</h2></div>
-        <p>{selectedNode ? `${district ?? "지식 구역"} · 공개 구조 association 기준 ego 관계` : entity ? `${entity.district} · ${layerLabel(state.relationLayer)} 기준 ego 관계` : "허브를 선택하면 실제 이웃 관계를 표시합니다."}</p>
+        <div style={{ display: "grid", justifyItems: "end", gap: 7 }}>
+          <p>{selectedNode ? `${district ?? "지식 구역"} · 실제 방향 wikilink 기준 ego 관계` : entity ? `${entity.district} · ${layerLabel(state.relationLayer)} 기준 ego 관계` : "허브를 선택하면 실제 이웃 관계를 표시합니다."}</p>
+          {selectedNode && <div className="view-switch"><button type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "explore", sceneId: "graph", focusId: selectedNode.id } })}>Explore에서 위치 보기 <ArrowRight size={14} aria-hidden="true" /></button></div>}
+        </div>
       </header>
       {(selectedNode || entity) && neighbors.length ? (
         <div className="hub-relations-grid">
@@ -433,7 +436,7 @@ function HubRelations() {
           </div>
           <ol>
             {neighbors.map((neighbor) => {
-              const target = structureNodeById.get(neighbor.id) ?? entityById.get(neighbor.id);
+              const target = graphNodeById.get(neighbor.id) ?? entityById.get(neighbor.id);
               return (
                 <li key={`${neighbor.id}:${neighbor.direction}`}>
                   <button type="button" disabled={!target} onClick={() => target && dispatch({ type: "focus", focusId: target.id })}>
@@ -546,7 +549,7 @@ function RelationMatrix() {
         : [cell[state.relationLayer]],
     ),
   );
-  const color = scaleSequential(interpolateRgbBasis(["#edf4f1", relationColors[state.relationLayer]])).domain([0, max]);
+  const color = scaleSequential(interpolateRgbBasis(["#17151e", relationColors[state.relationLayer]])).domain([0, max]);
   return (
     <>
       <MatrixReadingGuide
@@ -631,16 +634,16 @@ function RelationMatrix() {
                   width={x.bandwidth()}
                   height={y.bandwidth()}
                   rx={2}
-                  fill={source === target ? "#eef3f0" : value ? color(value) : "#f4f7f5"}
-                  fillOpacity={source === target ? 0.46 : value ? 0.92 : 0.5}
-                  stroke={selected ? "#173c34" : focused ? "#7ea99d" : "#e3ebe7"}
+                  fill={source === target ? "#121119" : value ? color(value) : "#0d0c12"}
+                  fillOpacity={source === target ? 0.7 : value ? 0.88 : 0.78}
+                  stroke={selected ? "#ffc069" : focused ? "#625d69" : "#27242f"}
                   strokeWidth={selected ? 2.5 : 1}
                   data-hit-width={x.bandwidth()}
                   data-hit-height={y.bandwidth()}
                   aria-hidden="true"
                 />
                 {value > 0 && x.bandwidth() > 28 && (
-                  <text x={(x(target) ?? 0) + x.bandwidth() / 2} y={(y(source) ?? 0) + y.bandwidth() / 2 + 4} textAnchor="middle" className="matrix-value" style={{ fill: highContrast ? "#fff" : "#173c34" }}>{value}</text>
+                  <text x={(x(target) ?? 0) + x.bandwidth() / 2} y={(y(source) ?? 0) + y.bandwidth() / 2 + 4} textAnchor="middle" className="matrix-value" style={{ fill: highContrast ? "#08070d" : "#f3edde" }}>{value}</text>
                 )}
               </g>
             );
@@ -711,7 +714,7 @@ function GlobalChord() {
                 className={selected ? "relation-ribbon is-selected" : "relation-ribbon"}
                 fill={colorForDistrict(source)}
                 fillOpacity={dimmed ? 0.08 : selected ? 0.82 : 0.2}
-                stroke={selected ? relationColors[state.relationLayer] : "#fff"}
+                stroke={selected ? "#ffc069" : "#08070d"}
                 strokeWidth={selected ? 2.4 : 0.8}
                 aria-hidden="true"
                 onClick={() => !mobileSibling && cell && dispatch({ type: "relationPair", relationPairId: cell.id, direction: isDirectedRelationLayer(state.relationLayer) ? direction : null })}
@@ -728,14 +731,14 @@ function GlobalChord() {
             const y = -Math.cos(angle) * labelRadius;
             return (
               <g key={district}>
-                <path d={arc(group as any) ?? undefined} fill={colorForDistrict(district)} stroke="#fff" strokeWidth={1.5} />
+                <path d={arc(group as any) ?? undefined} fill={colorForDistrict(district)} stroke="#08070d" strokeWidth={1.5} />
                 {group.endAngle - group.startAngle > 0.08 && (
                   <text x={x} y={y} textAnchor={x > 5 ? "start" : x < -5 ? "end" : "middle"} dominantBaseline="middle" className="chord-label">{shortDistrictLabel(district)}</text>
                 )}
               </g>
             );
           })}
-          <circle r={inner * 0.34} fill="#f8fbf9" stroke="#dce7e1" />
+          <circle r={inner * 0.34} fill="#100f17" stroke="#2d2a34" />
           <text textAnchor="middle" y={-4} className="chord-center-title">{layerLabel(state.relationLayer)}</text>
           <text textAnchor="middle" y={15} className="chord-center-sub">구역 간 → 선택 쌍</text>
         </g>
@@ -857,8 +860,8 @@ function MobileObserve() {
             <path d="M48 36 C88 10 132 62 172 36" fill="none" stroke={relationColors[state.relationLayer]} strokeWidth="4" strokeOpacity=".62" />
             {previewPresentation && <circle cx="65" cy="27" r="3.5" fill={relationColors.typed} />}
             {previewPresentation && <line x1="155" y1="27" x2="155" y2="45" stroke={relationColors.typed} strokeWidth="4" strokeLinecap="round" />}
-            <circle cx="46" cy="36" r="18" fill="#f8fbf9" stroke={colorForDistrict(previewPresentation?.source ?? previewPair.source)} strokeWidth="5" />
-            <circle cx="174" cy="36" r="18" fill="#f8fbf9" stroke={colorForDistrict(previewPresentation?.target ?? previewPair.target)} strokeWidth="5" />
+            <circle cx="46" cy="36" r="18" fill="#100f17" stroke={colorForDistrict(previewPresentation?.source ?? previewPair.source)} strokeWidth="5" />
+            <circle cx="174" cy="36" r="18" fill="#100f17" stroke={colorForDistrict(previewPresentation?.target ?? previewPair.target)} strokeWidth="5" />
             <circle cx="46" cy="36" r="4" fill={colorForDistrict(previewPresentation?.source ?? previewPair.source)} />
             <circle cx="174" cy="36" r="4" fill={colorForDistrict(previewPresentation?.target ?? previewPair.target)} />
           </svg>

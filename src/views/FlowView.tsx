@@ -1,14 +1,14 @@
 import { ArrowRight, CircleCheck, ShieldCheck } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
-import { atlasData, entityById, structureNodeById } from "../data-runtime";
+import { atlasData, entityById, graphNodeById } from "../data-runtime";
 import { useElementSize } from "../hooks/useElementSize";
 import { useAtlasState } from "../state";
 import type { RouteStation, RouteStationKind } from "../types";
 
 const publicProfile = atlasData.publication.profile === "public";
 
-const routeColors = ["#338f80", "#517db3", "#8a6cc2", "#89a94f", "#c88652", "#cf6767"];
+const routeColors = ["#4fd5b9", "#6f91f4", "#ae82e3", "#a8d05f", "#f0a04b", "#f36f87"];
 
 function verifiedRoutes() {
   return atlasData.flow.routes.filter((route) => (
@@ -34,15 +34,15 @@ function StationGlyph({ kind, active, focused, color }: { kind: RouteStationKind
     const half = active ? 9 : 7;
     return (
       <>
-        <rect x={-half} y={-half} width={half * 2} height={half * 2} rx="2" transform="rotate(45)" fill="#fffdf6" stroke={active ? color : "#9fb3aa"} strokeWidth={focused ? 4 : active ? 3 : 2} />
+        <rect x={-half} y={-half} width={half * 2} height={half * 2} rx="2" transform="rotate(45)" fill="#100f17" stroke={active ? color : "#625d69"} strokeWidth={focused ? 4 : active ? 3 : 2} />
         <circle r="2.8" fill={color} />
       </>
     );
   }
   return (
     <>
-      <circle r={radius} fill={kind === "external" ? "#fff8e8" : "#f8fbf9"} stroke={active ? color : "#9fb3aa"} strokeWidth={focused ? 4 : active ? 3 : 2} />
-      <circle r="3" fill={kind === "external" ? "#d18d52" : color} />
+      <circle r={radius} fill={kind === "external" ? "#241b13" : "#100f17"} stroke={active ? color : "#625d69"} strokeWidth={focused ? 4 : active ? 3 : 2} />
+      <circle r="3" fill={kind === "external" ? "#f0a04b" : color} />
     </>
   );
 }
@@ -59,6 +59,7 @@ export function FlowView() {
   const { state, dispatch } = useAtlasState();
   const routes = verifiedRoutes();
   const route = routes.find((item) => item.id === state.routeId) ?? routes[0];
+  const focusedGraphNode = graphNodeById.get(state.focusId);
   const activeRouteRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     revealSelectedRoute(activeRouteRef.current);
@@ -103,6 +104,11 @@ export function FlowView() {
           </button>
         ))}
       </nav>
+      {focusedGraphNode && route.stations.some((station) => station.entityId === focusedGraphNode.id) && (
+        <button className="panel-readout" style={{ position: "absolute", zIndex: 4, top: 124, right: 28, cursor: "pointer" }} type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "explore", sceneId: "graph", focusId: focusedGraphNode.id } })}>
+          {focusedGraphNode.label} · Explore에서 위치 보기 <ArrowRight size={14} aria-hidden="true" />
+        </button>
+      )}
       <div className="desktop-visual-surface flow-surface">
         <VaultMetro />
         <PulseRail />
@@ -124,7 +130,7 @@ function pathThroughPoints(points: Array<{ x: number; y: number }>) {
 }
 
 function routeGeometry(width: number, laneY: number, stationCount: number) {
-  const startX = 150;
+  const startX = 220;
   const endX = Math.max(startX + 20, width - 82);
   const step = stationCount > 1 ? (endX - startX) / (stationCount - 1) : 0;
   const points = Array.from({ length: stationCount }, (_, index) => ({
@@ -154,30 +160,26 @@ function VaultMetro() {
   return (
     <div className="metro-canvas" ref={ref} data-testid="vault-metro">
       <svg width={width} height={height} role="group" aria-label="확인된 허브 간 위키링크 경로 지도">
-        <defs>
-          <filter id="metro-focus-glow" x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation="5" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
-        </defs>
         {geometries.map(({ route, path, points }) => {
           const active = route.id === state.routeId;
           const weightRatio = Math.sqrt(route.weight / maxWeight);
           const strokeWidth = active ? 3.2 + weightRatio * 3.8 : 1.2 + weightRatio * 2.2;
+          const first = points[0];
+          const last = points.at(-1) ?? first;
+          const arrowX = first.x + (last.x - first.x) * 0.67;
+          const arrowY = first.y + (last.y - first.y) * 0.67;
+          const arrowAngle = Math.atan2(last.y - first.y, last.x - first.x) * 180 / Math.PI;
           return (
             <g key={route.id} className={`metro-route${active ? " is-active" : ""}`}>
-              <rect
-                className="metro-route-band"
-                x="8"
-                y={(points[0]?.y ?? 0) - laneGap * 0.38}
-                width={Math.max(0, width - 18)}
-                height={laneGap * 0.76}
-                rx="5"
-                aria-hidden="true"
-              />
-              <path d={path} fill="none" stroke={active ? routeColor(route.id) : "#91aaa1"} strokeWidth={strokeWidth} strokeOpacity={active ? 1 : 0.52} strokeLinecap="round" filter={active ? "url(#metro-focus-glow)" : undefined} />
+              <line className="metro-route-guide" x1="12" x2={Math.max(12, width - 12)} y1={first.y} y2={first.y} aria-hidden="true" />
+              <path d={path} fill="none" stroke={active ? routeColor(route.id) : "#56515d"} strokeWidth={strokeWidth} strokeOpacity={active ? 1 : 0.48} strokeLinecap="round" />
+              {active && <path d={path} fill="none" stroke="#f3edde" strokeWidth="1" strokeOpacity=".68" strokeLinecap="round" />}
+              <path d="M-5,-4 L4,0 L-5,4 Z" transform={`translate(${arrowX},${arrowY}) rotate(${arrowAngle})`} fill={routeColor(route.id)} opacity={active ? 1 : .56} aria-hidden="true" />
               <text x={18} y={(points[0]?.y ?? 0) + 4} className={active ? "metro-route-label is-active" : "metro-route-label"}>{route.label}</text>
               {route.stations.map((station, index) => {
                 const point = points[index];
                 const entity = station.entityId ? entityById.get(station.entityId) : undefined;
-                const structureNode = station.entityId ? structureNodeById.get(station.entityId) : undefined;
+                const structureNode = station.entityId ? graphNodeById.get(station.entityId) : undefined;
                 const resolvedLabel = entity?.displayLabel ?? structureNode?.label ?? station.label;
                 const focused = station.entityId === state.focusId;
                 const previewed = station.entityId === state.previewId;
@@ -192,7 +194,7 @@ function VaultMetro() {
                     {(active || index === 0 || index === route.stations.length - 1) && (
                       <text x={0} y={index % 2 === 0 ? -17 : 27} textAnchor="middle" className="station-label">
                         <tspan>{station.label}</tspan>
-                        {active && (entity || structureNode) && (
+                        {active && (entity || structureNode) && resolvedLabel !== station.label && (
                           <tspan x={0} dy={12} className="station-path">
                             {resolvedLabel.length > 24 ? `${resolvedLabel.slice(0, 22)}…` : resolvedLabel}
                           </tspan>
@@ -279,7 +281,7 @@ function MobileFlow() {
             <span style={{ borderColor: routeColor(route.id) }}>{stationKind(station) === "proof_gate" ? "◇" : String(index + 1).padStart(2, "0")}</span>
             <button type="button" disabled={!station.entityId} onClick={() => station.entityId && dispatch({ type: "focus", focusId: station.entityId })}>
               <strong>{station.label}</strong>
-              <small>{stationKind(station) === "proof_gate" ? "검증 관문 · " : ""}{station.entityId ? (entityById.get(station.entityId)?.displayLabel ?? structureNodeById.get(station.entityId)?.label ?? station.label) : station.external ? "공개 경계 단계" : "관계 단계"}</small>
+              <small>{stationKind(station) === "proof_gate" ? "검증 관문 · " : ""}{station.entityId ? (entityById.get(station.entityId)?.displayLabel ?? graphNodeById.get(station.entityId)?.label ?? station.label) : station.external ? "공개 경계 단계" : "관계 단계"}</small>
             </button>
           </li>
         ))}

@@ -14,7 +14,7 @@ const defaultDataDir = process.env.GITHUB_ACTIONS === "true"
 const dataDir = path.resolve(process.env.ATLAS_PUBLIC_DATA_DIR ?? defaultDataDir);
 const stagingDir = path.join(path.dirname(outputDir), `.${path.basename(outputDir)}-staging-${process.pid}`);
 const previousDir = path.join(path.dirname(outputDir), `.${path.basename(outputDir)}-previous-${process.pid}`);
-const packNames = ["agency", "bootstrap", "inventory", "structure", "relation", "flow", "temporal", "entity", "health", "insight", "publication"];
+const packNames = ["agency", "bootstrap", "inventory", "graph", "relation", "flow", "temporal", "entity", "health", "insight", "publication"];
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 
 function packageNameFromInput(inputPath) {
@@ -155,7 +155,7 @@ const html = `<!doctype html>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f4f3ed" />
+    <meta name="theme-color" content="#03040a" />
     <meta name="description" content="Luke와 전문 에이전트가 함께 축적한 공개 안전 지식 구조, 관계, 흐름, 시간과 책임 경계를 탐색합니다." />
     <meta property="og:title" content="Homi Vault Atlas" />
     <meta property="og:description" content="한 사람의 방향과 전문 에이전트의 책임이 지식 지형으로 이어지는 검증된 버전 스냅샷" />

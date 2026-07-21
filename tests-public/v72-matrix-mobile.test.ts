@@ -9,7 +9,7 @@ const packNames = [
   "agency",
   "bootstrap",
   "inventory",
-  "structure",
+  "graph",
   "relation",
   "flow",
   "temporal",

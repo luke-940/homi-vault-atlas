@@ -39,13 +39,13 @@ const actorIcons = {
 const defaultActorId = "actor:atlas-builder";
 
 export function agencyKnowledgeDistricts() {
-  return atlasData.structure.nodes
+  return atlasData.graph.nodes
     .filter((node) => node.kind === "district")
-    .sort((left, right) => right.documentCount - left.documentCount || left.label.localeCompare(right.label, "ko"));
+    .sort((left, right) => right.representedDocuments - left.representedDocuments || left.label.localeCompare(right.label, "ko"));
 }
 
 export function agencyKnowledgeTarget(districtId: string) {
-  return { workspace: "explore" as const, sceneId: "hubs", focusId: districtId };
+  return { workspace: "explore" as const, sceneId: "graph", focusId: districtId, districtId };
 }
 
 function AgencySceneRail({ scene }: { scene: AgencyScene }) {
@@ -220,10 +220,10 @@ function EvolutionScene() {
               key={item.id}
               type="button"
               style={{ color: strokeColorForDistrict(item.label) }}
-              aria-label={`${item.label} ${item.documentCount.toLocaleString("ko-KR")}개 표현 기록, Explore에서 열기`}
+              aria-label={`${item.label} ${item.representedDocuments.toLocaleString("ko-KR")}개 표현 기록, Explore에서 열기`}
               onClick={() => dispatch({ type: "journey", target: agencyKnowledgeTarget(item.id) })}
             >
-              <b>{item.label}</b><small>{item.documentCount.toLocaleString("ko-KR")}개</small>
+              <b>{item.label}</b><small>{item.representedDocuments.toLocaleString("ko-KR")}개</small>
             </button>
           ))}
         </div>

@@ -17,14 +17,14 @@ export type WorkspaceSceneDefinition = {
 export const workspaceSceneRegistry: Readonly<Record<Workspace, WorkspaceSceneDefinition>> = Object.freeze({
   home: {
     label: "Home",
-    title: "Living Knowledge Terrain",
-    defaultScene: "living-terrain",
+    title: "Meaningful Space Living Graph",
+    defaultScene: "knowledge-field",
     scenes: [
       {
-        id: "living-terrain",
-        label: "Living Terrain",
-        title: "지식 지형",
-        aliases: ["system-overview", "terrain-convergence"],
+        id: "knowledge-field",
+        label: "Knowledge Field",
+        title: "방향 지식 지형",
+        aliases: ["living-terrain", "system-overview", "terrain-convergence"],
       },
       {
         id: "knowledge-gravity",
@@ -33,27 +33,27 @@ export const workspaceSceneRegistry: Readonly<Record<Workspace, WorkspaceSceneDe
         aliases: ["knowledge-return"],
       },
       {
-        id: "verified-activity",
-        label: "Verified Activity Pulse",
-        title: "검증된 활동",
+        id: "freshness-field",
+        label: "Freshness Field",
+        title: "의미 있는 최신성",
         aliases: ["responsibility-partition"],
       },
       {
-        id: "coverage-boundary",
-        label: "Coverage Boundary",
-        title: "표현 범위",
-        aliases: ["independent-ownership", "public-boundary"],
+        id: "link-trace",
+        label: "Link Trace",
+        title: "실제 방향 경로",
+        aliases: ["coverage-boundary", "independent-ownership", "public-boundary"],
       },
     ],
   },
   explore: {
     label: "Explore",
-    title: "Knowledge Structure",
-    defaultScene: "districts",
+    title: "Living Knowledge Graph",
+    defaultScene: "graph",
     scenes: [
-      { id: "districts", label: "Districts", title: "지식 구역", aliases: ["explore", "city-overview"] },
-      { id: "hubs", label: "Hubs", title: "중력 허브", aliases: ["city-focus", "city-concentration"] },
-      { id: "sources", label: "Sources", title: "공개 안전 원천", aliases: ["attention-isolate"] },
+      { id: "graph", label: "Graph", title: "방향 지식 그래프", aliases: ["explore", "city-overview", "districts", "hubs", "sources"] },
+      { id: "clusters", label: "Clusters", title: "구역별 밀도", aliases: ["city-focus", "city-concentration"] },
+      { id: "list", label: "List", title: "접근 가능한 순위 목록", aliases: ["attention-isolate"] },
     ],
   },
   observe: {

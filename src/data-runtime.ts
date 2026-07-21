@@ -8,16 +8,16 @@ export const atlasData = atlas;
 export const entityById = new Map<string, Entity>(
   atlasData.entity.entities.map((entity) => [entity.id, entity]),
 );
-export const hierarchyById = new Map(
-  atlasData.structure.hierarchyNodes.map((node) => [node.id, node]),
+export const graphNodeById = new Map(
+  atlasData.graph.nodes.map((node) => [node.id, node]),
 );
-export const structureNodeById = new Map(
-  atlasData.structure.nodes.map((node) => [node.id, node]),
+export const graphCoordinateById = new Map(
+  atlasData.graph.layout.coordinates.map((coordinate) => [coordinate.id, coordinate]),
 );
 export const inventoryData = atlasData.inventory;
 
 export function hierarchyFocusForDistrict(name: string) {
-  return atlasData.structure.hierarchyNodes.find(
+  return atlasData.graph.nodes.find(
     (node) => node.kind === "district" && node.label === name,
   )?.id ?? null;
 }

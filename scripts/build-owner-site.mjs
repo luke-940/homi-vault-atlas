@@ -12,7 +12,7 @@ const dataDir = path.join(generatedRoot, "owner", "data");
 const outputDir = path.join(generatedRoot, "owner-site");
 const stagingDir = path.join(generatedRoot, `.owner-site-staging-${process.pid}`);
 const packNames = [
-  "agency", "bootstrap", "inventory", "structure", "relation", "flow",
+  "agency", "bootstrap", "inventory", "graph", "relation", "flow",
   "temporal", "entity", "health", "insight", "publication", "activity",
 ];
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
@@ -68,7 +68,7 @@ const html = `<!doctype html>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f4f3ed" />
+    <meta name="theme-color" content="#07131f" />
     <meta name="robots" content="noindex,nofollow,noarchive" />
     <link rel="icon" type="image/svg+xml" href="./assets/brand/homi-favicon.svg" />
     <link rel="stylesheet" href="./assets/fonts/space-grotesk/space-grotesk.css" />
@@ -101,7 +101,8 @@ const receipt = {
   },
   dataPacks: packNames,
   activityAggregates: packs.activity.aggregates.length,
-  structureNodes: packs.structure.nodes.length,
+  graphNodes: packs.graph.nodes.length,
+  graphEdges: packs.graph.edges.length,
   verifiedFlowRoutes: packs.flow.routes.length,
   fontSubset,
   esbuildInputs: Object.keys(buildResult.metafile.inputs).length,

@@ -43,7 +43,7 @@ const publicProfileReceiptPath = path.resolve(
 );
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 const compareText = (left, right) => left < right ? -1 : left > right ? 1 : 0;
-const publicPackNames = ["agency", "bootstrap", "inventory", "structure", "relation", "flow", "temporal", "entity", "health", "insight", "publication"];
+const publicPackNames = ["agency", "bootstrap", "inventory", "graph", "relation", "flow", "temporal", "entity", "health", "insight", "publication"];
 const textExtensions = new Set([".css", ".html", ".js", ".json", ".md", ".mjs", ".svg", ".ts", ".tsx", ".txt", ".webmanifest"]);
 const trackedTextExtensions = new Set([...textExtensions, ".yml", ".yaml", ".toml"]);
 
@@ -245,37 +245,59 @@ for (const [field, expected] of Object.entries(expectedRedactionCounts)) {
     });
   }
 }
-if (publicPacks.structure.schema !== "atlas.structure.v2"
-  || publicPacks.structure.profile !== "atlas-public"
-  || publicPacks.structure.measurement?.gravityMetric !== "uniqueInboundDocuments"
-  || publicPacks.structure.measurement?.occurrenceMetric !== "inboundLinkOccurrences"
-  || publicPacks.structure.measurement?.freshnessSource !== "semantic_date_only") {
-  findings.push({ id: "public-structure-v2-invalid", path: "public-safe/data/structure.json" });
+const graph = publicPacks.graph;
+if (graph.schema !== "atlas.graph.v1"
+  || graph.profile !== "atlas-public"
+  || graph.layout?.algorithm !== "seeded-d3-force-projected-3d-v1"
+  || graph.layout?.axes?.x?.field !== "districtId"
+  || graph.layout?.axes?.y?.field !== "freshness"
+  || graph.layout?.axes?.z?.field !== "kind") {
+  findings.push({ id: "public-graph-v1-invalid", path: "public-safe/data/graph.json" });
 }
-if (publicPacks.structure.nodes?.some((node) => node.id?.startsWith("actor:"))) {
-  findings.push({ id: "agency-node-in-knowledge-structure", path: "public-safe/data/structure.json" });
+if (graph.nodes?.some((node) => node.id?.startsWith("actor:"))) {
+  findings.push({ id: "agency-node-in-knowledge-graph", path: "public-safe/data/graph.json" });
 }
-const publicStructureNodes = publicPacks.structure.nodes ?? [];
-const publicStructureNodeById = new Map(publicStructureNodes.map((node) => [node.id, node]));
-const publicRepresentedNodeCount = publicStructureNodes
+const publicGraphNodes = graph.nodes ?? [];
+const publicGraphNodeById = new Map(publicGraphNodes.map((node) => [node.id, node]));
+const publicRepresentedNodeCount = publicGraphNodes
   .filter((node) => node.kind !== "district" && node.nameMode !== "public_alias")
-  .reduce((total, node) => total + (node.documentCount ?? 0), 0);
+  .reduce((total, node) => total + (node.representedDocuments ?? 0), 0);
 if (publicRepresentedNodeCount !== expectedRepresented) {
   findings.push({
-    id: "public-structure-primary-count-mismatch",
-    path: "public-safe/data/structure.json",
+    id: "public-graph-primary-count-mismatch",
+    path: "public-safe/data/graph.json",
     expected: expectedRepresented,
     actual: publicRepresentedNodeCount,
   });
 }
-for (const node of publicStructureNodes.filter((item) => item.nameMode === "aggregate")) {
-  const parent = publicStructureNodeById.get(node.parentId);
+for (const node of publicGraphNodes.filter((item) => item.nameMode === "aggregate")) {
+  const parent = publicGraphNodeById.get(node.parentId);
   if (!parent || parent.kind === "district" || node.kind !== "aggregate_boundary"
-    || !node.label.endsWith("· 공개 안전 원천 집계") || !Number.isInteger(node.documentCount) || node.documentCount <= 0) {
+    || !node.label.endsWith("· 공개 안전 원천 집계") || !Number.isInteger(node.representedDocuments) || node.representedDocuments <= 0) {
     findings.push({ id: "public-aggregate-child-invalid", path: node.id });
   }
 }
-const allowedPublicHashPaths = new Set(["agency.projectionDigest", "publication.publicSnapshotDigest"]);
+if (graph.manifest?.nodeCount !== publicGraphNodes.length
+  || graph.manifest?.edgeCount !== (graph.edges ?? []).length
+  || graph.manifest?.clusterCount !== (graph.clusters ?? []).length
+  || (graph.layout?.defaultNodeIds ?? []).length > 60
+  || (graph.layout?.defaultEdgeIds ?? []).length > 48) {
+  findings.push({ id: "public-graph-manifest-or-budget-invalid", path: "public-safe/data/graph.json#manifest" });
+}
+const publicGraphNodeIds = new Set(publicGraphNodes.map((node) => node.id));
+for (const edge of graph.edges ?? []) {
+  if (edge.kind !== "references" || edge.direction !== "forward" || edge.occurrenceCount <= 0
+    || !publicGraphNodeIds.has(edge.source) || !publicGraphNodeIds.has(edge.target)) {
+    findings.push({ id: "public-graph-edge-invalid", path: edge.id });
+  }
+}
+const allowedPublicHashPaths = new Set([
+  "agency.projectionDigest",
+  "graph.manifest.semanticDigest",
+  "graph.manifest.layoutDigest",
+  "graph.manifest.projectionDigest",
+  "publication.publicSnapshotDigest",
+]);
 const visitPublicHashes = (value, currentPath) => {
   if (typeof value === "string" && /^[a-f0-9]{64}$/.test(value) && !allowedPublicHashPaths.has(currentPath)) {
     findings.push({ id: "public-data-hash-not-allowed", path: currentPath });
@@ -301,10 +323,8 @@ for (const entity of entities.entities) {
 const relation = JSON.parse(await readFile(path.join(dataDir, "relation.json"), "utf8"));
 if (Object.keys(relation.neighborhoods ?? {}).length) findings.push({ id: "document-level-relation", path: "public-safe/data/relation.json" });
 const flow = JSON.parse(await readFile(path.join(dataDir, "flow.json"), "utf8"));
-const publicStructureNodeIds = new Set((publicPacks.structure?.nodes ?? []).map((node) => node.id));
-const referenceWeightByPair = new Map((publicPacks.structure?.associations ?? [])
-  .filter((edge) => edge.kind === "references")
-  .map((edge) => [`${edge.source}\0${edge.target}`, edge.weight]));
+const referenceWeightByPair = new Map((graph.edges ?? [])
+  .map((edge) => [`${edge.source}\0${edge.target}`, edge.occurrenceCount]));
 for (const route of flow.routes ?? []) {
   if (route.provenance !== "resolved_wikilink_path") findings.push({ id: "unverified-public-route", path: route.id });
   const referenceWeight = referenceWeightByPair.get(`${route.members?.[0]}\0${route.members?.[1]}`);
@@ -319,7 +339,7 @@ for (const route of flow.routes ?? []) {
   }
   if ((route.sourceRefs ?? []).length) findings.push({ id: "source-reference-not-redacted", path: route.id });
   for (const station of route.stations ?? []) {
-    if (!station.entityId || !publicStructureNodeIds.has(station.entityId)) {
+    if (!station.entityId || !publicGraphNodeIds.has(station.entityId)) {
       findings.push({ id: "unresolved-public-route-station", path: station.id });
     }
   }

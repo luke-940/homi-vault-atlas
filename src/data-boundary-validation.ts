@@ -17,14 +17,12 @@ export function collectPublicProjectCountDisclosureFailures(candidate: AtlasData
   if (privateCoverage.length > 0) failures.push("inventory:project-specific-coverage");
   const combinedCoverage = candidate.inventory.coverage.filter((row) => row.label === "Independent Projects");
   if (combinedCoverage.length !== 1) failures.push("inventory:combined-project-coverage-count");
-  const projectLabeledStructure = [
-    ...candidate.structure.districts.map((row) => row.name),
-    ...candidate.structure.hierarchyNodes.map((row) => row.label),
-    ...candidate.structure.nodes.map((row) => row.label),
-  ].filter((label) => [...ownerOnlyProjectNames].some((name) => label === name || label.startsWith(`${name} `)));
-  if (projectLabeledStructure.length > 0) failures.push("structure:project-specific-count-surface");
-  if (candidate.structure.nodes.some((node) => node.kind === "project_stage")) {
-    failures.push("structure:public-project-stage");
+  const projectLabeledGraph = candidate.graph.nodes
+    .map((row) => row.label)
+    .filter((label) => [...ownerOnlyProjectNames].some((name) => label === name || label.startsWith(`${name} `)));
+  if (projectLabeledGraph.length > 0) failures.push("graph:project-specific-count-surface");
+  if (candidate.graph.nodes.some((node) => node.kind === "project_stage")) {
+    failures.push("graph:public-project-stage");
   }
   return failures;
 }

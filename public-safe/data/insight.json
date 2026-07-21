@@ -1,6 +1,6 @@
 {
   "schema": "atlas.insight.v1",
-  "generatedAt": "2026-07-20T11:04:42.674Z",
+  "generatedAt": "2026-07-21T07:34:02.262Z",
   "evidenceBoundary": "공개 스냅샷의 집계 수량과 정제된 관계만 사용하며 내부 문서 본문과 실행 증거는 포함하지 않는다.",
   "items": [
     {
@@ -77,9 +77,9 @@
       "id": "insight:attention",
       "kind": "attention",
       "question": "공개판이 의도적으로 감춘 범위는 무엇인가",
-      "headline": "전체 866개 중 240개는 공개 경계에서 제외됐다",
+      "headline": "전체 869개 중 241개는 공개 경계에서 제외됐다",
       "metric": {
-        "value": 240,
+        "value": 241,
         "label": "제외 문서",
         "unit": "개"
       },

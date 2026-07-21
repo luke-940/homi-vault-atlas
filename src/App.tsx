@@ -10,7 +10,7 @@ import { TimeView } from "./views/TimeView";
 import { HomeView } from "./views/HomeView";
 import { AgencyView } from "./views/AgencyView";
 import { useAtlasState } from "./state";
-import { atlasData, entityById, hierarchyById, structureNodeById } from "./data-runtime";
+import { atlasData, entityById, graphNodeById } from "./data-runtime";
 
 const workspaceIds = ["home", "explore", "observe", "flow", "time", "agency"] as const;
 
@@ -115,8 +115,7 @@ export function App() {
   const accessibleSelectionLabel = state.workspace === "agency"
     ? atlasData.agency.actors.find((actor) => actor.id === state.actorId)?.label ?? "전체 역할"
     : entityById.get(state.focusId)?.displayLabel
-      ?? hierarchyById.get(state.focusId)?.label
-      ?? structureNodeById.get(state.focusId)?.label
+      ?? graphNodeById.get(state.focusId)?.label
       ?? "공개 지식";
 
   return (

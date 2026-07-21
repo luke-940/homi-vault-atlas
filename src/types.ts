@@ -1,5 +1,6 @@
 export type Workspace = "home" | "explore" | "observe" | "flow" | "time" | "agency";
 export type ExploreLens = "city";
+export type GraphFreshness = "all" | "30d" | "90d" | "1y" | "undated";
 export type RelationLayer = "wikilink" | "typed" | "route";
 export type AgencyScene = "system" | "roles" | "evolution";
 export type AgencyGroupKind = "core" | "independent";
@@ -32,6 +33,8 @@ export type AtlasStructureNodeKind =
   | "signal_storyline"
   | "source_document"
   | "aggregate_boundary";
+
+export type AtlasGraphNodeKind = AtlasStructureNodeKind;
 
 export interface InventoryCoverage {
   id: string;
@@ -76,25 +79,86 @@ export interface AtlasInventoryV1 {
   };
 }
 
-export interface AtlasStructureNodeV2 {
+export interface AtlasGraphNodeV1 {
   id: string;
-  kind: AtlasStructureNodeKind;
+  kind: AtlasGraphNodeKind;
   label: string;
   parentId: string | null;
   districtId: string;
-  documentCount: number;
-  uniqueInboundDocuments: number;
-  inboundLinkOccurrences: number;
-  lastMeaningfulDate: string | null;
+  clusterId: string;
+  representedDocuments: number;
+  gravity: number;
+  occurrences: number;
+  freshness: string | null;
   nameMode: "approved_name" | "public_alias" | "aggregate" | "owner_name";
 }
 
-export interface AtlasStructureAssociationV2 {
+export interface AtlasGraphEdgeV1 {
   id: string;
   source: string;
   target: string;
-  kind: "member_of" | "associated_with" | "project_stage_of" | "evidence_for" | "references";
-  weight: number;
+  kind: "references";
+  direction: "forward";
+  occurrenceCount: number;
+  defaultVisible: boolean;
+}
+
+export interface AtlasGraphCoordinateV1 {
+  id: string;
+  x: number;
+  y: number;
+  z: number;
+  depthLevel: 0 | 1 | 2 | 3 | 4;
+  radius: number;
+  dated: boolean;
+  clusterIndex: number;
+}
+
+export interface AtlasGraphClusterV1 {
+  id: string;
+  districtId: string;
+  label: string;
+  nodeCount: number;
+  representedDocumentCount: number;
+  representativeNodeCount: number;
+  summary: string | null;
+  contour: {
+    type: "MultiPolygon";
+    coordinates: number[][][][];
+  };
+}
+
+export interface AtlasGraphV1 {
+  schema: "atlas.graph.v1";
+  profile: AtlasProfile;
+  generatedAt: string;
+  nodes: AtlasGraphNodeV1[];
+  edges: AtlasGraphEdgeV1[];
+  clusters: AtlasGraphClusterV1[];
+  layout: {
+    algorithm: "seeded-d3-force-projected-3d-v1";
+    seed: string;
+    ticks: number;
+    axes: {
+      x: { field: "districtId"; kind: "categorical_cluster"; direction: "left_to_right" };
+      y: { field: "freshness"; kind: "semantic_date"; direction: "newer_is_higher"; scale: "order_preserving_rank" };
+      z: { field: "kind"; kind: "structural_depth"; direction: "district_to_source" };
+    };
+    bounds: { x: number; y: number; z: number; width: number; height: number; depth: number };
+    undatedRail: { y: number; label: string };
+    coordinates: AtlasGraphCoordinateV1[];
+    defaultNodeIds: string[];
+    defaultEdgeIds: string[];
+    labelBudget: number;
+  };
+  manifest: {
+    nodeCount: number;
+    edgeCount: number;
+    clusterCount: number;
+    semanticDigest: string;
+    layoutDigest: string;
+    projectionDigest: string;
+  };
 }
 
 export interface AtlasActivityV1 {
@@ -394,22 +458,7 @@ export interface EraRecord {
 export interface AtlasData {
   bootstrap: SnapshotPack;
   inventory: AtlasInventoryV1;
-  structure: {
-    schema: "atlas.structure.v2";
-    profile: AtlasProfile;
-    generatedAt: string;
-    districts: District[];
-    hierarchyNodes: HierarchyNode[];
-    rootId: string;
-    archiveScope: { active: number; archive: number; defaultState: string };
-    nodes: AtlasStructureNodeV2[];
-    associations: AtlasStructureAssociationV2[];
-    measurement: {
-      gravityMetric: "uniqueInboundDocuments";
-      occurrenceMetric: "inboundLinkOccurrences";
-      freshnessSource: "semantic_date_only";
-    };
-  };
+  graph: AtlasGraphV1;
   relation: {
     districtOrder: string[];
     matrix: MatrixCell[];
