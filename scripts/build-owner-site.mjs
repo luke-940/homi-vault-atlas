@@ -70,7 +70,8 @@ const html = `<!doctype html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f4f3ed" />
     <meta name="robots" content="noindex,nofollow,noarchive" />
-    <link rel="icon" type="image/svg+xml" href="./assets/brand/homi-mark-amber.svg" />
+    <link rel="icon" type="image/svg+xml" href="./assets/brand/homi-favicon.svg" />
+    <link rel="stylesheet" href="./assets/fonts/space-grotesk/space-grotesk.css" />
     <link rel="stylesheet" href="./assets/fonts/pretendard/pretendardvariable-dynamic-subset.css" />
     <link rel="stylesheet" href="./${cssName}" />
     <title>Homi Vault Atlas · Owner</title>

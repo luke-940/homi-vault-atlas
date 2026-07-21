@@ -55,6 +55,12 @@ async function installRuntimeNotices(packageNames) {
     await cp(licenseName, path.join(stagingDir, "licenses", targetName));
     rows.push(`| ${packageName} | ${manifest.version} | ${manifest.license ?? "see license file"} | \`licenses/${targetName}\` |`);
   }
+  const spaceGroteskLicense = "space-grotesk-OFL.txt";
+  await cp(
+    path.join(projectDir, "public", "assets", "fonts", "space-grotesk", "OFL.txt"),
+    path.join(stagingDir, "licenses", spaceGroteskLicense),
+  );
+  rows.push(`| Space Grotesk | 2.0 | OFL-1.1 | \`licenses/${spaceGroteskLicense}\` |`);
   await writeFile(
     path.join(stagingDir, "THIRD_PARTY_NOTICES.md"),
     `# Third-Party Notices\n\nOnly packages present in the deployed browser bundle or deployed font assets are listed.\n\n| Package | Version | License | Text |\n| --- | --- | --- | --- |\n${rows.join("\n")}\n`,
@@ -160,10 +166,11 @@ const html = `<!doctype html>
     <meta name="twitter:title" content="Homi Vault Atlas" />
     <meta name="twitter:description" content="검증된 지식 지형과 공개 커버리지 경계를 탐색합니다." />
     <meta name="twitter:image" content="https://luke-940.github.io/homi-vault-atlas/assets/brand/og-card.png" />
-    <link rel="icon" type="image/svg+xml" sizes="any" href="./assets/brand/homi-mark-amber.svg" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="./assets/brand/homi-favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="./assets/brand/homi-mark-amber-32.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="./assets/brand/homi-mark-amber-180.png" />
     <link rel="manifest" href="./assets/brand/site.webmanifest" />
+    <link rel="stylesheet" href="./assets/fonts/space-grotesk/space-grotesk.css" />
     <link rel="stylesheet" href="./assets/fonts/pretendard/pretendardvariable-dynamic-subset.css" />
     <link rel="stylesheet" href="./${cssName}" />
     <title>Homi Vault Atlas</title>

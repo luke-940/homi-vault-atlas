@@ -73,7 +73,8 @@ for (const root of [dataDir, distDir]) {
       && /(?:^|\/)(?:public-safe|dist-public|\.generated\/public)\/data\//.test(relative);
     const staticReaderText = relative === "dist-public/index.html"
       || relative.endsWith("/assets/brand/site.webmanifest")
-      || relative.endsWith("/assets/brand/homi-mark-amber.svg");
+      || relative.endsWith("/assets/brand/homi-mark-amber.svg")
+      || relative.endsWith("/assets/brand/homi-favicon.svg");
     if (authoritativeDataJson || staticReaderText) {
       const text = body.toString("utf8");
       const legalText = relative.includes("/licenses/") || /(?:\.LEGAL\.txt|THIRD_PARTY_NOTICES\.md)$/.test(relative);
@@ -425,11 +426,15 @@ if (!indexHtml.includes(`href="./${appStylesheet?.path}"`)) {
 }
 for (const brandAsset of [
   "assets/brand/homi-mark-amber.svg",
+  "assets/brand/homi-favicon.svg",
   "assets/brand/homi-mark-amber-32.png",
   "assets/brand/homi-mark-amber-180.png",
   "assets/brand/homi-mark-amber-192.png",
   "assets/brand/homi-mark-amber-512.png",
   "assets/brand/og-card.png",
+  "assets/fonts/space-grotesk/SpaceGrotesk-wght.woff2",
+  "assets/fonts/space-grotesk/OFL.txt",
+  "assets/fonts/space-grotesk/space-grotesk.css",
 ]) {
   try {
     await readFile(path.join(distDir, brandAsset));
@@ -438,9 +443,25 @@ for (const brandAsset of [
     else throw error;
   }
 }
-if (!indexHtml.includes("homi-mark-amber.svg")
+const approvedBrandAssetDigests = new Map([
+  ["assets/brand/homi-mark-amber.svg", "1fb6f1a3de10f2a9ff0b56ff795aa5165fc7431f1cef4bab871e2421b17d8718"],
+  ["assets/brand/homi-favicon.svg", "87871b9d2a87b055e7f8895e5f995ad019e0587ae3086e879f4b1d6c298ce894"],
+  ["assets/brand/homi-mark-amber-32.png", "558420b5372a951550a54542742c6ade1577495288e29ca05f9d9e243323d2fa"],
+  ["assets/brand/homi-mark-amber-180.png", "bfe655b09ce42855389f0d848842127193391557f23e4233886a0cbd852166ab"],
+  ["assets/brand/homi-mark-amber-192.png", "1d3d0ce332427de959374f80c2a3fbe61f3e0008b2078eba3d2734eaca65e7e2"],
+  ["assets/brand/homi-mark-amber-512.png", "4131308ca5ee15292b98b69f11751c9ad8b2da71da8d09077497e937145d1eed"],
+  ["assets/brand/og-card.png", "30438fd130047815f9c539d20db2b975cbea5d6cfd99f5f2dcc3ab0f9fee0872"],
+  ["assets/fonts/space-grotesk/SpaceGrotesk-wght.woff2", "8e085aa438094f11487a836652edd5c054fa6a96f63fc7c282105ee3a4b08c07"],
+  ["assets/fonts/space-grotesk/OFL.txt", "564ce565c371c5e5bbf286006565a7c9aa55a9f56e7ca58d56e05d649dd61a72"],
+]);
+for (const [assetPath, expectedDigest] of approvedBrandAssetDigests) {
+  const body = await readFile(path.join(distDir, assetPath));
+  if (sha256(body) !== expectedDigest) findings.push({ id: "approved-brand-asset-drift", path: `dist-public/${assetPath}` });
+}
+if (!indexHtml.includes("homi-favicon.svg")
   || !indexHtml.includes("homi-mark-amber-32.png")
   || !indexHtml.includes("homi-mark-amber-180.png")
+  || !indexHtml.includes("assets/fonts/space-grotesk/space-grotesk.css")
   || !indexHtml.includes("https://luke-940.github.io/homi-vault-atlas/")
   || !indexHtml.includes("summary_large_image")
   || !indexHtml.includes("assets/brand/og-card.png")) {
