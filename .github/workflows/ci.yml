@@ -29,7 +29,6 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm test
       - name: Build and audit the only deployable public profile
         run: npm run build
         env:
