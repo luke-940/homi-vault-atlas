@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
 import { auditPublicPackBinding } from "../scripts/lib/public-data-wire.mjs";
@@ -38,6 +38,13 @@ const readPack = (name: string) => JSON.parse(
 const readPackSet = (root: string, names: readonly string[]) => Object.fromEntries(
   names.map((name) => [name, JSON.parse(readFileSync(path.join(root, `${name}.json`), "utf8"))]),
 );
+
+const listModuleFiles = (root: string): string[] => readdirSync(root, { withFileTypes: true })
+  .flatMap((entry) => {
+    const entryPath = path.join(root, entry.name);
+    return entry.isDirectory() ? listModuleFiles(entryPath) : [entryPath];
+  })
+  .filter((file) => file.endsWith(".mjs"));
 
 const atlasTestProfile = process.env.ATLAS_TEST_PROFILE ?? "public-ci";
 if (!new Set(["public-ci", "owner-local"]).has(atlasTestProfile)) {
@@ -367,8 +374,7 @@ describe("Atlas v7.5 graph and dual-profile boundary", () => {
   });
 
   test("keeps tracked build source free of machine paths and release identifiers", () => {
-    const scriptFiles = execFileSync("rg", ["--files", "scripts"], { encoding: "utf8" })
-      .trim().split("\n").filter((file) => file.endsWith(".mjs"));
+    const scriptFiles = listModuleFiles("scripts");
     for (const file of scriptFiles) {
       const body = readFileSync(path.resolve(file), "utf8");
       if (file !== "scripts/lib/privacy-scanner.mjs") {
