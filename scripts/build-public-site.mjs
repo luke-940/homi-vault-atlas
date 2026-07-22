@@ -8,10 +8,13 @@ import { validatePublicPackShapes } from "./lib/public-shape-validation.mjs";
 
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outputDir = path.resolve(process.env.ATLAS_PUBLIC_OUTPUT_DIR ?? path.join(projectDir, "dist-public"));
-const dataDir = path.resolve(process.env.ATLAS_PUBLIC_DATA_DIR ?? path.join(projectDir, "public-safe", "data"));
+const defaultDataDir = process.env.GITHUB_ACTIONS === "true"
+  ? path.join(projectDir, "public-safe", "data")
+  : path.join(projectDir, ".generated", "public", "data");
+const dataDir = path.resolve(process.env.ATLAS_PUBLIC_DATA_DIR ?? defaultDataDir);
 const stagingDir = path.join(path.dirname(outputDir), `.${path.basename(outputDir)}-staging-${process.pid}`);
 const previousDir = path.join(path.dirname(outputDir), `.${path.basename(outputDir)}-previous-${process.pid}`);
-const packNames = ["agency", "bootstrap", "structure", "relation", "flow", "temporal", "entity", "health", "insight", "publication"];
+const packNames = ["agency", "bootstrap", "inventory", "graph", "relation", "flow", "temporal", "entity", "health", "insight", "publication"];
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 
 function packageNameFromInput(inputPath) {
@@ -52,6 +55,12 @@ async function installRuntimeNotices(packageNames) {
     await cp(licenseName, path.join(stagingDir, "licenses", targetName));
     rows.push(`| ${packageName} | ${manifest.version} | ${manifest.license ?? "see license file"} | \`licenses/${targetName}\` |`);
   }
+  const spaceGroteskLicense = "space-grotesk-OFL.txt";
+  await cp(
+    path.join(projectDir, "public", "assets", "fonts", "space-grotesk", "OFL.txt"),
+    path.join(stagingDir, "licenses", spaceGroteskLicense),
+  );
+  rows.push(`| Space Grotesk | 2.0 | OFL-1.1 | \`licenses/${spaceGroteskLicense}\` |`);
   await writeFile(
     path.join(stagingDir, "THIRD_PARTY_NOTICES.md"),
     `# Third-Party Notices\n\nOnly packages present in the deployed browser bundle or deployed font assets are listed.\n\n| Package | Version | License | Text |\n| --- | --- | --- | --- |\n${rows.join("\n")}\n`,
@@ -142,19 +151,26 @@ const runtimeLicenseCount = await installRuntimeNotices(runtimePackages);
 
 const scripts = packNames.map((name) => `    <script src="./data/${name}.js"></script>`).join("\n");
 const html = `<!doctype html>
-<html lang="ko">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f4f3ed" />
+    <meta name="theme-color" content="#03040a" />
     <meta name="description" content="Luke와 전문 에이전트가 함께 축적한 공개 안전 지식 구조, 관계, 흐름, 시간과 책임 경계를 탐색합니다." />
     <meta property="og:title" content="Homi Vault Atlas" />
     <meta property="og:description" content="한 사람의 방향과 전문 에이전트의 책임이 지식 지형으로 이어지는 검증된 버전 스냅샷" />
     <meta property="og:type" content="website" />
-    <link rel="icon" type="image/svg+xml" sizes="any" href="./assets/brand/homi-mark-amber.svg" />
+    <meta property="og:url" content="https://luke-940.github.io/homi-vault-atlas/" />
+    <meta property="og:image" content="https://luke-940.github.io/homi-vault-atlas/assets/brand/og-card.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Homi Vault Atlas" />
+    <meta name="twitter:description" content="검증된 지식 지형과 공개 커버리지 경계를 탐색합니다." />
+    <meta name="twitter:image" content="https://luke-940.github.io/homi-vault-atlas/assets/brand/og-card.png" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="./assets/brand/homi-favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="./assets/brand/homi-mark-amber-32.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="./assets/brand/homi-mark-amber-180.png" />
     <link rel="manifest" href="./assets/brand/site.webmanifest" />
+    <link rel="stylesheet" href="./assets/fonts/space-grotesk/space-grotesk.css" />
     <link rel="stylesheet" href="./assets/fonts/pretendard/pretendardvariable-dynamic-subset.css" />
     <link rel="stylesheet" href="./${cssName}" />
     <title>Homi Vault Atlas</title>

@@ -1,15 +1,18 @@
 {
   "schema": "atlas.publication.v1",
   "profile": "public",
-  "generatedAt": "2026-07-16T11:43:09.794Z",
-  "publicSnapshotDigest": "ecccc176b352b41152a20e16ccf8f1261c41f19427f1e8debce804721e6fc49f",
+  "generatedAt": "2026-07-22T08:44:46.744Z",
+  "publicSnapshotDigest": "44ef58d8318989aa7a79f4b2cf17d2d42e18dd3f8dd3773113172b7adfbd980a",
   "allowedSurfaces": [
     "district_role_aggregate",
     "reference_boundary",
     "district_relation_aggregate",
     "route_stage_aggregate",
     "era_state_aggregate",
-    "agency_role_projection"
+    "agency_role_projection",
+    "inventory_coverage",
+    "named_or_alias_hub",
+    "semantic_freshness_aggregate"
   ],
   "excludedFields": [
     "absolute_path",
@@ -23,28 +26,24 @@
     "raw_source",
     "internal_ownership_record",
     "internal_proof_record",
-    "external_tool_id",
-    "archive",
-    "session_id",
-    "task_id",
-    "thread_id",
-    "owner_lease",
-    "current_work",
-    "current_status"
+    "external_tool_identifier",
+    "archive"
   ],
   "redactionCounts": {
-    "sourceEntities": 804,
+    "sourceEntities": 878,
     "publicEntities": 6,
-    "aggregatedSourceDocuments": 382,
-    "excludedEntities": 804,
-    "pathsReissued": 6,
-    "aliasesRemoved": 1219,
-    "tagsRemoved": 1352,
-    "frontmatterRemoved": 382,
-    "typedRelationReceiptsRemoved": 42,
-    "documentLevelRelationsRemoved": 11944,
-    "rawDailyExcluded": 91,
-    "controlDocumentsExcluded": 55
+    "namedSourceDocuments": 15,
+    "aggregateSourceDocuments": 621,
+    "aggregatedSourceDocuments": 636,
+    "representedSourceDocuments": 636,
+    "excludedEntities": 242,
+    "excludedSourceDocuments": 242,
+    "archiveExcluded": 54,
+    "scaffoldingExcluded": 24,
+    "controlDocumentsExcluded": 70,
+    "rawDailyExcluded": 94,
+    "explicitPolicyExcluded": 0,
+    "publicNameNotApproved": 0
   },
   "blockers": []
 }

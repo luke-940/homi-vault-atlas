@@ -69,15 +69,6 @@ export const AGENCY_SCENES: ReadonlyArray<{
   { id: "evolution", label: "Evolution", description: "통합 역할 중심에서 세 지속 책임으로의 전문화" },
 ] as const;
 
-export const DISTRICT_COLORS: Record<string, string> = {
-  "중심 지식": "var(--district-knowledge)",
-  "연구 논거": "var(--district-research)",
-  전략: "var(--district-strategy)",
-  신호: "var(--district-signal)",
-  "운영 기반": "var(--district-operations)",
-  "공개 근거 경계": "var(--public-boundary)",
-};
-
 export const MOTION_SECONDS = {
   instant: 0.001,
   fast: 0.12,
@@ -105,7 +96,7 @@ export function currentAgencyScene(sceneId: string): AgencyScene {
 
 export function publicDocumentCount(data: AtlasData) {
   return data.publication.redactionCounts.aggregatedSourceDocuments
-    ?? data.structure.districts.reduce((sum, district) => sum + district.documentCount, 0);
+    ?? data.inventory.namedCount + data.inventory.aggregateCount;
 }
 
 export function strongestKnowledgeRelation(data: AtlasData): MatrixCell | null {

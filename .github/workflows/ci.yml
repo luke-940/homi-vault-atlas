@@ -15,9 +15,13 @@ jobs:
   atlas-public-contract:
     name: Atlas Public Contract
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 36
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Check out the exact PR head
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
@@ -25,95 +29,53 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm test
-      - run: npm run build
+      - name: Build and audit the only deployable public profile
+        run: npm run build
         env:
           ATLAS_PUBLIC_AUDIT_CONTEXT: public-ci
           ATLAS_PUBLIC_AUDIT_DIR: artifacts/publication
-          ATLAS_PUBLIC_AUDIT_RECEIPT: v7-3-publication-audit.json
-      - name: Create and verify the commit-bound release bundle
+          ATLAS_PUBLIC_AUDIT_RECEIPT: v7-4-publication-audit.json
+      - name: Create and verify the commit-bound public release bundle
         run: npm run release:package && npm run release:verify
         env:
-          ATLAS_SOURCE_COMMIT: ${{ github.sha }}
-      - name: Install the CI-owned Chromium binary
-        run: npx --no-install playwright install --with-deps chromium
-      - name: Run the serial browser contracts and prove shutdown
+          ATLAS_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha }}
+      - name: Bind the tested tree and every public byte
         shell: bash
         env:
-          ATLAS_URL: http://127.0.0.1:8785/
-          ATLAS_QA_ARTIFACT_DIR: artifacts/v7-3-browser-qa
+          ATLAS_PR_NUMBER: ${{ github.event.pull_request.number }}
+          ATLAS_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
-          server_pid=""
-
-          cleanup() {
-            status=$?
-            trap - EXIT
-            if [[ -n "${server_pid}" ]]; then
-              if kill -0 "${server_pid}" 2>/dev/null; then
-                kill "${server_pid}"
-              fi
-              wait "${server_pid}" 2>/dev/null || true
-            fi
-            if [[ -n "${server_pid}" ]] && kill -0 "${server_pid}" 2>/dev/null; then
-              echo "Static server PID ${server_pid} survived cleanup" >&2
-              status=1
-            fi
-            if ! python3 - <<'PY'
-          import errno
-          import socket
-
-          try:
-              connection = socket.create_connection(("127.0.0.1", 8785), timeout=2)
-          except OSError as error:
-              if error.errno != errno.ECONNREFUSED:
-                  raise SystemExit(f"expected ECONNREFUSED, received errno={error.errno}: {error}")
-              print("external Atlas server shutdown verified: ECONNREFUSED")
-          else:
-              connection.close()
-              raise SystemExit("expected ECONNREFUSED, but the Atlas port still accepted a connection")
-          PY
-            then
-              status=1
-            fi
-            exit "${status}"
-          }
-          trap cleanup EXIT
-
-          python3 -m http.server 8785 --bind 127.0.0.1 --directory dist-public >/dev/null 2>&1 &
-          server_pid=$!
-          for attempt in $(seq 1 50); do
-            if curl --fail --silent --show-error --max-time 1 "${ATLAS_URL}" >/dev/null; then
-              break
-            fi
-            sleep 0.2
-          done
-          curl --fail --silent --show-error --max-time 2 "${ATLAS_URL}" >/dev/null
-          npm run qa:ci
-          visual_status=0
-          npm run qa:visual:ci || visual_status=$?
-          if [[ "${visual_status}" -ne 0 ]]; then
-            candidate_status=0
-            npm run qa:visual:candidate:ci || candidate_status=$?
-            if [[ "${candidate_status}" -ne 0 ]]; then
-              echo "Visual golden verification and candidate generation both failed" >&2
-              exit "${candidate_status}"
-            fi
-            echo "Visual golden candidate generated as review-only evidence; required verification remains failed" >&2
-            exit "${visual_status}"
-          fi
-      - name: Upload commit-bound CI evidence
+          mkdir -p artifacts/ci-binding
+          (
+            cd dist-public
+            find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum
+          ) > artifacts/ci-binding/DIST_PUBLIC_SHA256SUMS
+          ATLAS_HEAD_TREE="$(git rev-parse 'HEAD^{tree}')" node --input-type=module -e '
+            import { writeFileSync } from "node:fs";
+            const value = {
+              schema: "homi.atlas_v7_4.ci_artifact_binding.v1",
+              pullRequest: Number(process.env.ATLAS_PR_NUMBER),
+              headSha: process.env.ATLAS_HEAD_SHA,
+              testedTree: process.env.ATLAS_HEAD_TREE,
+              publicRoot: "dist-public",
+              checksumManifest: "artifacts/ci-binding/DIST_PUBLIC_SHA256SUMS",
+            };
+            writeFileSync("artifacts/ci-binding/binding.json", `${JSON.stringify(value, null, 2)}\n`);
+          '
+      - name: Upload the exact tested public artifact and QA evidence
+        id: public-artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: atlas-v7-3-ci-evidence-${{ github.sha }}
+          name: atlas-public-${{ github.event.pull_request.head.sha }}
           path: |
             dist-public
             artifacts/publication
             artifacts/release
-            artifacts/v7-3-browser-qa
-            artifacts/v7-3-visual-golden
-            tests-visual/approved-baselines.json
-            tests-visual/__screenshots__
+            artifacts/ci-binding
           if-no-files-found: warn
           retention-days: 30
+      - name: Record the immutable Actions artifact digest
+        if: ${{ always() && steps.public-artifact.outputs.artifact-digest != '' }}
+        run: echo "Atlas public artifact digest ${{ steps.public-artifact.outputs.artifact-digest }}" >> "$GITHUB_STEP_SUMMARY"

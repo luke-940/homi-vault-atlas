@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "homi.atlas_v7_4.independent_visual_qa_receipt.v1",
+  "title": "Homi Atlas v7.4 independent visual QA receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "status", "releaseVersion", "reviewerSeparation", "scope", "cases", "completedAt"],
+  "properties": {
+    "schema": { "const": "homi.atlas_v7_4.independent_visual_qa_receipt.v1" },
+    "status": { "enum": ["pending_independent_review", "approved_independent_visual_qa"] },
+    "releaseVersion": { "const": "7.4.0" },
+    "reviewerSeparation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["identityMode", "implementer", "reviewer", "differentRole", "differentSession"],
+      "properties": {
+        "identityMode": { "const": "domain_separated_sha256_fingerprint" },
+        "implementer": { "$ref": "#/$defs/sessionIdentity" },
+        "reviewer": { "$ref": "#/$defs/sessionIdentity" },
+        "differentRole": { "type": ["boolean", "null"] },
+        "differentSession": { "type": ["boolean", "null"] }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "surface", "caseCount", "geometryChecklistRequired", "ubuntuBaselineComparisonRequired"],
+      "properties": {
+        "profile": { "const": "atlas-public" },
+        "surface": { "const": "in_app_browser" },
+        "caseCount": { "const": 16 },
+        "geometryChecklistRequired": { "const": true },
+        "ubuntuBaselineComparisonRequired": { "const": true }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 16,
+      "maxItems": 16,
+      "items": { "$ref": "#/$defs/case" }
+    },
+    "completedAt": { "type": ["string", "null"], "format": "date-time" }
+  },
+  "$defs": {
+    "nullableSha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
+    "sessionIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "sessionFingerprint"],
+      "properties": {
+        "role": { "enum": ["atlas_builder", "independent_visual_qa"] },
+        "sessionFingerprint": { "$ref": "#/$defs/nullableSha256" }
+      }
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "viewport", "evidence", "checks", "verdict"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "viewport": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["width", "height"],
+          "properties": { "width": { "type": "integer", "minimum": 1 }, "height": { "type": "integer", "minimum": 1 } }
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "bytes", "sha256"],
+          "properties": {
+            "path": { "type": "string", "pattern": "^tests-visual/independent-evidence/.+-iab\\.png$" },
+            "bytes": { "type": ["integer", "null"], "minimum": 9 },
+            "sha256": { "$ref": "#/$defs/nullableSha256" }
+          }
+        },
+        "checks": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["labelNodeCollisions", "clippedLabels", "requiredTextUnder12Px", "horizontalOverflowPx", "mobileInteractiveUnder44Px", "visualParity", "accessibilityEncoding"],
+          "properties": {
+            "labelNodeCollisions": { "type": ["integer", "null"], "minimum": 0 },
+            "clippedLabels": { "type": ["integer", "null"], "minimum": 0 },
+            "requiredTextUnder12Px": { "type": ["integer", "null"], "minimum": 0 },
+            "horizontalOverflowPx": { "type": ["number", "null"], "minimum": 0 },
+            "mobileInteractiveUnder44Px": { "type": ["integer", "null"], "minimum": 0 },
+            "visualParity": { "enum": ["pending", "pass"] },
+            "accessibilityEncoding": { "enum": ["pending", "pass"] }
+          }
+        },
+        "verdict": { "enum": ["pending_review", "approved_independent_visual_qa"] }
+      }
+    }
+  }
+}

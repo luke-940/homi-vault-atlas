@@ -5,7 +5,7 @@ import { App } from "./App";
 import { AtlasStateProvider } from "./state";
 import "./styles/tokens.css";
 import "./styles/app.css";
-import "./styles/v73.css";
+import "./styles/v75.css";
 
 class AtlasErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null };
@@ -15,11 +15,11 @@ class AtlasErrorBoundary extends Component<{ children: ReactNode }, { error: Err
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error("Atlas v7 render boundary", error, info.componentStack);
+    console.error("Atlas v7.5 render boundary", error, info.componentStack);
   }
 
   recover = () => {
-    const safeHash = "#explore?lens=city";
+    const safeHash = "#home";
     window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}${safeHash}`);
     window.location.reload();
   };

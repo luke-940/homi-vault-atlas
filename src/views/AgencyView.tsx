@@ -14,18 +14,19 @@ import {
 import { useEffect, useRef } from "react";
 import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
+import { SpatialWorkspaceFrame } from "../components/SpatialWorkspaceFrame";
 import { atlasData } from "../data-runtime";
 import {
   actorSurfaceLabel,
   actorsByGroup,
   AGENCY_SCENES,
   currentAgencyScene,
-  DISTRICT_COLORS,
   MOTION_SECONDS,
   strongestKnowledgeRelation,
 } from "../agency/presentation";
 import { useAtlasState } from "../state";
 import type { AgencyActor, AgencyScene } from "../types";
+import { strokeColorForDistrict } from "../viz/palette";
 
 const actorIcons = {
   "actor:control-plane": ShieldCheck,
@@ -37,6 +38,16 @@ const actorIcons = {
 } as const;
 
 const defaultActorId = "actor:atlas-builder";
+
+export function agencyKnowledgeDistricts() {
+  return atlasData.graph.nodes
+    .filter((node) => node.kind === "district")
+    .sort((left, right) => right.representedDocuments - left.representedDocuments || left.label.localeCompare(right.label, "ko"));
+}
+
+export function agencyKnowledgeTarget(districtId: string) {
+  return { workspace: "explore" as const, sceneId: "graph", focusId: districtId, districtId };
+}
 
 function AgencySceneRail({ scene }: { scene: AgencyScene }) {
   const { state, dispatch } = useAtlasState();
@@ -166,22 +177,11 @@ function MobileRolePicker({ selectedActorId }: { selectedActorId: string }) {
 }
 
 function EvolutionScene() {
+  const { dispatch } = useAtlasState();
   const core = atlasData.agency.actors.filter((actor) => actor.groupId === "agency:group:homi-core");
   const independent = atlasData.agency.actors.filter((actor) => actor.groupId === "agency:group:independent");
   const strongest = strongestKnowledgeRelation(atlasData);
-  const knowledgeItems = atlasData.publication.profile === "public"
-    ? atlasData.entity.entities.map((entity) => ({
-      id: entity.id,
-      label: entity.title,
-      documentCount: entity.documentCount ?? 0,
-      district: entity.district,
-    }))
-    : atlasData.structure.districts.slice(0, 6).map((district) => ({
-      id: district.id,
-      label: district.name,
-      documentCount: district.documentCount,
-      district: district.name,
-    }));
+  const knowledgeItems = agencyKnowledgeDistricts();
   return (
     <section className="agency-evolution" aria-label="역할 전문화 전환">
       <div className="agency-principal">
@@ -217,9 +217,15 @@ function EvolutionScene() {
         <header><span>KNOWLEDGE TERRAIN · UNCHANGED CONTEXT</span><strong>{strongest ? `가장 강한 관계 ${strongest.wikilink.toLocaleString("ko-KR")}회` : "공개 집계"}</strong></header>
         <div>
           {knowledgeItems.map((item) => (
-            <span key={item.id} style={{ color: DISTRICT_COLORS[item.district] ?? "var(--district-neutral)" }}>
-              <b>{item.label}</b><small>{item.documentCount.toLocaleString("ko-KR")}개</small>
-            </span>
+            <button
+              key={item.id}
+              type="button"
+              style={{ color: strokeColorForDistrict(item.label) }}
+              aria-label={`${item.label} ${item.representedDocuments.toLocaleString("ko-KR")}개 표현 기록, Explore에서 열기`}
+              onClick={() => dispatch({ type: "journey", target: agencyKnowledgeTarget(item.id) })}
+            >
+              <b>{item.label}</b><small>{item.representedDocuments.toLocaleString("ko-KR")}개</small>
+            </button>
           ))}
         </div>
       </section>
@@ -243,11 +249,11 @@ export function AgencyView() {
   }, []);
 
   return (
-    <section className="agency-view" aria-labelledby="agency-title" data-scene={scene}>
+    <SpatialWorkspaceFrame className="agency-view" aria-labelledby="agency-title" data-scene={scene}>
       <header className="agency-intro">
         <span className="eyebrow">HUMAN × AGENT RESPONSIBILITY MAP</span>
         <h1 id="agency-title">방향과 책임의 경계를 지식 지형과 함께 읽습니다.</h1>
-        <p>Luke와 여섯 전문 역할의 목적·책임 표면·공개 결과·검증·중지 경계를 릴리스 시점의 공개 안전 스냅샷으로 보여줍니다.</p>
+        <p>Luke와 여섯 전문 역할의 목적·책임 표면·결과·검증·중지 경계를 {atlasData.graph.profile === "atlas-owner" ? "Luke Mac 전용 Owner 스냅샷" : "공개 안전 스냅샷"}으로 보여줍니다.</p>
       </header>
 
       <AgencySceneRail scene={scene} />
@@ -275,6 +281,6 @@ export function AgencyView() {
         <span>VERIFIED VERSION SNAPSHOT</span>
         <p>{atlasData.agency.snapshot.caveat} · 기준일 {atlasData.agency.snapshot.asOfDate}</p>
       </footer>
-    </section>
+    </SpatialWorkspaceFrame>
   );
 }

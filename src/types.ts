@@ -1,5 +1,6 @@
 export type Workspace = "home" | "explore" | "observe" | "flow" | "time" | "agency";
 export type ExploreLens = "city";
+export type GraphFreshness = "all" | "30d" | "90d" | "1y" | "undated";
 export type RelationLayer = "wikilink" | "typed" | "route";
 export type AgencyScene = "system" | "roles" | "evolution";
 export type AgencyGroupKind = "core" | "independent";
@@ -11,6 +12,176 @@ export type AgencyLinkKind =
   | "returns_evidence";
 export type InsightKind = "latest_pulse" | "strongest_relation" | "knowledge_concentration" | "attention";
 export type InsightConfidence = "high" | "medium" | "low";
+export type AtlasProfile = "atlas-owner" | "atlas-public";
+export type InventoryDisposition = "named" | "aggregate" | "excluded";
+export type InventoryExclusionReason =
+  | "archive"
+  | "scaffolding"
+  | "control_internal"
+  | "raw_daily"
+  | "explicit_policy"
+  | "public_name_not_approved";
+export type AtlasStructureNodeKind =
+  | "district"
+  | "moc_hub"
+  | "paper_gateway"
+  | "strategy_insight"
+  | "strategy_request"
+  | "project"
+  | "project_stage"
+  | "signal_domain"
+  | "signal_storyline"
+  | "source_document"
+  | "aggregate_boundary";
+
+export type AtlasGraphNodeKind = AtlasStructureNodeKind;
+
+export interface InventoryCoverage {
+  id: string;
+  label: string;
+  physical: number;
+  named: number;
+  aggregate: number;
+  excluded: number;
+}
+
+export interface AtlasInventoryV1 {
+  schema: "atlas.inventory.v1";
+  profile: AtlasProfile;
+  generatedAt: string;
+  asOfDate: string;
+  physicalMarkdownCount: number;
+  namedCount: number;
+  aggregateCount: number;
+  excludedCount: number;
+  unclassifiedCount: 0;
+  reconciliation: {
+    classifiedTotal: number;
+    pass: true;
+  };
+  coverage: InventoryCoverage[];
+  exclusions: {
+    priority: [
+      "archive",
+      "scaffolding",
+      "control_internal",
+      "raw_daily",
+      "explicit_policy",
+      "public_name_not_approved",
+    ];
+    byReason: Record<InventoryExclusionReason, number>;
+  };
+  publicTitlePolicy: {
+    schema: "public-title-allowlist.v1";
+    mode: "safe_hybrid";
+    fallback: "alias_or_aggregate";
+    projectCountDisclosure: "combined_non_attributable" | "owner_exact";
+  };
+}
+
+export interface AtlasGraphNodeV1 {
+  id: string;
+  kind: AtlasGraphNodeKind;
+  label: string;
+  parentId: string | null;
+  districtId: string;
+  clusterId: string;
+  representedDocuments: number;
+  gravity: number;
+  occurrences: number;
+  freshness: string | null;
+  nameMode: "approved_name" | "public_alias" | "aggregate" | "owner_name";
+}
+
+export interface AtlasGraphEdgeV1 {
+  id: string;
+  source: string;
+  target: string;
+  kind: "references";
+  direction: "forward";
+  occurrenceCount: number;
+  defaultVisible: boolean;
+}
+
+export interface AtlasGraphCoordinateV1 {
+  id: string;
+  x: number;
+  y: number;
+  z: number;
+  depthLevel: 0 | 1 | 2 | 3 | 4;
+  radius: number;
+  dated: boolean;
+  clusterIndex: number;
+}
+
+export interface AtlasGraphClusterV1 {
+  id: string;
+  districtId: string;
+  label: string;
+  nodeCount: number;
+  representedDocumentCount: number;
+  representativeNodeCount: number;
+  summary: string | null;
+  contour: {
+    type: "MultiPolygon";
+    coordinates: number[][][][];
+  };
+}
+
+export interface AtlasGraphV1 {
+  schema: "atlas.graph.v1";
+  profile: AtlasProfile;
+  generatedAt: string;
+  nodes: AtlasGraphNodeV1[];
+  edges: AtlasGraphEdgeV1[];
+  clusters: AtlasGraphClusterV1[];
+  layout: {
+    algorithm: "seeded-d3-force-projected-3d-v1";
+    seed: string;
+    ticks: number;
+    axes: {
+      x: { field: "districtId"; kind: "categorical_cluster"; direction: "left_to_right" };
+      y: { field: "freshness"; kind: "semantic_date"; direction: "newer_is_higher"; scale: "order_preserving_rank" };
+      z: { field: "kind"; kind: "structural_depth"; direction: "district_to_source" };
+    };
+    bounds: { x: number; y: number; z: number; width: number; height: number; depth: number };
+    undatedRail: { y: number; label: string };
+    coordinates: AtlasGraphCoordinateV1[];
+    defaultNodeIds: string[];
+    defaultEdgeIds: string[];
+    labelBudget: number;
+  };
+  manifest: {
+    nodeCount: number;
+    edgeCount: number;
+    clusterCount: number;
+    semanticDigest: string;
+    layoutDigest: string;
+    projectionDigest: string;
+  };
+}
+
+export interface AtlasActivityV1 {
+  schema: "atlas.activity.v1";
+  profile: "atlas-owner";
+  generatedAt: string;
+  asOfDate: string;
+  live: false;
+  boundary: string;
+  aggregates: Array<{
+    role: string;
+    unitType: string;
+    status: string;
+    date: string | null;
+    count: number;
+  }>;
+  lifecycle: Array<{
+    date: string;
+    created: number;
+    completed: number;
+    stopped: number;
+  }>;
+}
 
 export interface InsightTargetScene {
   workspace: Workspace;
@@ -49,7 +220,7 @@ export interface InsightPack {
 
 export interface PublicationPack {
   schema: "atlas.publication.v1";
-  profile: "internal" | "public";
+  profile: "internal" | "owner" | "public";
   generatedAt: string;
   publicSnapshotDigest: string | null;
   allowedSurfaces: string[];
@@ -257,8 +428,9 @@ export interface Route {
   id: string;
   label: string;
   question: string;
+  weight: number;
   members: string[];
-  provenance: "curated_operating_lens";
+  provenance: "curated_operating_lens" | "resolved_wikilink_path";
   classifier: string;
   sourceRefs: string[];
   stations: RouteStation[];
@@ -285,12 +457,8 @@ export interface EraRecord {
 
 export interface AtlasData {
   bootstrap: SnapshotPack;
-  structure: {
-    districts: District[];
-    hierarchyNodes: HierarchyNode[];
-    rootId: string;
-    archiveScope: { active: number; archive: number; defaultState: string };
-  };
+  inventory: AtlasInventoryV1;
+  graph: AtlasGraphV1;
   relation: {
     districtOrder: string[];
     matrix: MatrixCell[];
@@ -327,7 +495,7 @@ export interface AtlasData {
       chains: Array<Record<string, unknown>>;
     };
   };
-  temporal: { eras: EraRecord[]; currentEra: number };
+  temporal: { eras: EraRecord[]; currentEra: number | null };
   entity: { entities: Entity[]; searchFields: string[] };
   health: {
     memoryEngine: Record<string, unknown>;
@@ -342,6 +510,7 @@ export interface AtlasData {
   insight: InsightPack;
   publication: PublicationPack;
   agency: AtlasAgencyV1;
+  activity?: AtlasActivityV1;
 }
 
 declare global {

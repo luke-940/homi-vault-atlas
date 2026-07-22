@@ -1,0 +1,8 @@
+/* Space Grotesk 2.0 — SIL Open Font License 1.1 */
+@font-face {
+  font-family: "Space Grotesk";
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url("./SpaceGrotesk-wght.woff2") format("woff2-variations");
+}

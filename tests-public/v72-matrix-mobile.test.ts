@@ -8,7 +8,8 @@ import { beforeAll, describe, expect, test, vi } from "vitest";
 const packNames = [
   "agency",
   "bootstrap",
-  "structure",
+  "inventory",
+  "graph",
   "relation",
   "flow",
   "temporal",

@@ -1,7 +1,7 @@
 {
   "schema": "atlas.snapshot.v7",
-  "version": "7.3.0-public",
-  "generatedAt": "2026-07-16T11:43:09.794Z",
+  "version": "7.5.0-public",
+  "generatedAt": "2026-07-22T08:44:46.744Z",
   "snapshot": {
     "memoryEngineSchema": "public-curated-snapshot.v1",
     "memoryFiles": 6,
@@ -14,7 +14,9 @@
     "atlas": "team-readable public snapshot",
     "canonical": "not included in public bundle",
     "actualObsidianGraphView": "not included",
-    "notionVisualQa": "not included"
+    "notionVisualQa": "not included",
+    "inventory": "실볼트 Markdown 인벤토리를 named·aggregate·excluded로 완전 reconciliation한 공개 안전 투영",
+    "freshness": "frontmatter 의미 날짜와 날짜형 Daily/Weekly 경로만 사용하며 mtime은 사용하지 않음"
   },
   "workspaces": [
     "home",

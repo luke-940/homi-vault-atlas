@@ -1,535 +1,260 @@
 import {
   ArrowRight,
-  Box,
-  Layers3,
-  Link2,
-  Radio,
-  Rocket,
-  SearchCheck,
-  ShieldCheck,
-  Sprout,
-  UserRound,
+  Search,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
+import { atlasData, graphNodeById } from "../data-runtime";
+import { LivingGraphCanvas } from "../graph/LivingGraphCanvas";
 import {
-  actorSurfaceLabel,
-  actorsByGroup,
-  currentHomeScene,
-  DISTRICT_COLORS,
-  HOME_SCENES,
-  MOTION_SECONDS,
-  publicDocumentCount,
-  strongestKnowledgeRelation,
-  type HomeSceneId,
-} from "../agency/presentation";
-import { atlasData } from "../data-runtime";
+  graphNodeLabel,
+  strongestConnectedNode,
+  strongestIncidentEdge,
+} from "../graph/model";
+import { interactionContext } from "../graph/semantic-edge-model";
 import { useAtlasState } from "../state";
-import type { AgencyActor, MatrixCell } from "../types";
+import type { AtlasGraphNodeV1 } from "../types";
 
-const actorIcons = {
-  "actor:control-plane": ShieldCheck,
-  "actor:daily-runner": Radio,
-  "actor:atlas-builder": Box,
-  "actor:rocket-manager": Rocket,
-  "actor:groot-manager": Sprout,
-  "actor:intelligence-layer-manager": Layers3,
-} as const;
+type HomeSceneId = "knowledge-field" | "knowledge-gravity" | "freshness-field" | "link-trace";
 
-const publicDistrictAliases: Record<string, string> = {
-  MOC: "중심 지식",
-  Papers: "연구 논거",
-  Strategy: "전략",
-  Signals: "신호",
-  "Console/Homi": "운영 기반",
-};
+const HOME_SCENES: Array<{
+  id: HomeSceneId;
+  index: string;
+  label: string;
+  eyebrow: string;
+  title: string;
+  body: string;
+}> = [
+  {
+    id: "knowledge-field",
+    index: "01",
+    label: "Knowledge Field",
+    eyebrow: "HOMI VAULT ATLAS",
+    title: "지식이 어디에 있고,\n어디로 움직이는지 본다.",
+    body: "기록을 연결하고, 관계의 흐름을 따라 새로운 통찰을 발견합니다.",
+  },
+  {
+    id: "knowledge-gravity",
+    index: "02",
+    label: "Knowledge Gravity",
+    eyebrow: "KNOWLEDGE GRAVITY",
+    title: "많이 참조되는 지식이\n더 강한 중력을 만든다.",
+    body: "크기와 빛은 고유 inbound 문서 수에서만 나옵니다. 링크 출현 횟수는 다른 단위로 분리해 읽습니다.",
+  },
+  {
+    id: "freshness-field",
+    index: "03",
+    label: "Freshness Field",
+    eyebrow: "MEANINGFUL FRESHNESS",
+    title: "최근의 지식은 위로,\n기록되지 않은 시간은 감추지 않는다.",
+    body: "의미 있는 날짜가 있는 기록만 시간축에 놓습니다. 날짜가 없으면 별도 rail에 남기며 활동으로 추정하지 않습니다.",
+  },
+  {
+    id: "link-trace",
+    index: "04",
+    label: "Link Trace",
+    eyebrow: "DIRECTED KNOWLEDGE FLOW",
+    title: "하나의 참조가\n지식의 흐름을 만든다.",
+    body: "선은 실제 wikilink 방향을 따릅니다. 선택한 지식에서 들어오고 나가는 경로만 선명하게 이어집니다.",
+  },
+];
 
-const terrainPositions: Record<string, { x: number; y: number }> = {
-  "중심 지식": { x: 92, y: 154 },
-  "연구 논거": { x: 260, y: 92 },
-  전략: { x: 430, y: 164 },
-  "운영 기반": { x: 602, y: 100 },
-  신호: { x: 756, y: 166 },
-  "공개 근거 경계": { x: 858, y: 82 },
-};
-
-const terrainPositionsMobile: Record<string, { x: number; y: number }> = {
-  "중심 지식": { x: 150, y: 64 },
-  "연구 논거": { x: 460, y: 44 },
-  전략: { x: 770, y: 64 },
-  "운영 기반": { x: 150, y: 164 },
-  신호: { x: 460, y: 144 },
-  "공개 근거 경계": { x: 770, y: 164 },
-};
-
-function normalizeDistrict(name: string) {
-  return publicDistrictAliases[name] ?? name;
+function normalizedScene(sceneId: string): HomeSceneId {
+  return HOME_SCENES.some((scene) => scene.id === sceneId) ? sceneId as HomeSceneId : "knowledge-field";
 }
 
-function useOpeningScene() {
-  const shouldReduceMotion = useReducedMotion();
-  const [play, setPlay] = useState(() => {
-    if (shouldReduceMotion) return false;
-    try {
-      return window.sessionStorage.getItem("homi-atlas-v7-3-home-entry-seen") !== "1";
-    } catch {
-      return true;
-    }
-  });
-  useEffect(() => {
-    if (!play) return;
-    try { window.sessionStorage.setItem("homi-atlas-v7-3-home-entry-seen", "1"); } catch { /* session storage is optional */ }
-    const timer = window.setTimeout(() => setPlay(false), 800);
-    return () => window.clearTimeout(timer);
-  }, [play]);
-  return { play, shouldReduceMotion: Boolean(shouldReduceMotion) };
+function graphScene(scene: HomeSceneId) {
+  return ({
+    "knowledge-field": "field",
+    "knowledge-gravity": "gravity",
+    "freshness-field": "freshness",
+    "link-trace": "trace",
+  } as const)[scene];
 }
 
-function HomeSceneRail({ active }: { active: HomeSceneId }) {
-  const { dispatch } = useAtlasState();
-  return (
-    <nav className="home-scene-rail" aria-label="Home editorial scenes">
-      {HOME_SCENES.map((scene) => (
-        <button
-          key={scene.id}
-          type="button"
-          className={active === scene.id ? "is-active" : ""}
-          onClick={() => dispatch({ type: "journey", target: { workspace: "home", sceneId: scene.id } })}
-          aria-current={active === scene.id ? "step" : undefined}
-          aria-label={`${scene.index} ${scene.label}: ${scene.headline}`}
-        >
-          <span>{scene.index}</span>
-          <strong>{scene.shortLabel}</strong>
-        </button>
-      ))}
-    </nav>
-  );
-}
-
-function ProofLedger({ recordCount, strongest }: { recordCount: number; strongest: MatrixCell | null }) {
-  const metrics = [
-    { value: "1", label: "사람 소유자 (Human Owner)", icon: UserRound },
-    { value: String(atlasData.agency.actors.length), label: "에이전트 역할 · 핵심 3 · 독립 3", icon: SearchCheck },
-    { value: recordCount.toLocaleString("ko-KR"), label: "공개 기록 (Public Records)", icon: Box },
-    { value: strongest ? strongest.wikilink.toLocaleString("ko-KR") : "—", label: "최강 관계 (Strongest Relation)", icon: Link2 },
-  ];
-  return (
-    <div className="home-proof-ledger" aria-label="공개 스냅샷 핵심 증거">
-      {metrics.map(({ value, label, icon: Icon }) => (
-        <div key={label}>
-          <Icon size={19} strokeWidth={1.65} aria-hidden="true" />
-          <strong>{value}</strong>
-          <span>{label}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function HomeActions() {
-  const { dispatch } = useAtlasState();
-  return (
-    <div className="home-primary-actions">
-      <button type="button" className="is-primary" onClick={() => dispatch({ type: "workspace", workspace: "explore" })}>
-        아틀라스 탐색 <ArrowRight size={17} aria-hidden="true" />
-      </button>
-      <button type="button" onClick={() => dispatch({ type: "workspace", workspace: "agency" })}>
-        협업 구조 보기 <ArrowRight size={17} aria-hidden="true" />
-      </button>
-    </div>
-  );
-}
-
-function HomeNarrative({ recordCount, strongest, deferActions = false }: {
-  recordCount: number;
-  strongest: MatrixCell | null;
-  deferActions?: boolean;
-}) {
-  return (
-    <section className="home-narrative">
-      <span className="eyebrow">HUMAN × AGENT KNOWLEDGE SYSTEM</span>
-      <h1 id="home-title" aria-label="한 사람의 방향이 전문 에이전트와 지식 지형을 움직인다.">
-        <span>한 사람의 방향이</span>
-        <span>전문 에이전트와</span>
-        <span>지식 지형을 움직인다.</span>
-      </h1>
-      <p>
-        Luke가 방향을 정하고, 세 개의 Homi 핵심 역할과 세 개의 독립 프로젝트 에이전트가 분리된 책임으로 지식을 선별·검증·발행합니다. 현재 {recordCount.toLocaleString("ko-KR")}개의 공개 기록이 그 협업이 남긴 지식 관계를 보여줍니다.
-      </p>
-      {!deferActions && <HomeActions />}
-      <ProofLedger recordCount={recordCount} strongest={strongest} />
-    </section>
-  );
-}
-
-function ActorRow({ actor, selected }: { actor: AgencyActor; selected: boolean }) {
-  const { dispatch } = useAtlasState();
-  const Icon = actorIcons[actor.id as keyof typeof actorIcons] ?? Box;
-  return (
-    <button
-      type="button"
-      className={selected ? "home-actor-row is-selected" : "home-actor-row"}
-      onClick={() => dispatch({ type: "actor", actorId: actor.id })}
-      aria-label={`${actor.label}, 책임 표면 ${actorSurfaceLabel(atlasData.agency, actor)}`}
-    >
-      <Icon size={18} strokeWidth={1.65} aria-hidden="true" />
-      <span><strong>{actor.label}</strong><small>{actorSurfaceLabel(atlasData.agency, actor)}</small></span>
-    </button>
-  );
-}
-
-function AgencyBand({ scene, playOpening, reducedMotion }: {
-  scene: HomeSceneId;
-  playOpening: boolean;
-  reducedMotion: boolean;
-}) {
-  const groups = actorsByGroup(atlasData.agency);
-  const showHistorical = scene === "responsibility-partition";
-  const selectedActor = scene === "knowledge-return" ? "actor:atlas-builder" : null;
-  return (
-    <m.section
-      className="home-agency-band"
-      data-scene={scene}
-      aria-label="Luke와 여섯 전문 역할"
-      animate={reducedMotion ? { opacity: 1 } : {
-        x: scene === "responsibility-partition" ? -10 : scene === "knowledge-return" ? 12 : 0,
-        scale: scene === "responsibility-partition" ? 1.012 : 1,
-      }}
-      transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : MOTION_SECONDS.scene }}
-    >
-      <m.div
-        className="home-principal"
-        initial={playOpening ? { y: -4 } : false}
-        animate={{ y: 0 }}
-        transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : MOTION_SECONDS.control, delay: playOpening ? 0.12 : 0 }}
-      >
-        <UserRound size={20} aria-hidden="true" />
-        <span><strong>Luke</strong><small>Human Owner</small></span>
-      </m.div>
-
-      {showHistorical && (
-        <m.div
-          className="home-historical-model"
-          initial={{ scaleX: 0.86 }}
-          animate={{ scaleX: 1 }}
-          transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : MOTION_SECONDS.emphasis }}
-        >
-          <span>HISTORICAL MODEL · NON-ACTOR</span>
-          <strong>단일 관리 세션 중심</strong>
-          <small>SCHEMATIC · NOT WORKLOAD</small>
-        </m.div>
-      )}
-
-      {showHistorical && (
-        <m.div
-          className="home-partition-flow"
-          initial={reducedMotion ? false : { y: -8 }}
-          animate={{ y: 0 }}
-          transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : MOTION_SECONDS.emphasis }}
-          aria-label="역사적 통합 역할에서 세 Homi Core 역할로 책임이 전문화됨"
-        >
-          <ArrowRight size={16} aria-hidden="true" />
-          <span>3 DURABLE CORE ROLES</span>
-        </m.div>
-      )}
-
-      <div className="home-authority-bus" aria-hidden="true">
-        {atlasData.agency.actors.map((actor, index) => (
-          <m.i
-            key={actor.id}
-            initial={playOpening ? { scaleY: 0, opacity: 0 } : false}
-            animate={{ scaleY: 1, opacity: 1 }}
-            transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : MOTION_SECONDS.control, delay: playOpening ? 0.2 + index * 0.036 : 0 }}
-          />
-        ))}
-      </div>
-
-      <div className="home-agency-groups">
-        {groups.map((group) => (
-          <section key={group.id} className={`home-agency-group is-${group.kind}`}>
-            <header><span>{group.kind === "core" ? "HOMI CORE" : "INDEPENDENT PROJECT OWNERS"}</span><b>{group.actors.length}</b></header>
-            <div>
-              {group.actors.map((actor, index) => (
-                <m.div
-                  key={actor.id}
-                  initial={playOpening ? { y: 8 } : false}
-                  animate={{ y: 0 }}
-                  transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : 0.2, delay: playOpening ? 0.24 + index * 0.036 : 0 }}
-                >
-                  <ActorRow actor={actor} selected={actor.id === selectedActor} />
-                </m.div>
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
-      <p className="home-agency-note">직접 방향 6개 · 그룹은 권한 계층이 아닙니다.</p>
-    </m.section>
-  );
-}
-
-type TerrainNode = { name: string; documentCount: number; x: number; y: number; boundary?: boolean };
-
-function terrainNodes(mobile: boolean): TerrainNode[] {
-  const positions = mobile ? terrainPositionsMobile : terrainPositions;
-  const districts = atlasData.structure.districts
-    .map((district) => ({ ...district, publicName: normalizeDistrict(district.name) }))
-    .filter((district) => positions[district.publicName])
-    .filter((district, index, all) => all.findIndex((candidate) => candidate.publicName === district.publicName) === index)
-    .map((district) => ({
-      name: district.publicName,
-      documentCount: district.documentCount,
-      ...positions[district.publicName],
-    }));
-  return [
-    ...districts,
-    { name: "공개 근거 경계", documentCount: 0, ...positions["공개 근거 경계"], boundary: true },
-  ];
-}
-
-function relationPath(source: TerrainNode, target: TerrainNode, index: number) {
-  const midX = (source.x + target.x) / 2;
-  const lift = 26 + (index % 4) * 12;
-  const midY = Math.min(source.y, target.y) - lift;
-  return `M ${source.x} ${source.y} Q ${midX} ${midY} ${target.x} ${target.y}`;
-}
-
-function KnowledgeTerrain({ scene, playOpening, reducedMotion }: {
-  scene: HomeSceneId;
-  playOpening: boolean;
-  reducedMotion: boolean;
-}) {
-  const { state } = useAtlasState();
-  const nodes = useMemo(() => terrainNodes(state.mobileSibling), [state.mobileSibling]);
-  const byName = useMemo(() => new Map(nodes.map((node) => [node.name, node])), [nodes]);
-  const visibleRelations = useMemo(() => atlasData.relation.matrix
-    .map((relation) => ({
-      relation,
-      source: byName.get(normalizeDistrict(relation.source)),
-      target: byName.get(normalizeDistrict(relation.target)),
-    }))
-    .filter((item): item is { relation: MatrixCell; source: TerrainNode; target: TerrainNode } => Boolean(item.source && item.target))
-    .sort((left, right) => right.relation.wikilink - left.relation.wikilink), [byName]);
-  const strongest = visibleRelations[0] ?? null;
-  const maxDocuments = Math.max(1, ...nodes.map((node) => node.documentCount));
-  const independentOwnership = scene === "independent-ownership";
-  const knowledgeReturn = scene === "knowledge-return";
-  const selectedNames = new Set(strongest ? [strongest.source.name, strongest.target.name] : []);
-
-  return (
-    <m.section
-      className="home-knowledge-terrain"
-      aria-label="공개 지식 지형"
-      initial={playOpening && !reducedMotion ? { scale: 1.018, y: 4 } : false}
-      animate={{ scale: knowledgeReturn ? 1.018 : 1, x: knowledgeReturn ? -8 : 0 }}
-      transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : playOpening ? MOTION_SECONDS.entry : MOTION_SECONDS.scene }}
-      data-scene={scene}
-    >
-      <header>
-        <span>KNOWLEDGE TERRAIN</span>
-        <p className="terrain-legend">구역색은 의미, 크기는 공개 기록 수, 선 굵기는 실제 관계 가중치를 나타냅니다.</p>
-        {strongest && (
-          <p className="terrain-header-summary">
-            {strongest.source.name} ↔ {strongest.target.name} · <b>{strongest.relation.wikilink.toLocaleString("ko-KR")}</b>
-          </p>
-        )}
-      </header>
-      <div className="home-terrain-canvas">
-        <svg viewBox="0 0 920 240" aria-hidden="true" preserveAspectRatio="none">
-          {visibleRelations.map(({ relation, source, target }, index) => {
-            const isStrongest = relation.id === strongest?.relation.id;
-            const width = 1.25 + 4.75 * Math.sqrt(relation.wikilink / Math.max(1, strongest?.relation.wikilink ?? relation.wikilink));
-            const path = relationPath(source, target, index);
-            const relationColor = DISTRICT_COLORS[source.name] ?? "var(--district-research)";
-            return (
-              <g key={relation.id} className={isStrongest ? "is-strongest" : ""}>
-                {isStrongest && (
-                  <path
-                    d={path}
-                    className="terrain-relation-underlay"
-                    style={{ stroke: `color-mix(in srgb, ${relationColor} 22%, transparent)` }}
-                  />
-                )}
-                <m.path
-                  d={path}
-                  className="terrain-relation"
-                  style={{ stroke: relationColor, strokeWidth: width }}
-                  initial={playOpening && isStrongest ? { pathLength: 0, opacity: 0.2 } : false}
-                  animate={{
-                    pathLength: 1,
-                    opacity: independentOwnership ? 0.12 : knowledgeReturn ? (isStrongest ? 1 : 0.18) : isStrongest ? 0.9 : 0.3,
-                  }}
-                  transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : playOpening && isStrongest ? MOTION_SECONDS.control : MOTION_SECONDS.scene, delay: playOpening && isStrongest ? 0.62 : 0 }}
-                />
-              </g>
-            );
-          })}
-        </svg>
-        {nodes.map((node) => {
-          const size = node.boundary ? 58 : 52 + 34 * Math.sqrt(node.documentCount / maxDocuments);
-          const selected = knowledgeReturn && selectedNames.has(node.name);
-          return (
-            <div key={node.name}>
-              {!node.boundary && (
-                <m.i
-                  className="terrain-contour"
-                  aria-hidden="true"
-                  style={{
-                    left: `${(node.x / 920) * 100}%`,
-                    top: `${(node.y / 240) * 100}%`,
-                    width: size + 28,
-                    height: size + 28,
-                    color: DISTRICT_COLORS[node.name] ?? "var(--ink)",
-                  }}
-                  initial={playOpening && !reducedMotion ? { opacity: 0, scale: .84 } : false}
-                  animate={{ opacity: independentOwnership ? .08 : knowledgeReturn && !selected ? .1 : .2, scale: 1 }}
-                  transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : MOTION_SECONDS.scene, delay: playOpening ? .5 : 0 }}
-                />
-              )}
-              <m.div
-                className={`terrain-node${node.boundary ? " is-boundary" : ""}${selected ? " is-selected" : ""}`}
-                data-node={node.name}
-                style={{
-                  left: `${(node.x / 920) * 100}%`,
-                  top: `${(node.y / 240) * 100}%`,
-                  width: size,
-                  minHeight: size,
-                  color: DISTRICT_COLORS[node.name] ?? "var(--ink)",
-                }}
-                initial={playOpening && !reducedMotion ? { opacity: 0, scale: .84 } : false}
-                animate={{
-                  opacity: independentOwnership ? (node.boundary ? 0.72 : 0.34) : knowledgeReturn ? (selected ? 1 : 0.45) : 1,
-                  scale: selected ? 1.05 : 1,
-                }}
-                transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : MOTION_SECONDS.scene, delay: playOpening ? .5 : 0 }}
-              >
-                <strong>{node.name}</strong>
-                <span>{node.boundary ? "PUBLIC" : node.documentCount.toLocaleString("ko-KR")}</span>
-              </m.div>
-            </div>
-          );
-        })}
-        {strongest && (
-          <m.p
-            className="terrain-strongest-readout"
-            animate={{ opacity: independentOwnership ? 0.24 : 1, y: knowledgeReturn ? -2 : 0 }}
-            transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : MOTION_SECONDS.scene }}
-          >
-            {strongest.source.name} ↔ {strongest.target.name} · <b>{strongest.relation.wikilink.toLocaleString("ko-KR")}</b>
-          </m.p>
-        )}
-      </div>
-      <p className="sr-only">
-        {visibleRelations.map(({ relation, source, target }) => `${source.name}와 ${target.name} ${relation.wikilink}회`).join(", ")}
-      </p>
-    </m.section>
-  );
-}
-
-function KnowledgeReturnBoundary({ active, reducedMotion }: {
-  active: boolean;
-  reducedMotion: boolean;
-}) {
-  return (
-    <div
-      className={active ? "home-knowledge-return-boundary is-active" : "home-knowledge-return-boundary"}
-      aria-label="검증된 버전 스냅샷 경계"
-    >
-      <span className="snapshot-boundary-label">VERIFIED RELEASE SNAPSHOT</span>
-      {active && (
-        <m.aside
-          className="publication-crossing"
-          initial={reducedMotion ? false : { opacity: 0, x: -18 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : MOTION_SECONDS.emphasis }}
-          aria-label="Atlas Builder가 검증된 공개 경계를 지나 지식 지형으로 결과와 증거를 돌려주는 경로"
-        >
-          <Box size={16} aria-hidden="true" />
-          <span>ATLAS BUILDER</span>
-          <ArrowRight size={16} aria-hidden="true" />
-          <ShieldCheck size={16} aria-hidden="true" />
-          <strong>VERIFIED KNOWLEDGE RETURN</strong>
-        </m.aside>
-      )}
-    </div>
-  );
-}
-
-function HomeStage({ scene, playOpening, reducedMotion }: {
-  scene: HomeSceneId;
-  playOpening: boolean;
-  reducedMotion: boolean;
-}) {
-  const sceneCopy = HOME_SCENES.find((item) => item.id === scene)!;
-  return (
-    <section className="home-system-stage" data-scene={scene}>
-      <HomeSceneRail active={scene} />
-      <m.div
-        className="home-scene-copy"
-        key={scene}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: reducedMotion ? MOTION_SECONDS.fast : 0.42 }}
-        aria-live="polite"
-      >
-        <span>{sceneCopy.label}</span>
-        <strong>{sceneCopy.headline}</strong>
-        <p>{sceneCopy.body}</p>
-      </m.div>
-      <AgencyBand scene={scene} playOpening={playOpening} reducedMotion={reducedMotion} />
-      <KnowledgeReturnBoundary active={scene === "knowledge-return"} reducedMotion={reducedMotion} />
-      <KnowledgeTerrain scene={scene} playOpening={playOpening} reducedMotion={reducedMotion} />
-    </section>
-  );
-}
-
-function MobileHome({ scene, recordCount, strongest, playOpening, reducedMotion }: {
-  scene: HomeSceneId;
-  recordCount: number;
-  strongest: MatrixCell | null;
-  playOpening: boolean;
-  reducedMotion: boolean;
-}) {
-  return (
-    <div className="home-mobile-composition">
-      <HomeNarrative recordCount={recordCount} strongest={strongest} deferActions />
-      <HomeSceneRail active={scene} />
-      <AgencyBand scene={scene} playOpening={playOpening} reducedMotion={reducedMotion} />
-      <KnowledgeReturnBoundary active={scene === "knowledge-return"} reducedMotion={reducedMotion} />
-      <KnowledgeTerrain scene={scene} playOpening={playOpening} reducedMotion={reducedMotion} />
-      <HomeActions />
-    </div>
-  );
+function nodeKindLabel(node: AtlasGraphNodeV1) {
+  return ({
+    district: "District",
+    moc_hub: "MOC Hub",
+    paper_gateway: "Paper Gateway",
+    strategy_insight: "Strategy Insight",
+    strategy_request: "Strategy Request",
+    project: "Project",
+    project_stage: "Project Stage",
+    signal_domain: "Signal Domain",
+    signal_storyline: "Signal Storyline",
+    source_document: "Source Document",
+    aggregate_boundary: "Aggregate Boundary",
+  } as const)[node.kind];
 }
 
 export function HomeView() {
-  const { state } = useAtlasState();
-  const scene = currentHomeScene(state.sceneId);
-  const recordCount = publicDocumentCount(atlasData);
-  const strongest = strongestKnowledgeRelation(atlasData);
-  const { play: playOpening, shouldReduceMotion } = useOpeningScene();
+  const { state, dispatch } = useAtlasState();
+  const sceneId = normalizedScene(state.sceneId);
+  const scene = HOME_SCENES.find((item) => item.id === sceneId)!;
+  const strongestNode = useMemo(() => strongestConnectedNode(atlasData.graph), []);
+  const graphFocus = state.focusId && graphNodeById.has(state.focusId) ? state.focusId : null;
+  const previewId = state.previewId && graphNodeById.has(state.previewId) ? state.previewId : null;
+  const traceFocus = graphFocus ?? strongestNode?.id ?? null;
+  const traceEdge = useMemo(() => strongestIncidentEdge(atlasData.graph, traceFocus), [traceFocus]);
+  const activeId = previewId ?? graphFocus;
+  const focusedNode = activeId ? graphNodeById.get(activeId) ?? null : null;
+  const focusedDistrict = focusedNode
+    ? atlasData.graph.clusters.find((cluster) => cluster.id === focusedNode.clusterId)?.label ?? "구역 미확인"
+    : null;
+  const context = useMemo(
+    () => interactionContext(atlasData.graph, previewId, graphFocus),
+    [graphFocus, previewId],
+  );
+  const incomingCount = focusedNode
+    ? focusedNode.kind === "district"
+      ? atlasData.graph.edges.filter((edge) => graphNodeById.get(edge.target)?.clusterId === focusedNode.clusterId && graphNodeById.get(edge.source)?.clusterId !== focusedNode.clusterId).length
+      : atlasData.graph.edges.filter((edge) => edge.target === focusedNode.id).length
+    : 0;
+  const outgoingCount = focusedNode
+    ? focusedNode.kind === "district"
+      ? atlasData.graph.edges.filter((edge) => graphNodeById.get(edge.source)?.clusterId === focusedNode.clusterId && graphNodeById.get(edge.target)?.clusterId !== focusedNode.clusterId).length
+      : atlasData.graph.edges.filter((edge) => edge.source === focusedNode.id).length
+    : 0;
+  const [intro, setIntro] = useState(false);
 
-  if (state.mobileSibling) {
-    return (
-      <section className="home-view-v73 is-mobile" aria-labelledby="home-title" data-scene={scene} data-opening={playOpening && !shouldReduceMotion}>
-        <MobileHome
-          scene={scene}
-          recordCount={recordCount}
-          strongest={strongest}
-          playOpening={playOpening && !shouldReduceMotion}
-          reducedMotion={shouldReduceMotion}
-        />
-        <p className="home-version-boundary"><ShieldCheck size={14} aria-hidden="true" /> {atlasData.agency.snapshot.caveat} · 기준일 {atlasData.agency.snapshot.asOfDate}</p>
-      </section>
-    );
-  }
+  useEffect(() => {
+    try {
+      const key = "homi-atlas-v7-5-entry-seen";
+      if (sessionStorage.getItem(key) !== "1") {
+        setIntro(true);
+        sessionStorage.setItem(key, "1");
+      }
+    } catch {
+      setIntro(false);
+    }
+  }, []);
+
+  const openScene = (nextScene: HomeSceneId) => {
+    dispatch({ type: "journey", target: { workspace: "home", sceneId: nextScene } });
+  };
 
   return (
-    <section className="home-view-v73" aria-labelledby="home-title" data-scene={scene} data-opening={playOpening && !shouldReduceMotion}>
-      <HomeNarrative recordCount={recordCount} strongest={strongest} />
-      <HomeStage scene={scene} playOpening={playOpening && !shouldReduceMotion} reducedMotion={shouldReduceMotion} />
-      <p className="home-version-boundary"><ShieldCheck size={14} aria-hidden="true" /> {atlasData.agency.snapshot.caveat} · 기준일 {atlasData.agency.snapshot.asOfDate}</p>
-    </section>
+    <div className={`home-v75 is-${sceneId}`} lang="ko" data-home-page={sceneId}>
+      <section className="home-v75-page" aria-labelledby="home-v75-title">
+        <m.div
+          className="home-v75-graph-shell"
+          initial={intro && !state.reducedMotion ? { opacity: 0, scale: 0.982 } : false}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8 }}
+        >
+          <LivingGraphCanvas
+            graph={atlasData.graph}
+            scene={graphScene(sceneId)}
+            focusId={graphFocus}
+            previewId={previewId}
+            from={sceneId === "link-trace" ? traceEdge?.source ?? null : null}
+            to={sceneId === "link-trace" ? traceEdge?.target ?? null : null}
+            districtRelationMatrix={atlasData.relation.matrix}
+            presentation="home"
+            mobile={state.mobileSibling}
+            reducedMotion={state.reducedMotion}
+            onSelect={(focusId) => dispatch({ type: "focus", focusId, openInspector: false })}
+            onHover={(focusId) => dispatch({ type: "preview", focusId })}
+          />
+        </m.div>
+
+        <m.article
+          key={scene.id}
+          className="home-v75-editorial"
+          initial={state.reducedMotion ? false : { opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <span className="home-v75-index-giant" aria-hidden="true">{scene.index}.</span>
+          <div className="home-v75-copy-block">
+            <span className="home-v75-eyebrow" lang="en">{scene.eyebrow}</span>
+            <h1 id="home-v75-title">
+              {scene.title.split("\n").map((line) => <span key={line}>{line}</span>)}
+            </h1>
+            <p>
+              {sceneId === "knowledge-field"
+                ? `${atlasData.inventory.physicalMarkdownCount.toLocaleString("ko-KR")}개의 ${scene.body}`
+                : scene.body}
+            </p>
+            {sceneId === "link-trace" && (
+              <div className="home-v75-actions">
+                <button type="button" className="is-primary" onClick={() => dispatch({ type: "journey", target: { workspace: "explore", sceneId: "graph", focusId: graphFocus ?? undefined } })}>
+                  그래프 탐색 <ArrowRight size={16} aria-hidden="true" />
+                </button>
+                <button type="button" onClick={() => dispatch({ type: "search", open: true })}>
+                  <Search size={16} aria-hidden="true" /> 지식 검색
+                </button>
+              </div>
+            )}
+          </div>
+        </m.article>
+
+        <div className={`home-v75-evidence${focusedNode ? " has-focus" : ""}`} aria-live="polite">
+          <span className="home-v75-evidence-profile" lang="en">
+            {atlasData.graph.profile === "atlas-owner" ? "OWNER · LOCAL ONLY" : "PUBLIC SNAPSHOT"}
+          </span>
+          {focusedNode ? (
+            <>
+              <strong>{graphNodeLabel(focusedNode)}</strong>
+              <span>{nodeKindLabel(focusedNode)} · {focusedDistrict}</span>
+              <span>inbound {focusedNode.gravity.toLocaleString("ko-KR")}</span>
+              <span>occurrence {focusedNode.occurrences.toLocaleString("ko-KR")}</span>
+              <span>{focusedNode.freshness ?? "날짜 미기록"}</span>
+              <span>{focusedNode.kind === "district" ? "district " : ""}in {incomingCount} · out {outgoingCount}</span>
+              {incomingCount + outgoingCount === 0
+                ? <em>확인된 직접 연결 없음</em>
+                : (context.hiddenIncoming + context.hiddenOutgoing > 0)
+                  ? <em>추가 관계 {context.hiddenIncoming + context.hiddenOutgoing}개</em>
+                  : null}
+            </>
+          ) : (
+            <>
+              <strong>Semantic overview</strong>
+              <span>검증 corridor 최대 4개</span>
+              <span>실제 reference {atlasData.graph.manifest.edgeCount.toLocaleString("ko-KR")}개</span>
+              <span>hover = 실제 in/out</span>
+              {atlasData.graph.profile === "atlas-owner" && (
+                <em>policy-excluded {atlasData.inventory.excludedCount.toLocaleString("ko-KR")} · 상세 ledger는 Explore</em>
+              )}
+            </>
+          )}
+        </div>
+
+        <nav className="home-v75-scenes" aria-label="Home visual chapters" lang="en">
+          <span className="home-v75-scenes-title" aria-hidden="true">RECENT</span>
+          {HOME_SCENES.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={item.id === sceneId ? "is-active" : ""}
+              aria-current={item.id === sceneId ? "page" : undefined}
+              aria-label={`${item.index}. ${item.label}`}
+              onClick={() => openScene(item.id)}
+            >
+              <i aria-hidden="true" />
+              <span>{item.index}</span>
+              <strong>{item.label}</strong>
+            </button>
+          ))}
+        </nav>
+
+        <footer className="home-v75-boundary" aria-label={`${atlasData.graph.profile === "atlas-owner" ? "Owner local" : "Public"} snapshot boundary`}>
+          <span>{atlasData.inventory.namedCount.toLocaleString("ko-KR")} named</span>
+          <span>{atlasData.inventory.aggregateCount.toLocaleString("ko-KR")} aggregated</span>
+          <span>{atlasData.inventory.excludedCount.toLocaleString("ko-KR")} policy-excluded</span>
+          <small>{atlasData.graph.profile === "atlas-owner" ? "Luke Mac 전용 · noindex · 외부 telemetry 0" : "검증된 버전 스냅샷 · 실시간 상태 아님"} · {atlasData.inventory.asOfDate}</small>
+        </footer>
+
+        {focusedNode && (
+          <p className="sr-only" aria-live="polite">
+            현재 선택 {graphNodeLabel(focusedNode)}. 고유 inbound {focusedNode.gravity}.
+            {sceneId === "link-trace" && traceEdge
+              ? ` 실제 참조 ${traceEdge.occurrenceCount}회. 화살표는 출발에서 도착으로 향합니다.`
+              : " 자세한 관계는 Explore 또는 Observe에서 확인할 수 있습니다."}
+          </p>
+        )}
+      </section>
+    </div>
   );
 }

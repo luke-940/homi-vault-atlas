@@ -64,18 +64,23 @@ beforeAll(async () => {
 });
 
 describe("v7.2 Home relation copy", () => {
-  test("names the public 971 value as a bidirectional resolved-link sum", () => {
+  test("binds the strongest insight to the fresh bidirectional matrix maximum", () => {
     const insight = readJson<InsightPack>("public-safe", "data", "insight.json");
     const relation = readJson<RelationPack>("public-safe", "data", "relation.json");
     const strongest = insight.items.find((item) => item.kind === "strongest_relation")!;
     const pair = relation.matrix.find((item) => item.id === strongest.targetScene.relationPairId)!;
+    const matrixMaximum = Math.max(...relation.matrix.map((item) => item.wikilink));
 
     expect(insight.schema).toBe("atlas.insight.v1");
-    expect(strongest.headline).toBe("연구 논거 ↔ 중심 지식의 양방향 해결 링크 합계가 971회로 가장 많다");
-    expect(strongest.metric).toEqual({ value: 971, label: "양방향 해결 링크 합계", unit: "회" });
+    expect(strongest.metric).toEqual({ value: matrixMaximum, label: "양방향 해결 링크 합계", unit: "회" });
+    expect(strongest.headline).toContain(`${matrixMaximum}회`);
+    expect(strongest.headline).toContain(pair.source);
+    expect(strongest.headline).toContain(pair.target);
     expect(pair.wikilinkForward + pair.wikilinkReverse).toBe(pair.wikilink);
     expect(pair.wikilink).toBe(strongest.metric.value);
-    expect(strongest.caveat).toBe("합계 971회는 연구 논거 → 중심 지식 827회와 중심 지식 → 연구 논거 144회를 더한 값이며, 두 방향은 따로 보존한다.");
+    expect(strongest.caveat).toContain(String(pair.wikilinkForward));
+    expect(strongest.caveat).toContain(String(pair.wikilinkReverse));
+    expect(strongest.caveat).toContain("fresh resolved link occurrence");
   });
 
   test("keeps public JSON and JavaScript insight packs behaviorally identical", () => {
@@ -124,16 +129,17 @@ describe("v7.2 recorded-only time semantics", () => {
     expect(timeModel.recordedLifecycleStates([{ deltas }], new Set(["doc:known"]))).toEqual([]);
   });
 
-  test("derives the public plot states from actually recorded evidence only", () => {
+  test("publishes no lifecycle state when public chronology evidence is unavailable", () => {
     const temporal = readJson<{ eras: Array<{ deltas: Array<Record<string, string>> }> }>("public-safe", "data", "temporal.json");
     const entity = readJson<{ entities: Array<{ id: string }> }>("public-safe", "data", "entity.json");
     const evidenceIds = new Set(entity.entities.map((item) => item.id));
 
     expect(entity.entities).toHaveLength(6);
-    expect(timeModel.recordedLifecycleStates(temporal.eras, evidenceIds)).toEqual(["born"]);
+    expect(temporal.eras).toEqual([]);
+    expect(timeModel.recordedLifecycleStates(temporal.eras, evidenceIds)).toEqual([]);
   });
 
-  test("renders only recorded lifecycle states in the plot and legend", async () => {
+  test("renders an honest empty state instead of an invented timeline", async () => {
     const React = await import("react");
     const { renderToStaticMarkup } = await import("react-dom/server");
     const { AtlasStateProvider } = await import("../src/state");
@@ -141,18 +147,10 @@ describe("v7.2 recorded-only time semantics", () => {
     const markup = renderToStaticMarkup(
       React.createElement(AtlasStateProvider, null, React.createElement(TimeView)),
     );
-    const plot = markup.match(/data-testid="era-small-multiples"[\s\S]*?<\/svg>/)?.[0] ?? "";
-
-    expect(markup).toContain("key-era-born");
-    expect(markup).not.toContain("key-era-persisted");
-    expect(markup).not.toContain("key-era-weakened");
-    expect(markup).not.toContain("key-era-retired");
-    expect(plot).toContain("기록상 등장");
-    expect(plot).not.toContain("기록상 지속");
-    expect(plot).not.toContain("기록상 약화");
-    expect(plot).not.toContain("기록상 종료");
-    expect(plot).toContain("장면 1");
-    expect(plot).not.toContain(">E1<");
+    expect(markup).toContain("공개할 수 있는 시간 증거가 아직 없습니다");
+    expect(markup).toContain("검증된 공개 chronology가 없습니다");
+    expect(markup).not.toContain("data-testid=\"era-small-multiples\"");
+    expect(markup).not.toMatch(/새로 생김 집계 \d+|미확정 변화 \d+/);
   });
 
   test("uses Korean-first lifecycle and era labels", () => {

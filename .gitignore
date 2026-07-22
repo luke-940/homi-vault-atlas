@@ -1,5 +1,6 @@
 node_modules/
 dist-public/
 artifacts/
+.generated/
 .DS_Store
 *.log

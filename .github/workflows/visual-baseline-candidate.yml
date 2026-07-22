@@ -1,0 +1,87 @@
+name: Atlas v7.4 Ubuntu visual candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Exact branch, tag, or commit to render
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: atlas-v7-4-visual-candidate-${{ inputs.ref }}
+  cancel-in-progress: true
+
+jobs:
+  candidate:
+    name: Render review-only Ubuntu goldens
+    runs-on: ubuntu-24.04
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Record the exact rendered commit
+        id: candidate-identity
+        run: echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+      - run: npm ci
+      - name: Build the public candidate without release promotion
+        run: npm run build
+        env:
+          ATLAS_PUBLIC_AUDIT_CONTEXT: public-ci
+          ATLAS_PUBLIC_AUDIT_DIR: artifacts/publication
+          ATLAS_PUBLIC_AUDIT_RECEIPT: v7-4-publication-audit.json
+      - run: npx --no-install playwright install --with-deps chromium
+      - name: Render the 16 review-only Ubuntu baseline candidates
+        shell: bash
+        env:
+          ATLAS_URL: http://127.0.0.1:8786/
+        run: |
+          set -euo pipefail
+          server_pid=""
+          cleanup() {
+            status=$?
+            trap - EXIT
+            if [[ -n "${server_pid}" ]] && kill -0 "${server_pid}" 2>/dev/null; then kill "${server_pid}"; fi
+            if [[ -n "${server_pid}" ]]; then wait "${server_pid}" 2>/dev/null || true; fi
+            if [[ -n "${server_pid}" ]] && kill -0 "${server_pid}" 2>/dev/null; then status=1; fi
+            if ! python3 - <<'PY'
+          import errno
+          import socket
+          try:
+              connection = socket.create_connection(("127.0.0.1", 8786), timeout=2)
+          except OSError as error:
+              if error.errno != errno.ECONNREFUSED:
+                  raise SystemExit(f"expected ECONNREFUSED, received errno={error.errno}: {error}")
+          else:
+              connection.close()
+              raise SystemExit("candidate server port still accepted a connection")
+          PY
+            then status=1; fi
+            exit "${status}"
+          }
+          trap cleanup EXIT
+          python3 -m http.server 8786 --bind 127.0.0.1 --directory dist-public >/dev/null 2>&1 &
+          server_pid=$!
+          for attempt in $(seq 1 50); do
+            if curl --fail --silent --max-time 1 "${ATLAS_URL}" >/dev/null; then break; fi
+            sleep 0.2
+          done
+          curl --fail --silent --show-error --max-time 2 "${ATLAS_URL}" >/dev/null
+          npm run qa:visual:candidate:ci
+      - name: Upload review-only PNG candidates
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: atlas-v7-4-ubuntu-visual-candidate-${{ steps.candidate-identity.outputs.sha }}
+          path: |
+            tests-visual/__screenshots__/v7-4-golden.spec.mjs
+            artifacts/v7-4-visual-golden
+          if-no-files-found: error
+          retention-days: 14

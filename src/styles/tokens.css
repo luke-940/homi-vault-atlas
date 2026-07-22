@@ -1,71 +1,51 @@
 :root {
-  color-scheme: light;
-  --canvas: #f4f3ed;
-  --paper: #fbfaf6;
-  --surface: #ffffff;
-  --ink: #13231d;
-  --ink-muted: #52635b;
-  --line: #d3dbd5;
-  --line-strong: #a7b5ae;
-  --homi-amber: #ed9840;
-  --homi-amber-strong: #a94d00;
-  --homi-amber-wash: #fff1e2;
-  --group-core: #f0f5ef;
-  --group-independent: #f1f3f8;
-  --historical: #616763;
-  --historical-wash: #eff1ef;
-  --district-knowledge: #1f6f63;
-  --district-knowledge-fill: #9fcfc4;
-  --district-research: #4667b1;
-  --district-research-fill: #b5c5e8;
-  --district-strategy: #985b1a;
-  --district-strategy-fill: #edc49b;
-  --district-signal: #a4414b;
-  --district-signal-fill: #e9b0b6;
-  --district-operations: #5d6d35;
-  --district-operations-fill: #c5cfaa;
-  --district-neutral: #65736c;
-  --district-neutral-fill: #c8cfcb;
-  --public-boundary: #5e656c;
-  --public-boundary-fill: #c7cbce;
-  --authority-edge: #66736d;
-  --evidence-return: #89938e;
-  --focus-ring: #173c34;
+  color-scheme: dark;
+  --canvas: #08070d;
+  --paper: #100f17;
+  --surface: #17151e;
+  --ink: #f3edde;
+  --ink-muted: #aaa397;
+  --line: #292731;
+  --line-strong: #4a4653;
+  --homi-amber: #e9a23d;
+  --homi-amber-strong: #ffc069;
+  --homi-amber-wash: #2b1d12;
+  --group-core: #101917;
+  --group-independent: #15131e;
+  --historical: #918b80;
+  --historical-wash: #16151a;
+  --district-knowledge: #4fd5b9;
+  --district-research: #6f91f4;
+  --district-strategy: #f0a04b;
+  --district-signal: #f36f87;
+  --district-operations: #a8d05f;
+  --district-rocket: #ae82e3;
+  --district-groot: #55c994;
+  --district-intelligence: #759dde;
+  --district-independent: #9d83dc;
+  --district-research-records: #57b9cf;
+  --district-neutral: #8c8a91;
+  --authority-edge: #5f5a67;
+  --focus-ring: #ffc069;
   --atlas-bg: var(--canvas);
   --atlas-paper: var(--paper);
-  --chrome-bg: rgba(251, 250, 246, 0.96);
-  --tray-bg: #f7f7f2;
-  --map-bg: #f1f3ee;
+  --tray-bg: rgba(13, 12, 19, .96);
+  --map-bg: #0b0a11;
   --ink-soft: var(--ink-muted);
-  --ink-faint: #596961;
-  --mint: #a9d9cf;
-  --mint-deep: #226f62;
-  --ice: #b8d4f0;
-  --lavender: #d5c3ef;
-  --amber: #f3cda9;
-  --pulse-blue: #6f8fd8;
-  --pulse-teal: #5b9d93;
-  --leaf: #d9e8ad;
-  --coral: #efbaba;
+  --ink-faint: #77717e;
+  --mint: #6acbb8;
+  --mint-deep: #4fd5b9;
+  --amber: #e9a23d;
+  --pulse-teal: #4fd5b9;
   --focus: var(--focus-ring);
-  --proof: #7561b3;
-  --warning: #a85f41;
+  --proof: #ae82e3;
+  --warning: #ff8b6d;
   --control-radius: 6px;
   --surface-radius: 8px;
-  --map-radius: 4px;
-  --shadow-tray: 0 14px 38px rgba(38, 70, 58, 0.08);
-  --shadow-focus: 0 9px 24px rgba(47, 136, 120, 0.2);
+  --shadow-tray: 0 28px 64px rgba(0, 0, 0, .34);
   --command-height: 64px;
   --workspace-header-height: 84px;
-  --motion-instant: 1ms;
-  --motion-fast: 120ms;
-  --motion-control: 180ms;
-  --motion-scene: 480ms;
-  --motion-emphasis: 560ms;
-  --motion-entry: 800ms;
-  --ease-standard: cubic-bezier(.2, .8, .2, 1);
-  --ease-emphasized: cubic-bezier(.16, 1, .3, 1);
-  --ease-exit: cubic-bezier(.4, 0, 1, 1);
+  --font-brand: "Space Grotesk", var(--font-sans);
   --font-sans: "Pretendard Variable", Pretendard, "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "SFMono-Regular", Consolas, monospace;
   font-family: var(--font-sans);
@@ -115,15 +95,9 @@ kbd {
   font-family: var(--font-mono);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  :root {
-    --motion-fast: 1ms;
-    --motion-control: 1ms;
-    --motion-scene: 1ms;
-    --motion-emphasis: 1ms;
-    --motion-entry: 1ms;
-  }
+small { font-size: 12px; }
 
+@media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {

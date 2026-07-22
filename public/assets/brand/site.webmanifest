@@ -9,7 +9,7 @@
   "theme_color": "#f4f3ed",
   "icons": [
     {
-      "src": "./homi-mark-amber.svg",
+      "src": "./homi-favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"

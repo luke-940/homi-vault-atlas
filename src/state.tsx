@@ -9,8 +9,12 @@ import {
   useRef,
 } from "react";
 import { atlasData, DEFAULT_DAILY_ROUTE_ID } from "./data-runtime";
-import type { AgencyScene, ExploreLens, MatrixCell, RelationLayer, Workspace } from "./types";
-import { normalizeHomeSceneId } from "./agency/presentation";
+import type { AgencyScene, ExploreLens, GraphFreshness, MatrixCell, RelationLayer, Workspace } from "./types";
+import {
+  resolveWorkspaceScene,
+  workspaceDocumentTitle,
+  workspaceSceneRegistry,
+} from "./components/workspaceSceneRegistry";
 
 export type PanelState = "none" | "navigator" | "inspector" | "data";
 export type InspectorTab = "summary" | "relations" | "proof" | "history";
@@ -19,7 +23,7 @@ export type RelationDirection = "forward" | "reverse";
 export interface SceneSnapshot {
   workspace: Workspace;
   sceneId: string;
-  focusId: string;
+  focusId: string | null;
   lens: ExploreLens;
   relationPairId: string | null;
   relationDirection: RelationDirection | null;
@@ -27,13 +31,19 @@ export interface SceneSnapshot {
   routeId: string;
   eraId: number;
   actorId: string | null;
+  compareIds: string[];
+  filters: string[];
+  districtId: string | null;
+  freshness: GraphFreshness;
+  pathFrom: string | null;
+  pathTo: string | null;
 }
 
 export interface AtlasState {
   workspace: Workspace;
   sceneId: string;
   lens: ExploreLens;
-  focusId: string;
+  focusId: string | null;
   previewId: string | null;
   compareIds: string[];
   relationPairId: string | null;
@@ -44,9 +54,14 @@ export interface AtlasState {
   actorId: string | null;
   guideStep: number | null;
   filters: string[];
+  districtId: string | null;
+  freshness: GraphFreshness;
+  pathFrom: string | null;
+  pathTo: string | null;
   camera: string | null;
   fallbackReason: string | null;
   previousScene: SceneSnapshot | null;
+  navigationHistory: SceneSnapshot[];
   panel: PanelState;
   inspectorTab: InspectorTab;
   searchOpen: boolean;
@@ -71,6 +86,9 @@ export type Action =
   | { type: "actor"; actorId: string | null }
   | { type: "guide"; step: number | null }
   | { type: "filters"; filters: string[] }
+  | { type: "graphDistrict"; districtId: string | null }
+  | { type: "graphFreshness"; freshness: GraphFreshness }
+  | { type: "graphPath"; from: string | null; to: string | null }
   | { type: "camera"; camera: string | null }
   | { type: "panel"; panel: PanelState }
   | { type: "panelSet"; panel: PanelState }
@@ -88,7 +106,7 @@ export interface ResponsiveEnvironment {
 
 const createDefaultState = (environment: ResponsiveEnvironment): AtlasState => ({
   workspace: "home",
-  sceneId: "system-overview",
+  sceneId: workspaceSceneRegistry.home.defaultScene,
   lens: "city",
   focusId: atlasData.bootstrap.defaultFocus,
   previewId: null,
@@ -96,14 +114,19 @@ const createDefaultState = (environment: ResponsiveEnvironment): AtlasState => (
   relationPairId: null,
   relationDirection: null,
   relationLayer: "wikilink",
-  routeId: DEFAULT_DAILY_ROUTE_ID,
-  eraId: atlasData.temporal.currentEra,
+  routeId: atlasData.flow.routes[0]?.id ?? DEFAULT_DAILY_ROUTE_ID,
+  eraId: atlasData.temporal.eras[0]?.id ?? atlasData.temporal.currentEra ?? 0,
   actorId: null,
   guideStep: null,
   filters: [],
+  districtId: null,
+  freshness: "all",
+  pathFrom: null,
+  pathTo: null,
   camera: null,
   fallbackReason: null,
   previousScene: null,
+  navigationHistory: [],
   panel: "none",
   inspectorTab: "summary",
   searchOpen: false,
@@ -113,41 +136,29 @@ const createDefaultState = (environment: ResponsiveEnvironment): AtlasState => (
 });
 
 const workspaces = new Set<Workspace>(["home", "explore", "observe", "flow", "time", "agency"]);
+const integratedInspectorWorkspaces = new Set<Workspace>(["home", "explore", "observe", "flow", "agency"]);
 const lenses = new Set<ExploreLens>(["city"]);
 const layers = new Set<RelationLayer>(["wikilink", "typed", "route"]);
 const availableLayers = new Set<RelationLayer>(atlasData.relation.availableLayers);
 const directions = new Set<RelationDirection>(["forward", "reverse"]);
+const freshnessBuckets = new Set<GraphFreshness>(["all", "30d", "90d", "1y", "undated"]);
+const districtIds = new Set(atlasData.graph.clusters.map((cluster) => cluster.id));
 const focusIds = new Set([
   ...atlasData.entity.entities.map((entity) => entity.id),
-  ...atlasData.structure.hierarchyNodes.map((node) => node.id),
+  ...atlasData.graph.nodes.map((node) => node.id),
 ]);
+const comparableIds = new Set(atlasData.entity.entities.map((entity) => entity.id));
 const relationPairIds = new Set(atlasData.relation.matrix.map((pair) => pair.id));
 const routeIds = new Set(atlasData.flow.routes.map((route) => route.id));
 const eraIds = new Set(atlasData.temporal.eras.map((era) => era.id));
 const actorIds = new Set(atlasData.agency.actors.map((actor) => actor.id));
-const defaultSceneByWorkspace: Record<Workspace, string> = {
-  home: "system-overview",
-  explore: "explore",
-  observe: "observe",
-  flow: "flow",
-  time: "time",
-  agency: "system",
-};
-const sceneIdsByWorkspace: Record<Workspace, Set<string>> = {
-  home: new Set(["system-overview", "responsibility-partition", "independent-ownership", "knowledge-return"]),
-  explore: new Set(["explore", "city-overview", "city-focus", "city-concentration", "attention-isolate"]),
-  observe: new Set(["observe", "global-relation", "entity-relation"]),
-  flow: new Set(["flow", "latest-pulse"]),
-  time: new Set(["time"]),
-  agency: new Set(["system", "roles", "evolution"]),
-};
-for (const insight of atlasData.insight.items) {
-  sceneIdsByWorkspace[insight.targetScene.workspace].add(insight.targetScene.scene);
-}
+const defaultSceneByWorkspace = Object.fromEntries(
+  Object.entries(workspaceSceneRegistry).map(([workspace, definition]) => [workspace, definition.defaultScene]),
+) as Record<Workspace, string>;
 export const mobileSiblingQuery = "(max-width: 820px), (max-width: 900px) and (max-height: 520px)";
 
 function validScene(workspace: Workspace, sceneId: string | null | undefined) {
-  return Boolean(sceneId && sceneIdsByWorkspace[workspace].has(sceneId));
+  return Boolean(resolveWorkspaceScene(workspace, sceneId));
 }
 
 export function isDirectedRelationLayer(layer: RelationLayer) {
@@ -197,9 +208,11 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
   const raw = hash.replace(/^#/, "");
   const [workspacePart, query = ""] = raw.split("?");
   const params = new URLSearchParams(query);
-  const workspace = workspaces.has(workspacePart as Workspace)
+  const requestedWorkspace = workspaces.has(workspacePart as Workspace)
     ? (workspacePart as Workspace)
     : defaultState.workspace;
+  const timeFallback = requestedWorkspace === "time" && atlasData.temporal.eras.length === 0;
+  const workspace = timeFallback ? "explore" : requestedWorkspace;
   const lensParam = params.get("lens") as ExploreLens | null;
   const layerParam = params.get("layer") as RelationLayer | null;
   const directionParam = params.get("dir") as RelationDirection | null;
@@ -209,14 +222,16 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
   const requestedRoute = params.get("route");
   const requestedEra = Number(params.get("era"));
   const requestedScene = params.get("scene");
-  const normalizedRequestedScene = workspace === "home"
-    ? normalizeHomeSceneId(requestedScene)
-    : requestedScene;
+  const normalizedRequestedScene = resolveWorkspaceScene(workspace, requestedScene);
   const requestedActor = params.get("actor");
   const guideParam = params.get("guide");
   const requestedGuide = guideParam === null ? Number.NaN : Number(guideParam);
   const rawCompare = (params.get("compare") ?? "").split(",").filter(Boolean);
-  const requestedCompare = [...new Set(rawCompare.filter((id) => focusIds.has(id)))].slice(0, 2);
+  const requestedDistrict = params.get("district");
+  const requestedFreshness = params.get("freshness") as GraphFreshness | null;
+  const requestedFrom = params.get("from");
+  const requestedTo = params.get("to");
+  const requestedCompare = [...new Set(rawCompare.filter((id) => comparableIds.has(id)))].slice(0, 2);
   const relationLayer = layerParam && layers.has(layerParam) && availableLayers.has(layerParam)
     ? layerParam
     : defaultState.relationLayer;
@@ -226,6 +241,9 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
   const fallbackReasons = [
     workspacePart && !workspaces.has(workspacePart as Workspace)
       ? "요청한 화면을 찾지 못해 대문을 열었습니다."
+      : null,
+    timeFallback
+      ? "기록된 chronology가 없어 Explore의 최신성 지형으로 안전하게 이동했습니다."
       : null,
     lensParam && !lenses.has(lensParam)
       ? "요청한 이전 Explore 공개 화면은 v7.3에서 City로 통합되어 안전하게 이동했습니다."
@@ -243,10 +261,22 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
       ? "요청한 가이드 단계를 찾지 못해 가이드를 닫았습니다."
       : null,
     ...rawCompare
-      .filter((id) => !focusIds.has(id))
-      .map(() => "비교할 객체를 현재 스냅샷에서 찾지 못했습니다."),
+      .filter((id) => !comparableIds.has(id))
+      .map(() => "비교는 공개 지식 엔터티에만 제공됩니다."),
     requestedFocus && !focusIds.has(requestedFocus)
       ? "요청한 객체를 현재 스냅샷에서 찾지 못해 기본 선택을 열었습니다."
+      : null,
+    requestedDistrict && !districtIds.has(requestedDistrict)
+      ? "요청한 지식 구역을 찾지 못해 전체 그래프를 열었습니다."
+      : null,
+    requestedFreshness && !freshnessBuckets.has(requestedFreshness)
+      ? "요청한 최신성 범위를 해석하지 못해 전체 기간을 사용했습니다."
+      : null,
+    requestedFrom && !focusIds.has(requestedFrom)
+      ? "경로의 출발 노드를 찾지 못해 경로 선택을 해제했습니다."
+      : null,
+    requestedTo && !focusIds.has(requestedTo)
+      ? "경로의 도착 노드를 찾지 못해 경로 선택을 해제했습니다."
       : null,
     requestedPair && !relationPairIds.has(requestedPair)
       ? "요청한 관계를 현재 스냅샷에서 찾지 못했습니다."
@@ -257,7 +287,7 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
     params.has("era") && !eraIds.has(requestedEra)
       ? "요청한 시대를 현재 스냅샷에서 찾지 못했습니다."
       : null,
-    requestedScene && !validScene(workspace, normalizedRequestedScene)
+    requestedScene && normalizedRequestedScene === null
       ? "요청한 장면을 현재 화면에서 찾지 못해 기본 장면을 열었습니다."
       : null,
     workspace === "agency" && requestedActor && !actorIds.has(requestedActor)
@@ -271,15 +301,21 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
   const validRequestedActor = requestedActor && actorIds.has(requestedActor) ? requestedActor : null;
   const agencyLocationValid = workspace !== "agency"
     || (requestedActor ? Boolean(validRequestedActor) : requestedAgencyScene !== "roles");
-  const resolvedScene = validScene(workspace, normalizedRequestedScene) && agencyLocationValid
-    ? normalizedRequestedScene!
+  const resolvedScene = timeFallback
+    ? "graph"
+    : normalizedRequestedScene && agencyLocationValid
+    ? normalizedRequestedScene
     : defaultSceneByWorkspace[workspace];
   return {
     ...defaultState,
     workspace,
     sceneId: resolvedScene,
     lens: lensParam && lenses.has(lensParam) ? lensParam : defaultState.lens,
-    focusId: requestedFocus && focusIds.has(requestedFocus) ? requestedFocus : defaultState.focusId,
+    focusId: requestedFocus && focusIds.has(requestedFocus)
+      ? requestedFocus
+      : workspace === "home"
+        ? null
+        : defaultState.focusId,
     compareIds: requestedCompare,
     relationPairId: relationPair?.id ?? null,
     relationDirection: normalizedRelationDirection(
@@ -293,11 +329,15 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
     actorId: workspace === "agency" && resolvedScene === "roles" ? validRequestedActor : null,
     guideStep: Number.isInteger(requestedGuide) && requestedGuide >= 0 && requestedGuide <= 2 ? requestedGuide : null,
     filters: [...new Set((params.get("filters") ?? "").split(",").map((value) => value.trim()).filter(Boolean))].slice(0, 12),
+    districtId: requestedDistrict && districtIds.has(requestedDistrict) ? requestedDistrict : null,
+    freshness: requestedFreshness && freshnessBuckets.has(requestedFreshness) ? requestedFreshness : "all",
+    pathFrom: requestedFrom && requestedTo && focusIds.has(requestedFrom) && focusIds.has(requestedTo) ? requestedFrom : null,
+    pathTo: requestedFrom && requestedTo && focusIds.has(requestedFrom) && focusIds.has(requestedTo) ? requestedTo : null,
     camera: params.get("cam") || null,
     panel:
       panelParam && ["none", "navigator", "inspector", "data"].includes(panelParam)
         ? panelParam
-        : workspace === "home" || workspace === "agency" || environment.mobileSibling
+        : integratedInspectorWorkspaces.has(workspace) || environment.mobileSibling
           ? "none"
           : "inspector",
     theatre: params.get("theatre") === "1",
@@ -305,6 +345,7 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
     fallbackReason: fallbackReasons.join(" ") || null,
     reducedMotion: environment.reducedMotion,
     mobileSibling: environment.mobileSibling,
+    navigationHistory: [],
   };
 }
 
@@ -316,16 +357,23 @@ export function stateToHash(state: AtlasState) {
     if (scene === "roles" && state.actorId && actorIds.has(state.actorId)) params.set("actor", state.actorId);
     return `#agency?${params.toString()}`;
   }
-  params.set("focus", state.focusId);
+  if (state.focusId) params.set("focus", state.focusId);
   if (state.sceneId) params.set("scene", state.sceneId);
-  if (state.workspace === "explore") params.set("lens", state.lens);
+  if (state.workspace === "explore") {
+    if (state.districtId) params.set("district", state.districtId);
+    if (state.freshness !== "all") params.set("freshness", state.freshness);
+    if (state.pathFrom && state.pathTo) {
+      params.set("from", state.pathFrom);
+      params.set("to", state.pathTo);
+    }
+  }
   if (state.workspace === "observe") {
     params.set("layer", state.relationLayer);
     if (state.relationPairId) params.set("pair", state.relationPairId);
     if (isDirectedRelationLayer(state.relationLayer) && state.relationDirection) params.set("dir", state.relationDirection);
   }
-  if (state.workspace === "flow") params.set("route", state.routeId);
-  if (state.workspace === "time") params.set("era", String(state.eraId));
+  if (state.workspace === "flow" && routeIds.has(state.routeId)) params.set("route", state.routeId);
+  if (state.workspace === "time" && eraIds.has(state.eraId)) params.set("era", String(state.eraId));
   if (state.compareIds.length) params.set("compare", state.compareIds.join(","));
   if (state.guideStep !== null) params.set("guide", String(state.guideStep));
   if (state.filters.length) params.set("filters", state.filters.join(","));
@@ -350,6 +398,10 @@ function semanticNavigationKey(state: AtlasState) {
     actorId: state.actorId,
     compareIds: state.compareIds,
     filters: state.filters,
+    districtId: state.districtId,
+    freshness: state.freshness,
+    pathFrom: state.pathFrom,
+    pathTo: state.pathTo,
   });
 }
 
@@ -365,22 +417,43 @@ function captureScene(state: AtlasState): SceneSnapshot {
     routeId: state.routeId,
     eraId: state.eraId,
     actorId: state.actorId,
+    compareIds: state.compareIds,
+    filters: state.filters,
+    districtId: state.districtId,
+    freshness: state.freshness,
+    pathFrom: state.pathFrom,
+    pathTo: state.pathTo,
   };
+}
+
+function historyFor(state: AtlasState) {
+  return [...state.navigationHistory, captureScene(state)].slice(-20);
+}
+
+function previousFrom(history: SceneSnapshot[]) {
+  return history.at(-1) ?? null;
 }
 
 export function reduceAtlasState(state: AtlasState, action: Action): AtlasState {
   switch (action.type) {
     case "workspace":
-      return {
+      return (() => {
+        const navigationHistory = historyFor(state);
+        return {
         ...state,
-        previousScene: captureScene(state),
+        previousScene: previousFrom(navigationHistory),
+        navigationHistory,
         workspace: action.workspace,
         sceneId: defaultSceneByWorkspace[action.workspace],
         actorId: null,
-        panel: action.workspace === "home" || action.workspace === "agency" || state.mobileSibling ? "none" : "inspector",
+        districtId: action.workspace === "explore" ? state.districtId : null,
+        pathFrom: action.workspace === "explore" ? state.pathFrom : null,
+        pathTo: action.workspace === "explore" ? state.pathTo : null,
+        panel: integratedInspectorWorkspaces.has(action.workspace) || state.mobileSibling ? "none" : "inspector",
         guideStep: action.workspace === "home" ? state.guideStep : null,
         fallbackReason: null,
-      };
+        };
+      })();
     case "journey": {
       const requestedFocus = action.target.focusId;
       const validFocus = requestedFocus ? focusIds.has(requestedFocus) : true;
@@ -388,7 +461,11 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
       const validPair = requestedPair ? relationPairIds.has(requestedPair) : true;
       const targetWorkspace = action.target.workspace ?? state.workspace;
       const requestedScene = action.target.sceneId;
-      const validRequestedScene = requestedScene ? validScene(targetWorkspace, requestedScene) : true;
+      const resolvedRequestedScene = requestedScene
+        ? resolveWorkspaceScene(targetWorkspace, requestedScene)
+        : null;
+      const validRequestedScene = requestedScene ? resolvedRequestedScene !== null : true;
+      const resolvedCurrentScene = resolveWorkspaceScene(targetWorkspace, state.sceneId);
       const pairWasRequested = Object.prototype.hasOwnProperty.call(action.target, "relationPairId");
       const targetPair = validPair
         ? pairWasRequested
@@ -401,31 +478,41 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
       const requestedLayer = action.target.relationLayer;
       const validLayer = requestedLayer ? availableLayers.has(requestedLayer) : true;
       const targetLayer = validLayer && requestedLayer ? requestedLayer : state.relationLayer;
+      const navigationHistory = historyFor(state);
       return {
         ...state,
-        previousScene: captureScene(state),
+        previousScene: previousFrom(navigationHistory),
+        navigationHistory,
         workspace: targetWorkspace,
-        sceneId: validRequestedScene && requestedScene
-          ? requestedScene
+        sceneId: validRequestedScene && resolvedRequestedScene
+          ? resolvedRequestedScene
           : action.target.workspace
             ? defaultSceneByWorkspace[targetWorkspace]
-            : validScene(targetWorkspace, state.sceneId)
-              ? state.sceneId
+            : resolvedCurrentScene
+              ? resolvedCurrentScene
               : defaultSceneByWorkspace[targetWorkspace],
         focusId: validFocus && requestedFocus ? requestedFocus : state.focusId,
         lens: action.target.lens && lenses.has(action.target.lens) ? action.target.lens : "city",
+        districtId: action.target.districtId !== undefined
+          ? action.target.districtId && districtIds.has(action.target.districtId) ? action.target.districtId : null
+          : targetWorkspace === "explore" ? state.districtId : null,
+        freshness: action.target.freshness && freshnessBuckets.has(action.target.freshness)
+          ? action.target.freshness
+          : state.freshness,
+        pathFrom: action.target.pathFrom && focusIds.has(action.target.pathFrom) ? action.target.pathFrom : state.pathFrom,
+        pathTo: action.target.pathTo && focusIds.has(action.target.pathTo) ? action.target.pathTo : state.pathTo,
         relationPairId: targetPair ?? null,
         relationLayer: targetLayer,
         relationDirection: normalizedRelationDirection(pair, targetLayer, action.target.relationDirection),
         routeId: action.target.routeId && routeIds.has(action.target.routeId) ? action.target.routeId : state.routeId,
         eraId: action.target.eraId && eraIds.has(action.target.eraId) ? action.target.eraId : state.eraId,
         actorId: targetWorkspace === "agency"
-          && (requestedScene ?? state.sceneId) === "roles"
+          && (resolvedRequestedScene ?? resolvedCurrentScene) === "roles"
           && action.target.actorId
           && actorIds.has(action.target.actorId)
           ? action.target.actorId
           : null,
-        panel: targetWorkspace === "home" || targetWorkspace === "agency" || state.mobileSibling ? "none" : "inspector",
+        panel: integratedInspectorWorkspaces.has(targetWorkspace) || state.mobileSibling ? "none" : "inspector",
         inspectorTab: "summary",
         guideStep: targetWorkspace === "home" ? state.guideStep : null,
         fallbackReason: !validFocus
@@ -440,35 +527,43 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
       };
     }
     case "back":
-      return state.previousScene
-        ? {
+      if (!state.navigationHistory.length) return state;
+      {
+        const navigationHistory = state.navigationHistory.slice(0, -1);
+        const destination = state.navigationHistory.at(-1)!;
+        return {
             ...state,
-            ...state.previousScene,
-            previousScene: null,
-            panel: state.previousScene.workspace === "home" || state.previousScene.workspace === "agency" || state.mobileSibling ? "none" : "inspector",
+            ...destination,
+            previousScene: previousFrom(navigationHistory),
+            navigationHistory,
+            panel: integratedInspectorWorkspaces.has(destination.workspace) || state.mobileSibling ? "none" : "inspector",
             fallbackReason: null,
-          }
-        : state;
+          };
+      }
     case "lens":
       return lenses.has(action.lens)
-        ? { ...state, lens: action.lens, fallbackReason: null }
+        ? { ...state, lens: action.lens, navigationHistory: historyFor(state), fallbackReason: null }
         : {
             ...state,
             lens: "city",
             fallbackReason: `요청한 ${action.lens} 공개 화면은 v7.3에서 City로 통합되어 안전하게 이동했습니다.`,
           };
     case "focus":
+      if (!focusIds.has(action.focusId)) {
+        return { ...state, fallbackReason: `요청한 객체 ${action.focusId}를 현재 스냅샷에서 찾지 못했습니다.` };
+      }
       return {
         ...state,
+        navigationHistory: historyFor(state),
         focusId: action.focusId,
-        panel: action.openInspector === false || state.mobileSibling ? state.panel : "inspector",
+        panel: integratedInspectorWorkspaces.has(state.workspace) || action.openInspector === false || state.mobileSibling ? state.panel : "inspector",
         inspectorTab: "summary",
       };
     case "preview":
       return { ...state, previewId: action.focusId };
     case "compare": {
-      if (!focusIds.has(action.focusId)) {
-        return { ...state, fallbackReason: `비교할 객체 ${action.focusId}를 현재 스냅샷에서 찾지 못했습니다.` };
+      if (!comparableIds.has(action.focusId)) {
+        return { ...state, fallbackReason: "비교는 공개 지식 엔터티에만 제공됩니다." };
       }
       const compareIds = state.compareIds.includes(action.focusId)
         ? state.compareIds.filter((id) => id !== action.focusId)
@@ -483,9 +578,10 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
         : undefined;
       return {
         ...state,
+        navigationHistory: historyFor(state),
         relationPairId: pair?.id ?? null,
         relationDirection: normalizedRelationDirection(pair, state.relationLayer, action.direction),
-        panel: state.mobileSibling ? "none" : "inspector",
+        panel: state.mobileSibling ? "none" : state.panel,
       };
     }
     case "relationLayer": {
@@ -500,18 +596,20 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
         : undefined;
       return {
         ...state,
+        navigationHistory: historyFor(state),
         relationLayer: action.relationLayer,
         relationDirection: normalizedRelationDirection(selectedPair, action.relationLayer, state.relationDirection),
       };
     }
     case "route":
-      return { ...state, routeId: action.routeId, panel: state.mobileSibling ? "none" : "inspector" };
+      return { ...state, navigationHistory: historyFor(state), routeId: action.routeId, panel: state.mobileSibling ? "none" : state.panel };
     case "era":
-      return { ...state, eraId: action.eraId, panel: state.mobileSibling ? "none" : "inspector" };
+      return { ...state, navigationHistory: historyFor(state), eraId: action.eraId, panel: state.mobileSibling ? "none" : "inspector" };
     case "actor":
       return action.actorId && actorIds.has(action.actorId)
         ? {
             ...state,
+            navigationHistory: historyFor(state),
             workspace: "agency",
             sceneId: "roles",
             actorId: action.actorId,
@@ -520,6 +618,7 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
           }
         : {
             ...state,
+            navigationHistory: historyFor(state),
             workspace: "agency",
             sceneId: "system",
             actorId: null,
@@ -532,6 +631,18 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
       return { ...state, guideStep: action.step };
     case "filters":
       return { ...state, filters: [...new Set(action.filters)].slice(0, 12) };
+    case "graphDistrict":
+      return action.districtId === null || districtIds.has(action.districtId)
+        ? { ...state, navigationHistory: historyFor(state), districtId: action.districtId, fallbackReason: null }
+        : { ...state, fallbackReason: "요청한 지식 구역을 찾지 못했습니다." };
+    case "graphFreshness":
+      return freshnessBuckets.has(action.freshness)
+        ? { ...state, navigationHistory: historyFor(state), freshness: action.freshness, fallbackReason: null }
+        : state;
+    case "graphPath":
+      return (action.from === null || focusIds.has(action.from)) && (action.to === null || focusIds.has(action.to))
+        ? { ...state, navigationHistory: historyFor(state), pathFrom: action.from, pathTo: action.to, fallbackReason: null }
+        : { ...state, fallbackReason: "경로 노드를 찾지 못했습니다." };
     case "camera":
       return { ...state, camera: action.camera };
     case "panel":
@@ -543,7 +654,7 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
     case "search":
       return { ...state, searchOpen: action.open };
     case "theatre":
-      return { ...state, theatre: action.open, panel: action.open || state.mobileSibling ? "none" : "inspector" };
+      return { ...state, theatre: action.open, panel: action.open || state.mobileSibling || integratedInspectorWorkspaces.has(state.workspace) ? "none" : "inspector" };
     case "reducedMotion":
       return { ...state, reducedMotion: action.reducedMotion };
     case "responsive":
@@ -604,6 +715,10 @@ export function AtlasStateProvider({ children }: PropsWithChildren) {
     previousNavigationKeyRef.current = nextNavigationKey;
     observedLocationRef.current = window.location.href;
   }, [state]);
+
+  useEffect(() => {
+    document.title = workspaceDocumentTitle(state.workspace, state.sceneId);
+  }, [state.sceneId, state.workspace]);
 
   useEffect(() => {
     const onHistoryNavigation = () => {

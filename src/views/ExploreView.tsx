@@ -1,267 +1,262 @@
-import { LocateFixed } from "lucide-react";
-import { stratify, treemap, treemapSquarify } from "d3-hierarchy";
-import { useMemo, type KeyboardEvent } from "react";
+import { ArrowRight, Box, CalendarRange, CircleDot, LocateFixed, Route, Search, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
-import { atlasData, entityById, hierarchyById, hierarchyFocusForDistrict } from "../data-runtime";
-import { useElementSize } from "../hooks/useElementSize";
+import { SpatialWorkspaceFrame } from "../components/SpatialWorkspaceFrame";
+import { atlasData, graphNodeById } from "../data-runtime";
+import { LivingGraphCanvas } from "../graph/LivingGraphCanvas";
+import { graphNodeLabel, shortestDirectedPath, type FreshnessBucket } from "../graph/model";
 import { useAtlasState } from "../state";
-import type { HierarchyNode } from "../types";
-import { colorForDistrict as colorFor } from "../viz/palette";
+import type { AtlasGraphNodeV1 } from "../types";
 
-function districtForFocus(focusId: string) {
-  const entity = entityById.get(focusId);
-  if (entity) return entity.district;
-  let node = hierarchyById.get(focusId);
-  const visited = new Set<string>();
-  while (node && !visited.has(node.id)) {
-    if (node.kind === "district") return node.label;
-    visited.add(node.id);
-    node = node.parentId ? hierarchyById.get(node.parentId) : undefined;
-  }
-  return null;
+const freshnessOptions: Array<{ id: FreshnessBucket; label: string }> = [
+  { id: "all", label: "전체 기간" },
+  { id: "30d", label: "최근 30일" },
+  { id: "90d", label: "최근 90일" },
+  { id: "1y", label: "최근 1년" },
+  { id: "undated", label: "날짜 미기록" },
+];
+
+function nodeKindLabel(node: AtlasGraphNodeV1) {
+  return ({
+    district: "District",
+    moc_hub: "MOC Hub",
+    paper_gateway: "Paper Gateway",
+    strategy_insight: "Strategy Insight",
+    strategy_request: "Strategy Request",
+    project: "Project",
+    project_stage: "Project Stage",
+    signal_domain: "Signal Domain",
+    signal_storyline: "Signal Storyline",
+    source_document: "Source",
+    aggregate_boundary: "Aggregate",
+  } as const)[node.kind];
 }
 
-function compactMapLabel(label: string, maxChars: number) {
-  if (label === "Intelligence Layer" && maxChars < label.length) return "Intelligence";
-  if (label.length <= maxChars) return label;
-  return `${label.slice(0, Math.max(3, maxChars - 1))}…`;
-}
-
-export function cityMapNodeAccessibility(depth: number) {
-  return {
-    role: "presentation" as const,
-    "aria-hidden": depth === 2 ? "true" as const : undefined,
-  };
-}
-
-export function cityDistrictAnchorAccessibility(label: string, documentCount: number) {
-  return {
-    role: "button" as const,
-    tabIndex: 0,
-    "aria-label": `${label}, ${documentCount}개 문서`,
-  };
+function VirtualRankedList({ nodes, selectedId, onSelect, onPreview }: {
+  nodes: AtlasGraphNodeV1[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  onPreview: (id: string | null) => void;
+}) {
+  const itemHeight = 62;
+  const viewportHeight = 500;
+  const [scrollTop, setScrollTop] = useState(0);
+  const start = Math.max(0, Math.floor(scrollTop / itemHeight) - 4);
+  const end = Math.min(nodes.length, start + Math.ceil(viewportHeight / itemHeight) + 8);
+  return (
+    <div
+      className="graph-ranked-list"
+      style={{ height: viewportHeight }}
+      onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}
+      role="listbox"
+      aria-label={`지식 노드 순위 ${nodes.length}개`}
+      tabIndex={0}
+    >
+      <div style={{ height: nodes.length * itemHeight, position: "relative" }}>
+        {nodes.slice(start, end).map((node, offset) => {
+          const index = start + offset;
+          return (
+            <button
+              key={node.id}
+              type="button"
+              role="option"
+              aria-selected={node.id === selectedId}
+              className={node.id === selectedId ? "is-selected" : ""}
+              style={{ position: "absolute", top: index * itemHeight, height: itemHeight }}
+              onPointerEnter={() => onPreview(node.id)}
+              onPointerLeave={() => onPreview(null)}
+              onFocus={() => onPreview(node.id)}
+              onBlur={() => onPreview(null)}
+              onClick={() => onSelect(node.id)}
+            >
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <strong>{graphNodeLabel(node)}</strong>
+              <small>{nodeKindLabel(node)} · inbound {node.gravity} · links {node.occurrences}</small>
+              <ArrowRight size={15} aria-hidden="true" />
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export function ExploreView() {
-  const { state } = useAtlasState();
-  const selectedDistrict = districtForFocus(state.focusId);
-  const largestDistrict = [...atlasData.structure.districts]
-    .sort((a, b) => b.documentCount - a.documentCount || a.name.localeCompare(b.name))[0];
+  const { state, dispatch } = useAtlasState();
+  const scene = ["graph", "clusters", "list"].includes(state.sceneId) ? state.sceneId : "graph";
+  const fallbackSelected = useMemo(() => [...atlasData.graph.nodes]
+    .filter((node) => node.kind !== "source_document")
+    .sort((left, right) => right.gravity - left.gravity || right.occurrences - left.occurrences || left.id.localeCompare(right.id, "en"))[0] ?? null, []);
+  const selected = graphNodeById.get(state.focusId ?? "") ?? fallbackSelected;
+  const previewed = state.previewId ? graphNodeById.get(state.previewId) ?? null : null;
+  const activeNode = previewed ?? selected;
+  useEffect(() => {
+    if ((!state.focusId || !graphNodeById.has(state.focusId)) && fallbackSelected) {
+      dispatch({ type: "focus", focusId: fallbackSelected.id });
+    }
+  }, [dispatch, fallbackSelected, state.focusId]);
+  const rankedNodes = useMemo(() => atlasData.graph.nodes
+    .filter((node) => !state.districtId || node.clusterId === state.districtId)
+    .sort((left, right) => right.gravity - left.gravity || right.occurrences - left.occurrences || left.id.localeCompare(right.id, "en")), [state.districtId]);
+  const path = useMemo(() => shortestDirectedPath(atlasData.graph, state.pathFrom, state.pathTo), [state.pathFrom, state.pathTo]);
+  const pathChoices = useMemo(() => [...atlasData.graph.nodes]
+    .filter((node) => node.kind !== "source_document")
+    .sort((left, right) => right.gravity - left.gravity || left.id.localeCompare(right.id, "en"))
+    .slice(0, 80), []);
+  const incoming = activeNode ? atlasData.graph.edges
+    .filter((edge) => edge.target === activeNode.id)
+    .sort((a, b) => b.occurrenceCount - a.occurrenceCount).slice(0, 12) : [];
+  const outgoing = activeNode ? atlasData.graph.edges
+    .filter((edge) => edge.source === activeNode.id)
+    .sort((a, b) => b.occurrenceCount - a.occurrenceCount).slice(0, 12) : [];
+  const matchingRoute = activeNode ? atlasData.flow.routes.find((route) => (
+    route.members.length > 0 && route.stations.some((station) => station.entityId === activeNode.id)
+  )) ?? null : null;
+  const districtPair = activeNode?.kind === "district"
+    ? [...atlasData.relation.matrix]
+      .filter((pair) => pair.source === activeNode.label || pair.target === activeNode.label)
+      .sort((left, right) => right.wikilink - left.wikilink || left.id.localeCompare(right.id, "en"))[0] ?? null
+    : null;
+
+  const selectNode = (focusId: string) => dispatch({ type: "focus", focusId });
+  const title = scene === "clusters" ? "구역별 밀도를 비교한다" : scene === "list" ? "중력 순위로 지식을 훑는다" : "실제 방향 관계를 따라 지식을 탐색한다";
+  const answer = scene === "graph"
+    ? `${atlasData.graph.layout.defaultNodeIds.length}개 대표 노드와 ${atlasData.graph.layout.defaultEdgeIds.length}개 기본 방향 관계를 헤어볼 없이 보여줍니다.`
+    : scene === "clusters"
+      ? `${atlasData.graph.clusters.length}개 district contour가 전체 ${atlasData.graph.nodes.length}개 노드의 밀도를 요약합니다.`
+      : `고유 inbound 문서 수를 기준으로 ${rankedNodes.length}개 노드를 탐색합니다.`;
 
   return (
-    <section className="workspace-view explore-view" aria-labelledby="explore-title">
+    <SpatialWorkspaceFrame className="workspace-view explore-v75" aria-labelledby="explore-title" lang="ko">
       <WorkspaceHeader
         titleId="explore-title"
-        eyebrow="CITY · PUBLIC KNOWLEDGE"
-        title="Vault의 지식은 어느 구역에 모여 있는가"
-        question="면적은 공개 기록 수, 경계는 집계된 지식 구역이다. 공개판은 City 한 가지 문법으로만 읽는다."
-        answer={selectedDistrict
-          ? `${selectedDistrict}을 선택했다. 가장 큰 공개 구역은 ${largestDistrict.name} ${largestDistrict.documentCount}개 기록이다.`
-          : `${largestDistrict.name}이 ${largestDistrict.documentCount}개 기록으로 가장 큰 공개 구역이다.`}
+        eyebrow="EXPLORE · LIVING GRAPH"
+        title={title}
+        question="Atlas의 지식 구조는 어디에 있고 어디로 연결되는가?"
+        answer={answer}
         keyItems={[
-          { label: "공개 기록 수", className: "key-area" },
-          { label: "현재 선택", className: "key-focus" },
-          { label: "집계 경계", className: "key-authority" },
+          { label: "district color", className: "key-color" },
+          { label: "gravity size", className: "key-size" },
+          { label: "directed link", className: "key-direction" },
         ]}
       />
-      {state.mobileSibling ? <MobileCity /> : <CityBlocks />}
-    </section>
-  );
-}
 
-function CityBlocks() {
-  const { state, dispatch } = useAtlasState();
-  const { ref, width, height } = useElementSize<HTMLDivElement>();
-  const layout = useMemo(() => {
-    if (!width || !height) return [];
-    const root = stratify<HierarchyNode>()
-      .id((node) => node.id)
-      .parentId((node) => node.parentId)(atlasData.structure.hierarchyNodes)
-      .sum((node) => (node.kind === "document" ? node.value ?? 1 : 0))
-      .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
-    return treemap<HierarchyNode>()
-      .size([width, height])
-      .paddingOuter(10)
-      .paddingTop((node) => (node.depth === 1 ? 36 : 4))
-      .paddingInner(3)
-      .tile(treemapSquarify.ratio(1.2))(root)
-      .descendants()
-      .filter((node) => node.depth === 1 || node.depth === 2);
-  }, [height, width]);
+      <div className="explore-v75-controls" aria-label="Graph filters">
+        <label><span>District</span>
+          <select value={state.districtId ?? ""} onChange={(event) => dispatch({ type: "graphDistrict", districtId: event.target.value || null })}>
+            <option value="">전체 구역</option>
+            {atlasData.graph.clusters.map((cluster) => <option key={cluster.id} value={cluster.id}>{cluster.label} · {cluster.nodeCount}</option>)}
+          </select>
+        </label>
+        <label><span>Freshness</span>
+          <select value={state.freshness} onChange={(event) => dispatch({ type: "graphFreshness", freshness: event.target.value as FreshnessBucket })}>
+            {freshnessOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+          </select>
+        </label>
+        <button type="button" onClick={() => dispatch({ type: "search", open: true })}><Search size={15} aria-hidden="true" /> 노드 검색</button>
+        {(state.districtId || state.freshness !== "all") && (
+          <button type="button" className="is-clear" onClick={() => {
+            dispatch({ type: "graphDistrict", districtId: null });
+            dispatch({ type: "graphFreshness", freshness: "all" });
+          }}><X size={15} aria-hidden="true" /> 필터 해제</button>
+        )}
+      </div>
 
-  const focusedPath = entityById.get(state.focusId)?.path ?? hierarchyById.get(state.focusId)?.path ?? "";
-  const selectedLayoutId = [...layout]
-    .filter((node) => node.data.path && (focusedPath === node.data.path || focusedPath.startsWith(`${node.data.path}/`)))
-    .sort((a, b) => b.depth - a.depth)[0]?.id;
-  const selectedDistrictId = layout.find((node) => node.depth === 1 && (
-    node.id === selectedLayoutId || focusedPath.startsWith(`${node.data.path}/`)
-  ))?.id;
-  const selectedDistrict = layout.find((node) => node.id === selectedDistrictId);
-  const accessibleBranches = layout
-    .filter((node) => node.depth === 2 && (!selectedDistrict || node.parent?.id === selectedDistrict.id))
-    .slice(0, 12);
+      {scene === "graph" && (
+        <div className="explore-v75-layout">
+          <main className="explore-v75-graph-panel">
+            <div className="explore-v75-mobile-clusters" aria-label="District mini map">
+              {atlasData.graph.clusters.map((cluster) => (
+                <button key={cluster.id} type="button" aria-pressed={state.districtId === cluster.id} onClick={() => dispatch({ type: "graphDistrict", districtId: state.districtId === cluster.id ? null : cluster.id })}>
+                  <i /><strong>{cluster.label}</strong><small>{cluster.representativeNodeCount}/{cluster.nodeCount}</small>
+                </button>
+              ))}
+            </div>
+            <div className="explore-v75-axes"><span><CalendarRange size={14} />Y · 위쪽일수록 최근</span><span><Box size={14} />Z · district → source 깊이</span><span><CircleDot size={14} />크기는 unique inbound</span><span><Route size={14} />화살표는 참조 방향</span></div>
+            <LivingGraphCanvas
+              graph={atlasData.graph}
+              scene={state.pathFrom && state.pathTo ? "trace" : state.freshness !== "all" ? "freshness" : "field"}
+              focusId={selected?.id ?? null}
+              previewId={state.previewId}
+              districtId={state.districtId}
+              freshness={state.freshness}
+              from={state.pathFrom}
+              to={state.pathTo}
+              districtRelationMatrix={atlasData.relation.matrix}
+              mobile={state.mobileSibling}
+              reducedMotion={state.reducedMotion}
+              presentation="workspace"
+              onSelect={selectNode}
+              onHover={(focusId) => dispatch({ type: "preview", focusId })}
+            />
+          </main>
+          {state.panel !== "inspector" && <aside className="explore-v75-insight" aria-live="polite">
+            {activeNode ? (
+              <>
+                <span className="eyebrow">{previewed ? "PREVIEW NODE" : "SELECTED NODE"}</span>
+                <h2>{graphNodeLabel(activeNode)}</h2>
+                <p>{nodeKindLabel(activeNode)} · {atlasData.graph.clusters.find((cluster) => cluster.id === activeNode.clusterId)?.label}</p>
+                <dl>
+                  <div><dt>고유 inbound</dt><dd>{activeNode.gravity}</dd></div>
+                  <div><dt>링크 출현</dt><dd>{activeNode.occurrences}</dd></div>
+                  <div><dt>표현 기록</dt><dd>{activeNode.representedDocuments}</dd></div>
+                  <div><dt>의미 날짜</dt><dd>{activeNode.freshness ?? "미기록"}</dd></div>
+                </dl>
+                <div className="explore-v75-directions">
+                  <section><h3>Incoming <span>{incoming.length}</span></h3>{incoming.slice(0, 5).map((edge) => <button type="button" key={edge.id} onClick={() => selectNode(edge.source)}>{graphNodeLabel(graphNodeById.get(edge.source)!)} <small>{edge.occurrenceCount}</small></button>)}</section>
+                  <section><h3>Outgoing <span>{outgoing.length}</span></h3>{outgoing.slice(0, 5).map((edge) => <button type="button" key={edge.id} onClick={() => selectNode(edge.target)}>{graphNodeLabel(graphNodeById.get(edge.target)!)} <small>{edge.occurrenceCount}</small></button>)}</section>
+                </div>
+                <nav className="view-switch" aria-label="선택 지식의 연결 화면">
+                  <button type="button" onClick={() => dispatch({ type: "journey", target: activeNode.kind === "district"
+                    ? { workspace: "observe", sceneId: "global-relations", focusId: activeNode.id, relationPairId: districtPair?.id ?? null, relationLayer: "wikilink" }
+                    : { workspace: "observe", sceneId: "hub-relations", focusId: activeNode.id } })}>Observe 관계 <ArrowRight size={14} aria-hidden="true" /></button>
+                  {matchingRoute && <button type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "flow", sceneId: "routes", focusId: activeNode.id, routeId: matchingRoute.id } })}>Flow 경로 <ArrowRight size={14} aria-hidden="true" /></button>}
+                </nav>
+              </>
+            ) : <div className="explore-v75-empty"><LocateFixed size={24} /><h2>노드를 선택하세요</h2><p>지식 중력, 의미 날짜, incoming·outgoing 방향을 여기에서 읽을 수 있습니다.</p></div>}
+          </aside>}
+        </div>
+      )}
 
-  const activate = (focusId: string | undefined) => {
-    if (focusId) dispatch({ type: "focus", focusId });
-  };
-  const activateWithKeyboard = (event: KeyboardEvent, focusId: string | undefined) => {
-    if (event.key !== "Enter" && event.key !== " ") return;
-    event.preventDefault();
-    activate(focusId);
-  };
-
-  return (
-    <div className="city-workspace-surface">
-      <div className="map-surface city-map" ref={ref} data-testid="city-map">
-        <svg width={width} height={height} role="group" aria-label="문서량 기준 Vault 도시 블록 지도">
-          <defs>
-            <pattern id="authority-grid" width="7" height="7" patternUnits="userSpaceOnUse">
-              <path d="M0 7 L7 0" stroke="#1f5147" strokeOpacity="0.12" strokeWidth="1" />
-            </pattern>
-            <filter id="focus-shadow" x="-30%" y="-30%" width="160%" height="160%">
-              <feDropShadow dx="0" dy="4" stdDeviation="7" floodColor="#2f8878" floodOpacity="0.28" />
-            </filter>
-            {layout.map((node, index) => (
-              <clipPath id={`city-label-clip-${index}`} key={`clip-${node.id}`}>
-                <rect x="4" y="3" width={Math.max(0, node.x1 - node.x0 - 8)} height={Math.max(0, node.y1 - node.y0 - 6)} rx="3" />
-              </clipPath>
-            ))}
-          </defs>
-          {layout.map((node, index) => {
-            const w = Math.max(0, node.x1 - node.x0);
-            const h = Math.max(0, node.y1 - node.y0);
-            const district = node.data.path.split("/").slice(0, node.data.path.startsWith("Console/") ? 2 : 1).join("/");
-            const selected = node.id === selectedLayoutId || node.id === selectedDistrictId;
-            const previewed = state.previewId === node.id;
-            const labelFits = w > 90 && h > 30;
-            const mapLabel = compactMapLabel(node.data.label, Math.max(6, Math.floor((w - 18) / 7.2)));
-            const authorityRatio = node.data.documentCount ? node.data.authorityL1L2 / node.data.documentCount : 0;
+      {scene === "clusters" && (
+        <div className="explore-v75-clusters">
+          {atlasData.graph.clusters.map((cluster, index) => {
+            const strongest = atlasData.graph.nodes.filter((node) => node.clusterId === cluster.id)
+              .sort((left, right) => right.gravity - left.gravity || left.id.localeCompare(right.id, "en"))[0];
             return (
-              <g
-                key={node.id}
-                className={`city-block depth-${node.depth}${selected ? " is-selected" : ""}${previewed ? " is-preview" : ""}`}
-                transform={`translate(${node.x0},${node.y0})`}
-                onPointerEnter={node.depth === 2 ? () => dispatch({ type: "preview", focusId: node.id! }) : undefined}
-                onPointerLeave={node.depth === 2 ? () => dispatch({ type: "preview", focusId: null }) : undefined}
-                onClick={node.depth === 2 ? () => activate(node.id) : undefined}
-                {...cityMapNodeAccessibility(node.depth)}
-                pointerEvents={node.depth === 1 ? "none" : undefined}
-              >
-                <rect
-                  data-authority-count={node.data.authorityL1L2}
-                  width={w}
-                  height={h}
-                  rx={node.depth === 1 ? 8 : 3}
-                  fill={colorFor(district)}
-                  fillOpacity={node.depth === 1 ? 0.82 : 0.96}
-                  stroke={selected ? "#183b33" : "#f9fbf9"}
-                  strokeWidth={selected ? 2.5 : node.depth === 1 ? 2 : 1}
-                  filter={selected && node.depth === 1 ? "url(#focus-shadow)" : undefined}
-                />
-                {node.data.authorityL1L2 > 0 && (
-                  <rect width={w} height={h} rx={node.depth === 1 ? 8 : 3} fill="url(#authority-grid)" opacity={selected ? 0.72 : Math.min(0.48, 0.16 + authorityRatio)} />
-                )}
-                {node.depth === 2 && labelFits && (
-                  <text clipPath={`url(#city-label-clip-${index})`} x="8" y="17" className="branch-label">
-                    <tspan>{mapLabel}</tspan>
-                  </text>
-                )}
-                <title>{`${node.data.label} · ${node.data.documentCount}개 공개 기록`}</title>
-              </g>
+              <button key={cluster.id} type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "explore", sceneId: "graph", districtId: cluster.id, focusId: strongest?.id } })}>
+                <span>{String(index + 1).padStart(2, "0")}</span><i />
+                <h2>{cluster.label}</h2>
+                <p>{cluster.nodeCount} nodes · {cluster.representedDocumentCount} represented records</p>
+                <strong>{strongest ? graphNodeLabel(strongest) : "기록 없음"}</strong>
+                <small>대표 중력 {strongest?.gravity ?? 0}</small>
+                <ArrowRight size={17} aria-hidden="true" />
+              </button>
             );
           })}
-          {layout.filter((node) => node.depth === 1).map((node) => {
-            const labelWidth = Math.max(94, Math.min(node.x1 - node.x0 - 20, 210));
-            return (
-              <g
-                key={`district-anchor-${node.id}`}
-                className={`city-district-anchor${node.id === selectedDistrictId ? " is-selected" : ""}`}
-                transform={`translate(${node.x0 + 10},${node.y0 + 6})`}
-                onClick={() => activate(node.id)}
-                onKeyDown={(event) => activateWithKeyboard(event, node.id)}
-                {...cityDistrictAnchorAccessibility(node.data.label, node.data.documentCount)}
-              >
-                <rect width={labelWidth} height="30" rx="4" fill="#fbfdfa" fillOpacity="0.96" stroke={node.id === selectedDistrictId ? "#173c34" : "#a9c8bf"} />
-                <text x="10" y="20" className="district-label">
-                  <tspan>{compactMapLabel(node.data.label, 20)}</tspan>
-                  <tspan className="map-count"> · {node.data.documentCount}</tspan>
-                </text>
-              </g>
-            );
-          })}
-        </svg>
-      </div>
-      <div className="city-accessible-index" aria-label="선택 구역의 하위 지식 가지">
-        {accessibleBranches.map((node) => (
-          <button key={node.id} type="button" onClick={() => activate(node.id)}>
-            <span>{node.data.label}</span><small>{node.data.documentCount}개 공개 기록</small>
-          </button>
-        ))}
-      </div>
-      <div className="map-status-band" aria-label="지도 범위">
-        <span>공개 기록 {atlasData.structure.archiveScope.active}개 (Public Records)</span>
-        <span>지식 구역 {atlasData.structure.districts.length}개 (Knowledge Districts)</span>
-        <span>공개 City 전용 보기</span>
-      </div>
-    </div>
-  );
-}
+        </div>
+      )}
 
-function MobileCity() {
-  const { state, dispatch } = useAtlasState();
-  const entity = entityById.get(state.focusId);
-  const district = districtForFocus(state.focusId);
-  const districtRecord = atlasData.structure.districts.find((item) => item.name === district)
-    ?? [...atlasData.structure.districts].sort((a, b) => b.documentCount - a.documentCount)[0];
-  const neighbors = entity ? atlasData.relation.neighborhoods[entity.id] ?? [] : [];
-  const rankedItems = entity
-    ? neighbors.slice(0, 6).map((neighbor) => entityById.get(neighbor.id)).filter(Boolean)
-    : atlasData.structure.districts.slice(0, 6);
+      {scene === "list" && (
+        <div className="explore-v75-list-layout">
+          <header><div><span className="eyebrow">RANKED ACCESSIBLE LIST</span><h2>지식 중력 순위</h2></div><p>Canvas와 동일한 노드·수치·선택 상태를 키보드로 탐색합니다.</p></header>
+          <VirtualRankedList nodes={rankedNodes} selectedId={selected?.id ?? null} onSelect={selectNode} onPreview={(focusId) => dispatch({ type: "preview", focusId })} />
+        </div>
+      )}
 
-  return (
-    <div className="mobile-sibling mobile-explore lens-city">
-      <section className="mobile-selection">
-        <span className="eyebrow">CITY · PUBLIC KNOWLEDGE</span>
-        <h2>{entity?.title ?? hierarchyById.get(state.focusId)?.label ?? "Homi Vault"}</h2>
-        <p>{districtRecord?.name ?? "전체"} · {districtRecord?.documentCount ?? 0}개 공개 기록</p>
-        <button className="mobile-inspector-cue" type="button" onClick={() => dispatch({ type: "panel", panel: "inspector" })}>
-          선택 해석 보기
-        </button>
-      </section>
-      <section className="mobile-ranked-list">
-        <h3>{entity ? "가까운 지식" : `${district ?? "전체"}의 주요 구역`}</h3>
-        {rankedItems.map((item) => item && (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => dispatch({
-              type: "focus",
-              focusId: "path" in item
-                ? item.id
-                : hierarchyFocusForDistrict(item.name) ?? atlasData.structure.rootId,
-            })}
-          >
-            <span><strong>{"title" in item ? item.title : item.name}</strong><small>{"path" in item ? `${item.district} · 공개 집계` : `${item.documentCount}개 공개 기록`}</small></span>
-            <LocateFixed size="16" aria-hidden="true" />
-          </button>
-        ))}
-      </section>
-      <section className="mobile-district-map" aria-label="주요 지식 구역">
-        <h3>지식 구역 (Knowledge Districts)</h3>
-        <div>
-          {atlasData.structure.districts.slice(0, 8).map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              style={{ background: colorFor(item.name) }}
-              onClick={() => dispatch({ type: "focus", focusId: hierarchyFocusForDistrict(item.name) ?? atlasData.structure.rootId })}
-            >
-              <strong>{item.name}</strong><small>{item.documentCount}개 공개 기록</small>
-            </button>
-          ))}
+      <section className="explore-v75-path" aria-labelledby="path-title">
+        <div><span className="eyebrow">DIRECTED SHORTEST PATH</span><h2 id="path-title">두 지점 사이의 실제 참조 경로</h2><p>최단 hop을 우선하고, 동률이면 occurrence 합계와 안정 ID로 결정합니다.</p></div>
+        <label>From<select value={state.pathFrom ?? ""} onChange={(event) => dispatch({ type: "graphPath", from: event.target.value || null, to: state.pathTo })}><option value="">출발 선택</option>{pathChoices.map((node) => <option key={node.id} value={node.id}>{graphNodeLabel(node)}</option>)}</select></label>
+        <label>To<select value={state.pathTo ?? ""} onChange={(event) => dispatch({ type: "graphPath", from: state.pathFrom, to: event.target.value || null })}><option value="">도착 선택</option>{pathChoices.map((node) => <option key={node.id} value={node.id}>{graphNodeLabel(node)}</option>)}</select></label>
+        <div className="explore-v75-path-result">
+          {state.pathFrom && state.pathTo
+            ? path.length > 1
+              ? path.map((id, index) => <span key={id}>{index > 0 && <ArrowRight size={13} aria-hidden="true" />}{graphNodeLabel(graphNodeById.get(id)!)}</span>)
+              : <strong>실제 방향 경로가 없습니다.</strong>
+            : <span>출발과 도착을 선택하면 전체 graph에서 경로를 계산합니다.</span>}
         </div>
       </section>
-      <button className="mobile-theatre-action" type="button" onClick={() => dispatch({ type: "theatre", open: true })}>읽기 집중 보기</button>
-    </div>
+      <p className="explore-v75-boundary">{atlasData.graph.profile === "atlas-public" ? "Public snapshot" : "Owner · Luke Mac local-only · 실제 허용 제목"} · {atlasData.graph.manifest.nodeCount} nodes · {atlasData.graph.manifest.edgeCount} directed reference edges · runtime force simulation 0</p>
+    </SpatialWorkspaceFrame>
   );
 }

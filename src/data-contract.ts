@@ -1,6 +1,28 @@
 export const RELATION_LAYERS = ["wikilink", "typed", "route"] as const;
 
 const WORKSPACES = ["home", "explore", "observe", "flow", "time", "agency"] as const;
+const ATLAS_PROFILES = ["atlas-owner", "atlas-public"] as const;
+const INVENTORY_EXCLUSION_PRIORITY = [
+  "archive",
+  "scaffolding",
+  "control_internal",
+  "raw_daily",
+  "explicit_policy",
+  "public_name_not_approved",
+] as const;
+const STRUCTURE_NODE_KINDS = [
+  "district",
+  "moc_hub",
+  "paper_gateway",
+  "strategy_insight",
+  "strategy_request",
+  "project",
+  "project_stage",
+  "signal_domain",
+  "signal_storyline",
+  "source_document",
+  "aggregate_boundary",
+] as const;
 const AGENCY_LINK_KINDS = [
   "sets_direction",
   "coordinates_boundary",
@@ -146,6 +168,7 @@ const booleanValue: Validator = (value, path, issues) => {
 };
 const finiteNumber = numberValue();
 const nonNegativeNumber = numberValue({ min: 0 });
+const positiveNumber = numberValue({ exclusiveMin: 0 });
 const integer = numberValue({ integer: true });
 const positiveInteger = numberValue({ integer: true, exclusiveMin: 0 });
 const nonNegativeInteger = numberValue({ integer: true, min: 0 });
@@ -153,6 +176,7 @@ const stringArray = arrayOf(string);
 const nullable = (validator: Validator): Validator => (value, path, issues) => {
   if (value !== null) validator(value, path, issues);
 };
+const isoDate = stringValue({ pattern: /^\d{4}-\d{2}-\d{2}$/ });
 const numberOrString: Validator = (value, path, issues) => {
   if (typeof value === "string") return;
   finiteNumber(value, path, issues);
@@ -266,7 +290,7 @@ const insightValidator = objectOf({
 
 const publicationValidator = objectOf({
   schema: required(literal("atlas.publication.v1")),
-  profile: required(oneOf(["internal", "public"])),
+  profile: required(oneOf(["internal", "owner", "public"])),
   generatedAt: required(string),
   publicSnapshotDigest: required(nullable(string)),
   allowedSurfaces: required(stringArray),
@@ -358,24 +382,140 @@ const bootstrapValidator = objectOf({
   defaultFocus: required(string),
 }, { exact: true });
 
-const structureValidator = objectOf({
-  districts: required(arrayOf(objectOf({
-    id: required(string),
-    name: required(string),
-    documentCount: required(nonNegativeInteger),
-    wordCount: required(nonNegativeNumber),
-    typedRelations: required(nonNegativeInteger),
-    currentDocuments: required(nonNegativeInteger),
-    authorityL1L2: required(nonNegativeInteger),
-    topEntities: required(stringArray),
-  }))),
-  hierarchyNodes: required(arrayOf(hierarchyValidator, { min: 1 })),
-  rootId: required(string),
-  archiveScope: required(objectOf({
-    active: required(positiveInteger),
-    archive: required(nonNegativeInteger),
-    defaultState: required(string),
-  })),
+const inventoryValidator = objectOf({
+  schema: required(literal("atlas.inventory.v1")),
+  profile: required(oneOf(ATLAS_PROFILES)),
+  generatedAt: required(nonEmptyString),
+  asOfDate: required(isoDate),
+  physicalMarkdownCount: required(nonNegativeInteger),
+  namedCount: required(nonNegativeInteger),
+  aggregateCount: required(nonNegativeInteger),
+  excludedCount: required(nonNegativeInteger),
+  unclassifiedCount: required(literal(0)),
+  reconciliation: required(objectOf({
+    classifiedTotal: required(nonNegativeInteger),
+    pass: required(literal(true)),
+  }, { exact: true })),
+  coverage: required(arrayOf(objectOf({
+    id: required(nonEmptyString),
+    label: required(nonEmptyString),
+    physical: required(nonNegativeInteger),
+    named: required(nonNegativeInteger),
+    aggregate: required(nonNegativeInteger),
+    excluded: required(nonNegativeInteger),
+  }, { exact: true }), { min: 1 })),
+  exclusions: required(objectOf({
+    priority: required(tupleOf(INVENTORY_EXCLUSION_PRIORITY.map((reason) => literal(reason)))),
+    byReason: required(objectOf(Object.fromEntries(
+      INVENTORY_EXCLUSION_PRIORITY.map((reason) => [reason, required(nonNegativeInteger)]),
+    ), { exact: true })),
+  }, { exact: true })),
+  publicTitlePolicy: required(objectOf({
+    schema: required(literal("public-title-allowlist.v1")),
+    mode: required(literal("safe_hybrid")),
+    fallback: required(literal("alias_or_aggregate")),
+    projectCountDisclosure: required(oneOf(["combined_non_attributable", "owner_exact"])),
+  }, { exact: true })),
+}, { exact: true });
+
+const graphValidator = objectOf({
+  schema: required(literal("atlas.graph.v1")),
+  profile: required(oneOf(ATLAS_PROFILES)),
+  generatedAt: required(nonEmptyString),
+  nodes: required(arrayOf(objectOf({
+    id: required(nonEmptyString),
+    kind: required(oneOf(STRUCTURE_NODE_KINDS)),
+    label: required(nonEmptyString),
+    parentId: required(nullable(string)),
+    districtId: required(nonEmptyString),
+    clusterId: required(nonEmptyString),
+    representedDocuments: required(nonNegativeInteger),
+    gravity: required(nonNegativeInteger),
+    occurrences: required(nonNegativeInteger),
+    freshness: required(nullable(isoDate)),
+    nameMode: required(oneOf(["approved_name", "public_alias", "aggregate", "owner_name"])),
+  }, { exact: true }), { min: 1 })),
+  edges: required(arrayOf(objectOf({
+    id: required(nonEmptyString),
+    source: required(nonEmptyString),
+    target: required(nonEmptyString),
+    kind: required(literal("references")),
+    direction: required(literal("forward")),
+    occurrenceCount: required(positiveInteger),
+    defaultVisible: required(booleanValue),
+  }, { exact: true }))),
+  clusters: required(arrayOf(objectOf({
+    id: required(nonEmptyString),
+    districtId: required(nonEmptyString),
+    label: required(nonEmptyString),
+    nodeCount: required(positiveInteger),
+    representedDocumentCount: required(nonNegativeInteger),
+    representativeNodeCount: required(nonNegativeInteger),
+    summary: required(nullable(nonEmptyString)),
+    contour: required(objectOf({
+      type: required(literal("MultiPolygon")),
+      coordinates: required(arrayOf(arrayOf(arrayOf(
+        tupleOf([finiteNumber, finiteNumber]),
+        { min: 4 },
+      )))),
+    }, { exact: true })),
+  }, { exact: true }), { min: 1 })),
+  layout: required(objectOf({
+    algorithm: required(literal("seeded-d3-force-projected-3d-v1")),
+    seed: required(nonEmptyString),
+    ticks: required(positiveInteger),
+    axes: required(objectOf({
+      x: required(objectOf({
+        field: required(literal("districtId")),
+        kind: required(literal("categorical_cluster")),
+        direction: required(literal("left_to_right")),
+      }, { exact: true })),
+      y: required(objectOf({
+        field: required(literal("freshness")),
+        kind: required(literal("semantic_date")),
+        direction: required(literal("newer_is_higher")),
+        scale: required(literal("order_preserving_rank")),
+      }, { exact: true })),
+      z: required(objectOf({
+        field: required(literal("kind")),
+        kind: required(literal("structural_depth")),
+        direction: required(literal("district_to_source")),
+      }, { exact: true })),
+    }, { exact: true })),
+    bounds: required(objectOf({
+      x: required(nonNegativeNumber),
+      y: required(nonNegativeNumber),
+      z: required(nonNegativeNumber),
+      width: required(positiveNumber),
+      height: required(positiveNumber),
+      depth: required(positiveNumber),
+    }, { exact: true })),
+    undatedRail: required(objectOf({
+      y: required(nonNegativeNumber),
+      label: required(nonEmptyString),
+    }, { exact: true })),
+    coordinates: required(arrayOf(objectOf({
+      id: required(nonEmptyString),
+      x: required(nonNegativeNumber),
+      y: required(nonNegativeNumber),
+      z: required(nonNegativeNumber),
+      depthLevel: required(nonNegativeInteger),
+      radius: required(positiveNumber),
+      dated: required(booleanValue),
+      clusterIndex: required(nonNegativeInteger),
+    }, { exact: true }), { min: 1 })),
+    defaultNodeIds: required(stringArray),
+    defaultEdgeIds: required(stringArray),
+    labelBudget: required(positiveInteger),
+  }, { exact: true })),
+  manifest: required(objectOf({
+    nodeCount: required(positiveInteger),
+    edgeCount: required(nonNegativeInteger),
+    clusterCount: required(positiveInteger),
+    semanticDigest: required(stringValue({ length: 64 })),
+    layoutDigest: required(stringValue({ length: 64 })),
+    projectionDigest: required(stringValue({ length: 64 })),
+  }, { exact: true })),
 }, { exact: true });
 
 const relationValidator = objectOf({
@@ -430,8 +570,9 @@ const flowValidator = objectOf({
     id: required(string),
     label: required(string),
     question: required(string),
+    weight: required(positiveInteger),
     members: required(stringArray),
-    provenance: required(literal("curated_operating_lens")),
+    provenance: required(oneOf(["curated_operating_lens", "resolved_wikilink_path"])),
     classifier: required(string),
     sourceRefs: required(stringArray),
     stations: required(arrayOf(objectOf({
@@ -442,7 +583,7 @@ const flowValidator = objectOf({
       external: required(booleanValue),
       kind: optional(oneOf(["standard", "proof_gate", "external"])),
     }))),
-  }), { min: 1 })),
+  }))),
   pulse: required(objectOf({
     latestDailyId: required(nullable(string)),
     latestDailyDate: required(nullable(string)),
@@ -469,8 +610,30 @@ const temporalValidator = objectOf({
     }))),
     unknown: required(stringArray),
     proofBoundary: required(string),
-  }), { min: 1 })),
-  currentEra: required(positiveInteger),
+  }))),
+  currentEra: required(nullable(positiveInteger)),
+}, { exact: true });
+
+const activityValidator = objectOf({
+  schema: required(literal("atlas.activity.v1")),
+  profile: required(literal("atlas-owner")),
+  generatedAt: required(nonEmptyString),
+  asOfDate: required(isoDate),
+  live: required(literal(false)),
+  boundary: required(nonEmptyString),
+  aggregates: required(arrayOf(objectOf({
+    role: required(nonEmptyString),
+    unitType: required(nonEmptyString),
+    status: required(nonEmptyString),
+    date: required(nullable(isoDate)),
+    count: required(positiveInteger),
+  }, { exact: true }))),
+  lifecycle: required(arrayOf(objectOf({
+    date: required(isoDate),
+    created: required(nonNegativeInteger),
+    completed: required(nonNegativeInteger),
+    stopped: required(nonNegativeInteger),
+  }, { exact: true }))),
 }, { exact: true });
 
 const entityPackValidator = objectOf({
@@ -496,7 +659,8 @@ const healthValidator = objectOf({
 
 const atlasValidator = objectOf({
   bootstrap: required(bootstrapValidator),
-  structure: required(structureValidator),
+  inventory: required(inventoryValidator),
+  graph: required(graphValidator),
   relation: required(relationValidator),
   flow: required(flowValidator),
   temporal: required(temporalValidator),
@@ -505,6 +669,7 @@ const atlasValidator = objectOf({
   insight: required(insightValidator),
   publication: required(publicationValidator),
   agency: required(agencyValidator),
+  activity: optional(activityValidator),
 }, { exact: true });
 
 export function collectAtlasShapeFailures(candidate: unknown): AtlasShapeIssue[] {

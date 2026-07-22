@@ -8,8 +8,9 @@ import {
   verifyReleaseArtifact,
 } from "../scripts/lib/release-artifact.mjs";
 import { runProductionReadback } from "../scripts/lib/production-readback.mjs";
+import { assertNoOwnerPayloadInPublicArtifact } from "../scripts/lib/v7-4-public-artifact-exclusion.mjs";
 
-const releaseVersion = "7.3.0";
+const releaseVersion = "7.4.0";
 const sourceCommit = "1".repeat(40);
 const publicSnapshotDigest = "a".repeat(64);
 const temporaryRoots: string[] = [];
@@ -148,5 +149,21 @@ describe("release delivery contract", () => {
     const manifestUrl = new URL("https://luke-940.github.io/homi-vault-atlas/assets/brand/site.webmanifest");
     expect(new URL(manifest.start_url, manifestUrl).toString()).toBe("https://luke-940.github.io/homi-vault-atlas/#home");
     expect(new URL(manifest.scope, manifestUrl).toString()).toBe("https://luke-940.github.io/homi-vault-atlas/");
+  });
+
+  test("allows shared reader capability literals while blocking actual owner data payloads", async () => {
+    const { distDir } = await fixtureRoot();
+    await writeFile(
+      path.join(distDir, "app.shared.js"),
+      'const supportedProfiles = ["atlas-public", "atlas-owner"]; const optionalSchema = "atlas.activity.v1";\n',
+    );
+    await expect(assertNoOwnerPayloadInPublicArtifact({ distDir })).resolves.toMatchObject({ pass: true, findings: [] });
+
+    await writeFile(path.join(distDir, "data", "activity.json"), '{"schema":"atlas.activity.v1","profile":"atlas-owner"}\n');
+    await expect(assertNoOwnerPayloadInPublicArtifact({ distDir })).rejects.toThrow(/owner-activity-file/);
+    await rm(path.join(distDir, "data", "activity.json"));
+
+    await writeFile(path.join(distDir, "data", "leak.js"), 'window.DATA={"profile":"owner","nameMode":"owner_name"};\n');
+    await expect(assertNoOwnerPayloadInPublicArtifact({ distDir })).rejects.toThrow(/owner-profile/);
   });
 });

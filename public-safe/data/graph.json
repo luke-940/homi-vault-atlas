@@ -1,0 +1,3443 @@
+{
+  "schema": "atlas.graph.v1",
+  "profile": "atlas-public",
+  "generatedAt": "2026-07-22T08:44:46.744Z",
+  "nodes": [
+    {
+      "id": "aggregate:pub:ajjfebmckicopnklpl",
+      "kind": "aggregate_boundary",
+      "label": "Video Papers · 공개 안전 원천 집계",
+      "parentId": "hub:pub:jnhphfkomonkoojdcb",
+      "districtId": "district:pub:gdoehndnngjokincll",
+      "clusterId": "district:pub:gdoehndnngjokincll",
+      "nameMode": "aggregate",
+      "representedDocuments": 7,
+      "gravity": 15,
+      "occurrences": 75,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "aggregate:pub:ajndkpemcggkajdcec",
+      "kind": "aggregate_boundary",
+      "label": "Foundation Model Papers · 공개 안전 원천 집계",
+      "parentId": "hub:pub:dfchpoahnmmondanci",
+      "districtId": "district:pub:gdoehndnngjokincll",
+      "clusterId": "district:pub:gdoehndnngjokincll",
+      "nameMode": "aggregate",
+      "representedDocuments": 15,
+      "gravity": 69,
+      "occurrences": 545,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "aggregate:pub:baadnolmhkkofcnlop",
+      "kind": "aggregate_boundary",
+      "label": "Audio Papers · 공개 안전 원천 집계",
+      "parentId": "hub:pub:cgmmgppmbkcdgknajp",
+      "districtId": "district:pub:gdoehndnngjokincll",
+      "clusterId": "district:pub:gdoehndnngjokincll",
+      "nameMode": "aggregate",
+      "representedDocuments": 4,
+      "gravity": 10,
+      "occurrences": 53,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "aggregate:pub:bobhiebapppbnfgdkm",
+      "kind": "aggregate_boundary",
+      "label": "연구 기록 · 공개 안전 원천 집계",
+      "parentId": "hub:pub:ldcocieelcgjjpjmkp",
+      "districtId": "district:pub:bnpdeghebdmopjhnml",
+      "clusterId": "district:pub:bnpdeghebdmopjhnml",
+      "nameMode": "aggregate",
+      "representedDocuments": 19,
+      "gravity": 52,
+      "occurrences": 109,
+      "freshness": "2026-07-16"
+    },
+    {
+      "id": "aggregate:pub:chokjgmpmimjedgcge",
+      "kind": "aggregate_boundary",
+      "label": "Agent Papers · 공개 안전 원천 집계",
+      "parentId": "hub:pub:honjgcnmnhhiajpdce",
+      "districtId": "district:pub:gdoehndnngjokincll",
+      "clusterId": "district:pub:gdoehndnngjokincll",
+      "nameMode": "aggregate",
+      "representedDocuments": 31,
+      "gravity": 136,
+      "occurrences": 835,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "aggregate:pub:ebpigkpdcfbdkmidne",
+      "kind": "aggregate_boundary",
+      "label": "Independent Projects · 공개 안전 원천 집계",
+      "parentId": "hub:pub:omgcibnkelakhomknk",
+      "districtId": "district:pub:bmfohnipgjoniceokh",
+      "clusterId": "district:pub:bmfohnipgjoniceokh",
+      "nameMode": "aggregate",
+      "representedDocuments": 235,
+      "gravity": 189,
+      "occurrences": 1562,
+      "freshness": "2026-07-22"
+    },
+    {
+      "id": "aggregate:pub:eckckfjnjkjjemnfne",
+      "kind": "aggregate_boundary",
+      "label": "운영 기반 · 공개 안전 원천 집계",
+      "parentId": "hub:pub:fejnbhmkceeoedjalm",
+      "districtId": "district:pub:gcjmfjnihkncgmcfea",
+      "clusterId": "district:pub:gcjmfjnihkncgmcfea",
+      "nameMode": "aggregate",
+      "representedDocuments": 21,
+      "gravity": 308,
+      "occurrences": 2166,
+      "freshness": "2026-07-10"
+    },
+    {
+      "id": "aggregate:pub:fgdnamkpnoeaeajhli",
+      "kind": "aggregate_boundary",
+      "label": "Tool Atlas · 공개 안전 원천 집계",
+      "parentId": "hub:pub:fpfdgajeodngfgehhm",
+      "districtId": "district:pub:iifenbocdbbaijbjgf",
+      "clusterId": "district:pub:iifenbocdbbaijbjgf",
+      "nameMode": "aggregate",
+      "representedDocuments": 7,
+      "gravity": 119,
+      "occurrences": 439,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "aggregate:pub:fkhfoabgimjomchpfl",
+      "kind": "aggregate_boundary",
+      "label": "AI 신뢰성 · 공개 안전 원천 집계",
+      "parentId": "hub:pub:fpklgapieidgcbiinb",
+      "districtId": "district:pub:iifenbocdbbaijbjgf",
+      "clusterId": "district:pub:iifenbocdbbaijbjgf",
+      "nameMode": "aggregate",
+      "representedDocuments": 46,
+      "gravity": 481,
+      "occurrences": 5628,
+      "freshness": "2026-07-06"
+    },
+    {
+      "id": "aggregate:pub:gcomkadkbakpflnbml",
+      "kind": "aggregate_boundary",
+      "label": "AI and Society Papers · 공개 안전 원천 집계",
+      "parentId": "hub:pub:cddiapjcnpfekmchpc",
+      "districtId": "district:pub:gdoehndnngjokincll",
+      "clusterId": "district:pub:gdoehndnngjokincll",
+      "nameMode": "aggregate",
+      "representedDocuments": 48,
+      "gravity": 90,
+      "occurrences": 561,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "aggregate:pub:gfnncmefbcajcdmiga",
+      "kind": "aggregate_boundary",
+      "label": "VLM Papers · 공개 안전 원천 집계",
+      "parentId": "hub:pub:aaeodccfgonhehiafa",
+      "districtId": "district:pub:gdoehndnngjokincll",
+      "clusterId": "district:pub:gdoehndnngjokincll",
+      "nameMode": "aggregate",
+      "representedDocuments": 7,
+      "gravity": 54,
+      "occurrences": 246,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "aggregate:pub:hakagedehloinjmife",
+      "kind": "aggregate_boundary",
+      "label": "World and 3D Papers · 공개 안전 원천 집계",
+      "parentId": "hub:pub:enomkjhfhdnfmlpedf",
+      "districtId": "district:pub:gdoehndnngjokincll",
+      "clusterId": "district:pub:gdoehndnngjokincll",
+      "nameMode": "aggregate",
+      "representedDocuments": 7,
+      "gravity": 18,
+      "occurrences": 115,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "aggregate:pub:idkggcljegfkfbokma",
+      "kind": "aggregate_boundary",
+      "label": "Image Papers · 공개 안전 원천 집계",
+      "parentId": "hub:pub:pgkcpabbcdcnmnpddm",
+      "districtId": "district:pub:gdoehndnngjokincll",
+      "clusterId": "district:pub:gdoehndnngjokincll",
+      "nameMode": "aggregate",
+      "representedDocuments": 15,
+      "gravity": 47,
+      "occurrences": 383,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "aggregate:pub:ieieohcalkkfomdlag",
+      "kind": "aggregate_boundary",
+      "label": "Commerce Papers · 공개 안전 원천 집계",
+      "parentId": "hub:pub:bfjokiodpgpgbgifne",
+      "districtId": "district:pub:gdoehndnngjokincll",
+      "clusterId": "district:pub:gdoehndnngjokincll",
+      "nameMode": "aggregate",
+      "representedDocuments": 5,
+      "gravity": 21,
+      "occurrences": 95,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "aggregate:pub:kpkgmdhhkcicehffhi",
+      "kind": "aggregate_boundary",
+      "label": "전략 포트폴리오 · 공개 안전 원천 집계",
+      "parentId": "hub:pub:mmbnfenhhpnopegidg",
+      "districtId": "district:pub:mdbopkghhgbcjimojl",
+      "clusterId": "district:pub:mdbopkghhgbcjimojl",
+      "nameMode": "aggregate",
+      "representedDocuments": 31,
+      "gravity": 318,
+      "occurrences": 2975,
+      "freshness": "2026-07-06"
+    },
+    {
+      "id": "aggregate:pub:leonejeegmjmphmlhc",
+      "kind": "aggregate_boundary",
+      "label": "신호 도메인 · 공개 안전 원천 집계",
+      "parentId": "hub:pub:hoflckjnkebdoajfcb",
+      "districtId": "district:pub:ebgmlojhnbdnphamdm",
+      "clusterId": "district:pub:ebgmlojhnbdnphamdm",
+      "nameMode": "aggregate",
+      "representedDocuments": 21,
+      "gravity": 158,
+      "occurrences": 1546,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "aggregate:pub:llpgifembbjmidcked",
+      "kind": "aggregate_boundary",
+      "label": "중심 지식 허브 · 공개 안전 원천 집계",
+      "parentId": "hub:pub:ehhomnpcpbnbnlfkll",
+      "districtId": "district:pub:iifenbocdbbaijbjgf",
+      "clusterId": "district:pub:iifenbocdbbaijbjgf",
+      "nameMode": "aggregate",
+      "representedDocuments": 56,
+      "gravity": 269,
+      "occurrences": 2478,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "aggregate:pub:mgiaodbcnhcielhcfh",
+      "kind": "aggregate_boundary",
+      "label": "에이전트 · 공개 안전 원천 집계",
+      "parentId": "hub:pub:opnaegbkakkicfenem",
+      "districtId": "district:pub:iifenbocdbbaijbjgf",
+      "clusterId": "district:pub:iifenbocdbbaijbjgf",
+      "nameMode": "aggregate",
+      "representedDocuments": 16,
+      "gravity": 250,
+      "occurrences": 1154,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "aggregate:pub:noacikchihabjclhfo",
+      "kind": "aggregate_boundary",
+      "label": "MCP · 공개 안전 원천 집계",
+      "parentId": "hub:pub:kmfbcbjcjobaplfndc",
+      "districtId": "district:pub:iifenbocdbbaijbjgf",
+      "clusterId": "district:pub:iifenbocdbbaijbjgf",
+      "nameMode": "aggregate",
+      "representedDocuments": 10,
+      "gravity": 291,
+      "occurrences": 1881,
+      "freshness": "2026-07-10"
+    },
+    {
+      "id": "aggregate:pub:pcbpgoadfjbbfbjplf",
+      "kind": "aggregate_boundary",
+      "label": "Anthropic · 공개 안전 원천 집계",
+      "parentId": "hub:pub:cbakakojgkclekcjbf",
+      "districtId": "district:pub:iifenbocdbbaijbjgf",
+      "clusterId": "district:pub:iifenbocdbbaijbjgf",
+      "nameMode": "aggregate",
+      "representedDocuments": 14,
+      "gravity": 293,
+      "occurrences": 1753,
+      "freshness": "2026-07-06"
+    },
+    {
+      "id": "aggregate:pub:pfpmpboalalkdlicad",
+      "kind": "aggregate_boundary",
+      "label": "Claude · 공개 안전 원천 집계",
+      "parentId": "hub:pub:kpafjmeobbpfcnbamm",
+      "districtId": "district:pub:iifenbocdbbaijbjgf",
+      "clusterId": "district:pub:iifenbocdbbaijbjgf",
+      "nameMode": "aggregate",
+      "representedDocuments": 6,
+      "gravity": 130,
+      "occurrences": 402,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "district:pub:bmfohnipgjoniceokh",
+      "kind": "district",
+      "label": "Independent Projects",
+      "parentId": null,
+      "districtId": "district:pub:bmfohnipgjoniceokh",
+      "clusterId": "district:pub:bmfohnipgjoniceokh",
+      "nameMode": "approved_name",
+      "representedDocuments": 235,
+      "gravity": 189,
+      "occurrences": 1562,
+      "freshness": "2026-07-22"
+    },
+    {
+      "id": "district:pub:bnpdeghebdmopjhnml",
+      "kind": "district",
+      "label": "연구 기록",
+      "parentId": null,
+      "districtId": "district:pub:bnpdeghebdmopjhnml",
+      "clusterId": "district:pub:bnpdeghebdmopjhnml",
+      "nameMode": "approved_name",
+      "representedDocuments": 19,
+      "gravity": 52,
+      "occurrences": 109,
+      "freshness": "2026-07-16"
+    },
+    {
+      "id": "district:pub:ebgmlojhnbdnphamdm",
+      "kind": "district",
+      "label": "신호",
+      "parentId": null,
+      "districtId": "district:pub:ebgmlojhnbdnphamdm",
+      "clusterId": "district:pub:ebgmlojhnbdnphamdm",
+      "nameMode": "approved_name",
+      "representedDocuments": 21,
+      "gravity": 158,
+      "occurrences": 1546,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "district:pub:gcjmfjnihkncgmcfea",
+      "kind": "district",
+      "label": "운영 기반",
+      "parentId": null,
+      "districtId": "district:pub:gcjmfjnihkncgmcfea",
+      "clusterId": "district:pub:gcjmfjnihkncgmcfea",
+      "nameMode": "approved_name",
+      "representedDocuments": 21,
+      "gravity": 308,
+      "occurrences": 2166,
+      "freshness": "2026-07-10"
+    },
+    {
+      "id": "district:pub:gdoehndnngjokincll",
+      "kind": "district",
+      "label": "연구 논거",
+      "parentId": null,
+      "districtId": "district:pub:gdoehndnngjokincll",
+      "clusterId": "district:pub:gdoehndnngjokincll",
+      "nameMode": "approved_name",
+      "representedDocuments": 148,
+      "gravity": 217,
+      "occurrences": 3409,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "district:pub:iifenbocdbbaijbjgf",
+      "kind": "district",
+      "label": "중심 지식",
+      "parentId": null,
+      "districtId": "district:pub:iifenbocdbbaijbjgf",
+      "clusterId": "district:pub:iifenbocdbbaijbjgf",
+      "nameMode": "approved_name",
+      "representedDocuments": 161,
+      "gravity": 511,
+      "occurrences": 16490,
+      "freshness": "2026-07-10"
+    },
+    {
+      "id": "district:pub:mdbopkghhgbcjimojl",
+      "kind": "district",
+      "label": "전략",
+      "parentId": null,
+      "districtId": "district:pub:mdbopkghhgbcjimojl",
+      "clusterId": "district:pub:mdbopkghhgbcjimojl",
+      "nameMode": "approved_name",
+      "representedDocuments": 31,
+      "gravity": 318,
+      "occurrences": 2975,
+      "freshness": "2026-07-06"
+    },
+    {
+      "id": "hub:pub:aaeodccfgonhehiafa",
+      "kind": "paper_gateway",
+      "label": "VLM Papers",
+      "parentId": "district:pub:gdoehndnngjokincll",
+      "districtId": "district:pub:gdoehndnngjokincll",
+      "clusterId": "district:pub:gdoehndnngjokincll",
+      "nameMode": "approved_name",
+      "representedDocuments": 1,
+      "gravity": 9,
+      "occurrences": 13,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "hub:pub:bfjokiodpgpgbgifne",
+      "kind": "paper_gateway",
+      "label": "Commerce Papers",
+      "parentId": "district:pub:gdoehndnngjokincll",
+      "districtId": "district:pub:gdoehndnngjokincll",
+      "clusterId": "district:pub:gdoehndnngjokincll",
+      "nameMode": "approved_name",
+      "representedDocuments": 1,
+      "gravity": 7,
+      "occurrences": 9,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "hub:pub:cbakakojgkclekcjbf",
+      "kind": "moc_hub",
+      "label": "Anthropic",
+      "parentId": "district:pub:iifenbocdbbaijbjgf",
+      "districtId": "district:pub:iifenbocdbbaijbjgf",
+      "clusterId": "district:pub:iifenbocdbbaijbjgf",
+      "nameMode": "approved_name",
+      "representedDocuments": 1,
+      "gravity": 132,
+      "occurrences": 388,
+      "freshness": "2026-07-06"
+    },
+    {
+      "id": "hub:pub:cddiapjcnpfekmchpc",
+      "kind": "paper_gateway",
+      "label": "AI and Society Papers",
+      "parentId": "district:pub:gdoehndnngjokincll",
+      "districtId": "district:pub:gdoehndnngjokincll",
+      "clusterId": "district:pub:gdoehndnngjokincll",
+      "nameMode": "approved_name",
+      "representedDocuments": 1,
+      "gravity": 79,
+      "occurrences": 209,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "hub:pub:cgmmgppmbkcdgknajp",
+      "kind": "paper_gateway",
+      "label": "Audio Papers",
+      "parentId": "district:pub:gdoehndnngjokincll",
+      "districtId": "district:pub:gdoehndnngjokincll",
+      "clusterId": "district:pub:gdoehndnngjokincll",
+      "nameMode": "approved_name",
+      "representedDocuments": 1,
+      "gravity": 6,
+      "occurrences": 7,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "hub:pub:dfchpoahnmmondanci",
+      "kind": "paper_gateway",
+      "label": "Foundation Model Papers",
+      "parentId": "district:pub:gdoehndnngjokincll",
+      "districtId": "district:pub:gdoehndnngjokincll",
+      "clusterId": "district:pub:gdoehndnngjokincll",
+      "nameMode": "approved_name",
+      "representedDocuments": 1,
+      "gravity": 25,
+      "occurrences": 60,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "hub:pub:ehhomnpcpbnbnlfkll",
+      "kind": "moc_hub",
+      "label": "중심 지식 허브",
+      "parentId": "district:pub:iifenbocdbbaijbjgf",
+      "districtId": "district:pub:iifenbocdbbaijbjgf",
+      "clusterId": "district:pub:iifenbocdbbaijbjgf",
+      "nameMode": "public_alias",
+      "representedDocuments": 0,
+      "gravity": 0,
+      "occurrences": 0,
+      "freshness": null
+    },
+    {
+      "id": "hub:pub:enomkjhfhdnfmlpedf",
+      "kind": "paper_gateway",
+      "label": "World and 3D Papers",
+      "parentId": "district:pub:gdoehndnngjokincll",
+      "districtId": "district:pub:gdoehndnngjokincll",
+      "clusterId": "district:pub:gdoehndnngjokincll",
+      "nameMode": "approved_name",
+      "representedDocuments": 1,
+      "gravity": 7,
+      "occurrences": 10,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "hub:pub:fejnbhmkceeoedjalm",
+      "kind": "aggregate_boundary",
+      "label": "운영 기반",
+      "parentId": "district:pub:gcjmfjnihkncgmcfea",
+      "districtId": "district:pub:gcjmfjnihkncgmcfea",
+      "clusterId": "district:pub:gcjmfjnihkncgmcfea",
+      "nameMode": "public_alias",
+      "representedDocuments": 0,
+      "gravity": 0,
+      "occurrences": 0,
+      "freshness": null
+    },
+    {
+      "id": "hub:pub:fpfdgajeodngfgehhm",
+      "kind": "moc_hub",
+      "label": "Tool Atlas",
+      "parentId": "district:pub:iifenbocdbbaijbjgf",
+      "districtId": "district:pub:iifenbocdbbaijbjgf",
+      "clusterId": "district:pub:iifenbocdbbaijbjgf",
+      "nameMode": "approved_name",
+      "representedDocuments": 1,
+      "gravity": 21,
+      "occurrences": 52,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "hub:pub:fpklgapieidgcbiinb",
+      "kind": "moc_hub",
+      "label": "AI 신뢰성",
+      "parentId": "district:pub:iifenbocdbbaijbjgf",
+      "districtId": "district:pub:iifenbocdbbaijbjgf",
+      "clusterId": "district:pub:iifenbocdbbaijbjgf",
+      "nameMode": "approved_name",
+      "representedDocuments": 1,
+      "gravity": 303,
+      "occurrences": 1165,
+      "freshness": "2026-07-06"
+    },
+    {
+      "id": "hub:pub:gbkejbmjlnaiejgdhp",
+      "kind": "paper_gateway",
+      "label": "연구 논거 게이트웨이",
+      "parentId": "district:pub:gdoehndnngjokincll",
+      "districtId": "district:pub:gdoehndnngjokincll",
+      "clusterId": "district:pub:gdoehndnngjokincll",
+      "nameMode": "public_alias",
+      "representedDocuments": 0,
+      "gravity": 0,
+      "occurrences": 0,
+      "freshness": null
+    },
+    {
+      "id": "hub:pub:hoflckjnkebdoajfcb",
+      "kind": "signal_domain",
+      "label": "신호 도메인",
+      "parentId": "district:pub:ebgmlojhnbdnphamdm",
+      "districtId": "district:pub:ebgmlojhnbdnphamdm",
+      "clusterId": "district:pub:ebgmlojhnbdnphamdm",
+      "nameMode": "public_alias",
+      "representedDocuments": 0,
+      "gravity": 0,
+      "occurrences": 0,
+      "freshness": null
+    },
+    {
+      "id": "hub:pub:honjgcnmnhhiajpdce",
+      "kind": "paper_gateway",
+      "label": "Agent Papers",
+      "parentId": "district:pub:gdoehndnngjokincll",
+      "districtId": "district:pub:gdoehndnngjokincll",
+      "clusterId": "district:pub:gdoehndnngjokincll",
+      "nameMode": "approved_name",
+      "representedDocuments": 1,
+      "gravity": 58,
+      "occurrences": 164,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "hub:pub:jnhphfkomonkoojdcb",
+      "kind": "paper_gateway",
+      "label": "Video Papers",
+      "parentId": "district:pub:gdoehndnngjokincll",
+      "districtId": "district:pub:gdoehndnngjokincll",
+      "clusterId": "district:pub:gdoehndnngjokincll",
+      "nameMode": "approved_name",
+      "representedDocuments": 1,
+      "gravity": 7,
+      "occurrences": 14,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "hub:pub:kmfbcbjcjobaplfndc",
+      "kind": "moc_hub",
+      "label": "MCP",
+      "parentId": "district:pub:iifenbocdbbaijbjgf",
+      "districtId": "district:pub:iifenbocdbbaijbjgf",
+      "clusterId": "district:pub:iifenbocdbbaijbjgf",
+      "nameMode": "approved_name",
+      "representedDocuments": 1,
+      "gravity": 140,
+      "occurrences": 384,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "hub:pub:kpafjmeobbpfcnbamm",
+      "kind": "moc_hub",
+      "label": "Claude",
+      "parentId": "district:pub:iifenbocdbbaijbjgf",
+      "districtId": "district:pub:iifenbocdbbaijbjgf",
+      "clusterId": "district:pub:iifenbocdbbaijbjgf",
+      "nameMode": "approved_name",
+      "representedDocuments": 1,
+      "gravity": 70,
+      "occurrences": 136,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "hub:pub:ldcocieelcgjjpjmkp",
+      "kind": "aggregate_boundary",
+      "label": "연구 기록",
+      "parentId": "district:pub:bnpdeghebdmopjhnml",
+      "districtId": "district:pub:bnpdeghebdmopjhnml",
+      "clusterId": "district:pub:bnpdeghebdmopjhnml",
+      "nameMode": "public_alias",
+      "representedDocuments": 0,
+      "gravity": 0,
+      "occurrences": 0,
+      "freshness": null
+    },
+    {
+      "id": "hub:pub:mmbnfenhhpnopegidg",
+      "kind": "aggregate_boundary",
+      "label": "전략 포트폴리오",
+      "parentId": "district:pub:mdbopkghhgbcjimojl",
+      "districtId": "district:pub:mdbopkghhgbcjimojl",
+      "clusterId": "district:pub:mdbopkghhgbcjimojl",
+      "nameMode": "public_alias",
+      "representedDocuments": 0,
+      "gravity": 0,
+      "occurrences": 0,
+      "freshness": null
+    },
+    {
+      "id": "hub:pub:omgcibnkelakhomknk",
+      "kind": "aggregate_boundary",
+      "label": "Independent Projects",
+      "parentId": "district:pub:bmfohnipgjoniceokh",
+      "districtId": "district:pub:bmfohnipgjoniceokh",
+      "clusterId": "district:pub:bmfohnipgjoniceokh",
+      "nameMode": "public_alias",
+      "representedDocuments": 0,
+      "gravity": 0,
+      "occurrences": 0,
+      "freshness": null
+    },
+    {
+      "id": "hub:pub:opnaegbkakkicfenem",
+      "kind": "moc_hub",
+      "label": "에이전트",
+      "parentId": "district:pub:iifenbocdbbaijbjgf",
+      "districtId": "district:pub:iifenbocdbbaijbjgf",
+      "clusterId": "district:pub:iifenbocdbbaijbjgf",
+      "nameMode": "approved_name",
+      "representedDocuments": 1,
+      "gravity": 228,
+      "occurrences": 630,
+      "freshness": "2026-07-03"
+    },
+    {
+      "id": "hub:pub:pgkcpabbcdcnmnpddm",
+      "kind": "paper_gateway",
+      "label": "Image Papers",
+      "parentId": "district:pub:gdoehndnngjokincll",
+      "districtId": "district:pub:gdoehndnngjokincll",
+      "clusterId": "district:pub:gdoehndnngjokincll",
+      "nameMode": "approved_name",
+      "representedDocuments": 1,
+      "gravity": 7,
+      "occurrences": 15,
+      "freshness": "2026-07-03"
+    }
+  ],
+  "edges": [
+    {
+      "id": "association:pub:accdcaabeacogllpfe",
+      "source": "hub:pub:kpafjmeobbpfcnbamm",
+      "target": "hub:pub:kmfbcbjcjobaplfndc",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 3,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:adkihgilpnddbogdgo",
+      "source": "hub:pub:fpklgapieidgcbiinb",
+      "target": "hub:pub:kmfbcbjcjobaplfndc",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 2,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:akmafhfmookabnmcco",
+      "source": "hub:pub:fpfdgajeodngfgehhm",
+      "target": "hub:pub:fpklgapieidgcbiinb",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 2,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:akndanaophlbiaakln",
+      "source": "hub:pub:pgkcpabbcdcnmnpddm",
+      "target": "hub:pub:opnaegbkakkicfenem",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 1,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:bieojambbapbpedemd",
+      "source": "hub:pub:cbakakojgkclekcjbf",
+      "target": "hub:pub:opnaegbkakkicfenem",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 1,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:bklpgebpgjbkcamona",
+      "source": "hub:pub:honjgcnmnhhiajpdce",
+      "target": "hub:pub:fpklgapieidgcbiinb",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 33,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:blohabhfhcjmohhapl",
+      "source": "hub:pub:fpklgapieidgcbiinb",
+      "target": "hub:pub:opnaegbkakkicfenem",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 1,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:cdmdfaklcopnejhjgk",
+      "source": "hub:pub:fpfdgajeodngfgehhm",
+      "target": "hub:pub:kmfbcbjcjobaplfndc",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 5,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:chjldaaklahdegnoba",
+      "source": "hub:pub:jnhphfkomonkoojdcb",
+      "target": "hub:pub:fpklgapieidgcbiinb",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 1,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:dchoimgnbaheejffhf",
+      "source": "hub:pub:kpafjmeobbpfcnbamm",
+      "target": "hub:pub:cbakakojgkclekcjbf",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 4,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:dciofkpddkaakckdpj",
+      "source": "hub:pub:enomkjhfhdnfmlpedf",
+      "target": "hub:pub:fpklgapieidgcbiinb",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 1,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:deoimomlbnphionfnn",
+      "source": "hub:pub:kpafjmeobbpfcnbamm",
+      "target": "hub:pub:fpklgapieidgcbiinb",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 1,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:dihmpjpbbgkkapfbke",
+      "source": "hub:pub:honjgcnmnhhiajpdce",
+      "target": "hub:pub:kmfbcbjcjobaplfndc",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 4,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:dpldggkijjhkpkngce",
+      "source": "hub:pub:dfchpoahnmmondanci",
+      "target": "hub:pub:opnaegbkakkicfenem",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 2,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:ebcofghioenlijhfcn",
+      "source": "hub:pub:dfchpoahnmmondanci",
+      "target": "hub:pub:kmfbcbjcjobaplfndc",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 1,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:enmnnkdiigmhddlocg",
+      "source": "hub:pub:aaeodccfgonhehiafa",
+      "target": "hub:pub:opnaegbkakkicfenem",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 3,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:ffdcjoijdmfmhmddck",
+      "source": "hub:pub:fpfdgajeodngfgehhm",
+      "target": "hub:pub:opnaegbkakkicfenem",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 1,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:fgffdnbfkggipnffbk",
+      "source": "hub:pub:dfchpoahnmmondanci",
+      "target": "hub:pub:fpklgapieidgcbiinb",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 8,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:fnlfljbbnecaaclokg",
+      "source": "hub:pub:pgkcpabbcdcnmnpddm",
+      "target": "hub:pub:fpklgapieidgcbiinb",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 1,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:fodhbehmkpfajkmkpd",
+      "source": "hub:pub:aaeodccfgonhehiafa",
+      "target": "hub:pub:kmfbcbjcjobaplfndc",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 1,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:fpimkdkonifppbjbne",
+      "source": "hub:pub:opnaegbkakkicfenem",
+      "target": "hub:pub:cbakakojgkclekcjbf",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 1,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:hoopjleadiookohkok",
+      "source": "hub:pub:kmfbcbjcjobaplfndc",
+      "target": "hub:pub:opnaegbkakkicfenem",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 3,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:iemfkaobgjmejlojgl",
+      "source": "hub:pub:cddiapjcnpfekmchpc",
+      "target": "hub:pub:fpklgapieidgcbiinb",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 6,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:iimlnmbmgnofjhcgcc",
+      "source": "hub:pub:opnaegbkakkicfenem",
+      "target": "hub:pub:kmfbcbjcjobaplfndc",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 9,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:imegjmpjjidigihojh",
+      "source": "hub:pub:cgmmgppmbkcdgknajp",
+      "target": "hub:pub:opnaegbkakkicfenem",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 1,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:jnmmddlcnamodoglie",
+      "source": "hub:pub:fpklgapieidgcbiinb",
+      "target": "hub:pub:cbakakojgkclekcjbf",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 1,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:knenbddlgnaiapofgi",
+      "source": "hub:pub:aaeodccfgonhehiafa",
+      "target": "hub:pub:fpklgapieidgcbiinb",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 2,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:koajjcbmkddlnkjkjj",
+      "source": "hub:pub:kmfbcbjcjobaplfndc",
+      "target": "hub:pub:kpafjmeobbpfcnbamm",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 2,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:lbdcjceojekblolboj",
+      "source": "hub:pub:cddiapjcnpfekmchpc",
+      "target": "hub:pub:opnaegbkakkicfenem",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 1,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:ldiokbboikpkoadkdh",
+      "source": "hub:pub:cbakakojgkclekcjbf",
+      "target": "hub:pub:fpklgapieidgcbiinb",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 11,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:leiifflkikolgelmog",
+      "source": "hub:pub:kmfbcbjcjobaplfndc",
+      "target": "hub:pub:cbakakojgkclekcjbf",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 5,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:mdagjmemjponnlpmbg",
+      "source": "hub:pub:kmfbcbjcjobaplfndc",
+      "target": "hub:pub:fpklgapieidgcbiinb",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 4,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:mdfciloooejohfegkp",
+      "source": "hub:pub:cbakakojgkclekcjbf",
+      "target": "hub:pub:kpafjmeobbpfcnbamm",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 11,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:mnjddeffalmilcbiho",
+      "source": "hub:pub:opnaegbkakkicfenem",
+      "target": "hub:pub:kpafjmeobbpfcnbamm",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 1,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:mobebbinhfhapokjfj",
+      "source": "hub:pub:jnhphfkomonkoojdcb",
+      "target": "hub:pub:opnaegbkakkicfenem",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 1,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:moenmajhbefokgopdp",
+      "source": "hub:pub:cbakakojgkclekcjbf",
+      "target": "hub:pub:kmfbcbjcjobaplfndc",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 6,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:ncndcjojnbaknokghe",
+      "source": "hub:pub:cgmmgppmbkcdgknajp",
+      "target": "hub:pub:fpklgapieidgcbiinb",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 1,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:nljbmeekiglkjgcbgh",
+      "source": "hub:pub:bfjokiodpgpgbgifne",
+      "target": "hub:pub:opnaegbkakkicfenem",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 1,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:obeafeombikiccgfnm",
+      "source": "hub:pub:honjgcnmnhhiajpdce",
+      "target": "hub:pub:opnaegbkakkicfenem",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 37,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:odecbnoanahoddnmbi",
+      "source": "hub:pub:fpfdgajeodngfgehhm",
+      "target": "hub:pub:cbakakojgkclekcjbf",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 3,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:pcghfofknboalmfbbp",
+      "source": "hub:pub:opnaegbkakkicfenem",
+      "target": "hub:pub:fpklgapieidgcbiinb",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 6,
+      "defaultVisible": true
+    },
+    {
+      "id": "association:pub:plgjflgbglkolnhoci",
+      "source": "hub:pub:kpafjmeobbpfcnbamm",
+      "target": "hub:pub:opnaegbkakkicfenem",
+      "kind": "references",
+      "direction": "forward",
+      "occurrenceCount": 1,
+      "defaultVisible": true
+    }
+  ],
+  "clusters": [
+    {
+      "id": "district:pub:ebgmlojhnbdnphamdm",
+      "districtId": "district:pub:ebgmlojhnbdnphamdm",
+      "label": "신호",
+      "nodeCount": 3,
+      "representedDocumentCount": 21,
+      "representativeNodeCount": 3,
+      "summary": null,
+      "contour": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                153.43,
+                732.41
+              ],
+              [
+                165.96,
+                720.44
+              ],
+              [
+                177.55,
+                707.59
+              ],
+              [
+                191.04,
+                682.76
+              ],
+              [
+                191.49,
+                681.42
+              ],
+              [
+                202.32,
+                657.93
+              ],
+              [
+                207.57,
+                633.1
+              ],
+              [
+                208.47,
+                608.28
+              ],
+              [
+                205.02,
+                583.45
+              ],
+              [
+                195.61,
+                558.62
+              ],
+              [
+                191.49,
+                551.9
+              ],
+              [
+                180.4,
+                533.79
+              ],
+              [
+                165.96,
+                518.57
+              ],
+              [
+                153.12,
+                508.97
+              ],
+              [
+                140.43,
+                500.31
+              ],
+              [
+                114.89,
+                490.48
+              ],
+              [
+                89.36,
+                487.11
+              ],
+              [
+                63.83,
+                488.66
+              ],
+              [
+                38.3,
+                495.81
+              ],
+              [
+                16.53,
+                508.97
+              ],
+              [
+                12.77,
+                511.34
+              ],
+              [
+                0,
+                533.79
+              ],
+              [
+                0,
+                558.62
+              ],
+              [
+                0,
+                583.45
+              ],
+              [
+                0,
+                608.28
+              ],
+              [
+                0,
+                633.1
+              ],
+              [
+                0,
+                657.93
+              ],
+              [
+                0,
+                682.76
+              ],
+              [
+                0,
+                707.59
+              ],
+              [
+                12.77,
+                729.17
+              ],
+              [
+                16.66,
+                732.41
+              ],
+              [
+                38.3,
+                744.83
+              ],
+              [
+                63.83,
+                744.83
+              ],
+              [
+                89.36,
+                744.83
+              ],
+              [
+                114.89,
+                744.83
+              ],
+              [
+                140.43,
+                744.83
+              ],
+              [
+                153.43,
+                732.41
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "district:pub:gdoehndnngjokincll",
+      "districtId": "district:pub:gdoehndnngjokincll",
+      "label": "연구 논거",
+      "nodeCount": 20,
+      "representedDocumentCount": 148,
+      "representativeNodeCount": 20,
+      "summary": null,
+      "contour": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                315.04,
+                707.59
+              ],
+              [
+                319.15,
+                705.95
+              ],
+              [
+                344.68,
+                689.63
+              ],
+              [
+                352.13,
+                682.76
+              ],
+              [
+                370.21,
+                658.88
+              ],
+              [
+                370.89,
+                657.93
+              ],
+              [
+                382.31,
+                633.1
+              ],
+              [
+                385.37,
+                608.28
+              ],
+              [
+                382.79,
+                583.45
+              ],
+              [
+                374.22,
+                558.62
+              ],
+              [
+                370.21,
+                551.5
+              ],
+              [
+                361.61,
+                533.79
+              ],
+              [
+                344.68,
+                513.54
+              ],
+              [
+                339.91,
+                508.97
+              ],
+              [
+                319.15,
+                492.83
+              ],
+              [
+                296.2,
+                484.14
+              ],
+              [
+                293.62,
+                482.97
+              ],
+              [
+                268.09,
+                478.63
+              ],
+              [
+                242.55,
+                482.69
+              ],
+              [
+                239.4,
+                484.14
+              ],
+              [
+                217.02,
+                492.53
+              ],
+              [
+                195.53,
+                508.97
+              ],
+              [
+                191.49,
+                512.23
+              ],
+              [
+                171.49,
+                533.79
+              ],
+              [
+                165.96,
+                542.33
+              ],
+              [
+                155.24,
+                558.62
+              ],
+              [
+                146.38,
+                583.45
+              ],
+              [
+                143.38,
+                608.28
+              ],
+              [
+                144.9,
+                633.1
+              ],
+              [
+                152.22,
+                657.93
+              ],
+              [
+                165.96,
+                678.44
+              ],
+              [
+                169.09,
+                682.76
+              ],
+              [
+                191.49,
+                704.09
+              ],
+              [
+                198.02,
+                707.59
+              ],
+              [
+                217.02,
+                718.83
+              ],
+              [
+                242.55,
+                724.69
+              ],
+              [
+                268.09,
+                724.2
+              ],
+              [
+                293.62,
+                718.2
+              ],
+              [
+                315.04,
+                707.59
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "district:pub:mdbopkghhgbcjimojl",
+      "districtId": "district:pub:mdbopkghhgbcjimojl",
+      "label": "전략",
+      "nodeCount": 3,
+      "representedDocumentCount": 31,
+      "representativeNodeCount": 3,
+      "summary": null,
+      "contour": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                483.22,
+                732.41
+              ],
+              [
+                497.87,
+                718.79
+              ],
+              [
+                507.09,
+                707.59
+              ],
+              [
+                517.93,
+                682.76
+              ],
+              [
+                523.04,
+                657.93
+              ],
+              [
+                523.4,
+                656.07
+              ],
+              [
+                532.03,
+                633.1
+              ],
+              [
+                547.33,
+                608.28
+              ],
+              [
+                548.94,
+                606.32
+              ],
+              [
+                568.28,
+                583.45
+              ],
+              [
+                574.47,
+                574.25
+              ],
+              [
+                584.91,
+                558.62
+              ],
+              [
+                596.01,
+                533.79
+              ],
+              [
+                600,
+                519.17
+              ],
+              [
+                603.44,
+                508.97
+              ],
+              [
+                607.96,
+                484.14
+              ],
+              [
+                608.82,
+                459.31
+              ],
+              [
+                606.19,
+                434.48
+              ],
+              [
+                600,
+                411.31
+              ],
+              [
+                599.65,
+                409.66
+              ],
+              [
+                591.11,
+                384.83
+              ],
+              [
+                576.5,
+                360
+              ],
+              [
+                574.47,
+                357.27
+              ],
+              [
+                556.73,
+                335.17
+              ],
+              [
+                548.94,
+                327.51
+              ],
+              [
+                526.13,
+                310.34
+              ],
+              [
+                523.4,
+                308.4
+              ],
+              [
+                497.87,
+                294.75
+              ],
+              [
+                472.34,
+                287.41
+              ],
+              [
+                457.26,
+                285.52
+              ],
+              [
+                446.81,
+                283.78
+              ],
+              [
+                421.28,
+                284.24
+              ],
+              [
+                414.92,
+                285.52
+              ],
+              [
+                395.74,
+                288.45
+              ],
+              [
+                370.21,
+                296.8
+              ],
+              [
+                346.93,
+                310.34
+              ],
+              [
+                344.68,
+                311.64
+              ],
+              [
+                319.15,
+                332.4
+              ],
+              [
+                316.4,
+                335.17
+              ],
+              [
+                296.24,
+                360
+              ],
+              [
+                293.62,
+                364.47
+              ],
+              [
+                281.47,
+                384.83
+              ],
+              [
+                272.32,
+                409.66
+              ],
+              [
+                268.09,
+                430.2
+              ],
+              [
+                266.94,
+                434.48
+              ],
+              [
+                263.97,
+                459.31
+              ],
+              [
+                264.75,
+                484.14
+              ],
+              [
+                268.09,
+                502.17
+              ],
+              [
+                269.02,
+                508.97
+              ],
+              [
+                275.62,
+                533.79
+              ],
+              [
+                287.17,
+                558.62
+              ],
+              [
+                293.62,
+                568.48
+              ],
+              [
+                303.42,
+                583.45
+              ],
+              [
+                319.15,
+                601.79
+              ],
+              [
+                324.84,
+                608.28
+              ],
+              [
+                343.98,
+                633.1
+              ],
+              [
+                344.68,
+                634.33
+              ],
+              [
+                351.63,
+                657.93
+              ],
+              [
+                358.27,
+                682.76
+              ],
+              [
+                370.21,
+                705.09
+              ],
+              [
+                371.32,
+                707.59
+              ],
+              [
+                394.03,
+                732.41
+              ],
+              [
+                395.74,
+                744.83
+              ],
+              [
+                421.28,
+                744.83
+              ],
+              [
+                446.81,
+                744.83
+              ],
+              [
+                472.34,
+                744.83
+              ],
+              [
+                483.22,
+                732.41
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "district:pub:iifenbocdbbaijbjgf",
+      "districtId": "district:pub:iifenbocdbbaijbjgf",
+      "label": "중심 지식",
+      "nodeCount": 15,
+      "representedDocumentCount": 161,
+      "representativeNodeCount": 15,
+      "summary": null,
+      "contour": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                677.17,
+                732.41
+              ],
+              [
+                702.13,
+                717.48
+              ],
+              [
+                713.76,
+                707.59
+              ],
+              [
+                727.66,
+                692.94
+              ],
+              [
+                736.27,
+                682.76
+              ],
+              [
+                750.28,
+                657.93
+              ],
+              [
+                753.19,
+                648.91
+              ],
+              [
+                759.54,
+                633.1
+              ],
+              [
+                764.4,
+                608.28
+              ],
+              [
+                765.63,
+                583.45
+              ],
+              [
+                764.59,
+                558.62
+              ],
+              [
+                762.42,
+                533.79
+              ],
+              [
+                760.09,
+                508.97
+              ],
+              [
+                758.08,
+                484.14
+              ],
+              [
+                756.31,
+                459.31
+              ],
+              [
+                754.43,
+                434.48
+              ],
+              [
+                753.19,
+                421.32
+              ],
+              [
+                752.27,
+                409.66
+              ],
+              [
+                749.48,
+                384.83
+              ],
+              [
+                745.19,
+                360
+              ],
+              [
+                738.55,
+                335.17
+              ],
+              [
+                728.45,
+                310.34
+              ],
+              [
+                727.66,
+                308.83
+              ],
+              [
+                714.2,
+                285.52
+              ],
+              [
+                702.13,
+                270.25
+              ],
+              [
+                692.16,
+                260.69
+              ],
+              [
+                676.6,
+                248.03
+              ],
+              [
+                651.59,
+                235.86
+              ],
+              [
+                651.06,
+                235.61
+              ],
+              [
+                625.53,
+                229.82
+              ],
+              [
+                600,
+                230.69
+              ],
+              [
+                582.61,
+                235.86
+              ],
+              [
+                574.47,
+                238.24
+              ],
+              [
+                548.94,
+                253.33
+              ],
+              [
+                540.83,
+                260.69
+              ],
+              [
+                523.4,
+                279.71
+              ],
+              [
+                519.21,
+                285.52
+              ],
+              [
+                504.82,
+                310.34
+              ],
+              [
+                497.87,
+                326.67
+              ],
+              [
+                494.39,
+                335.17
+              ],
+              [
+                486.27,
+                360
+              ],
+              [
+                480.18,
+                384.83
+              ],
+              [
+                475.52,
+                409.66
+              ],
+              [
+                472.34,
+                431.66
+              ],
+              [
+                471.86,
+                434.48
+              ],
+              [
+                468.44,
+                459.31
+              ],
+              [
+                465.82,
+                484.14
+              ],
+              [
+                463.75,
+                508.97
+              ],
+              [
+                462.15,
+                533.79
+              ],
+              [
+                461.34,
+                558.62
+              ],
+              [
+                462,
+                583.45
+              ],
+              [
+                465.06,
+                608.28
+              ],
+              [
+                471.81,
+                633.1
+              ],
+              [
+                472.34,
+                634.35
+              ],
+              [
+                480.13,
+                657.93
+              ],
+              [
+                494.78,
+                682.76
+              ],
+              [
+                497.87,
+                686.72
+              ],
+              [
+                514.63,
+                707.59
+              ],
+              [
+                523.4,
+                715.8
+              ],
+              [
+                547.07,
+                732.41
+              ],
+              [
+                548.94,
+                744.83
+              ],
+              [
+                574.47,
+                744.83
+              ],
+              [
+                600,
+                744.83
+              ],
+              [
+                625.53,
+                744.83
+              ],
+              [
+                651.06,
+                744.83
+              ],
+              [
+                676.6,
+                744.83
+              ],
+              [
+                677.17,
+                732.41
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "district:pub:gcjmfjnihkncgmcfea",
+      "districtId": "district:pub:gcjmfjnihkncgmcfea",
+      "label": "운영 기반",
+      "nodeCount": 3,
+      "representedDocumentCount": 21,
+      "representativeNodeCount": 3,
+      "summary": null,
+      "contour": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                841.26,
+                508.97
+              ],
+              [
+                855.32,
+                504.51
+              ],
+              [
+                880.85,
+                490.71
+              ],
+              [
+                889.48,
+                484.14
+              ],
+              [
+                906.38,
+                470.08
+              ],
+              [
+                916.7,
+                459.31
+              ],
+              [
+                931.91,
+                438.45
+              ],
+              [
+                934.7,
+                434.48
+              ],
+              [
+                948.15,
+                409.66
+              ],
+              [
+                955.97,
+                384.83
+              ],
+              [
+                957.45,
+                376.49
+              ],
+              [
+                961.31,
+                360
+              ],
+              [
+                963.26,
+                335.17
+              ],
+              [
+                961.52,
+                310.34
+              ],
+              [
+                957.45,
+                292.52
+              ],
+              [
+                956.23,
+                285.52
+              ],
+              [
+                948.43,
+                260.69
+              ],
+              [
+                934.81,
+                235.86
+              ],
+              [
+                931.91,
+                231.82
+              ],
+              [
+                916.1,
+                211.03
+              ],
+              [
+                906.38,
+                201.22
+              ],
+              [
+                887.11,
+                186.21
+              ],
+              [
+                880.85,
+                181.67
+              ],
+              [
+                855.32,
+                168.4
+              ],
+              [
+                829.91,
+                161.38
+              ],
+              [
+                829.79,
+                161.34
+              ],
+              [
+                804.26,
+                157.24
+              ],
+              [
+                778.72,
+                157.93
+              ],
+              [
+                762.55,
+                161.38
+              ],
+              [
+                753.19,
+                162.92
+              ],
+              [
+                727.66,
+                171.4
+              ],
+              [
+                702.98,
+                186.21
+              ],
+              [
+                702.13,
+                186.72
+              ],
+              [
+                676.6,
+                207.9
+              ],
+              [
+                673.56,
+                211.03
+              ],
+              [
+                653.93,
+                235.86
+              ],
+              [
+                651.06,
+                240.91
+              ],
+              [
+                639.49,
+                260.69
+              ],
+              [
+                630.49,
+                285.52
+              ],
+              [
+                625.6,
+                310.34
+              ],
+              [
+                625.53,
+                311.2
+              ],
+              [
+                622.84,
+                335.17
+              ],
+              [
+                623.92,
+                360
+              ],
+              [
+                625.53,
+                368.13
+              ],
+              [
+                627.99,
+                384.83
+              ],
+              [
+                635.2,
+                409.66
+              ],
+              [
+                647.9,
+                434.48
+              ],
+              [
+                651.06,
+                439.13
+              ],
+              [
+                665.27,
+                459.31
+              ],
+              [
+                676.6,
+                471.29
+              ],
+              [
+                691.9,
+                484.14
+              ],
+              [
+                702.13,
+                491.91
+              ],
+              [
+                727.66,
+                505.28
+              ],
+              [
+                739.71,
+                508.97
+              ],
+              [
+                753.19,
+                513.94
+              ],
+              [
+                778.72,
+                518.45
+              ],
+              [
+                804.26,
+                518.3
+              ],
+              [
+                829.79,
+                513.39
+              ],
+              [
+                841.26,
+                508.97
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                840.51,
+                732.41
+              ],
+              [
+                855.32,
+                718.58
+              ],
+              [
+                863.61,
+                707.59
+              ],
+              [
+                871.24,
+                682.76
+              ],
+              [
+                869.21,
+                657.93
+              ],
+              [
+                855.63,
+                633.1
+              ],
+              [
+                855.32,
+                632.72
+              ],
+              [
+                829.79,
+                611.16
+              ],
+              [
+                817.51,
+                608.28
+              ],
+              [
+                804.26,
+                603.67
+              ],
+              [
+                783.23,
+                608.28
+              ],
+              [
+                778.72,
+                608.9
+              ],
+              [
+                753.19,
+                625.09
+              ],
+              [
+                746.27,
+                633.1
+              ],
+              [
+                734.04,
+                657.93
+              ],
+              [
+                732.23,
+                682.76
+              ],
+              [
+                739.2,
+                707.59
+              ],
+              [
+                753.19,
+                725.12
+              ],
+              [
+                762.64,
+                732.41
+              ],
+              [
+                778.72,
+                744.83
+              ],
+              [
+                804.26,
+                744.83
+              ],
+              [
+                829.79,
+                744.83
+              ],
+              [
+                840.51,
+                732.41
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "district:pub:bmfohnipgjoniceokh",
+      "districtId": "district:pub:bmfohnipgjoniceokh",
+      "label": "Independent Projects",
+      "nodeCount": 3,
+      "representedDocumentCount": 235,
+      "representativeNodeCount": 3,
+      "summary": null,
+      "contour": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                1035.11,
+                211.03
+              ],
+              [
+                1059.57,
+                194.65
+              ],
+              [
+                1068.4,
+                186.21
+              ],
+              [
+                1085.11,
+                164.45
+              ],
+              [
+                1087.33,
+                161.38
+              ],
+              [
+                1100.25,
+                136.55
+              ],
+              [
+                1106.32,
+                111.72
+              ],
+              [
+                1107.95,
+                86.9
+              ],
+              [
+                1105.77,
+                62.07
+              ],
+              [
+                1098.96,
+                37.24
+              ],
+              [
+                1085.11,
+                12.85
+              ],
+              [
+                1084.87,
+                12.41
+              ],
+              [
+                1059.57,
+                0
+              ],
+              [
+                1034.04,
+                0
+              ],
+              [
+                1008.51,
+                0
+              ],
+              [
+                982.98,
+                0
+              ],
+              [
+                957.45,
+                0
+              ],
+              [
+                931.91,
+                0
+              ],
+              [
+                906.38,
+                0
+              ],
+              [
+                880.85,
+                0
+              ],
+              [
+                855.32,
+                0
+              ],
+              [
+                848.95,
+                12.41
+              ],
+              [
+                836.1,
+                37.24
+              ],
+              [
+                829.97,
+                62.07
+              ],
+              [
+                829.79,
+                64.28
+              ],
+              [
+                827.01,
+                86.9
+              ],
+              [
+                829.53,
+                111.72
+              ],
+              [
+                829.79,
+                112.56
+              ],
+              [
+                835.28,
+                136.55
+              ],
+              [
+                847.26,
+                161.38
+              ],
+              [
+                855.32,
+                172.12
+              ],
+              [
+                866.91,
+                186.21
+              ],
+              [
+                880.85,
+                199.01
+              ],
+              [
+                900.35,
+                211.03
+              ],
+              [
+                906.38,
+                214.79
+              ],
+              [
+                931.91,
+                225.06
+              ],
+              [
+                957.45,
+                229.16
+              ],
+              [
+                982.98,
+                228.74
+              ],
+              [
+                1008.51,
+                223.64
+              ],
+              [
+                1034.04,
+                211.74
+              ],
+              [
+                1035.11,
+                211.03
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                1011.01,
+                732.41
+              ],
+              [
+                1033.76,
+                707.59
+              ],
+              [
+                1034.04,
+                706.73
+              ],
+              [
+                1042.63,
+                682.76
+              ],
+              [
+                1039.96,
+                657.93
+              ],
+              [
+                1034.04,
+                647.14
+              ],
+              [
+                1025.77,
+                633.1
+              ],
+              [
+                1008.51,
+                618.02
+              ],
+              [
+                982.98,
+                609.89
+              ],
+              [
+                957.45,
+                611.44
+              ],
+              [
+                931.91,
+                624.53
+              ],
+              [
+                923.24,
+                633.1
+              ],
+              [
+                909.99,
+                657.93
+              ],
+              [
+                907.95,
+                682.76
+              ],
+              [
+                914.81,
+                707.59
+              ],
+              [
+                931.91,
+                727.76
+              ],
+              [
+                939.3,
+                732.41
+              ],
+              [
+                957.45,
+                744.83
+              ],
+              [
+                982.98,
+                744.83
+              ],
+              [
+                1008.51,
+                744.83
+              ],
+              [
+                1011.01,
+                732.41
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "district:pub:bnpdeghebdmopjhnml",
+      "districtId": "district:pub:bnpdeghebdmopjhnml",
+      "label": "연구 기록",
+      "nodeCount": 3,
+      "representedDocumentCount": 19,
+      "representativeNodeCount": 3,
+      "summary": null,
+      "contour": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                1198.28,
+                285.52
+              ],
+              [
+                1212.77,
+                268.28
+              ],
+              [
+                1225.53,
+                260.69
+              ],
+              [
+                1225.53,
+                235.86
+              ],
+              [
+                1225.53,
+                211.03
+              ],
+              [
+                1225.53,
+                186.21
+              ],
+              [
+                1225.53,
+                161.38
+              ],
+              [
+                1212.77,
+                154.67
+              ],
+              [
+                1197.23,
+                136.55
+              ],
+              [
+                1187.23,
+                128.1
+              ],
+              [
+                1161.7,
+                116.81
+              ],
+              [
+                1136.17,
+                114.69
+              ],
+              [
+                1110.64,
+                119.45
+              ],
+              [
+                1085.11,
+                136.47
+              ],
+              [
+                1085.02,
+                136.55
+              ],
+              [
+                1063.95,
+                161.38
+              ],
+              [
+                1059.57,
+                173.41
+              ],
+              [
+                1053.55,
+                186.21
+              ],
+              [
+                1049.8,
+                211.03
+              ],
+              [
+                1053.28,
+                235.86
+              ],
+              [
+                1059.57,
+                249.5
+              ],
+              [
+                1063.53,
+                260.69
+              ],
+              [
+                1083.84,
+                285.52
+              ],
+              [
+                1085.11,
+                286.71
+              ],
+              [
+                1110.64,
+                303.39
+              ],
+              [
+                1136.17,
+                308.07
+              ],
+              [
+                1161.7,
+                305.99
+              ],
+              [
+                1187.23,
+                294.91
+              ],
+              [
+                1198.28,
+                285.52
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                1180.26,
+                732.41
+              ],
+              [
+                1187.23,
+                727.34
+              ],
+              [
+                1203.28,
+                707.59
+              ],
+              [
+                1209.92,
+                682.76
+              ],
+              [
+                1207.94,
+                657.93
+              ],
+              [
+                1195.12,
+                633.1
+              ],
+              [
+                1187.23,
+                624.97
+              ],
+              [
+                1161.7,
+                610.44
+              ],
+              [
+                1141.3,
+                608.28
+              ],
+              [
+                1136.17,
+                607.48
+              ],
+              [
+                1133.61,
+                608.28
+              ],
+              [
+                1110.64,
+                613.78
+              ],
+              [
+                1087.16,
+                633.1
+              ],
+              [
+                1085.11,
+                636.22
+              ],
+              [
+                1072.82,
+                657.93
+              ],
+              [
+                1070.52,
+                682.76
+              ],
+              [
+                1078.24,
+                707.59
+              ],
+              [
+                1085.11,
+                716.86
+              ],
+              [
+                1100.86,
+                732.41
+              ],
+              [
+                1110.64,
+                744.83
+              ],
+              [
+                1136.17,
+                744.83
+              ],
+              [
+                1161.7,
+                744.83
+              ],
+              [
+                1180.26,
+                732.41
+              ]
+            ]
+          ]
+        ]
+      }
+    }
+  ],
+  "layout": {
+    "algorithm": "seeded-d3-force-projected-3d-v1",
+    "seed": "homi-vault-atlas-v7.5-layout-01",
+    "ticks": 420,
+    "axes": {
+      "x": {
+        "field": "districtId",
+        "kind": "categorical_cluster",
+        "direction": "left_to_right"
+      },
+      "y": {
+        "field": "freshness",
+        "kind": "semantic_date",
+        "direction": "newer_is_higher",
+        "scale": "order_preserving_rank"
+      },
+      "z": {
+        "field": "kind",
+        "kind": "structural_depth",
+        "direction": "district_to_source"
+      }
+    },
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "width": 1200,
+      "height": 720,
+      "depth": 640
+    },
+    "undatedRail": {
+      "y": 664,
+      "label": "날짜 미기록"
+    },
+    "coordinates": [
+      {
+        "id": "aggregate:pub:ajjfebmckicopnklpl",
+        "x": 202.3,
+        "y": 556.66,
+        "z": 400.27,
+        "depthLevel": 3,
+        "radius": 9.63,
+        "dated": true,
+        "clusterIndex": 1
+      },
+      {
+        "id": "aggregate:pub:ajndkpemcggkajdcec",
+        "x": 236.07,
+        "y": 563.96,
+        "z": 437.82,
+        "depthLevel": 3,
+        "radius": 14.92,
+        "dated": true,
+        "clusterIndex": 1
+      },
+      {
+        "id": "aggregate:pub:baadnolmhkkofcnlop",
+        "x": 208.8,
+        "y": 612,
+        "z": 419.36,
+        "depthLevel": 3,
+        "radius": 8.78,
+        "dated": true,
+        "clusterIndex": 1
+      },
+      {
+        "id": "aggregate:pub:bobhiebapppbnfgdkm",
+        "x": 1128,
+        "y": 180.45,
+        "z": 425.73,
+        "depthLevel": 3,
+        "radius": 13.61,
+        "dated": true,
+        "clusterIndex": 6
+      },
+      {
+        "id": "aggregate:pub:chokjgmpmimjedgcge",
+        "x": 254.81,
+        "y": 612,
+        "z": 454.03,
+        "depthLevel": 3,
+        "radius": 18.93,
+        "dated": true,
+        "clusterIndex": 1
+      },
+      {
+        "id": "aggregate:pub:ebpigkpdcfbdkmidne",
+        "x": 957.4,
+        "y": 79.88,
+        "z": 413.1,
+        "depthLevel": 3,
+        "radius": 21.42,
+        "dated": true,
+        "clusterIndex": 5
+      },
+      {
+        "id": "aggregate:pub:eckckfjnjkjjemnfne",
+        "x": 784.08,
+        "y": 294.18,
+        "z": 444.46,
+        "depthLevel": 3,
+        "radius": 25.96,
+        "dated": true,
+        "clusterIndex": 4
+      },
+      {
+        "id": "aggregate:pub:fgdnamkpnoeaeajhli",
+        "x": 623.04,
+        "y": 612,
+        "z": 453.38,
+        "depthLevel": 3,
+        "radius": 18.03,
+        "dated": true,
+        "clusterIndex": 3
+      },
+      {
+        "id": "aggregate:pub:fkhfoabgimjomchpfl",
+        "x": 627.09,
+        "y": 421.41,
+        "z": 410.66,
+        "depthLevel": 3,
+        "radius": 31.2,
+        "dated": true,
+        "clusterIndex": 3
+      },
+      {
+        "id": "aggregate:pub:gcomkadkbakpflnbml",
+        "x": 245.11,
+        "y": 605.81,
+        "z": 410.23,
+        "depthLevel": 3,
+        "radius": 16.33,
+        "dated": true,
+        "clusterIndex": 1
+      },
+      {
+        "id": "aggregate:pub:gfnncmefbcajcdmiga",
+        "x": 274.93,
+        "y": 583.3,
+        "z": 424.75,
+        "depthLevel": 3,
+        "radius": 13.78,
+        "dated": true,
+        "clusterIndex": 1
+      },
+      {
+        "id": "aggregate:pub:hakagedehloinjmife",
+        "x": 240.14,
+        "y": 509.47,
+        "z": 398.38,
+        "depthLevel": 3,
+        "radius": 10.07,
+        "dated": true,
+        "clusterIndex": 1
+      },
+      {
+        "id": "aggregate:pub:idkggcljegfkfbokma",
+        "x": 201.11,
+        "y": 612,
+        "z": 450.35,
+        "depthLevel": 3,
+        "radius": 13.19,
+        "dated": true,
+        "clusterIndex": 1
+      },
+      {
+        "id": "aggregate:pub:ieieohcalkkfomdlag",
+        "x": 214.82,
+        "y": 612,
+        "z": 390.35,
+        "depthLevel": 3,
+        "radius": 10.47,
+        "dated": true,
+        "clusterIndex": 1
+      },
+      {
+        "id": "aggregate:pub:kpkgmdhhkcicehffhi",
+        "x": 422.76,
+        "y": 484.87,
+        "z": 449.79,
+        "depthLevel": 3,
+        "radius": 26.3,
+        "dated": true,
+        "clusterIndex": 2
+      },
+      {
+        "id": "aggregate:pub:leonejeegmjmphmlhc",
+        "x": 72,
+        "y": 612,
+        "z": 437.14,
+        "depthLevel": 3,
+        "radius": 20.01,
+        "dated": true,
+        "clusterIndex": 0
+      },
+      {
+        "id": "aggregate:pub:llpgifembbjmidcked",
+        "x": 611.63,
+        "y": 612,
+        "z": 400.79,
+        "depthLevel": 3,
+        "radius": 24.59,
+        "dated": true,
+        "clusterIndex": 3
+      },
+      {
+        "id": "aggregate:pub:mgiaodbcnhcielhcfh",
+        "x": 569.66,
+        "y": 612,
+        "z": 441.45,
+        "depthLevel": 3,
+        "radius": 23.89,
+        "dated": true,
+        "clusterIndex": 3
+      },
+      {
+        "id": "aggregate:pub:noacikchihabjclhfo",
+        "x": 603.73,
+        "y": 346.54,
+        "z": 410.61,
+        "depthLevel": 3,
+        "radius": 25.38,
+        "dated": true,
+        "clusterIndex": 3
+      },
+      {
+        "id": "aggregate:pub:pcbpgoadfjbbfbjplf",
+        "x": 570.76,
+        "y": 457.03,
+        "z": 413.41,
+        "depthLevel": 3,
+        "radius": 25.45,
+        "dated": true,
+        "clusterIndex": 3
+      },
+      {
+        "id": "aggregate:pub:pfpmpboalalkdlicad",
+        "x": 661.8,
+        "y": 603.88,
+        "z": 416.46,
+        "depthLevel": 3,
+        "radius": 18.62,
+        "dated": true,
+        "clusterIndex": 3
+      },
+      {
+        "id": "district:pub:bmfohnipgjoniceokh",
+        "x": 952,
+        "y": 72,
+        "z": 64,
+        "depthLevel": 0,
+        "radius": 21.42,
+        "dated": true,
+        "clusterIndex": 5
+      },
+      {
+        "id": "district:pub:bnpdeghebdmopjhnml",
+        "x": 1128,
+        "y": 217.67,
+        "z": 64,
+        "depthLevel": 0,
+        "radius": 13.61,
+        "dated": true,
+        "clusterIndex": 6
+      },
+      {
+        "id": "district:pub:ebgmlojhnbdnphamdm",
+        "x": 72,
+        "y": 586.19,
+        "z": 64,
+        "depthLevel": 0,
+        "radius": 20.01,
+        "dated": true,
+        "clusterIndex": 0
+      },
+      {
+        "id": "district:pub:gcjmfjnihkncgmcfea",
+        "x": 776,
+        "y": 356.04,
+        "z": 64,
+        "depthLevel": 0,
+        "radius": 25.96,
+        "dated": true,
+        "clusterIndex": 4
+      },
+      {
+        "id": "district:pub:gdoehndnngjokincll",
+        "x": 248,
+        "y": 612,
+        "z": 64,
+        "depthLevel": 0,
+        "radius": 22.59,
+        "dated": true,
+        "clusterIndex": 1
+      },
+      {
+        "id": "district:pub:iifenbocdbbaijbjgf",
+        "x": 600,
+        "y": 279.2,
+        "z": 64,
+        "depthLevel": 0,
+        "radius": 32,
+        "dated": true,
+        "clusterIndex": 3
+      },
+      {
+        "id": "district:pub:mdbopkghhgbcjimojl",
+        "x": 424,
+        "y": 422.31,
+        "z": 64,
+        "depthLevel": 0,
+        "radius": 26.3,
+        "dated": true,
+        "clusterIndex": 2
+      },
+      {
+        "id": "hub:pub:aaeodccfgonhehiafa",
+        "x": 283.19,
+        "y": 612,
+        "z": 265.46,
+        "depthLevel": 2,
+        "radius": 8.58,
+        "dated": true,
+        "clusterIndex": 1
+      },
+      {
+        "id": "hub:pub:bfjokiodpgpgbgifne",
+        "x": 270.32,
+        "y": 612,
+        "z": 310.84,
+        "depthLevel": 2,
+        "radius": 8.16,
+        "dated": true,
+        "clusterIndex": 1
+      },
+      {
+        "id": "hub:pub:cbakakojgkclekcjbf",
+        "x": 619.42,
+        "y": 480.84,
+        "z": 166.33,
+        "depthLevel": 1,
+        "radius": 18.72,
+        "dated": true,
+        "clusterIndex": 3
+      },
+      {
+        "id": "hub:pub:cddiapjcnpfekmchpc",
+        "x": 301.22,
+        "y": 559.81,
+        "z": 271.23,
+        "depthLevel": 2,
+        "radius": 15.62,
+        "dated": true,
+        "clusterIndex": 1
+      },
+      {
+        "id": "hub:pub:cgmmgppmbkcdgknajp",
+        "x": 210.01,
+        "y": 583.95,
+        "z": 273.36,
+        "depthLevel": 2,
+        "radius": 7.93,
+        "dated": true,
+        "clusterIndex": 1
+      },
+      {
+        "id": "hub:pub:dfchpoahnmmondanci",
+        "x": 257.74,
+        "y": 535.34,
+        "z": 293.96,
+        "depthLevel": 2,
+        "radius": 10.97,
+        "dated": true,
+        "clusterIndex": 1
+      },
+      {
+        "id": "hub:pub:ehhomnpcpbnbnlfkll",
+        "x": 591.93,
+        "y": 664,
+        "z": 199.3,
+        "depthLevel": 1,
+        "radius": 5,
+        "dated": false,
+        "clusterIndex": 3
+      },
+      {
+        "id": "hub:pub:enomkjhfhdnfmlpedf",
+        "x": 287.17,
+        "y": 602.82,
+        "z": 292.87,
+        "depthLevel": 2,
+        "radius": 8.16,
+        "dated": true,
+        "clusterIndex": 1
+      },
+      {
+        "id": "hub:pub:fejnbhmkceeoedjalm",
+        "x": 788.65,
+        "y": 664,
+        "z": 444.54,
+        "depthLevel": 3,
+        "radius": 5,
+        "dated": false,
+        "clusterIndex": 4
+      },
+      {
+        "id": "hub:pub:fpfdgajeodngfgehhm",
+        "x": 617.19,
+        "y": 609.74,
+        "z": 197.09,
+        "depthLevel": 1,
+        "radius": 10.47,
+        "dated": true,
+        "clusterIndex": 3
+      },
+      {
+        "id": "hub:pub:fpklgapieidgcbiinb",
+        "x": 579.24,
+        "y": 517.68,
+        "z": 162.56,
+        "depthLevel": 1,
+        "radius": 25.79,
+        "dated": true,
+        "clusterIndex": 3
+      },
+      {
+        "id": "hub:pub:gbkejbmjlnaiejgdhp",
+        "x": 232.81,
+        "y": 664,
+        "z": 267.7,
+        "depthLevel": 2,
+        "radius": 5,
+        "dated": false,
+        "clusterIndex": 1
+      },
+      {
+        "id": "hub:pub:hoflckjnkebdoajfcb",
+        "x": 72,
+        "y": 664,
+        "z": 269.31,
+        "depthLevel": 2,
+        "radius": 5,
+        "dated": false,
+        "clusterIndex": 0
+      },
+      {
+        "id": "hub:pub:honjgcnmnhhiajpdce",
+        "x": 314.52,
+        "y": 612,
+        "z": 278.53,
+        "depthLevel": 2,
+        "radius": 14.1,
+        "dated": true,
+        "clusterIndex": 1
+      },
+      {
+        "id": "hub:pub:jnhphfkomonkoojdcb",
+        "x": 286.28,
+        "y": 529.52,
+        "z": 312.93,
+        "depthLevel": 2,
+        "radius": 8.16,
+        "dated": true,
+        "clusterIndex": 1
+      },
+      {
+        "id": "hub:pub:kmfbcbjcjobaplfndc",
+        "x": 578.06,
+        "y": 612,
+        "z": 191.73,
+        "depthLevel": 1,
+        "radius": 19.13,
+        "dated": true,
+        "clusterIndex": 3
+      },
+      {
+        "id": "hub:pub:kpafjmeobbpfcnbamm",
+        "x": 562.04,
+        "y": 582.37,
+        "z": 163.29,
+        "depthLevel": 1,
+        "radius": 14.99,
+        "dated": true,
+        "clusterIndex": 3
+      },
+      {
+        "id": "hub:pub:ldcocieelcgjjpjmkp",
+        "x": 1128,
+        "y": 664,
+        "z": 408.24,
+        "depthLevel": 3,
+        "radius": 5,
+        "dated": false,
+        "clusterIndex": 6
+      },
+      {
+        "id": "hub:pub:mmbnfenhhpnopegidg",
+        "x": 425.97,
+        "y": 664,
+        "z": 430.01,
+        "depthLevel": 3,
+        "radius": 5,
+        "dated": false,
+        "clusterIndex": 2
+      },
+      {
+        "id": "hub:pub:omgcibnkelakhomknk",
+        "x": 961.93,
+        "y": 664,
+        "z": 429.25,
+        "depthLevel": 3,
+        "radius": 5,
+        "dated": false,
+        "clusterIndex": 5
+      },
+      {
+        "id": "hub:pub:opnaegbkakkicfenem",
+        "x": 612.29,
+        "y": 566.35,
+        "z": 180.44,
+        "depthLevel": 1,
+        "radius": 23.04,
+        "dated": true,
+        "clusterIndex": 3
+      },
+      {
+        "id": "hub:pub:pgkcpabbcdcnmnpddm",
+        "x": 212.76,
+        "y": 612,
+        "z": 286.05,
+        "depthLevel": 2,
+        "radius": 8.16,
+        "dated": true,
+        "clusterIndex": 1
+      }
+    ],
+    "defaultNodeIds": [
+      "aggregate:pub:ajjfebmckicopnklpl",
+      "aggregate:pub:ajndkpemcggkajdcec",
+      "aggregate:pub:baadnolmhkkofcnlop",
+      "aggregate:pub:bobhiebapppbnfgdkm",
+      "aggregate:pub:chokjgmpmimjedgcge",
+      "aggregate:pub:ebpigkpdcfbdkmidne",
+      "aggregate:pub:eckckfjnjkjjemnfne",
+      "aggregate:pub:fgdnamkpnoeaeajhli",
+      "aggregate:pub:fkhfoabgimjomchpfl",
+      "aggregate:pub:gcomkadkbakpflnbml",
+      "aggregate:pub:gfnncmefbcajcdmiga",
+      "aggregate:pub:hakagedehloinjmife",
+      "aggregate:pub:idkggcljegfkfbokma",
+      "aggregate:pub:ieieohcalkkfomdlag",
+      "aggregate:pub:kpkgmdhhkcicehffhi",
+      "aggregate:pub:leonejeegmjmphmlhc",
+      "aggregate:pub:llpgifembbjmidcked",
+      "aggregate:pub:mgiaodbcnhcielhcfh",
+      "aggregate:pub:noacikchihabjclhfo",
+      "aggregate:pub:pcbpgoadfjbbfbjplf",
+      "aggregate:pub:pfpmpboalalkdlicad",
+      "district:pub:bmfohnipgjoniceokh",
+      "district:pub:bnpdeghebdmopjhnml",
+      "district:pub:ebgmlojhnbdnphamdm",
+      "district:pub:gcjmfjnihkncgmcfea",
+      "district:pub:gdoehndnngjokincll",
+      "district:pub:iifenbocdbbaijbjgf",
+      "district:pub:mdbopkghhgbcjimojl",
+      "hub:pub:aaeodccfgonhehiafa",
+      "hub:pub:bfjokiodpgpgbgifne",
+      "hub:pub:cbakakojgkclekcjbf",
+      "hub:pub:cddiapjcnpfekmchpc",
+      "hub:pub:cgmmgppmbkcdgknajp",
+      "hub:pub:dfchpoahnmmondanci",
+      "hub:pub:ehhomnpcpbnbnlfkll",
+      "hub:pub:enomkjhfhdnfmlpedf",
+      "hub:pub:fejnbhmkceeoedjalm",
+      "hub:pub:fpfdgajeodngfgehhm",
+      "hub:pub:fpklgapieidgcbiinb",
+      "hub:pub:gbkejbmjlnaiejgdhp",
+      "hub:pub:hoflckjnkebdoajfcb",
+      "hub:pub:honjgcnmnhhiajpdce",
+      "hub:pub:jnhphfkomonkoojdcb",
+      "hub:pub:kmfbcbjcjobaplfndc",
+      "hub:pub:kpafjmeobbpfcnbamm",
+      "hub:pub:ldcocieelcgjjpjmkp",
+      "hub:pub:mmbnfenhhpnopegidg",
+      "hub:pub:omgcibnkelakhomknk",
+      "hub:pub:opnaegbkakkicfenem",
+      "hub:pub:pgkcpabbcdcnmnpddm"
+    ],
+    "defaultEdgeIds": [
+      "association:pub:accdcaabeacogllpfe",
+      "association:pub:adkihgilpnddbogdgo",
+      "association:pub:akmafhfmookabnmcco",
+      "association:pub:akndanaophlbiaakln",
+      "association:pub:bieojambbapbpedemd",
+      "association:pub:bklpgebpgjbkcamona",
+      "association:pub:blohabhfhcjmohhapl",
+      "association:pub:cdmdfaklcopnejhjgk",
+      "association:pub:chjldaaklahdegnoba",
+      "association:pub:dchoimgnbaheejffhf",
+      "association:pub:dciofkpddkaakckdpj",
+      "association:pub:deoimomlbnphionfnn",
+      "association:pub:dihmpjpbbgkkapfbke",
+      "association:pub:dpldggkijjhkpkngce",
+      "association:pub:ebcofghioenlijhfcn",
+      "association:pub:enmnnkdiigmhddlocg",
+      "association:pub:ffdcjoijdmfmhmddck",
+      "association:pub:fgffdnbfkggipnffbk",
+      "association:pub:fnlfljbbnecaaclokg",
+      "association:pub:fodhbehmkpfajkmkpd",
+      "association:pub:fpimkdkonifppbjbne",
+      "association:pub:hoopjleadiookohkok",
+      "association:pub:iemfkaobgjmejlojgl",
+      "association:pub:iimlnmbmgnofjhcgcc",
+      "association:pub:imegjmpjjidigihojh",
+      "association:pub:jnmmddlcnamodoglie",
+      "association:pub:knenbddlgnaiapofgi",
+      "association:pub:koajjcbmkddlnkjkjj",
+      "association:pub:lbdcjceojekblolboj",
+      "association:pub:ldiokbboikpkoadkdh",
+      "association:pub:leiifflkikolgelmog",
+      "association:pub:mdagjmemjponnlpmbg",
+      "association:pub:mdfciloooejohfegkp",
+      "association:pub:mnjddeffalmilcbiho",
+      "association:pub:mobebbinhfhapokjfj",
+      "association:pub:moenmajhbefokgopdp",
+      "association:pub:ncndcjojnbaknokghe",
+      "association:pub:nljbmeekiglkjgcbgh",
+      "association:pub:obeafeombikiccgfnm",
+      "association:pub:odecbnoanahoddnmbi",
+      "association:pub:pcghfofknboalmfbbp",
+      "association:pub:plgjflgbglkolnhoci"
+    ],
+    "labelBudget": 18
+  },
+  "manifest": {
+    "nodeCount": 50,
+    "edgeCount": 42,
+    "clusterCount": 7,
+    "semanticDigest": "b0ed906319546b7783925b7d446a0dc65b9bde97419c054a0fc86fa29d3f199f",
+    "layoutDigest": "5aa0b043fba2f4177f5c126da3a4960a04cdd3e81524c502114ceee8461ad0bf",
+    "projectionDigest": "4003e1836286249af1cbdcd3d59cc6625cf58aba16734626279aaf8e5953861c"
+  }
+}
