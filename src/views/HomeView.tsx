@@ -10,7 +10,6 @@ import {
   connectedGraphNodeIds,
   districtRelationRoutes,
   graphNodeLabel,
-  selectedNeighborhood,
   strongestConnectedNode,
   strongestIncidentEdge,
 } from "../graph/model";
@@ -30,7 +29,7 @@ const HOME_SCENES: Array<{
     index: "01",
     label: "Knowledge Field",
     title: "구역과 허브가 실제 위치를 갖습니다.",
-    body: "가로축은 지식 구역, 세로축은 의미 있는 최신성입니다. 배경 윤곽은 같은 구역에 모인 지식의 밀도를 보여줍니다.",
+    body: "가로축은 지식 구역, 세로축은 의미 있는 최신성입니다. 구역은 위치·색·라벨로 묶이고, 허브의 주변광은 실제 중력에서만 나옵니다.",
   },
   {
     id: "knowledge-gravity",
@@ -83,26 +82,7 @@ export function HomeView() {
     : strongestNode?.id ?? null;
   const traceEdge = useMemo(() => strongestIncidentEdge(atlasData.graph, graphFocus), [graphFocus]);
   const focusedNode = graphFocus ? graphNodeById.get(graphFocus) ?? null : null;
-  const districtRouteSummary = useMemo(() => ({
-    incoming: districtRoutes.filter((route) => route.targetId === graphFocus).reduce((sum, route) => sum + route.occurrenceCount, 0),
-    outgoing: districtRoutes.filter((route) => route.sourceId === graphFocus).reduce((sum, route) => sum + route.occurrenceCount, 0),
-  }), [districtRoutes, graphFocus]);
-  const districtPair = useMemo(() => focusedNode?.kind === "district"
-    ? [...atlasData.relation.matrix]
-      .filter((pair) => pair.source === focusedNode.label || pair.target === focusedNode.label)
-      .sort((left, right) => right.wikilink - left.wikilink || left.id.localeCompare(right.id, "en"))[0] ?? null
-    : null, [focusedNode]);
-  const matchingRoute = useMemo(() => atlasData.flow.routes.find((route) => (
-    route.members.length > 0 && route.stations.some((station) => station.entityId === graphFocus)
-  )) ?? null, [graphFocus]);
-  const traceSource = traceEdge ? graphNodeById.get(traceEdge.source) ?? null : null;
-  const traceTarget = traceEdge ? graphNodeById.get(traceEdge.target) ?? null : null;
   const [intro, setIntro] = useState(false);
-  const [previewId, setPreviewId] = useState<string | null>(null);
-  const readoutId = sceneId === "link-trace" ? graphFocus : previewId ?? graphFocus;
-  const readoutNode = readoutId ? graphNodeById.get(readoutId) ?? null : null;
-  const readoutCluster = readoutNode ? atlasData.graph.clusters.find((cluster) => cluster.id === readoutNode.clusterId) ?? null : null;
-  const readoutNeighborhood = useMemo(() => selectedNeighborhood(atlasData.graph, readoutId), [readoutId]);
 
   useEffect(() => {
     try {
@@ -143,7 +123,7 @@ export function HomeView() {
             <span><i className="is-x" />X · 지식 구역</span>
             <span><i className="is-y" />Y · 위쪽일수록 최근</span>
             <span><i className="is-z" />Z · 구조 깊이</span>
-            <span><i className="is-size" />크기 · 고유 inbound</span>
+            <span><i className="is-size" />크기·주변광 · 고유 inbound</span>
             <span><i className="is-edge" />굵은 항로 · 구역 집계 방향</span>
             <span><i className="is-edge" style={{ opacity: 0.56, scale: "0.72" }} />가는 선 · 허브 실제 참조</span>
           </div>
@@ -190,32 +170,14 @@ export function HomeView() {
               mobile={state.mobileSibling}
               reducedMotion={state.reducedMotion}
               onSelect={(focusId) => dispatch({ type: "focus", focusId, openInspector: false })}
-              onHover={setPreviewId}
             />
-            {readoutId && readoutNode && (
-              <aside className="home-v75-focus-readout" aria-live="polite">
-                <span>{sceneId === "link-trace" ? "DIRECTED FIELD NOTE" : previewId ? "LIVE FIELD NOTE" : "FIELD NOTE"}</span>
-                <strong>{sceneId === "link-trace" && traceSource && traceTarget
-                  ? `${graphNodeLabel(traceSource)} → ${graphNodeLabel(traceTarget)}`
-                  : graphNodeLabel(readoutNode)}</strong>
-                <small>{readoutNode.kind === "district" && readoutId === graphFocus
-                  ? `구역 링크 들어옴 ${districtRouteSummary.incoming} · 나감 ${districtRouteSummary.outgoing}`
-                  : sceneId === "link-trace" && traceEdge
-                    ? `실제 참조 ${traceEdge.occurrenceCount}회 · 화살표는 출발에서 도착으로 읽습니다.`
-                    : `고유 inbound ${readoutNode.gravity} · 들어옴 ${readoutNeighborhood.incoming.length} · 나감 ${readoutNeighborhood.outgoing.length}`}</small>
-                <small>{sceneId === "link-trace" && traceSource && traceTarget
-                  ? `${graphNodeLabel(traceSource)}에서 ${graphNodeLabel(traceTarget)}으로 향하는 검증된 공개 경로입니다.`
-                  : readoutNode.kind === "district"
-                    ? `${graphNodeLabel(readoutNode)} 안에서 공개 안전한 허브와 집계 기록의 구조 깊이를 함께 읽습니다.`
-                    : `${readoutCluster?.label ?? "지식"} 구역 · ${readoutNode.freshness ?? "날짜 미기록"}`}</small>
-                <nav className="view-switch" aria-label="선택 지식의 연결 화면" style={{ marginTop: 3, border: 0, background: "transparent", padding: 0 }}>
-                  <button type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "explore", sceneId: "graph", focusId: readoutId } })}>Explore</button>
-                  <button type="button" onClick={() => dispatch({ type: "journey", target: readoutNode.kind === "district"
-                    ? { workspace: "observe", sceneId: "global-relations", focusId: readoutId, relationPairId: readoutId === graphFocus ? districtPair?.id ?? null : null, relationLayer: "wikilink" }
-                    : { workspace: "observe", sceneId: "hub-relations", focusId: readoutId } })}>Observe</button>
-                  {readoutId === graphFocus && matchingRoute && <button type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "flow", sceneId: "routes", focusId: graphFocus, routeId: matchingRoute.id } })}>Flow</button>}
-                </nav>
-              </aside>
+            {focusedNode && (
+              <p className="sr-only" aria-live="polite">
+                현재 선택 {graphNodeLabel(focusedNode)}. 고유 inbound {focusedNode.gravity}.
+                {sceneId === "link-trace" && traceEdge
+                  ? ` 실제 참조 ${traceEdge.occurrenceCount}회. 화살표는 출발에서 도착으로 향합니다.`
+                  : " 자세한 관계는 Explore 또는 Observe에서 확인할 수 있습니다."}
+              </p>
             )}
           </article>
         </m.div>

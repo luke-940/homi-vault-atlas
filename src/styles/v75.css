@@ -148,12 +148,6 @@
 .home-v75-axis-key .is-size { width: 9px; height: 9px; border: 1px solid var(--district-knowledge); border-radius: 50%; }
 .home-v75-axis-key .is-edge { width: 15px; border-top: 1px solid var(--ha); }
 .home-v75-axis-key .is-edge::after { content: ""; display: block; width: 4px; height: 4px; margin: -3px 0 0 auto; border-top: 1px solid var(--ha); border-right: 1px solid var(--ha); rotate: 45deg; }
-.home-v75-focus-readout { position: absolute; z-index: 7; right: 92px; bottom: 84px; max-width: min(330px,42%); display: grid; gap: 4px; padding: 8px 0 8px 14px; border: 0; border-left: 1px solid #e99a31; border-radius: 0; background: linear-gradient(90deg,rgba(5,5,14,.58),transparent); color: #f3edde; box-shadow: none; }
-.home-v75-focus-readout span { color: #eda23b; font: 700 12px var(--fm); letter-spacing: .08em; }
-.home-v75-focus-readout strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.home-v75-focus-readout small { color: rgba(238,233,219,.54); font-size: 12px; }
-.home-v75-focus-readout .view-switch { display: flex; gap: 4px; }
-.home-v75-focus-readout .view-switch button { min-height: 30px; padding: 0 3px; border: 0; border-bottom: 1px solid rgba(238,233,219,.18); border-radius: 0; background: transparent; color: rgba(246,240,223,.78); font-size: 12px; cursor: pointer; }
 
 .living-graph-canvas { position: relative; min-width: 0; min-height: 390px; overflow: hidden; isolation: isolate; background: #08070d; cursor: grab; touch-action: none; outline: none; }
 .living-graph-canvas:active { cursor: grabbing; }
@@ -326,7 +320,6 @@
   .graph-label-layer button { min-width: 44px; min-height: 44px; translate: -50% -50%; padding: 4px 6px; font-size: 12px; }
   .living-graph-canvas { touch-action: pan-y; }
   .graph-3d-badge { top: 14px; left: 14px; }
-  .home-v75-focus-readout { right: 12px; bottom: 22px; max-width: calc(100% - 24px); }
   .home-v75-provenance-line { margin: 12px 0 0; }
 
   .explore-v75 { height: auto; min-height: 100%; display: block; overflow: visible; }
