@@ -1,6 +1,7 @@
 import { ArrowRight, Box, CalendarRange, CircleDot, LocateFixed, Route, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
+import { SpatialWorkspaceFrame } from "../components/SpatialWorkspaceFrame";
 import { atlasData, graphNodeById } from "../data-runtime";
 import { LivingGraphCanvas } from "../graph/LivingGraphCanvas";
 import { graphNodeLabel, shortestDirectedPath, type FreshnessBucket } from "../graph/model";
@@ -31,10 +32,11 @@ function nodeKindLabel(node: AtlasGraphNodeV1) {
   } as const)[node.kind];
 }
 
-function VirtualRankedList({ nodes, selectedId, onSelect }: {
+function VirtualRankedList({ nodes, selectedId, onSelect, onPreview }: {
   nodes: AtlasGraphNodeV1[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onPreview: (id: string | null) => void;
 }) {
   const itemHeight = 62;
   const viewportHeight = 500;
@@ -61,6 +63,10 @@ function VirtualRankedList({ nodes, selectedId, onSelect }: {
               aria-selected={node.id === selectedId}
               className={node.id === selectedId ? "is-selected" : ""}
               style={{ position: "absolute", top: index * itemHeight, height: itemHeight }}
+              onPointerEnter={() => onPreview(node.id)}
+              onPointerLeave={() => onPreview(null)}
+              onFocus={() => onPreview(node.id)}
+              onBlur={() => onPreview(null)}
               onClick={() => onSelect(node.id)}
             >
               <span>{String(index + 1).padStart(2, "0")}</span>
@@ -81,9 +87,11 @@ export function ExploreView() {
   const fallbackSelected = useMemo(() => [...atlasData.graph.nodes]
     .filter((node) => node.kind !== "source_document")
     .sort((left, right) => right.gravity - left.gravity || right.occurrences - left.occurrences || left.id.localeCompare(right.id, "en"))[0] ?? null, []);
-  const selected = graphNodeById.get(state.focusId) ?? fallbackSelected;
+  const selected = graphNodeById.get(state.focusId ?? "") ?? fallbackSelected;
+  const previewed = state.previewId ? graphNodeById.get(state.previewId) ?? null : null;
+  const activeNode = previewed ?? selected;
   useEffect(() => {
-    if (!graphNodeById.has(state.focusId) && fallbackSelected) {
+    if ((!state.focusId || !graphNodeById.has(state.focusId)) && fallbackSelected) {
       dispatch({ type: "focus", focusId: fallbackSelected.id });
     }
   }, [dispatch, fallbackSelected, state.focusId]);
@@ -95,18 +103,18 @@ export function ExploreView() {
     .filter((node) => node.kind !== "source_document")
     .sort((left, right) => right.gravity - left.gravity || left.id.localeCompare(right.id, "en"))
     .slice(0, 80), []);
-  const incoming = selected ? atlasData.graph.edges
-    .filter((edge) => edge.target === selected.id)
+  const incoming = activeNode ? atlasData.graph.edges
+    .filter((edge) => edge.target === activeNode.id)
     .sort((a, b) => b.occurrenceCount - a.occurrenceCount).slice(0, 12) : [];
-  const outgoing = selected ? atlasData.graph.edges
-    .filter((edge) => edge.source === selected.id)
+  const outgoing = activeNode ? atlasData.graph.edges
+    .filter((edge) => edge.source === activeNode.id)
     .sort((a, b) => b.occurrenceCount - a.occurrenceCount).slice(0, 12) : [];
-  const matchingRoute = selected ? atlasData.flow.routes.find((route) => (
-    route.members.length > 0 && route.stations.some((station) => station.entityId === selected.id)
+  const matchingRoute = activeNode ? atlasData.flow.routes.find((route) => (
+    route.members.length > 0 && route.stations.some((station) => station.entityId === activeNode.id)
   )) ?? null : null;
-  const districtPair = selected?.kind === "district"
+  const districtPair = activeNode?.kind === "district"
     ? [...atlasData.relation.matrix]
-      .filter((pair) => pair.source === selected.label || pair.target === selected.label)
+      .filter((pair) => pair.source === activeNode.label || pair.target === activeNode.label)
       .sort((left, right) => right.wikilink - left.wikilink || left.id.localeCompare(right.id, "en"))[0] ?? null
     : null;
 
@@ -119,7 +127,7 @@ export function ExploreView() {
       : `고유 inbound 문서 수를 기준으로 ${rankedNodes.length}개 노드를 탐색합니다.`;
 
   return (
-    <section className="workspace-view explore-v75" aria-labelledby="explore-title" lang="ko">
+    <SpatialWorkspaceFrame className="workspace-view explore-v75" aria-labelledby="explore-title" lang="ko">
       <WorkspaceHeader
         titleId="explore-title"
         eyebrow="EXPLORE · LIVING GRAPH"
@@ -169,6 +177,7 @@ export function ExploreView() {
               graph={atlasData.graph}
               scene={state.pathFrom && state.pathTo ? "trace" : state.freshness !== "all" ? "freshness" : "field"}
               focusId={selected?.id ?? null}
+              previewId={state.previewId}
               districtId={state.districtId}
               freshness={state.freshness}
               from={state.pathFrom}
@@ -178,29 +187,30 @@ export function ExploreView() {
               reducedMotion={state.reducedMotion}
               presentation="workspace"
               onSelect={selectNode}
+              onHover={(focusId) => dispatch({ type: "preview", focusId })}
             />
           </main>
           {state.panel !== "inspector" && <aside className="explore-v75-insight" aria-live="polite">
-            {selected ? (
+            {activeNode ? (
               <>
-                <span className="eyebrow">SELECTED NODE</span>
-                <h2>{graphNodeLabel(selected)}</h2>
-                <p>{nodeKindLabel(selected)} · {atlasData.graph.clusters.find((cluster) => cluster.id === selected.clusterId)?.label}</p>
+                <span className="eyebrow">{previewed ? "PREVIEW NODE" : "SELECTED NODE"}</span>
+                <h2>{graphNodeLabel(activeNode)}</h2>
+                <p>{nodeKindLabel(activeNode)} · {atlasData.graph.clusters.find((cluster) => cluster.id === activeNode.clusterId)?.label}</p>
                 <dl>
-                  <div><dt>고유 inbound</dt><dd>{selected.gravity}</dd></div>
-                  <div><dt>링크 출현</dt><dd>{selected.occurrences}</dd></div>
-                  <div><dt>표현 기록</dt><dd>{selected.representedDocuments}</dd></div>
-                  <div><dt>의미 날짜</dt><dd>{selected.freshness ?? "미기록"}</dd></div>
+                  <div><dt>고유 inbound</dt><dd>{activeNode.gravity}</dd></div>
+                  <div><dt>링크 출현</dt><dd>{activeNode.occurrences}</dd></div>
+                  <div><dt>표현 기록</dt><dd>{activeNode.representedDocuments}</dd></div>
+                  <div><dt>의미 날짜</dt><dd>{activeNode.freshness ?? "미기록"}</dd></div>
                 </dl>
                 <div className="explore-v75-directions">
                   <section><h3>Incoming <span>{incoming.length}</span></h3>{incoming.slice(0, 5).map((edge) => <button type="button" key={edge.id} onClick={() => selectNode(edge.source)}>{graphNodeLabel(graphNodeById.get(edge.source)!)} <small>{edge.occurrenceCount}</small></button>)}</section>
                   <section><h3>Outgoing <span>{outgoing.length}</span></h3>{outgoing.slice(0, 5).map((edge) => <button type="button" key={edge.id} onClick={() => selectNode(edge.target)}>{graphNodeLabel(graphNodeById.get(edge.target)!)} <small>{edge.occurrenceCount}</small></button>)}</section>
                 </div>
                 <nav className="view-switch" aria-label="선택 지식의 연결 화면">
-                  <button type="button" onClick={() => dispatch({ type: "journey", target: selected.kind === "district"
-                    ? { workspace: "observe", sceneId: "global-relations", focusId: selected.id, relationPairId: districtPair?.id ?? null, relationLayer: "wikilink" }
-                    : { workspace: "observe", sceneId: "hub-relations", focusId: selected.id } })}>Observe 관계 <ArrowRight size={14} aria-hidden="true" /></button>
-                  {matchingRoute && <button type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "flow", sceneId: "routes", focusId: selected.id, routeId: matchingRoute.id } })}>Flow 경로 <ArrowRight size={14} aria-hidden="true" /></button>}
+                  <button type="button" onClick={() => dispatch({ type: "journey", target: activeNode.kind === "district"
+                    ? { workspace: "observe", sceneId: "global-relations", focusId: activeNode.id, relationPairId: districtPair?.id ?? null, relationLayer: "wikilink" }
+                    : { workspace: "observe", sceneId: "hub-relations", focusId: activeNode.id } })}>Observe 관계 <ArrowRight size={14} aria-hidden="true" /></button>
+                  {matchingRoute && <button type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "flow", sceneId: "routes", focusId: activeNode.id, routeId: matchingRoute.id } })}>Flow 경로 <ArrowRight size={14} aria-hidden="true" /></button>}
                 </nav>
               </>
             ) : <div className="explore-v75-empty"><LocateFixed size={24} /><h2>노드를 선택하세요</h2><p>지식 중력, 의미 날짜, incoming·outgoing 방향을 여기에서 읽을 수 있습니다.</p></div>}
@@ -230,7 +240,7 @@ export function ExploreView() {
       {scene === "list" && (
         <div className="explore-v75-list-layout">
           <header><div><span className="eyebrow">RANKED ACCESSIBLE LIST</span><h2>지식 중력 순위</h2></div><p>Canvas와 동일한 노드·수치·선택 상태를 키보드로 탐색합니다.</p></header>
-          <VirtualRankedList nodes={rankedNodes} selectedId={selected?.id ?? null} onSelect={selectNode} />
+          <VirtualRankedList nodes={rankedNodes} selectedId={selected?.id ?? null} onSelect={selectNode} onPreview={(focusId) => dispatch({ type: "preview", focusId })} />
         </div>
       )}
 
@@ -246,7 +256,7 @@ export function ExploreView() {
             : <span>출발과 도착을 선택하면 전체 graph에서 경로를 계산합니다.</span>}
         </div>
       </section>
-      <p className="explore-v75-boundary">{atlasData.graph.profile === "atlas-public" ? "Public" : "Owner"} profile · {atlasData.graph.manifest.nodeCount} nodes · {atlasData.graph.manifest.edgeCount} directed reference edges · runtime force simulation 0</p>
-    </section>
+      <p className="explore-v75-boundary">{atlasData.graph.profile === "atlas-public" ? "Public snapshot" : "Owner · Luke Mac local-only · 실제 허용 제목"} · {atlasData.graph.manifest.nodeCount} nodes · {atlasData.graph.manifest.edgeCount} directed reference edges · runtime force simulation 0</p>
+    </SpatialWorkspaceFrame>
   );
 }

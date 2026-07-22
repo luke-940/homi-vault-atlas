@@ -14,6 +14,7 @@ import {
 import { useEffect, useRef } from "react";
 import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
+import { SpatialWorkspaceFrame } from "../components/SpatialWorkspaceFrame";
 import { atlasData } from "../data-runtime";
 import {
   actorSurfaceLabel,
@@ -248,11 +249,11 @@ export function AgencyView() {
   }, []);
 
   return (
-    <section className="agency-view" aria-labelledby="agency-title" data-scene={scene}>
+    <SpatialWorkspaceFrame className="agency-view" aria-labelledby="agency-title" data-scene={scene}>
       <header className="agency-intro">
         <span className="eyebrow">HUMAN × AGENT RESPONSIBILITY MAP</span>
         <h1 id="agency-title">방향과 책임의 경계를 지식 지형과 함께 읽습니다.</h1>
-        <p>Luke와 여섯 전문 역할의 목적·책임 표면·공개 결과·검증·중지 경계를 릴리스 시점의 공개 안전 스냅샷으로 보여줍니다.</p>
+        <p>Luke와 여섯 전문 역할의 목적·책임 표면·결과·검증·중지 경계를 {atlasData.graph.profile === "atlas-owner" ? "Luke Mac 전용 Owner 스냅샷" : "공개 안전 스냅샷"}으로 보여줍니다.</p>
       </header>
 
       <AgencySceneRail scene={scene} />
@@ -280,6 +281,6 @@ export function AgencyView() {
         <span>VERIFIED VERSION SNAPSHOT</span>
         <p>{atlasData.agency.snapshot.caveat} · 기준일 {atlasData.agency.snapshot.asOfDate}</p>
       </footer>
-    </section>
+    </SpatialWorkspaceFrame>
   );
 }

@@ -23,7 +23,7 @@ export type RelationDirection = "forward" | "reverse";
 export interface SceneSnapshot {
   workspace: Workspace;
   sceneId: string;
-  focusId: string;
+  focusId: string | null;
   lens: ExploreLens;
   relationPairId: string | null;
   relationDirection: RelationDirection | null;
@@ -43,7 +43,7 @@ export interface AtlasState {
   workspace: Workspace;
   sceneId: string;
   lens: ExploreLens;
-  focusId: string;
+  focusId: string | null;
   previewId: string | null;
   compareIds: string[];
   relationPairId: string | null;
@@ -136,6 +136,7 @@ const createDefaultState = (environment: ResponsiveEnvironment): AtlasState => (
 });
 
 const workspaces = new Set<Workspace>(["home", "explore", "observe", "flow", "time", "agency"]);
+const integratedInspectorWorkspaces = new Set<Workspace>(["home", "explore", "observe", "flow", "agency"]);
 const lenses = new Set<ExploreLens>(["city"]);
 const layers = new Set<RelationLayer>(["wikilink", "typed", "route"]);
 const availableLayers = new Set<RelationLayer>(atlasData.relation.availableLayers);
@@ -310,7 +311,11 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
     workspace,
     sceneId: resolvedScene,
     lens: lensParam && lenses.has(lensParam) ? lensParam : defaultState.lens,
-    focusId: requestedFocus && focusIds.has(requestedFocus) ? requestedFocus : defaultState.focusId,
+    focusId: requestedFocus && focusIds.has(requestedFocus)
+      ? requestedFocus
+      : workspace === "home"
+        ? null
+        : defaultState.focusId,
     compareIds: requestedCompare,
     relationPairId: relationPair?.id ?? null,
     relationDirection: normalizedRelationDirection(
@@ -332,7 +337,7 @@ export function createAtlasState(hash: string, environment: ResponsiveEnvironmen
     panel:
       panelParam && ["none", "navigator", "inspector", "data"].includes(panelParam)
         ? panelParam
-        : workspace === "home" || workspace === "explore" || workspace === "agency" || environment.mobileSibling
+        : integratedInspectorWorkspaces.has(workspace) || environment.mobileSibling
           ? "none"
           : "inspector",
     theatre: params.get("theatre") === "1",
@@ -352,7 +357,7 @@ export function stateToHash(state: AtlasState) {
     if (scene === "roles" && state.actorId && actorIds.has(state.actorId)) params.set("actor", state.actorId);
     return `#agency?${params.toString()}`;
   }
-  params.set("focus", state.focusId);
+  if (state.focusId) params.set("focus", state.focusId);
   if (state.sceneId) params.set("scene", state.sceneId);
   if (state.workspace === "explore") {
     if (state.districtId) params.set("district", state.districtId);
@@ -444,7 +449,7 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
         districtId: action.workspace === "explore" ? state.districtId : null,
         pathFrom: action.workspace === "explore" ? state.pathFrom : null,
         pathTo: action.workspace === "explore" ? state.pathTo : null,
-        panel: action.workspace === "home" || action.workspace === "explore" || action.workspace === "agency" || state.mobileSibling ? "none" : "inspector",
+        panel: integratedInspectorWorkspaces.has(action.workspace) || state.mobileSibling ? "none" : "inspector",
         guideStep: action.workspace === "home" ? state.guideStep : null,
         fallbackReason: null,
         };
@@ -507,7 +512,7 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
           && actorIds.has(action.target.actorId)
           ? action.target.actorId
           : null,
-        panel: targetWorkspace === "home" || targetWorkspace === "explore" || targetWorkspace === "agency" || state.mobileSibling ? "none" : "inspector",
+        panel: integratedInspectorWorkspaces.has(targetWorkspace) || state.mobileSibling ? "none" : "inspector",
         inspectorTab: "summary",
         guideStep: targetWorkspace === "home" ? state.guideStep : null,
         fallbackReason: !validFocus
@@ -531,7 +536,7 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
             ...destination,
             previousScene: previousFrom(navigationHistory),
             navigationHistory,
-            panel: destination.workspace === "home" || destination.workspace === "explore" || destination.workspace === "agency" || state.mobileSibling ? "none" : "inspector",
+            panel: integratedInspectorWorkspaces.has(destination.workspace) || state.mobileSibling ? "none" : "inspector",
             fallbackReason: null,
           };
       }
@@ -551,7 +556,7 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
         ...state,
         navigationHistory: historyFor(state),
         focusId: action.focusId,
-        panel: state.workspace === "explore" || action.openInspector === false || state.mobileSibling ? state.panel : "inspector",
+        panel: integratedInspectorWorkspaces.has(state.workspace) || action.openInspector === false || state.mobileSibling ? state.panel : "inspector",
         inspectorTab: "summary",
       };
     case "preview":
@@ -576,7 +581,7 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
         navigationHistory: historyFor(state),
         relationPairId: pair?.id ?? null,
         relationDirection: normalizedRelationDirection(pair, state.relationLayer, action.direction),
-        panel: state.mobileSibling ? "none" : "inspector",
+        panel: state.mobileSibling ? "none" : state.panel,
       };
     }
     case "relationLayer": {
@@ -597,7 +602,7 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
       };
     }
     case "route":
-      return { ...state, navigationHistory: historyFor(state), routeId: action.routeId, panel: state.mobileSibling ? "none" : "inspector" };
+      return { ...state, navigationHistory: historyFor(state), routeId: action.routeId, panel: state.mobileSibling ? "none" : state.panel };
     case "era":
       return { ...state, navigationHistory: historyFor(state), eraId: action.eraId, panel: state.mobileSibling ? "none" : "inspector" };
     case "actor":
@@ -649,7 +654,7 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
     case "search":
       return { ...state, searchOpen: action.open };
     case "theatre":
-      return { ...state, theatre: action.open, panel: action.open || state.mobileSibling || state.workspace === "explore" ? "none" : "inspector" };
+      return { ...state, theatre: action.open, panel: action.open || state.mobileSibling || integratedInspectorWorkspaces.has(state.workspace) ? "none" : "inspector" };
     case "reducedMotion":
       return { ...state, reducedMotion: action.reducedMotion };
     case "responsive":

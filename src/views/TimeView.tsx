@@ -288,7 +288,7 @@ function EraPlot() {
 
 function EntityTimeReadout() {
   const { state } = useAtlasState();
-  const entity = entityById.get(state.focusId);
+  const entity = entityById.get(state.focusId ?? "");
   return (
     <section className="entity-time-readout">
       <span className="eyebrow">현재 선택</span>

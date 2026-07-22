@@ -176,7 +176,7 @@ export function graphResultKind(node: AtlasGraphNodeV1): SearchResult["kind"] {
 function structureResultMeta(node: (typeof atlasData.graph.nodes)[number]) {
   const district = graphNodeById.get(node.districtId)?.label ?? "지식 구역";
   if (node.kind === "district") return `${node.representedDocuments}개 기록 · 구역`;
-  if (isGraphSource(node)) return `${district} · ${node.nameMode === "public_alias" ? "안전 별칭" : node.nameMode === "aggregate" ? "공개 안전 집계" : "승인 이름"}`;
+  if (isGraphSource(node)) return `${district} · ${atlasData.graph.profile === "atlas-owner" ? "실제 허용 제목" : node.nameMode === "public_alias" ? "안전 별칭" : node.nameMode === "aggregate" ? "공개 안전 집계" : "승인 이름"}`;
   return `${district} · 고유 inbound ${node.gravity} · 출현 ${node.occurrences}`;
 }
 
@@ -289,12 +289,20 @@ export function SearchPalette() {
     revealSearchOption(document.getElementById(`atlas-search-option-${activeIndex}`));
   }, [activeIndex, results, state.searchOpen]);
 
+  useLayoutEffect(() => {
+    if (!state.searchOpen) return;
+    const result = results[activeIndex];
+    dispatch({ type: "preview", focusId: result && graphNodeById.has(result.id) ? result.id : null });
+    return () => dispatch({ type: "preview", focusId: null });
+  }, [activeIndex, dispatch, results, state.searchOpen]);
+
   if (!state.searchOpen) return null;
 
   const choose = (result: SearchResult) => {
     const plan = createSearchSelectionPlan(result, state.workspace, state.relationLayer);
     selectionCommittedRef.current = true;
     destinationTitleRef.current = plan.destinationTitleId;
+    dispatch({ type: "preview", focusId: null });
     plan.actions.forEach(dispatch);
   };
 
@@ -357,7 +365,7 @@ export function SearchPalette() {
             <X size={18} />
           </button>
         </div>
-        <div className="search-context">Operating Roles와 Knowledge를 분리해 찾습니다. 역할은 Agency로, 공개 지식은 해당 workspace로 이동합니다.</div>
+        <div className="search-context">Operating Roles와 Knowledge Graph를 분리합니다. {atlasData.graph.profile === "atlas-owner" ? "Owner 허용 제목 전체를 검색하고 Enter에서만 이동을 확정합니다." : "공개 승인 이름과 안전 별칭만 검색합니다."}</div>
         <div className="search-results" id="atlas-search-results" role="listbox" aria-label="검색 결과">
           {results.map((result, index) => {
             const Icon = result.kind === "actor" ? Network : result.kind === "hub" ? CircleDot : result.kind === "document" || result.kind === "source" ? FileText : Folder;

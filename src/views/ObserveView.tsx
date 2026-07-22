@@ -1,10 +1,8 @@
 import { ArrowRight, CircleDot, Grid3X3, Link2, Route, ShieldCheck, Waypoints } from "lucide-react";
-import { descending } from "d3-array";
-import { chord as d3Chord, chordDirected, ribbon as d3Ribbon, ribbonArrow } from "d3-chord";
 import { interpolateRgbBasis } from "d3-interpolate";
 import { scaleBand, scaleSequential } from "d3-scale";
-import { arc as d3Arc } from "d3-shape";
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { SpatialWorkspaceFrame } from "../components/SpatialWorkspaceFrame";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { atlasData, entityById, graphNodeById } from "../data-runtime";
 import { useElementSize } from "../hooks/useElementSize";
@@ -300,10 +298,13 @@ function relationCoverageReadout(layer: RelationLayer) {
 export function ObserveView() {
   const { state, dispatch } = useAtlasState();
   const selectedPair = atlasData.relation.matrix.find((pair) => pair.id === state.relationPairId);
+  const [previewPairId, setPreviewPairId] = useState<string | null>(null);
+  const visiblePair = atlasData.relation.matrix.find((pair) => pair.id === previewPairId) ?? selectedPair;
   const rankedPairs = [...atlasData.relation.matrix]
     .filter((pair) => pair[state.relationLayer] > 0)
     .sort((a, b) => b[state.relationLayer] - a[state.relationLayer] || a.id.localeCompare(b.id));
   const strongestPair = rankedPairs[0];
+  const displayPair = visiblePair ?? strongestPair;
   const strongestTieCount = strongestPair
     ? rankedPairs.filter((pair) => pair[state.relationLayer] === strongestPair[state.relationLayer]).length
     : 0;
@@ -321,7 +322,7 @@ export function ObserveView() {
     requestAnimationFrame(() => document.getElementById(`relation-layer-tab-${next.id}`)?.focus());
   };
   return (
-    <section className="workspace-view observe-view" aria-labelledby="observe-title">
+    <SpatialWorkspaceFrame className="workspace-view observe-view" aria-labelledby="observe-title">
       <WorkspaceHeader
         titleId="observe-title"
         eyebrow="구역 간 관계 관측"
@@ -374,19 +375,19 @@ export function ObserveView() {
               <div><span className="eyebrow">확인된 관계</span><h2>구역 간 관계표</h2></div>
               <span className="panel-readout">{relationCoverageReadout(state.relationLayer)}</span>
             </div>
-            <RelationMatrix />
+            <RelationMatrix onPreviewPair={setPreviewPairId} />
           </section>
-          <section className="chord-panel" aria-label="선택한 연결쌍">
+          <section className="chord-panel pair-lens-panel" aria-label="선택한 방향 관계쌍">
             <div className="panel-title-row">
-              <div><span className="eyebrow">선택 연결</span><h2>{pairHeading(selectedPair, state.relationLayer, state.relationDirection)}</h2></div>
+              <div><span className="eyebrow">DIRECTIONAL PAIR LENS</span><h2>{pairHeading(displayPair, state.relationLayer, state.relationDirection)}</h2></div>
             </div>
-            <GlobalChord />
-            <PairReadout pair={selectedPair} />
+            <DirectionalPairLens pair={displayPair} />
+            <PairReadout pair={displayPair} />
           </section>
         </div>
       )}
       <MobileObserve />
-    </section>
+    </SpatialWorkspaceFrame>
   );
 }
 
@@ -394,8 +395,8 @@ function HubRelations() {
   const { state, dispatch } = useAtlasState();
   const hubKinds = new Set(["moc_hub", "paper_gateway", "project", "signal_domain", "strategy_insight", "strategy_request"]);
   const fallbackNode = atlasData.graph.nodes.find((node) => hubKinds.has(node.kind));
-  const selectedNode = graphNodeById.get(state.focusId) ?? fallbackNode;
-  const entity = selectedNode ? undefined : entityById.get(state.focusId);
+  const selectedNode = graphNodeById.get(state.focusId ?? "") ?? fallbackNode;
+  const entity = selectedNode ? undefined : entityById.get(state.focusId ?? "");
   const structuralNeighbors = selectedNode
     ? atlasData.graph.edges
       .filter((edge) => edge.source === selectedNode.id || edge.target === selectedNode.id)
@@ -484,7 +485,7 @@ function directionFor(cell: MatrixCell | undefined, source: string, target: stri
   return source === cell.source && target === cell.target ? "forward" : "reverse";
 }
 
-function RelationMatrix() {
+function RelationMatrix({ onPreviewPair }: { onPreviewPair: (pairId: string | null) => void }) {
   const { state, dispatch } = useAtlasState();
   const mobileSibling = state.mobileSibling && !state.theatre;
   const { ref, width, height } = useElementSize<HTMLDivElement>();
@@ -587,7 +588,7 @@ function RelationMatrix() {
             const selected = cell?.id === state.relationPairId && (
               !isDirectedRelationLayer(state.relationLayer) || state.relationDirection === direction
             );
-            const focusedDistrict = entityById.get(state.focusId)?.district;
+            const focusedDistrict = entityById.get(state.focusId ?? "")?.district;
             const focused = source === focusedDistrict || target === focusedDistrict;
             const markInteractive = Boolean(navigationEntry) && !mobileSibling;
             const highContrast = value / max >= 0.48;
@@ -602,7 +603,27 @@ function RelationMatrix() {
                 aria-label={markInteractive && navigationEntry ? `${navigationEntry.source}${isDirectedRelationLayer(state.relationLayer) ? "에서" : "와"} ${navigationEntry.target}${isDirectedRelationLayer(state.relationLayer) ? "로" : ""}: ${layerLabel(state.relationLayer)} ${navigationEntry.value}` : undefined}
                 aria-describedby={markInteractive ? matrixReadingGuideId : undefined}
                 aria-keyshortcuts={markInteractive ? "ArrowUp ArrowDown ArrowLeft ArrowRight Home End Enter Space" : undefined}
-                onFocus={() => navigationEntry && setActiveEntryKey(navigationEntry.key)}
+                onPointerEnter={() => {
+                  if (!navigationEntry) return;
+                  onPreviewPair(navigationEntry.cell.id);
+                  const district = atlasData.graph.nodes.find((node) => node.kind === "district" && node.label === navigationEntry.source);
+                  dispatch({ type: "preview", focusId: district?.id ?? null });
+                }}
+                onPointerLeave={() => {
+                  onPreviewPair(null);
+                  dispatch({ type: "preview", focusId: null });
+                }}
+                onFocus={() => {
+                  if (!navigationEntry) return;
+                  setActiveEntryKey(navigationEntry.key);
+                  onPreviewPair(navigationEntry.cell.id);
+                  const district = atlasData.graph.nodes.find((node) => node.kind === "district" && node.label === navigationEntry.source);
+                  dispatch({ type: "preview", focusId: district?.id ?? null });
+                }}
+                onBlur={() => {
+                  onPreviewPair(null);
+                  dispatch({ type: "preview", focusId: null });
+                }}
                 onClick={() => navigationEntry && dispatch({ type: "relationPair", relationPairId: navigationEntry.cell.id, direction: navigationEntry.direction })}
                 onKeyDown={(event) => {
                   if (!navigationEntry) return;
@@ -655,93 +676,49 @@ function RelationMatrix() {
   );
 }
 
-function GlobalChord() {
-  const { state, dispatch } = useAtlasState();
+function DirectionalPairLens({ pair }: { pair?: MatrixCell }) {
+  const { state } = useAtlasState();
   const mobileSibling = state.mobileSibling && !state.theatre;
   const { ref, width, height } = useElementSize<HTMLDivElement>();
-  const order = atlasData.relation.districtOrder;
-  const layout = useMemo(() => {
-    const index = new Map(order.map((district, i) => [district, i]));
-    const values = order.map(() => order.map(() => 0));
-    for (const cell of atlasData.relation.matrix) {
-      const a = index.get(cell.source);
-      const b = index.get(cell.target);
-      if (a == null || b == null) continue;
-      if (isDirectedRelationLayer(state.relationLayer)) {
-        const counts = relationDirectionCounts(cell, state.relationLayer);
-        values[a][b] = counts.forward;
-        values[b][a] = counts.reverse;
-      } else {
-        values[a][b] = cell[state.relationLayer];
-        values[b][a] = cell[state.relationLayer];
-      }
-    }
-    return isDirectedRelationLayer(state.relationLayer)
-      ? chordDirected().padAngle(0.045).sortSubgroups(descending)(values)
-      : d3Chord().padAngle(0.045).sortSubgroups(descending)(values);
-  }, [order, state.relationLayer]);
-  const outer = Math.max(40, Math.min((width - 140) / 2, (height - 86) / 2));
-  const inner = outer - Math.max(12, outer * 0.11);
-  const arc = d3Arc().innerRadius(inner).outerRadius(outer);
-  const ribbon = isDirectedRelationLayer(state.relationLayer)
-    ? ribbonArrow().radius(inner - 1).padAngle(0.015)
-    : d3Ribbon().radius(inner - 1);
-  const selectedPair = atlasData.relation.matrix.find((pair) => pair.id === state.relationPairId);
+  const counts = pair ? relationDirectionCounts(pair, state.relationLayer) : { forward: 0, reverse: 0 };
+  const maximum = Math.max(1, counts.forward, counts.reverse);
+  const sourceX = Math.max(72, width * 0.24);
+  const targetX = Math.min(width - 72, width * 0.76);
+  const centerY = Math.max(100, height * 0.52);
+  const arcHeight = Math.max(42, Math.min(108, height * 0.25));
+  const forwardWidth = 1.5 + 6 * Math.sqrt(counts.forward / maximum);
+  const reverseWidth = 1.5 + 6 * Math.sqrt(counts.reverse / maximum);
+  const forwardPath = `M ${sourceX} ${centerY} C ${width * 0.38} ${centerY - arcHeight}, ${width * 0.62} ${centerY - arcHeight}, ${targetX} ${centerY}`;
+  const reversePath = `M ${targetX} ${centerY} C ${width * 0.62} ${centerY + arcHeight}, ${width * 0.38} ${centerY + arcHeight}, ${sourceX} ${centerY}`;
   return (
-    <div className="chord-canvas" ref={ref} data-testid="global-chord">
+    <div className="chord-canvas directional-pair-lens" ref={ref} data-testid="directional-pair-lens">
       <svg
         width={width}
         height={height}
         role={mobileSibling ? undefined : "img"}
-        aria-label={mobileSibling ? undefined : `${layerLabel(state.relationLayer)}의 구역 간 연결 링 요약. 조작은 왼쪽 관계표에서 합니다.`}
+        aria-label={mobileSibling ? undefined : pair
+          ? `${pair.source}에서 ${pair.target}로 ${counts.forward}건, 반대 방향 ${counts.reverse}건`
+          : "관계표에서 한 연결쌍을 선택하면 두 방향을 비교합니다."}
         aria-hidden={mobileSibling ? "true" : undefined}
         focusable="false"
       >
-        <g transform={`translate(${width / 2},${height / 2})`}>
-          {layout.map((item, index) => {
-            const source = order[item.source.index];
-            const target = order[item.target.index];
-            const cell = atlasData.relation.matrix.find((candidate) => pairKey(candidate.source, candidate.target) === pairKey(source, target));
-            const direction = directionFor(cell, source, target);
-            const selected = selectedPair && pairKey(source, target) === pairKey(selectedPair.source, selectedPair.target) && (
-              !isDirectedRelationLayer(state.relationLayer) || state.relationDirection === direction
-            );
-            const dimmed = Boolean(selectedPair) && !selected;
-            return (
-              <path
-                key={`ribbon-${index}`}
-                d={ribbon(item as any) ?? undefined}
-                className={selected ? "relation-ribbon is-selected" : "relation-ribbon"}
-                fill={colorForDistrict(source)}
-                fillOpacity={dimmed ? 0.08 : selected ? 0.82 : 0.2}
-                stroke={selected ? "#ffc069" : "#08070d"}
-                strokeWidth={selected ? 2.4 : 0.8}
-                aria-hidden="true"
-                onClick={() => !mobileSibling && cell && dispatch({ type: "relationPair", relationPairId: cell.id, direction: isDirectedRelationLayer(state.relationLayer) ? direction : null })}
-              >
-                <title>{`${source} ${isDirectedRelationLayer(state.relationLayer) ? "→" : "↔"} ${target}: ${relationValue(cell, source, target, state.relationLayer)}`}</title>
-              </path>
-            );
-          })}
-          {layout.groups.map((group) => {
-            const district = order[group.index];
-            const angle = (group.startAngle + group.endAngle) / 2;
-            const labelRadius = outer + 15;
-            const x = Math.sin(angle) * labelRadius;
-            const y = -Math.cos(angle) * labelRadius;
-            return (
-              <g key={district}>
-                <path d={arc(group as any) ?? undefined} fill={colorForDistrict(district)} stroke="#08070d" strokeWidth={1.5} />
-                {group.endAngle - group.startAngle > 0.08 && (
-                  <text x={x} y={y} textAnchor={x > 5 ? "start" : x < -5 ? "end" : "middle"} dominantBaseline="middle" className="chord-label">{shortDistrictLabel(district)}</text>
-                )}
-              </g>
-            );
-          })}
-          <circle r={inner * 0.34} fill="#100f17" stroke="#2d2a34" />
-          <text textAnchor="middle" y={-4} className="chord-center-title">{layerLabel(state.relationLayer)}</text>
-          <text textAnchor="middle" y={15} className="chord-center-sub">구역 간 → 선택 쌍</text>
-        </g>
+        <defs>
+          <marker id="pair-lens-arrow-forward" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#ffc069" /></marker>
+          <marker id="pair-lens-arrow-reverse" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#8fc6ff" /></marker>
+        </defs>
+        {pair && counts.forward > 0 && <path d={forwardPath} fill="none" stroke="#ffc069" strokeWidth={forwardWidth} strokeOpacity=".86" strokeLinecap="round" markerEnd="url(#pair-lens-arrow-forward)" />}
+        {pair && counts.reverse > 0 && <path d={reversePath} fill="none" stroke="#8fc6ff" strokeWidth={reverseWidth} strokeOpacity=".72" strokeLinecap="round" markerEnd="url(#pair-lens-arrow-reverse)" />}
+        {pair && <>
+          <circle cx={sourceX} cy={centerY} r="24" fill="#100e12" stroke={colorForDistrict(pair.source)} strokeWidth="4" />
+          <circle cx={targetX} cy={centerY} r="24" fill="#100e12" stroke={colorForDistrict(pair.target)} strokeWidth="4" />
+          <circle cx={sourceX} cy={centerY} r="5" fill={colorForDistrict(pair.source)} />
+          <circle cx={targetX} cy={centerY} r="5" fill={colorForDistrict(pair.target)} />
+          <text x={sourceX} y={centerY + 48} textAnchor="middle" className="chord-label">{shortDistrictLabel(pair.source)}</text>
+          <text x={targetX} y={centerY + 48} textAnchor="middle" className="chord-label">{shortDistrictLabel(pair.target)}</text>
+          <text x={width / 2} y={centerY - arcHeight - 12} textAnchor="middle" className="pair-lens-count">{counts.forward} →</text>
+          <text x={width / 2} y={centerY + arcHeight + 20} textAnchor="middle" className="pair-lens-count is-reverse">← {counts.reverse}</text>
+        </>}
+        {!pair && <text x={width / 2} y={height / 2} textAnchor="middle" className="chord-center-sub">관계표에서 한 쌍을 선택하세요</text>}
       </svg>
     </div>
   );
@@ -753,7 +730,7 @@ function PairReadout({ pair }: { pair?: MatrixCell }) {
     return (
       <div className="pair-readout">
         <span className="eyebrow">읽는 순서</span>
-        <p>왼쪽 관계표에서 한 칸을 고르면 오른쪽 링이 같은 연결쌍을 강조하고, 해석 패널에서 두 구역의 fresh 집계와 방향별 출현을 보여준다.</p>
+        <p>왼쪽 관계표에서 한 칸을 가리키면 오른쪽 lens가 같은 연결쌍의 두 방향과 실제 출현 수를 즉시 비교합니다.</p>
       </div>
     );
   }

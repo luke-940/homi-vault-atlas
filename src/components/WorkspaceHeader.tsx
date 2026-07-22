@@ -26,7 +26,7 @@ export function WorkspaceHeader({
   const currentScene = workspaceScene(state.workspace, state.sceneId);
   const selection = state.workspace === "agency"
     ? atlasData.agency.actors.find((actor) => actor.id === state.actorId)?.label
-    : entityById.get(state.focusId)?.displayLabel ?? graphNodeById.get(state.focusId)?.label;
+    : entityById.get(state.focusId ?? "")?.displayLabel ?? graphNodeById.get(state.focusId ?? "")?.label;
   return (
     <header className="workspace-header">
       <div className="workspace-title">

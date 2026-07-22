@@ -41,6 +41,14 @@ function isAllowedToolingLiteral(id, value) {
   return false;
 }
 
+function isInsideCanonicalDigest(body, offset, length) {
+  let start = offset;
+  let end = offset + length;
+  while (start > 0 && /[a-f0-9]/i.test(body[start - 1])) start -= 1;
+  while (end < body.length && /[a-f0-9]/i.test(body[end])) end += 1;
+  return end - start === 64;
+}
+
 function scanDefinitions(definitions, text, { path = "unknown", legalText = false, toolingText = false } = {}) {
   const body = String(text);
   const findings = [];
@@ -50,6 +58,8 @@ function scanDefinitions(definitions, text, { path = "unknown", legalText = fals
     let match;
     while ((match = definition.pattern.exec(body))) {
       if (toolingText && isAllowedToolingLiteral(definition.id, match[0])) continue;
+      if (definition.id === "phone-number-kr"
+        && isInsideCanonicalDigest(body, match.index, match[0].length)) continue;
       findings.push({
         id: definition.id,
         path,

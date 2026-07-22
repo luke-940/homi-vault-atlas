@@ -199,8 +199,8 @@ export function InspectorTray() {
     );
   }
 
-  const entity = entityById.get(state.focusId);
-  const graphNode = graphNodeById.get(state.focusId);
+  const entity = entityById.get(state.focusId ?? "");
+  const graphNode = graphNodeById.get(state.focusId ?? "");
   const pair = atlasData.relation.matrix.find((candidate) => candidate.id === state.relationPairId);
   const route = atlasData.flow.routes.find((candidate) => candidate.id === state.routeId);
   const era = atlasData.temporal.eras.find((candidate) => candidate.id === state.eraId);
@@ -212,7 +212,7 @@ export function InspectorTray() {
   const selectionEntity = hasWorkspaceSelection ? undefined : entity;
   const selectionGraphNode = hasWorkspaceSelection ? undefined : graphNode;
   const neighbors = selectionEntity ? atlasData.relation.neighborhoods[selectionEntity.id] ?? [] : [];
-  const scopeLabels = hasWorkspaceSelection ? [] : aggregateScopeLabelsFor(state.focusId);
+  const scopeLabels = hasWorkspaceSelection || !state.focusId ? [] : aggregateScopeLabelsFor(state.focusId);
   const directionalPairTitle = pair && state.relationLayer === "typed" && state.relationDirection
     ? state.relationDirection === "forward"
       ? `${pair.source} → ${pair.target}`
@@ -292,10 +292,10 @@ export function InspectorTray() {
             type="button"
             disabled={!selectionEntity}
             title={selectionEntity ? "비교에 추가" : "비교는 공개 지식 엔터티에만 제공됩니다."}
-            aria-pressed={state.compareIds.includes(state.focusId)}
-            onClick={() => dispatch({ type: "compare", focusId: state.focusId })}
+            aria-pressed={Boolean(state.focusId && state.compareIds.includes(state.focusId))}
+            onClick={() => state.focusId && dispatch({ type: "compare", focusId: state.focusId })}
           >
-            <Scale size={16} /> {selectionEntity ? (state.compareIds.includes(state.focusId) ? "비교에서 빼기" : "비교에 추가") : "엔터티 비교 전용"}
+            <Scale size={16} /> {selectionEntity ? (state.focusId && state.compareIds.includes(state.focusId) ? "비교에서 빼기" : "비교에 추가") : "엔터티 비교 전용"}
           </button>
           {selectionEntity && (() => {
             const districtNode = atlasData.graph.nodes.find((node) =>

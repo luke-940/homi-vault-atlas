@@ -204,15 +204,30 @@ describe("public Atlas v7.5 runtime contracts", () => {
     const markup = renderWorkspace("#home?scene=knowledge-field", homeModule.HomeView);
     const inventory = readJson("inventory");
     const graph = readJson("graph");
-    expect(markup).toContain("MEANINGFUL SPACE · LIVING GRAPH");
+    expect(markup).toContain("HOMI VAULT ATLAS");
     expect(markup).toContain("지식이 어디에 있고,");
-    expect(markup).toContain("표현 기록");
-    expect(markup).toContain("방향 관계");
+    expect(markup).toContain("관계의 흐름을 따라");
     expect(markup).toContain(inventory.physicalMarkdownCount.toLocaleString("ko-KR"));
+    expect(markup).toContain(`${inventory.namedCount.toLocaleString("ko-KR")} named`);
+    expect(markup).toContain(`${inventory.aggregateCount.toLocaleString("ko-KR")} aggregated`);
+    expect(markup).toContain(`${inventory.excludedCount.toLocaleString("ko-KR")} policy-excluded`);
     expect(markup).toContain(graph.manifest.edgeCount.toLocaleString("ko-KR"));
     expect(markup).toContain("날짜 미기록");
     expect(markup).toContain("검증된 버전 스냅샷");
+    expect(markup).not.toContain("표현 기록");
     expect(inventory.reconciliation.pass).toBe(true);
+  });
+
+  test("keeps gravity, freshness, and link trace as distinct full-screen Home pages", () => {
+    for (const [scene, title] of [
+      ["knowledge-gravity", "많이 참조되는 지식이"],
+      ["freshness-field", "최근의 지식은 위로"],
+      ["link-trace", "하나의 참조가"],
+    ] as const) {
+      const markup = renderWorkspace(`#home?scene=${scene}`, homeModule.HomeView);
+      expect(markup).toContain(`data-home-page=\"${scene}\"`);
+      expect(markup).toContain(title);
+    }
   });
 
   test("routes graph search results to their exact graph focus", () => {

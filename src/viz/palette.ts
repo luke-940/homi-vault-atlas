@@ -45,7 +45,7 @@ export const strokeColorForDistrict = (district: string) =>
 
 export const shortDistrictLabel = (district: string) => {
   const leaf = district.split("/").at(-1) ?? district;
-  return leaf === "Intelligence Layer" ? "Intel" : leaf;
+  return leaf === "Intelligence Layer" ? "Intel" : leaf === "Independent Projects" ? "Independent" : leaf;
 };
 
 export const relationColors = {

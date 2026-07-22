@@ -18,6 +18,13 @@ import {
 import { validateAtlasPacks } from "../src/data";
 import { resolveWorkspaceScene } from "../src/components/workspaceSceneRegistry";
 import { districtRelationRoutes, strongestConnectedNode, strongestIncidentEdge } from "../src/graph/model";
+import {
+  defaultDistrictCorridorCommands,
+  directedPathCommands,
+  focusedReferenceCommands,
+  interactionContext,
+  semanticEdgeCommands,
+} from "../src/graph/semantic-edge-model";
 
 const publicPackNames = [
   "agency", "bootstrap", "inventory", "graph", "relation", "flow",
@@ -94,6 +101,64 @@ function minimalStructure() {
 }
 
 describe("Atlas v7.5 graph and dual-profile boundary", () => {
+  test("renders only typed, provenance-bound semantic edge commands", () => {
+    const graph = readPack("graph");
+    const relation = readPack("relation");
+    const overview = defaultDistrictCorridorCommands(graph, relation.matrix);
+    const pairs = new Set(overview.map((command) =>
+      [command.sourceId, command.targetId].sort((left, right) => left.localeCompare(right, "en")).join("\0")));
+    expect(pairs.size).toBeLessThanOrEqual(4);
+    expect(overview.length).toBeLessThanOrEqual(8);
+    expect(overview.every((command) => command.semanticKind === "district_corridor"
+      && command.provenance === "atlas.graph.v1" && command.weight > 0)).toBe(true);
+
+    const focus = strongestConnectedNode(graph);
+    expect(focus).not.toBeNull();
+    if (!focus) throw new Error("Expected a connected focus node.");
+    const focused = focusedReferenceCommands(graph, focus.id);
+    expect(focused.commands.length).toBeLessThanOrEqual(12);
+    expect(focused.commands.every((command) => command.semanticKind === "exact_reference"
+      && (command.sourceId === focus.id || command.targetId === focus.id))).toBe(true);
+    expect(semanticEdgeCommands({
+      graph,
+      matrix: relation.matrix,
+      scene: "freshness",
+      focusId: focus.id,
+      previewId: null,
+      from: null,
+      to: null,
+      presentation: "home",
+    })).toEqual([]);
+  });
+
+  test("keeps preview transient and path or isolated evidence exact", () => {
+    const graph = readPack("graph");
+    const connected = strongestConnectedNode(graph);
+    expect(connected).not.toBeNull();
+    if (!connected) throw new Error("Expected a connected focus node.");
+    const context = interactionContext(graph, connected.id, null);
+    expect(context.previewId).toBe(connected.id);
+    expect(context.focusId).toBeNull();
+    expect(context.neighborhood.incoming.length).toBeLessThanOrEqual(6);
+    expect(context.neighborhood.outgoing.length).toBeLessThanOrEqual(6);
+
+    const edge = strongestIncidentEdge(graph, connected.id);
+    expect(edge).not.toBeNull();
+    if (!edge) throw new Error("Expected an incident reference edge.");
+    const path = directedPathCommands(graph, edge.source, edge.target);
+    expect(path.commands).toEqual([
+      expect.objectContaining({
+        semanticKind: "directed_path",
+        sourceId: edge.source,
+        targetId: edge.target,
+        provenance: "atlas.graph.v1",
+      }),
+    ]);
+
+    const isolated = graph.nodes.find((node: { id: string }) =>
+      !graph.edges.some((candidate: { source: string; target: string }) => candidate.source === node.id || candidate.target === node.id));
+    if (isolated) expect(focusedReferenceCommands(graph, isolated.id).commands).toEqual([]);
+  });
   test("reconciles every physical Markdown document exactly once", () => {
     const inventory = readPack("inventory");
     const classified = inventory.namedCount + inventory.aggregateCount + inventory.excludedCount;
@@ -293,6 +358,14 @@ describe("Atlas v7.5 graph and dual-profile boundary", () => {
     }
   });
 
+  test("does not mistake a canonical digest for a Korean phone number", () => {
+    const digest = "4003e1836286249af1cbdcd3d59cc6625cf58aba16734626279aaf8e5953861c";
+    const injectedPhone = ["010", "1234", "5678"].join("-");
+    expect(scanPrivacyText(JSON.stringify({ projectionDigest: digest }))).toEqual([]);
+    expect(scanPrivacyText(JSON.stringify({ contact: injectedPhone })))
+      .toEqual([expect.objectContaining({ id: "phone-number-kr" })]);
+  });
+
   test("keeps tracked build source free of machine paths and release identifiers", () => {
     const scriptFiles = execFileSync("rg", ["--files", "scripts"], { encoding: "utf8" })
       .trim().split("\n").filter((file) => file.endsWith(".mjs"));
@@ -323,6 +396,28 @@ describe("Atlas v7.5 graph and dual-profile boundary", () => {
     expect(readFileSync(path.join(ownerDataRoot, "graph.json"), "utf8"))
       .not.toBe(readFileSync(path.resolve("public-safe", "data", "graph.json"), "utf8"));
     expect(existsSync(path.join(ownerDataRoot, "structure.json"))).toBe(false);
+  });
+
+  ownerTest("keeps every admitted Owner title exact and searchable without aliases", () => {
+    const projection = JSON.parse(readFileSync(path.join(ownerRoot, "atlas-owner.json"), "utf8"));
+    const graph = JSON.parse(readFileSync(path.join(ownerRoot, "data", "graph.json"), "utf8"));
+    const nodeById = new Map(graph.nodes.map((node: { id: string; label: string; nameMode: string }) => [node.id, node]));
+    expect(projection.sourceIndex).toHaveLength(projection.inventory.namedCount);
+    for (const source of projection.sourceIndex) {
+      const node = nodeById.get(source.id) as { label: string; nameMode: string } | undefined;
+      expect(node, source.id).toBeDefined();
+      if (source.title === "_Index") {
+        const parentLabel = source.path.split("/").at(-2);
+        expect(node?.label).toContain(parentLabel);
+      } else {
+        expect(node?.label).toBe(source.title);
+      }
+      expect(node?.nameMode).toBe("owner_name");
+    }
+    expect(graph.nodes.filter((node: { nameMode: string }) => node.nameMode === "public_alias")).toEqual([]);
+    expect(projection.inventory.unclassifiedCount).toBe(0);
+    expect(Object.values(projection.inventory.exclusions.byReason).reduce((sum: number, count) => sum + Number(count), 0))
+      .toBe(projection.inventory.excludedCount);
   });
 
   ownerTest("keeps owner source ancestry, Paper dimensions, and routes evidence-bound", () => {

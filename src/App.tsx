@@ -114,8 +114,8 @@ export function App() {
   }[state.workspace];
   const accessibleSelectionLabel = state.workspace === "agency"
     ? atlasData.agency.actors.find((actor) => actor.id === state.actorId)?.label ?? "전체 역할"
-    : entityById.get(state.focusId)?.displayLabel
-      ?? graphNodeById.get(state.focusId)?.label
+    : entityById.get(state.focusId ?? "")?.displayLabel
+      ?? graphNodeById.get(state.focusId ?? "")?.label
       ?? "공개 지식";
 
   return (
