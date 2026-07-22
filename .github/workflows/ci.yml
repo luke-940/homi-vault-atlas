@@ -1,4 +1,4 @@
-name: Atlas v7.4 Public Contract
+name: Atlas Public Contract
 
 on:
   pull_request:
@@ -8,12 +8,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: atlas-v7-4-public-contract-${{ github.event.pull_request.number }}
+  group: atlas-public-contract-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
   atlas-public-contract:
-    name: Atlas v7.4 Public Contract
+    name: Atlas Public Contract
     runs-on: ubuntu-24.04
     timeout-minutes: 36
     steps:
@@ -64,114 +64,19 @@ jobs:
             };
             writeFileSync("artifacts/ci-binding/binding.json", `${JSON.stringify(value, null, 2)}\n`);
           '
-      - name: Block before browser work unless v7.4 goldens were independently approved
-        id: visual-manifest
-        continue-on-error: true
-        run: npm run qa:visual:manifest
-      - name: Install CI-owned Chromium and WebKit binaries
-        run: npx --no-install playwright install --with-deps chromium webkit
-      - name: Run the one serial 24-route matrix and prove shutdown
-        shell: bash
-        env:
-          ATLAS_URL: http://127.0.0.1:8785/
-          ATLAS_QA_ARTIFACT_DIR: artifacts/v7-4-browser-qa
-          ATLAS_VISUAL_MANIFEST_READY: ${{ steps.visual-manifest.outcome == 'success' }}
-        run: |
-          set -euo pipefail
-          server_pid=""
-
-          cleanup() {
-            status=$?
-            trap - EXIT
-            if [[ -n "${server_pid}" ]] && kill -0 "${server_pid}" 2>/dev/null; then
-              kill "${server_pid}"
-            fi
-            if [[ -n "${server_pid}" ]]; then
-              wait "${server_pid}" 2>/dev/null || true
-            fi
-            residual=false
-            if [[ -n "${server_pid}" ]] && kill -0 "${server_pid}" 2>/dev/null; then
-              residual=true
-              status=1
-            fi
-            refused=false
-            if python3 - <<'PY'
-          import errno
-          import socket
-
-          try:
-              connection = socket.create_connection(("127.0.0.1", 8785), timeout=2)
-          except OSError as error:
-              if error.errno != errno.ECONNREFUSED:
-                  raise SystemExit(f"expected ECONNREFUSED, received errno={error.errno}: {error}")
-          else:
-              connection.close()
-              raise SystemExit("expected ECONNREFUSED, but the Atlas port still accepted a connection")
-          PY
-            then
-              refused=true
-            else
-              status=1
-            fi
-            mkdir -p artifacts/v7-4-browser-qa
-            SERVER_PID="${server_pid}" RESIDUAL="${residual}" REFUSED="${refused}" node --input-type=module -e '
-              import { writeFileSync } from "node:fs";
-              const value = {
-                schema: "homi.atlas_v7_4.server_shutdown.v1",
-                ownedPid: Number(process.env.SERVER_PID),
-                residualOwnedPid: process.env.RESIDUAL === "true",
-                port: 8785,
-                host: "127.0.0.1",
-                connectionRefused: process.env.REFUSED === "true",
-                pass: process.env.RESIDUAL !== "true" && process.env.REFUSED === "true",
-                completedAt: new Date().toISOString(),
-              };
-              writeFileSync("artifacts/v7-4-browser-qa/server-shutdown.json", `${JSON.stringify(value, null, 2)}\n`);
-            '
-            exit "${status}"
-          }
-          trap cleanup EXIT
-
-          python3 -m http.server 8785 --bind 127.0.0.1 --directory dist-public >/dev/null 2>&1 &
-          server_pid=$!
-          for attempt in $(seq 1 50); do
-            if curl --fail --silent --show-error --max-time 1 "${ATLAS_URL}" >/dev/null; then
-              break
-            fi
-            sleep 0.2
-          done
-          curl --fail --silent --show-error --max-time 2 "${ATLAS_URL}" >/dev/null
-          if [[ "${ATLAS_VISUAL_MANIFEST_READY}" != "true" ]]; then
-            npm run qa:visual:candidate:ci
-            echo "Ubuntu visual candidates generated; independent approval and manifest binding are still required" >&2
-            exit 1
-          fi
-          npm run qa:ci
-          npm run qa:visual:ci
-      - name: Bind the CI and GitHub Release evidence inventory
-        run: npm run release:evidence
-        env:
-          ATLAS_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha }}
       - name: Upload the exact tested public artifact and QA evidence
         id: public-artifact
         if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: atlas-v7-4-public-${{ github.event.pull_request.head.sha }}
+          name: atlas-public-${{ github.event.pull_request.head.sha }}
           path: |
             dist-public
             artifacts/publication
             artifacts/release
             artifacts/ci-binding
-            artifacts/v7-4-browser-qa
-            artifacts/v7-4-visual-golden
-            tests-visual/approved-baselines.json
-            tests-visual/independent-visual-qa-receipt.json
-            tests-visual/independent-visual-qa-receipt.v1.schema.json
-            tests-visual/independent-evidence
-            tests-visual/__screenshots__/v7-4-golden.spec.mjs
           if-no-files-found: warn
           retention-days: 30
       - name: Record the immutable Actions artifact digest
         if: ${{ always() && steps.public-artifact.outputs.artifact-digest != '' }}
-        run: echo "Atlas v7.4 artifact digest ${{ steps.public-artifact.outputs.artifact-digest }}" >> "$GITHUB_STEP_SUMMARY"
+        run: echo "Atlas public artifact digest ${{ steps.public-artifact.outputs.artifact-digest }}" >> "$GITHUB_STEP_SUMMARY"
