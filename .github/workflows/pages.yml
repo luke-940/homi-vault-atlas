@@ -1,4 +1,4 @@
-name: Deploy validated Atlas v7.4 artifact
+name: Deploy validated Atlas artifact
 
 on:
   push:
@@ -58,7 +58,7 @@ jobs:
           runs="$(gh api --method GET "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs" \
             -f head_sha="${head_sha}" -f status=success -f event=pull_request -f per_page=100)"
           run_id="$(jq -er --arg head "${head_sha}" '[.workflow_runs[] | select(.head_sha == $head and .conclusion == "success")] | sort_by(.run_started_at) | last | .id' <<<"${runs}")"
-          artifact_name="atlas-v7-4-public-${head_sha}"
+          artifact_name="atlas-public-${head_sha}"
           artifacts="$(gh api --method GET "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts" -f per_page=100)"
           artifact="$(jq -ec --arg name "${artifact_name}" '.artifacts[] | select(.name == $name and .expired == false)' <<<"${artifacts}")"
           artifact_digest="$(jq -er '.digest | select(test("^sha256:[0-9a-f]{64}$"))' <<<"${artifact}")"
@@ -112,21 +112,16 @@ jobs:
           node scripts/package-release-artifact.mjs
           node scripts/package-release-artifact.mjs --verify
           mkdir -p artifacts/main-release/evidence
-          cp validated-artifact/artifacts/ci-binding/RELEASE_EVIDENCE.json artifacts/main-release/evidence/
-          cp validated-artifact/artifacts/ci-binding/RELEASE_EVIDENCE_SHA256SUMS artifacts/main-release/evidence/
+          cp validated-artifact/artifacts/ci-binding/binding.json artifacts/main-release/evidence/
+          cp validated-artifact/artifacts/ci-binding/DIST_PUBLIC_SHA256SUMS artifacts/main-release/evidence/
           cp validated-artifact/artifacts/publication/v7-4-publication-audit.json artifacts/main-release/evidence/
-          cp validated-artifact/artifacts/v7-4-browser-qa/v7-4-ci-browser-qa.json artifacts/main-release/evidence/
-          cp validated-artifact/artifacts/v7-4-browser-qa/server-shutdown.json artifacts/main-release/evidence/
-          cp validated-artifact/tests-visual/approved-baselines.json artifacts/main-release/evidence/
-          cp validated-artifact/tests-visual/independent-visual-qa-receipt.json artifacts/main-release/evidence/
-          cp validated-artifact/tests-visual/independent-visual-qa-receipt.v1.schema.json artifacts/main-release/evidence/
         env:
           ATLAS_PUBLIC_OUTPUT_DIR: ${{ github.workspace }}/validated-artifact/dist-public
           ATLAS_RELEASE_ARTIFACT_DIR: ${{ github.workspace }}/artifacts/main-release
           ATLAS_SOURCE_COMMIT: ${{ github.sha }}
       - name: Name the main-bound release artifact
         id: release-artifact-name
-        run: echo "name=atlas-v7-4-main-release-${GITHUB_SHA}" >> "${GITHUB_OUTPUT}"
+        run: echo "name=atlas-main-release-${GITHUB_SHA}" >> "${GITHUB_OUTPUT}"
       - name: Retain the deterministic main-bound release package
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -195,12 +190,12 @@ jobs:
           ATLAS_SOURCE_COMMIT: ${{ github.sha }}
           ATLAS_PUBLIC_OUTPUT_DIR: ${{ github.workspace }}/validated-artifact/dist-public
           ATLAS_RELEASE_ARTIFACT_DIR: ${{ github.workspace }}/main-release
-          ATLAS_READBACK_RECEIPT: ${{ github.workspace }}/artifacts/production-readback/v7-4-production-readback.json
+          ATLAS_READBACK_RECEIPT: ${{ github.workspace }}/artifacts/production-readback/v7-5-production-readback.json
       - name: Retain the production readback receipt
         if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: atlas-v7-4-production-readback-${{ github.sha }}
-          path: artifacts/production-readback/v7-4-production-readback.json
+          name: atlas-v7-5-production-readback-${{ github.sha }}
+          path: artifacts/production-readback/v7-5-production-readback.json
           if-no-files-found: warn
           retention-days: 90
