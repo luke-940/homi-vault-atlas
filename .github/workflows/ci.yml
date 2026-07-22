@@ -65,6 +65,8 @@ jobs:
             writeFileSync("artifacts/ci-binding/binding.json", `${JSON.stringify(value, null, 2)}\n`);
           '
       - name: Block before browser work unless v7.4 goldens were independently approved
+        id: visual-manifest
+        continue-on-error: true
         run: npm run qa:visual:manifest
       - name: Install CI-owned Chromium and WebKit binaries
         run: npx --no-install playwright install --with-deps chromium webkit
@@ -73,6 +75,7 @@ jobs:
         env:
           ATLAS_URL: http://127.0.0.1:8785/
           ATLAS_QA_ARTIFACT_DIR: artifacts/v7-4-browser-qa
+          ATLAS_VISUAL_MANIFEST_READY: ${{ steps.visual-manifest.outcome == 'success' }}
         run: |
           set -euo pipefail
           server_pid=""
@@ -138,6 +141,11 @@ jobs:
             sleep 0.2
           done
           curl --fail --silent --show-error --max-time 2 "${ATLAS_URL}" >/dev/null
+          if [[ "${ATLAS_VISUAL_MANIFEST_READY}" != "true" ]]; then
+            npm run qa:visual:candidate:ci
+            echo "Ubuntu visual candidates generated; independent approval and manifest binding are still required" >&2
+            exit 1
+          fi
           npm run qa:ci
           npm run qa:visual:ci
       - name: Bind the CI and GitHub Release evidence inventory
