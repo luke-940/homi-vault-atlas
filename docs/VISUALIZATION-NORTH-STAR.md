@@ -6,7 +6,7 @@ Atlas must make the Vault readable as a knowledge system. Within three seconds, 
 
 ## Art direction
 
-The visual center is `Contemporary Editorial Data Art`: a crisp, expressive, human-authored data product rather than a luxury dashboard or science-fiction interface. Supporting lenses are `playful scientific visualization`, `spatial knowledge graph interface`, `tactile digital cartography`, `editorial cosmic data field`, and `flat point-cloud visualization`. `Luxury`, `holographic`, `neon cyberpunk`, `futuristic HUD`, `glossy orb`, and `deep-space wallpaper` are negative prompts. The background is a data substrate: graphite-aubergine depth, district fields, gravity light, contours, and real directed routes. It cannot become an unrelated space image, fake star field, generic blue nebula, or decorative particle layer. Home is the minimum craft bar for every workspace, not a separate marketing skin. The proprietary signature is the combination of evidence-bound district color, Homi amber selection, editorial annotation, and sparse directed lines; generic card repetition, gratuitous glass, and explanatory copy that is not load-bearing are removed.
+The visual center is `Contemporary Editorial Data Art`: a crisp, expressive, human-authored data product rather than a luxury dashboard or science-fiction interface. Supporting lenses are `playful scientific visualization`, `spatial knowledge graph interface`, `tactile digital cartography`, `editorial cosmic data field`, and `flat point-cloud visualization`. `Luxury`, `holographic`, `neon cyberpunk`, `futuristic HUD`, `glossy orb`, and `deep-space wallpaper` are negative prompts. The background is a data substrate: graphite-aubergine depth, district fields, gravity light, contours, and real directed routes. It cannot become an unrelated space image, fake star field, generic blue nebula, or decorative particle layer. Home is the minimum craft bar for every workspace, not a separate marketing skin. The proprietary signature is the combination of evidence-shaped district volumes, a strong whole-field silhouette, Homi amber selection, route-aware editorial annotation, and directed relation choreography. A fashionable dark palette alone is never sufficient; generic card repetition, gratuitous glass, glossy spheres, and non-load-bearing copy are removed.
 
 ## Non-negotiable meaning
 
@@ -17,6 +17,8 @@ The visual center is `Contemporary Editorial Data Art`: a crisp, expressive, hum
 - Line: directed `references` links only. Membership and association inform layout but never inflate knowledge-relation totals.
 - Camera: real perspective with bounded orbit, pan, and zoom. Selection may trigger a finite dolly toward evidence; there is no auto-rotation or decorative camera drift.
 - Motion: finite entry, selection, and trace transitions only. Anonymous micro-marks represent reconciled public records; decorative particles, perpetual pulse, runtime force simulation, auto-rotation, and drift remain forbidden.
+- Annotation: a meaningful field note is visible before interaction. Pointer or keyboard focus may temporarily take control, but the experience never depends on a tooltip that most readers will miss.
+- Connector hierarchy: aggregate district routes, exact hub references, and dashed annotation leaders have visibly different grammar. Arrowheads remain legible under bounded zoom; annotation leaders never use arrowheads and therefore cannot masquerade as relations.
 
 ## Product contract
 
@@ -38,6 +40,8 @@ The default canvas renders at most 60 nodes and 48 edges. Public renders all saf
 ## Engineering and evidence
 
 Three-dimensional layout is computed at build time with a fixed seed and persisted coordinates. Identical semantic input must produce identical graph and layout bytes. Runtime uses Canvas2D perspective projection with device pixel ratio capped at 2; no WebGL engine or runtime force simulation is required. The background uses restrained ink-black, indigo, and violet depth fields derived from real district contours; it cannot introduce fake stars or connections. Thick orbital routes summarize resolved district-to-district direction, while fine lines remain exact hub references. Visual PASS requires both golden screenshots and independent geometry checks; a screenshot file or hash alone is not evidence of correctness.
+
+At 1280×720 and 1440×920, the reconciled point field and its district volumes must read as one deliberate spatial object, not a collection of unrelated blobs. Aggregation is allowed for clarity and speed only when the visible ledger and focused note disclose what is represented or hidden. Depth, hover, and camera response are clamped so far nodes remain readable and controls remain stable instead of shrinking into ornamental noise.
 
 ## Resource and release stop rules
 

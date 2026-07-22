@@ -37,11 +37,11 @@ export function defaultCamera(
     };
   }
   return {
-    yaw: presentation === "home" ? -0.38 : -0.3,
-    pitch: presentation === "home" ? 0.18 : 0.18,
-    zoom: presentation === "home" ? 1.38 : 1.08,
-    panX: presentation === "home" ? 154 : -45,
-    panY: presentation === "home" ? -34 : -20,
+    yaw: presentation === "home" ? -0.44 : -0.3,
+    pitch: presentation === "home" ? 0.24 : 0.18,
+    zoom: presentation === "home" ? 1.12 : 1.08,
+    panX: presentation === "home" ? -20 : -45,
+    panY: presentation === "home" ? -4 : -20,
     focusX: presentation === "home" ? graph.layout.bounds.width * 0.4375 : graph.layout.bounds.width / 2,
     focusY: presentation === "home" ? graph.layout.bounds.height * 0.486 : graph.layout.bounds.height / 2,
     focusZ: presentation === "home" ? graph.layout.bounds.depth * 0.469 : graph.layout.bounds.depth / 2,
@@ -81,10 +81,13 @@ export function projectCoordinate(
 
   // A tall browser pane must not magnify the field just because its short edge
   // grew. Cap the lens so portrait/tablet layouts retain the whole terrain.
-  const lensCap = presentation === "home" ? 900 : 1_040;
+  // Let the authored Home field grow with a desktop canvas instead of keeping
+  // the same small projection inside progressively larger empty space. Mobile
+  // remains governed by the short edge, so its bounded sibling is unchanged.
+  const lensCap = presentation === "home" ? 1_040 : 1_040;
   const focalLength = Math.max(420, Math.min(lensCap, Math.min(viewport.width, viewport.height) * 1.32)) * camera.zoom;
-  const cameraDistance = 1_420;
-  const denominator = Math.max(320, cameraDistance - depth);
+  const cameraDistance = presentation === "home" ? 1_120 : 1_420;
+  const denominator = Math.max(presentation === "home" ? 280 : 320, cameraDistance - depth);
   const scale = focalLength / denominator;
   const fieldShift = 0;
   const x = viewport.width / 2 + fieldShift + camera.panX + yawX * scale;
@@ -94,7 +97,7 @@ export function projectCoordinate(
     y,
     depth,
     scale,
-    visible: denominator > 320 && x > -180 && x < viewport.width + 180 && y > -180 && y < viewport.height + 180,
+    visible: denominator > (presentation === "home" ? 280 : 320) && x > -180 && x < viewport.width + 180 && y > -180 && y < viewport.height + 180,
   };
 }
 

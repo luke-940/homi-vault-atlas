@@ -82,7 +82,6 @@ export function HomeView() {
     ? state.focusId
     : strongestNode?.id ?? null;
   const traceEdge = useMemo(() => strongestIncidentEdge(atlasData.graph, graphFocus), [graphFocus]);
-  const neighborhood = useMemo(() => selectedNeighborhood(atlasData.graph, graphFocus), [graphFocus]);
   const focusedNode = graphFocus ? graphNodeById.get(graphFocus) ?? null : null;
   const districtRouteSummary = useMemo(() => ({
     incoming: districtRoutes.filter((route) => route.targetId === graphFocus).reduce((sum, route) => sum + route.occurrenceCount, 0),
@@ -96,7 +95,14 @@ export function HomeView() {
   const matchingRoute = useMemo(() => atlasData.flow.routes.find((route) => (
     route.members.length > 0 && route.stations.some((station) => station.entityId === graphFocus)
   )) ?? null, [graphFocus]);
+  const traceSource = traceEdge ? graphNodeById.get(traceEdge.source) ?? null : null;
+  const traceTarget = traceEdge ? graphNodeById.get(traceEdge.target) ?? null : null;
   const [intro, setIntro] = useState(false);
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const readoutId = sceneId === "link-trace" ? graphFocus : previewId ?? graphFocus;
+  const readoutNode = readoutId ? graphNodeById.get(readoutId) ?? null : null;
+  const readoutCluster = readoutNode ? atlasData.graph.clusters.find((cluster) => cluster.id === readoutNode.clusterId) ?? null : null;
+  const readoutNeighborhood = useMemo(() => selectedNeighborhood(atlasData.graph, readoutId), [readoutId]);
 
   useEffect(() => {
     try {
@@ -133,6 +139,14 @@ export function HomeView() {
               <Search size={16} aria-hidden="true" /> 지식 검색
             </button>
           </div>
+          <div className="home-v75-axis-key" aria-label="그래프 의미 범례">
+            <span><i className="is-x" />X · 지식 구역</span>
+            <span><i className="is-y" />Y · 위쪽일수록 최근</span>
+            <span><i className="is-z" />Z · 구조 깊이</span>
+            <span><i className="is-size" />크기 · 고유 inbound</span>
+            <span><i className="is-edge" />굵은 항로 · 구역 집계 방향</span>
+            <span><i className="is-edge" style={{ opacity: 0.56, scale: "0.72" }} />가는 선 · 허브 실제 참조</span>
+          </div>
           <dl className="home-v75-ledger" aria-label="Atlas evidence ledger">
             <div><dt>표현 기록</dt><dd>{atlasData.inventory.namedCount.toLocaleString("ko-KR")}</dd><small>public-safe names</small></div>
             <div><dt>안전 집계</dt><dd>{atlasData.inventory.aggregateCount.toLocaleString("ko-KR")}</dd><small>aggregate boundary</small></div>
@@ -165,14 +179,6 @@ export function HomeView() {
               <div><span>{scene.index} · {scene.label}</span><h2>{scene.title}</h2></div>
               <p>{scene.body}</p>
             </header>
-            <div className="home-v75-axis-key" aria-label="그래프 의미 범례">
-              <span><i className="is-x" />X · 지식 구역</span>
-              <span><i className="is-y" />Y · 위쪽일수록 최근</span>
-              <span><i className="is-z" />Z · 구조 깊이</span>
-              <span><i className="is-size" />크기 · 고유 inbound</span>
-              <span><i className="is-edge" />굵은 항로 · 구역 집계 방향</span>
-              <span><i className="is-edge" style={{ opacity: 0.56, scale: "0.72" }} />가는 선 · 허브 실제 참조</span>
-            </div>
             <LivingGraphCanvas
               graph={atlasData.graph}
               scene={graphScene(sceneId)}
@@ -184,20 +190,30 @@ export function HomeView() {
               mobile={state.mobileSibling}
               reducedMotion={state.reducedMotion}
               onSelect={(focusId) => dispatch({ type: "focus", focusId, openInspector: false })}
+              onHover={setPreviewId}
             />
-            {graphFocus && (
+            {readoutId && readoutNode && (
               <aside className="home-v75-focus-readout" aria-live="polite">
-                <span>FOCUSED KNOWLEDGE</span>
-                <strong>{graphNodeLabel(graphNodeById.get(graphFocus)!)}</strong>
-                <small>{focusedNode?.kind === "district"
+                <span>{sceneId === "link-trace" ? "DIRECTED FIELD NOTE" : previewId ? "LIVE FIELD NOTE" : "FIELD NOTE"}</span>
+                <strong>{sceneId === "link-trace" && traceSource && traceTarget
+                  ? `${graphNodeLabel(traceSource)} → ${graphNodeLabel(traceTarget)}`
+                  : graphNodeLabel(readoutNode)}</strong>
+                <small>{readoutNode.kind === "district" && readoutId === graphFocus
                   ? `구역 링크 들어옴 ${districtRouteSummary.incoming} · 나감 ${districtRouteSummary.outgoing}`
-                  : `들어옴 ${neighborhood.incoming.length} · 나감 ${neighborhood.outgoing.length} · 링크 출현 ${focusedNode?.occurrences ?? 0}`}</small>
-                <nav className="view-switch" aria-label="선택 지식의 연결 화면" style={{ marginTop: 3 }}>
-                  <button type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "explore", sceneId: "graph", focusId: graphFocus } })}>Explore</button>
-                  <button type="button" onClick={() => dispatch({ type: "journey", target: focusedNode?.kind === "district"
-                    ? { workspace: "observe", sceneId: "global-relations", focusId: graphFocus, relationPairId: districtPair?.id ?? null, relationLayer: "wikilink" }
-                    : { workspace: "observe", sceneId: "hub-relations", focusId: graphFocus } })}>Observe</button>
-                  {matchingRoute && <button type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "flow", sceneId: "routes", focusId: graphFocus, routeId: matchingRoute.id } })}>Flow</button>}
+                  : sceneId === "link-trace" && traceEdge
+                    ? `실제 참조 ${traceEdge.occurrenceCount}회 · 화살표는 출발에서 도착으로 읽습니다.`
+                    : `고유 inbound ${readoutNode.gravity} · 들어옴 ${readoutNeighborhood.incoming.length} · 나감 ${readoutNeighborhood.outgoing.length}`}</small>
+                <small>{sceneId === "link-trace" && traceSource && traceTarget
+                  ? `${graphNodeLabel(traceSource)}에서 ${graphNodeLabel(traceTarget)}으로 향하는 검증된 공개 경로입니다.`
+                  : readoutNode.kind === "district"
+                    ? `${graphNodeLabel(readoutNode)} 안에서 공개 안전한 허브와 집계 기록의 구조 깊이를 함께 읽습니다.`
+                    : `${readoutCluster?.label ?? "지식"} 구역 · ${readoutNode.freshness ?? "날짜 미기록"}`}</small>
+                <nav className="view-switch" aria-label="선택 지식의 연결 화면" style={{ marginTop: 3, border: 0, background: "transparent", padding: 0 }}>
+                  <button type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "explore", sceneId: "graph", focusId: readoutId } })}>Explore</button>
+                  <button type="button" onClick={() => dispatch({ type: "journey", target: readoutNode.kind === "district"
+                    ? { workspace: "observe", sceneId: "global-relations", focusId: readoutId, relationPairId: readoutId === graphFocus ? districtPair?.id ?? null : null, relationLayer: "wikilink" }
+                    : { workspace: "observe", sceneId: "hub-relations", focusId: readoutId } })}>Observe</button>
+                  {readoutId === graphFocus && matchingRoute && <button type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "flow", sceneId: "routes", focusId: graphFocus, routeId: matchingRoute.id } })}>Flow</button>}
                 </nav>
               </aside>
             )}

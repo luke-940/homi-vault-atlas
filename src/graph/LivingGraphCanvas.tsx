@@ -86,6 +86,18 @@ function drawArrow(context: CanvasRenderingContext2D, source: ProjectedPoint, ta
   context.fill();
 }
 
+function quadraticPoint(source: ProjectedPoint, control: { x: number; y: number }, target: ProjectedPoint, progress: number): ProjectedPoint {
+  const t = Math.max(0, Math.min(1, progress));
+  const inverse = 1 - t;
+  return {
+    x: inverse * inverse * source.x + 2 * inverse * t * control.x + t * t * target.x,
+    y: inverse * inverse * source.y + 2 * inverse * t * control.y + t * t * target.y,
+    depth: source.depth + (target.depth - source.depth) * t,
+    scale: source.scale + (target.scale - source.scale) * t,
+    visible: source.visible && target.visible,
+  };
+}
+
 function rgba(color: string, alpha: number) {
   if (/^#[0-9a-f]{6}$/i.test(color)) {
     const value = Number.parseInt(color.slice(1), 16);
@@ -130,6 +142,54 @@ function drawProjectedRing(
   return points;
 }
 
+function convexHull(points: Array<{ x: number; y: number }>) {
+  const unique = [...new Map(points.map((point) => [`${point.x.toFixed(3)}\0${point.y.toFixed(3)}`, point])).values()]
+    .sort((left, right) => left.x - right.x || left.y - right.y);
+  if (unique.length <= 2) return unique;
+  const cross = (origin: { x: number; y: number }, left: { x: number; y: number }, right: { x: number; y: number }) =>
+    (left.x - origin.x) * (right.y - origin.y) - (left.y - origin.y) * (right.x - origin.x);
+  const lower: Array<{ x: number; y: number }> = [];
+  for (const point of unique) {
+    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], point) <= 0) lower.pop();
+    lower.push(point);
+  }
+  const upper: Array<{ x: number; y: number }> = [];
+  for (const point of [...unique].reverse()) {
+    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], point) <= 0) upper.pop();
+    upper.push(point);
+  }
+  lower.pop();
+  upper.pop();
+  return [...lower, ...upper];
+}
+
+function drawSoftHull(context: CanvasRenderingContext2D, hull: Array<{ x: number; y: number }>, scale: number) {
+  if (hull.length < 3) return false;
+  const center = {
+    x: hull.reduce((sum, point) => sum + point.x, 0) / hull.length,
+    y: hull.reduce((sum, point) => sum + point.y, 0) / hull.length,
+  };
+  const points = hull.map((point) => ({
+    x: center.x + (point.x - center.x) * scale,
+    y: center.y + (point.y - center.y) * scale,
+  }));
+  const midpoint = (left: { x: number; y: number }, right: { x: number; y: number }) => ({
+    x: (left.x + right.x) / 2,
+    y: (left.y + right.y) / 2,
+  });
+  context.beginPath();
+  const first = midpoint(points[points.length - 1], points[0]);
+  context.moveTo(first.x, first.y);
+  for (let index = 0; index < points.length; index += 1) {
+    const point = points[index];
+    const next = points[(index + 1) % points.length];
+    const end = midpoint(point, next);
+    context.quadraticCurveTo(point.x, point.y, end.x, end.y);
+  }
+  context.closePath();
+  return true;
+}
+
 interface LabelPlacement {
   node: AtlasGraphNodeV1;
   x: number;
@@ -152,32 +212,189 @@ function stableUnit(value: string) {
   return (hash >>> 0) / 4294967295;
 }
 
+interface VolumeEnvelope {
+  center: { x: number; y: number; z: number };
+  radius: { x: number; y: number; z: number };
+}
+
+function percentile(values: number[], ratio: number) {
+  const sorted = [...values].sort((left, right) => left - right);
+  return sorted[Math.max(0, Math.min(sorted.length - 1, Math.round((sorted.length - 1) * ratio)))] ?? 0;
+}
+
+function volumeEnvelope(
+  coordinates: Array<Pick<AtlasGraphCoordinateV1, "x" | "y" | "z">>,
+): VolumeEnvelope | null {
+  if (coordinates.length < 3) return null;
+  const center = {
+    x: percentile(coordinates.map((coordinate) => coordinate.x), 0.5),
+    y: percentile(coordinates.map((coordinate) => coordinate.y), 0.5),
+    z: percentile(coordinates.map((coordinate) => coordinate.z), 0.5),
+  };
+  const radius = {
+    x: Math.max(56, Math.min(220, percentile(coordinates.map((coordinate) => Math.abs(coordinate.x - center.x)), 0.92) + 32)),
+    y: Math.max(48, Math.min(165, percentile(coordinates.map((coordinate) => Math.abs(coordinate.y - center.y)), 0.92) + 28)),
+    z: Math.max(56, Math.min(145, percentile(coordinates.map((coordinate) => Math.abs(coordinate.z - center.z)), 0.92) + 28)),
+  };
+  return { center, radius };
+}
+
+function volumeRing(
+  envelope: VolumeEnvelope,
+  kind: "latitude" | "meridian",
+  offset: number,
+  segments = 42,
+) {
+  const points: Array<Pick<AtlasGraphCoordinateV1, "x" | "y" | "z">> = [];
+  for (let index = 0; index <= segments; index += 1) {
+    const angle = index / segments * Math.PI * 2;
+    if (kind === "latitude") {
+      const radial = Math.sqrt(Math.max(0.08, 1 - offset * offset));
+      points.push({
+        x: envelope.center.x + envelope.radius.x * radial * Math.cos(angle),
+        y: envelope.center.y + envelope.radius.y * offset,
+        z: envelope.center.z + envelope.radius.z * radial * Math.sin(angle),
+      });
+    } else {
+      points.push({
+        x: envelope.center.x + envelope.radius.x * Math.cos(angle) * Math.cos(offset),
+        y: envelope.center.y + envelope.radius.y * Math.sin(angle),
+        z: envelope.center.z + envelope.radius.z * Math.cos(angle) * Math.sin(offset),
+      });
+    }
+  }
+  return points;
+}
+
+function drawDepthRing(
+  context: CanvasRenderingContext2D,
+  coordinates: Array<Pick<AtlasGraphCoordinateV1, "x" | "y" | "z">>,
+  project: (coordinate: Pick<AtlasGraphCoordinateV1, "x" | "y" | "z">) => ProjectedPoint,
+  color: string,
+  alpha: number,
+  width: number,
+) {
+  const points = coordinates.map(project);
+  const visibleDepths = points.filter((point) => point.visible).map((point) => point.depth);
+  if (visibleDepths.length < 3) return;
+  const minimumDepth = Math.min(...visibleDepths);
+  const depthSpan = Math.max(1, Math.max(...visibleDepths) - minimumDepth);
+  const trace = (minimumNearness: number, strokeAlpha: number, strokeWidth: number) => {
+    let drawing = false;
+    let hasSegment = false;
+    context.beginPath();
+    for (let index = 0; index < points.length - 1; index += 1) {
+      const source = points[index];
+      const target = points[index + 1];
+      const nearness = ((source.depth + target.depth) / 2 - minimumDepth) / depthSpan;
+      if (!source.visible || !target.visible || nearness < minimumNearness) {
+        drawing = false;
+        continue;
+      }
+      if (!drawing) context.moveTo(source.x, source.y);
+      context.lineTo(target.x, target.y);
+      drawing = true;
+      hasSegment = true;
+    }
+    if (!hasSegment) return;
+    context.strokeStyle = rgba(color, strokeAlpha);
+    context.lineWidth = strokeWidth;
+    context.stroke();
+  };
+  trace(0, alpha * 0.34, width * 0.82);
+  trace(0.54, alpha, width * 1.08);
+}
+
+function drawVolumeSkin(
+  context: CanvasRenderingContext2D,
+  envelope: VolumeEnvelope,
+  project: (coordinate: Pick<AtlasGraphCoordinateV1, "x" | "y" | "z">) => ProjectedPoint,
+  color: string,
+  alpha: number,
+) {
+  const sections = [-0.72, -0.24, 0.24, 0.72].map((offset) => volumeRing(envelope, "latitude", offset, 34).map(project));
+  const visibleDepths = sections.flat().filter((point) => point.visible).map((point) => point.depth);
+  if (visibleDepths.length < 8) return;
+  const minimumDepth = Math.min(...visibleDepths);
+  const depthSpan = Math.max(1, Math.max(...visibleDepths) - minimumDepth);
+  for (const threshold of [0, 0.42, 0.68]) {
+    context.beginPath();
+    let hasSurface = false;
+    for (let section = 0; section < sections.length - 1; section += 1) {
+      const upper = sections[section];
+      const lower = sections[section + 1];
+      for (let index = 0; index < upper.length - 1; index += 1) {
+        const quad = [upper[index], upper[index + 1], lower[index + 1], lower[index]];
+        if (quad.some((point) => !point.visible)) continue;
+        const depth = quad.reduce((sum, point) => sum + point.depth, 0) / quad.length;
+        if ((depth - minimumDepth) / depthSpan < threshold) continue;
+        context.moveTo(quad[0].x, quad[0].y);
+        context.lineTo(quad[1].x, quad[1].y);
+        context.lineTo(quad[2].x, quad[2].y);
+        context.lineTo(quad[3].x, quad[3].y);
+        context.closePath();
+        hasSurface = true;
+      }
+    }
+    if (!hasSurface) continue;
+    context.fillStyle = rgba(color, alpha * (threshold === 0 ? 0.34 : threshold < 0.5 ? 0.48 : 0.7));
+    context.fill();
+  }
+}
+
 function aggregateDocumentMarks(
   nodes: AtlasGraphNodeV1[],
   coordinateById: Map<string, AtlasGraphCoordinateV1>,
 ): AggregateDocumentMark[] {
   const marks: AggregateDocumentMark[] = [];
   const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+  const boundariesByCluster = new Map<string, AtlasGraphNodeV1[]>();
+  const districtAnchorByCluster = new Map<string, AtlasGraphCoordinateV1>();
+  for (const node of nodes) {
+    if (node.kind === "aggregate_boundary" && node.representedDocuments > 0) {
+      const group = boundariesByCluster.get(node.clusterId) ?? [];
+      group.push(node);
+      boundariesByCluster.set(node.clusterId, group);
+    } else if (node.kind === "district") {
+      const coordinate = coordinateById.get(node.id);
+      if (coordinate) districtAnchorByCluster.set(node.clusterId, coordinate);
+    }
+  }
   for (const node of nodes) {
     if (node.kind !== "aggregate_boundary" || node.representedDocuments < 1) continue;
     const anchor = coordinateById.get(node.id);
     if (!anchor) continue;
     const count = node.representedDocuments;
-    const spread = Math.min(156, 24 + Math.sqrt(count) * 5.8);
+    const clusterBoundaries = boundariesByCluster.get(node.clusterId) ?? [node];
+    const clusterTotal = clusterBoundaries.reduce((sum, boundary) => sum + boundary.representedDocuments, 0);
+    const districtAnchor = districtAnchorByCluster.get(node.clusterId) ?? anchor;
+    const share = Math.sqrt(count / Math.max(1, clusterTotal));
+    const spread = Math.min(188, (44 + Math.sqrt(clusterTotal) * 7.25) * (0.38 + share * 0.62));
+    const groupCenter = {
+      x: districtAnchor.x + (anchor.x - districtAnchor.x) * 0.48,
+      y: anchor.y,
+      z: districtAnchor.z + (anchor.z - districtAnchor.z) * 0.48,
+    };
     const phase = stableUnit(node.id) * Math.PI * 2;
+    const cosPhase = Math.cos(phase * 0.36);
+    const sinPhase = Math.sin(phase * 0.36);
+    const depthBias = 0.72 + stableUnit(`${node.id}:depth-profile`) * 0.34;
     for (let index = 0; index < count; index += 1) {
       const radial = Math.sqrt((index + 0.5) / count);
       const angle = phase + index * goldenAngle;
       const ripple = 0.72 + stableUnit(`${node.id}:${index}:r`) * 0.28;
       const lift = stableUnit(`${node.id}:${index}:y`) - 0.5;
       const depth = stableUnit(`${node.id}:${index}:z`) - 0.5;
+      const along = Math.cos(angle) * spread * radial * ripple;
+      const across = Math.sin(angle) * spread * radial * depthBias;
+      const ribbon = ((index + 0.5) / count - 0.5) * spread * 0.28;
       marks.push({
         parentId: node.id,
         clusterId: node.clusterId,
         coordinate: {
-          x: anchor.x + Math.cos(angle) * spread * radial * ripple,
-          y: anchor.y + lift * spread * 0.66,
-          z: anchor.z + Math.sin(angle) * spread * radial * 0.74 + depth * spread * 0.38,
+          x: groupCenter.x + along * cosPhase - across * sinPhase + ribbon * sinPhase,
+          y: groupCenter.y + lift * spread * 0.48 + Math.sin(angle * 2) * spread * 0.075,
+          z: groupCenter.z + along * sinPhase + across * cosPhase + depth * spread * 0.24 - ribbon * cosPhase,
         },
       });
     }
@@ -198,8 +415,15 @@ function placeLabels(
   const safeLeft = presentation === "home" && viewport.width >= 900 ? viewport.width * 0.31 : 18;
   const safeRight = viewport.width - (presentation === "home" ? 82 : 18);
   const safeTop = 28;
-  const safeBottom = viewport.height - 32;
+  const safeBottom = viewport.height - (presentation === "home" ? 108 : 32);
   const occupied: Array<{ left: number; top: number; right: number; bottom: number }> = [];
+  const nodeBounds = nodes.flatMap((node) => {
+    const point = projectedById.get(node.id);
+    const coordinate = coordinateById.get(node.id);
+    if (!point?.visible || !coordinate) return [];
+    const radius = Math.max(6, coordinate.radius * point.scale * (node.id === focusId ? 1.9 : 1.35));
+    return [{ id: node.id, left: point.x - radius, right: point.x + radius, top: point.y - radius, bottom: point.y + radius }];
+  });
   const output: LabelPlacement[] = [];
   const kindRank = (node: AtlasGraphNodeV1) => node.kind === "district" ? 0 : node.kind === "aggregate_boundary" ? 2 : 1;
   const ranked = [...nodes].sort((left, right) =>
@@ -229,6 +453,9 @@ function placeLabels(
       const box = { left: x - width / 2, right: x + width / 2, top: y - height / 2, bottom: y + height / 2 };
       if (box.left < safeLeft || box.right > safeRight || box.top < safeTop || box.bottom > safeBottom) continue;
       if (occupied.some((prior) => !(box.right + 5 < prior.left || box.left - 5 > prior.right || box.bottom + 4 < prior.top || box.top - 4 > prior.bottom))) continue;
+      if (nodeBounds.some((nodeBox) => nodeBox.id !== node.id && !(
+        box.right + 4 < nodeBox.left || box.left - 4 > nodeBox.right || box.bottom + 3 < nodeBox.top || box.top - 3 > nodeBox.bottom
+      ))) continue;
       occupied.push(box);
       output.push({ node, x, y, depth: point.depth });
       break;
@@ -250,6 +477,7 @@ export function LivingGraphCanvas({
   presentation = "workspace",
   districtRelationMatrix = [],
   onSelect,
+  onHover,
   className = "",
 }: {
   graph: AtlasGraphV1;
@@ -264,6 +492,7 @@ export function LivingGraphCanvas({
   presentation?: Presentation;
   districtRelationMatrix?: readonly MatrixCell[];
   onSelect: (id: string) => void;
+  onHover?: (id: string | null) => void;
   className?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -285,6 +514,7 @@ export function LivingGraphCanvas({
   } | null>(null);
   const [size, setSize] = useState({ width: 1, height: 1 });
   const [hidden, setHidden] = useState(document.hidden);
+  const [hoverId, setHoverId] = useState<string | null>(null);
   const [camera, setCamera] = useState(() => {
     const target = defaultCamera(graph, presentation, mobile);
     return reducedMotion ? target : { ...target, yaw: target.yaw - 0.12, pitch: target.pitch + 0.05, zoom: target.zoom * 0.92 };
@@ -298,8 +528,8 @@ export function LivingGraphCanvas({
   const clusterById = useMemo(() => new Map(graph.clusters.map((cluster) => [cluster.id, cluster])), [graph.clusters]);
   const clusterCoordinates = useMemo(() => new Map(graph.clusters.map((cluster) => [
     cluster.id,
-    graph.layout.coordinates.filter((coordinate) => graph.nodes.find((node) => node.id === coordinate.id)?.clusterId === cluster.id),
-  ])), [graph.clusters, graph.layout.coordinates, graph.nodes]);
+    graph.layout.coordinates.filter((coordinate) => nodeById.get(coordinate.id)?.clusterId === cluster.id),
+  ])), [graph.clusters, graph.layout.coordinates, nodeById]);
   const documentMarks = useMemo(
     () => aggregateDocumentMarks(selection.nodes, coordinateById),
     [coordinateById, selection.nodes],
@@ -433,7 +663,9 @@ export function LivingGraphCanvas({
     const style = getComputedStyle(document.documentElement);
     const project = (coordinate: Pick<AtlasGraphCoordinateV1, "x" | "y" | "z">) =>
       projectCoordinate(coordinate, camera, size, presentation);
+    const projectedDocumentMarks = documentMarks.map((mark) => ({ mark, point: project(mark.coordinate) }));
     const focusedClusterId = focusId ? nodeById.get(focusId)?.clusterId ?? null : null;
+    const emphasisId = hoverId ?? focusId;
     const focusContext = scene === "gravity" || scene === "trace";
     const pathClusterPairs = new Set(selection.path.slice(0, -1).map((id, index) => {
       const sourceCluster = nodeById.get(id)?.clusterId;
@@ -454,8 +686,8 @@ export function LivingGraphCanvas({
     context.fillRect(0, 0, size.width, size.height);
 
     const freshnessWash = context.createLinearGradient(0, 0, 0, size.height);
-    freshnessWash.addColorStop(0, "rgba(181,188,244,.055)");
-    freshnessWash.addColorStop(0.42, "rgba(112,92,158,.018)");
+    freshnessWash.addColorStop(0, "rgba(181,188,244,.078)");
+    freshnessWash.addColorStop(0.42, "rgba(112,92,158,.03)");
     freshnessWash.addColorStop(0.76, "rgba(58,39,75,.012)");
     freshnessWash.addColorStop(1, "rgba(0,0,0,0)");
     context.fillStyle = freshnessWash;
@@ -504,9 +736,9 @@ export function LivingGraphCanvas({
       context.scale(radiusX, radiusY);
       context.globalCompositeOperation = "screen";
       const substrate = context.createRadialGradient(-0.08, -0.04, 0.04, 0, 0, 1);
-      substrate.addColorStop(0, "rgba(112,88,145,.12)");
-      substrate.addColorStop(0.38, "rgba(73,61,108,.065)");
-      substrate.addColorStop(0.7, "rgba(46,39,72,.028)");
+      substrate.addColorStop(0, "rgba(112,88,145,.2)");
+      substrate.addColorStop(0.38, "rgba(73,61,108,.115)");
+      substrate.addColorStop(0.7, "rgba(46,39,72,.052)");
       substrate.addColorStop(1, "rgba(0,0,0,0)");
       context.fillStyle = substrate;
       context.beginPath();
@@ -522,8 +754,8 @@ export function LivingGraphCanvas({
       gravityCenter.y,
       Math.max(size.width, size.height) * 0.58,
     );
-    knowledgeBloom.addColorStop(0, rgba(gravityColor, focusContext && focusedClusterId ? 0.13 : 0.095));
-    knowledgeBloom.addColorStop(0.46, rgba(mixHex(gravityColor, "#6d5d91", 0.62), 0.052));
+    knowledgeBloom.addColorStop(0, rgba(gravityColor, focusContext && focusedClusterId ? 0.19 : 0.155));
+    knowledgeBloom.addColorStop(0.46, rgba(mixHex(gravityColor, "#6d5d91", 0.62), 0.09));
     knowledgeBloom.addColorStop(1, "rgba(0,0,0,0)");
     context.fillStyle = knowledgeBloom;
     context.fillRect(0, 0, size.width, size.height);
@@ -587,80 +819,110 @@ export function LivingGraphCanvas({
       context.restore();
     }
 
-    // Home uses data-bound district fields instead of a wireframe cage or
+    // Home uses data-bound district volumes instead of a wireframe cage or
     // ornamental planetary rings. Extent and tint come only from reconciled
-    // cluster members; exact contour geometry is drawn separately below.
+    // cluster members and aggregate document marks.
+    const clusterRenderOrder = [...graph.clusters].sort((left, right) => {
+      const averageDepth = (clusterId: string) => {
+        const points = (clusterCoordinates.get(clusterId) ?? [])
+          .map((coordinate) => projectedById.get(coordinate.id))
+          .filter((point): point is ProjectedPoint => Boolean(point));
+        return points.length ? points.reduce((sum, point) => sum + point.depth, 0) / points.length : 0;
+      };
+      return averageDepth(left.id) - averageDepth(right.id) || left.id.localeCompare(right.id, "en");
+    });
+
     if (presentation === "home") {
-      for (const cluster of graph.clusters) {
-        const points = (clusterCoordinates.get(cluster.id) ?? [])
-          .map((coordinate) => project(coordinate))
-          .filter((point) => point.visible);
-        if (points.length < 1) continue;
-        const minX = Math.min(...points.map((point) => point.x));
-        const maxX = Math.max(...points.map((point) => point.x));
-        const minY = Math.min(...points.map((point) => point.y));
-        const maxY = Math.max(...points.map((point) => point.y));
-        const centerX = (minX + maxX) / 2;
-        const centerY = (minY + maxY) / 2;
-        const radiusX = Math.max(76, (maxX - minX) / 2 + 58);
-        const radiusY = Math.max(64, (maxY - minY) / 2 + 48);
+      // A rotating field must never reveal a billboard. Each district receives
+      // a sparse 3D envelope whose center and XYZ radii are robust extents of
+      // the actual node/document cloud. Meridians and latitude sections project
+      // with depth-sensitive ink, while the irregular silhouette stays bound to
+      // the reconciled points rather than a decorative screen-space panel.
+      for (const cluster of clusterRenderOrder) {
+        if (districtId && cluster.id !== districtId) continue;
+        const coordinates = [
+          ...(clusterCoordinates.get(cluster.id) ?? []).filter((coordinate) => nodeById.get(coordinate.id)?.kind !== "district"),
+          ...documentMarks
+            .filter((mark) => mark.clusterId === cluster.id)
+            .map((mark) => mark.coordinate),
+        ];
+        const envelope = volumeEnvelope(coordinates);
+        if (!envelope) continue;
+        const shellCoordinates = coordinates.filter((coordinate) => {
+          const dx = (coordinate.x - envelope.center.x) / envelope.radius.x;
+          const dy = (coordinate.y - envelope.center.y) / envelope.radius.y;
+          const dz = (coordinate.z - envelope.center.z) / envelope.radius.z;
+          return dx * dx + dy * dy + dz * dz <= 2.35;
+        });
+        const projected = shellCoordinates.map(project).filter((point) => point.visible);
+        const outerHull = convexHull(projected);
+        if (outerHull.length < 3) continue;
         const color = colorFor(cluster.label, style);
-        const selected = cluster.id === focusedClusterId;
-        const contextualAlpha = focusContext && focusedClusterId && !selected ? 0.62 : 1;
+        const selectedCluster = cluster.id === focusedClusterId;
+        const contextualAlpha = focusContext && focusedClusterId && !selectedCluster ? 0.5 : 1;
         context.save();
-        context.translate(centerX, centerY);
-        context.scale(radiusX, radiusY);
         context.globalCompositeOperation = "screen";
-        const atmosphere = context.createRadialGradient(0, 0, 0.04, 0, 0, 1);
-        atmosphere.addColorStop(0, rgba(color, (selected ? 0.18 : 0.095) * contextualAlpha));
-        atmosphere.addColorStop(0.42, rgba(color, (selected ? 0.09 : 0.048) * contextualAlpha));
-        atmosphere.addColorStop(0.72, rgba(color, 0.018 * contextualAlpha));
-        atmosphere.addColorStop(1, rgba(color, 0));
-        context.fillStyle = atmosphere;
-        context.beginPath();
-        context.arc(0, 0, 1, 0, Math.PI * 2);
-        context.fill();
+        context.lineJoin = "round";
+        context.shadowColor = rgba(color, selectedCluster ? 0.13 : 0.045);
+        context.shadowBlur = selectedCluster ? 7 : 2;
+        drawVolumeSkin(
+          context,
+          envelope,
+          project,
+          color,
+          (selectedCluster ? 0.17 : 0.125) * contextualAlpha,
+        );
+        const phase = stableUnit(`${cluster.id}:volume-phase`) * Math.PI;
+        for (const latitude of selectedCluster ? [-0.58, 0, 0.58] : [-0.48, 0, 0.48]) {
+          drawDepthRing(
+            context,
+            volumeRing(envelope, "latitude", latitude),
+            project,
+            color,
+            (selectedCluster ? 0.17 : 0.048) * contextualAlpha,
+            selectedCluster ? 0.92 : 0.58,
+          );
+        }
+        for (const meridian of selectedCluster ? [phase, phase + Math.PI / 3, phase + Math.PI * 2 / 3] : []) {
+          drawDepthRing(
+            context,
+            volumeRing(envelope, "meridian", meridian),
+            project,
+            color,
+            (selectedCluster ? 0.135 : 0.052) * contextualAlpha,
+            selectedCluster ? 0.82 : 0.5,
+          );
+        }
+        context.shadowBlur = selectedCluster ? 9 : 3;
+        for (const [scale, alpha, width] of selectedCluster
+          ? [[1.04, 0.32, 1.12], [1.15, 0.16, 0.84], [1.27, 0.07, 0.62]]
+          : [[1.075, 0.2, 0.78], [1.2, 0.1, 0.6], [1.32, 0.045, 0.48]]) {
+          context.strokeStyle = rgba(color, alpha * contextualAlpha);
+          context.lineWidth = width;
+          if (drawSoftHull(context, outerHull, scale)) context.stroke();
+        }
         context.restore();
       }
-    }
-
-    // District contours become translucent volumes by projecting the same evidenced X/Y contour at a bounded Z span.
-    for (const cluster of graph.clusters) {
-      if (districtId && cluster.id !== districtId) continue;
-      const color = colorFor(cluster.label, style);
-      const depth = depthForCluster(clusterCoordinates.get(cluster.id) ?? []);
-      context.save();
-      context.lineJoin = "round";
-      for (const polygon of cluster.contour.coordinates) {
-        for (const ring of polygon) {
-          const homeAlpha = presentation === "home" ? (cluster.id === focusedClusterId ? 1 : focusContext && focusedClusterId ? 0.5 : 0.78) : 1;
-          const selectedCluster = cluster.id === focusedClusterId;
-          context.shadowColor = rgba(color, presentation === "home" ? 0.07 : 0.18);
-          context.shadowBlur = presentation === "home" ? 5 : 16;
-          context.fillStyle = rgba(color, (presentation === "home" ? selectedCluster ? 0.042 : 0.027 : scene === "trace" ? 0.008 : 0.015) * homeAlpha);
-          context.strokeStyle = rgba(color, (presentation === "home" ? selectedCluster ? 0.16 : 0.105 : scene === "trace" ? 0.025 : 0.055) * homeAlpha);
-          context.lineWidth = presentation === "home" ? selectedCluster ? 0.9 : 0.68 : 0.65;
-          const farPoints = drawProjectedRing(context, ring, depth.far, project);
-          if (farPoints.length) { context.fill(); context.stroke(); }
-          context.shadowBlur = 0;
-          context.fillStyle = rgba(color, (presentation === "home" ? selectedCluster ? 0.03 : 0.018 : scene === "trace" ? 0.006 : 0.011) * homeAlpha);
-          context.strokeStyle = rgba(color, (presentation === "home" ? selectedCluster ? 0.12 : 0.074 : scene === "trace" ? 0.018 : 0.038) * homeAlpha);
-          const nearPoints = drawProjectedRing(context, ring, depth.near, project);
-          if (nearPoints.length) { context.fill(); context.stroke(); }
-          if (presentation === "home" && farPoints.length === nearPoints.length && farPoints.length > 2) {
-            context.strokeStyle = rgba(color, (selectedCluster ? 0.095 : 0.046) * homeAlpha);
-            context.lineWidth = 0.55;
-            const stride = Math.max(1, Math.floor(farPoints.length / 10));
-            for (let index = 0; index < farPoints.length; index += stride) {
-              context.beginPath();
-              context.moveTo(nearPoints[index].x, nearPoints[index].y);
-              context.lineTo(farPoints[index].x, farPoints[index].y);
-              context.stroke();
-            }
+    } else {
+      // The analytical workspace retains the persisted X/Y contour as a map
+      // boundary. It is deliberately flat and is never presented as volume.
+      for (const cluster of clusterRenderOrder) {
+        if (districtId && cluster.id !== districtId) continue;
+        const color = colorFor(cluster.label, style);
+        const depth = depthForCluster(clusterCoordinates.get(cluster.id) ?? []);
+        context.save();
+        context.lineJoin = "round";
+        for (const polygon of cluster.contour.coordinates) {
+          for (const ring of polygon) {
+            context.fillStyle = rgba(color, scene === "trace" ? 0.006 : 0.011);
+            context.strokeStyle = rgba(color, scene === "trace" ? 0.018 : 0.038);
+            context.lineWidth = 0.65;
+            const points = drawProjectedRing(context, ring, depth.near, project);
+            if (points.length) { context.fill(); context.stroke(); }
           }
         }
+        context.restore();
       }
-      context.restore();
     }
 
     // Meaning axis: freshness is always visible, even with camera rotation.
@@ -719,7 +981,7 @@ export function LivingGraphCanvas({
         context.strokeStyle = exactTrace
           ? "rgba(246,162,58,.22)"
           : rgba(mixHex(sourceColor, targetColor, 0.5), active ? 0.24 : 0.12);
-        context.lineWidth = routeWidth + (active ? 3 : 2.05);
+        context.lineWidth = routeWidth + (active ? 5.5 : 3.8);
         context.shadowColor = exactTrace
           ? "rgba(246,162,58,.34)"
           : rgba(mixHex(sourceColor, targetColor, 0.5), active ? 0.28 : 0.12);
@@ -737,6 +999,18 @@ export function LivingGraphCanvas({
         context.quadraticCurveTo(control.x, control.y, target.x, target.y);
         context.stroke();
         context.fillStyle = exactTrace ? "#ffc46f" : mixHex(targetColor, "#f4efe3", active ? 0.34 : 0.14);
+        for (const position of route.occurrenceCount >= maximumDistrictRoute * 0.18 ? [0.31, 0.61] : [0.58]) {
+          const before = pointAt(position - 0.025);
+          const after = pointAt(position + 0.025);
+          const angle = Math.atan2(after.y - before.y, after.x - before.x);
+          context.save();
+          context.translate(pointAt(position).x, pointAt(position).y);
+          context.rotate(angle);
+          context.fillStyle = exactTrace ? "#ffc46f" : mixHex(sourceColor, targetColor, position);
+          roundedRect(context, -4.5, -1.5, 9, 3, 1.5);
+          context.fill();
+          context.restore();
+        }
         if (route.occurrenceCount >= maximumDistrictRoute * 0.12) {
           drawArrow(context, pointAt(0.53), pointAt(0.59), 1);
         }
@@ -756,18 +1030,25 @@ export function LivingGraphCanvas({
       const targetFull = projectedById.get(edge.target);
       if (!source?.visible || !targetFull?.visible) continue;
       const exactPath = selection.pathIds.has(edge.id);
-      const incident = focusId !== null && (edge.source === focusId || edge.target === focusId);
+      const incident = emphasisId !== null && (edge.source === emphasisId || edge.target === emphasisId);
       const active = exactPath || incident;
       const emphasized = exactPath || (scene === "trace" && incident);
       const edgeProgress = emphasized ? traceProgress : 1;
-      const target = {
-        ...targetFull,
-        x: source.x + (targetFull.x - source.x) * edgeProgress,
-        y: source.y + (targetFull.y - source.y) * edgeProgress,
+      const distance = Math.hypot(targetFull.x - source.x, targetFull.y - source.y);
+      const bendDirection = stableUnit(`${edge.id}:curve`) > 0.5 ? 1 : -1;
+      const bend = presentation === "home" ? Math.min(38, Math.max(9, distance * 0.065)) * bendDirection : 0;
+      const control = {
+        x: (source.x + targetFull.x) / 2 - (targetFull.y - source.y) / Math.max(1, distance) * bend,
+        y: (source.y + targetFull.y) / 2 + (targetFull.x - source.x) / Math.max(1, distance) * bend,
+      };
+      const target = quadraticPoint(source, control, targetFull, edgeProgress);
+      const partialControl = {
+        x: source.x + (control.x - source.x) * edgeProgress,
+        y: source.y + (control.y - source.y) * edgeProgress,
       };
       context.save();
       const homeContextAlpha = presentation === "home" && scene !== "trace"
-        ? incident ? 0.24 : 0.14
+        ? incident ? 0.42 : 0.3
         : incident ? 0.26 : 0.15;
       context.globalAlpha = scene === "trace" && !active ? 0.045 : exactPath ? 1 : emphasized ? 0.48 : homeContextAlpha;
       const width = (emphasized ? 1.1 : incident ? 0.62 : 0.3) + 1.55 * Math.sqrt(edge.occurrenceCount / maximumEdge);
@@ -789,22 +1070,53 @@ export function LivingGraphCanvas({
       context.lineWidth = width;
       context.beginPath();
       context.moveTo(source.x, source.y);
-      context.lineTo(target.x, target.y);
+      context.quadraticCurveTo(partialControl.x, partialControl.y, target.x, target.y);
       context.stroke();
       const targetCoordinate = coordinateById.get(edge.target)!;
-      drawArrow(context, source, target, Math.max(4, targetCoordinate.radius * targetFull.scale));
+      if (edgeProgress > 0.44) {
+        const arrowEnd = Math.min(edgeProgress, 0.84);
+        const arrowStart = Math.max(0, arrowEnd - 0.055);
+        drawArrow(
+          context,
+          quadraticPoint(source, control, targetFull, arrowStart),
+          quadraticPoint(source, control, targetFull, arrowEnd),
+          Math.max(4, targetCoordinate.radius * targetFull.scale),
+        );
+      }
       context.restore();
+    }
+
+    // A short structural-depth whisker gives every reconciled anonymous mark a
+    // camera-responsive Z cue. These uniform tails have no arrowhead and never
+    // participate in relation counts, so they cannot masquerade as wikilinks.
+    if (presentation === "home") {
+      for (const cluster of graph.clusters) {
+        const marks = projectedDocumentMarks.filter(({ mark, point }) => mark.clusterId === cluster.id && point.visible);
+        if (!marks.length) continue;
+        const color = colorFor(cluster.label, style);
+        context.save();
+        context.strokeStyle = rgba(color, focusContext && focusedClusterId && focusedClusterId !== cluster.id ? 0.055 : 0.14);
+        context.lineWidth = 0.55;
+        context.beginPath();
+        for (const { mark, point } of marks) {
+          const tail = project({ ...mark.coordinate, z: Math.max(0, mark.coordinate.z - 13) });
+          if (!tail.visible) continue;
+          context.moveTo(tail.x, tail.y);
+          context.lineTo(point.x, point.y);
+        }
+        context.stroke();
+        context.restore();
+      }
     }
 
     // One anonymous micro-mark per represented document. This restores truthful
     // density without turning private documents into public graph nodes.
-    for (const mark of documentMarks) {
-      const point = project(mark.coordinate);
+    for (const { mark, point } of projectedDocumentMarks) {
       if (!point.visible) continue;
       const cluster = clusterById.get(mark.clusterId);
       const color = colorFor(cluster?.label ?? "", style);
-      const active = mark.parentId === focusId;
-      const radius = Math.max(1.8, Math.min(3.65, point.scale * (active ? 3.7 : 3.05)));
+      const active = mark.parentId === emphasisId;
+      const radius = Math.max(2.05, Math.min(4.25, point.scale * (active ? 4.25 : 3.55)));
       const inFocusedCluster = !focusContext || !focusedClusterId || mark.clusterId === focusedClusterId;
       context.save();
       const depthAlpha = Math.max(0.58, Math.min(1, point.scale * 1.18));
@@ -833,6 +1145,7 @@ export function LivingGraphCanvas({
       const cluster = clusterById.get(node.clusterId);
       const color = colorFor(cluster?.label ?? "", style);
       const selected = node.id === focusId;
+      const hovered = node.id === hoverId;
       const inFocusedCluster = !focusContext || !focusedClusterId || node.clusterId === focusedClusterId;
       const isAggregate = node.kind === "aggregate_boundary";
       const isDistrict = node.kind === "district";
@@ -844,18 +1157,18 @@ export function LivingGraphCanvas({
         ? selected ? Math.max(7.5, Math.min(12, metricRadius * 0.32)) : 3.2
         : isDistrict ? presentation === "home" ? Math.max(8, Math.min(17, metricRadius * 0.5)) : Math.max(8, Math.min(14, metricRadius * 0.58))
           : node.kind === "moc_hub"
-            ? selected ? Math.min(presentation === "home" ? 19 : 17, metricRadius * 1.4) : Math.min(presentation === "home" ? 17 : 14, metricRadius * 1.3)
+            ? selected ? Math.min(presentation === "home" ? (mobile ? 19 : 25) : 19, metricRadius * 1.62) : Math.min(presentation === "home" ? 13.5 : 12.5, metricRadius * 1.12)
             : selected ? Math.min(presentation === "home" ? 13 : 14, metricRadius) : Math.min(10, metricRadius);
       context.save();
       context.globalAlpha = scene === "freshness" && !node.freshness
         ? 0.24
         : Math.max(0.36, Math.min(1, (inFocusedCluster ? 0.68 : 0.52) + point.scale * 0.2));
-      if (selected) {
+      if (selected || hovered) {
         const glowReach = 2.05;
         context.globalCompositeOperation = "screen";
         const glow = context.createRadialGradient(point.x, point.y, radius * 0.25, point.x, point.y, radius * glowReach);
-        glow.addColorStop(0, "rgba(255,167,53,.12)");
-        glow.addColorStop(0.42, "rgba(255,167,53,.035)");
+        glow.addColorStop(0, selected ? "rgba(255,167,53,.18)" : rgba(color, 0.13));
+        glow.addColorStop(0.42, selected ? "rgba(255,167,53,.05)" : rgba(color, 0.035));
         glow.addColorStop(1, "rgba(0,0,0,0)");
         context.fillStyle = glow;
         context.beginPath(); context.arc(point.x, point.y, radius * glowReach, 0, Math.PI * 2); context.fill();
@@ -863,8 +1176,10 @@ export function LivingGraphCanvas({
       }
       if (isAggregate || isDistrict) {
         context.fillStyle = rgba(color, isDistrict ? selected ? 0.22 : 0.1 : selected ? 0.18 : 0.055);
+      } else if (node.kind === "moc_hub" && selected) {
+        context.fillStyle = "#e99a31";
       } else if (node.kind === "moc_hub") {
-        context.fillStyle = selected ? "rgba(233,162,61,.2)" : rgba(color, 0.12);
+        context.fillStyle = mixHex(color, "#f7f2e7", hovered ? 0.22 : 0.08);
       } else if (selected) {
         context.fillStyle = "#f5a642";
       } else {
@@ -873,8 +1188,44 @@ export function LivingGraphCanvas({
       }
       context.strokeStyle = selected ? "#ffc069" : node.kind === "moc_hub" ? color : mixHex(color, "#02040b", isDistrict ? 0.26 : 0.38);
       context.lineWidth = selected ? 1.8 : node.kind === "moc_hub" ? 1.35 : isDistrict ? 1.15 : 0.8;
+      if (!isAggregate && !isDistrict) {
+        const relief = Math.max(1.2, Math.min(3.4, radius * 0.16));
+        context.save();
+        context.globalAlpha *= 0.72;
+        context.fillStyle = "#03040a";
+        context.strokeStyle = rgba(color, 0.16);
+        context.lineWidth = 0.7;
+        drawNodePath(context, node, point.x + relief, point.y + relief * 0.72, radius);
+        context.fill();
+        context.stroke();
+        context.restore();
+      }
       drawNodePath(context, node, point.x, point.y, radius);
       context.fill(); context.stroke();
+      if (node.kind === "moc_hub" && selected) {
+        context.fillStyle = "#ffe0a8";
+        context.beginPath(); context.arc(point.x, point.y, Math.max(3.1, radius * 0.19), 0, Math.PI * 2); context.fill();
+      }
+      if (node.kind === "moc_hub" && presentation === "home") {
+        const ring = radius + (selected ? 10 : 6);
+        const arc = Math.max(0.22, Math.min(0.88, node.gravity / maximumGravity));
+        context.globalAlpha *= selected ? 0.94 : 0.5;
+        context.strokeStyle = selected ? "#ffc069" : rgba(color, 0.82);
+        context.lineWidth = selected ? 1.35 : 0.8;
+        context.beginPath();
+        context.arc(point.x, point.y, ring, -Math.PI * 0.74, -Math.PI * 0.74 + Math.PI * 1.48 * arc);
+        context.stroke();
+        context.fillStyle = selected ? "#ffe1a9" : mixHex(color, "#fff7e9", 0.3);
+        context.beginPath();
+        context.arc(
+          point.x + Math.cos(-Math.PI * 0.74 + Math.PI * 1.48 * arc) * ring,
+          point.y + Math.sin(-Math.PI * 0.74 + Math.PI * 1.48 * arc) * ring,
+          selected ? 2.2 : 1.45,
+          0,
+          Math.PI * 2,
+        );
+        context.fill();
+      }
       if (isDistrict) {
         context.globalAlpha *= selected ? 1 : 0.78;
         context.fillStyle = selected ? "#ffe2ae" : mixHex(color, "#f8f2e4", 0.16);
@@ -896,6 +1247,33 @@ export function LivingGraphCanvas({
         context.beginPath(); context.arc(point.x, point.y, radius + (selected ? 5 : 4), 0, Math.PI * 2); context.stroke();
       }
       context.restore();
+    }
+
+    // A dashed editorial leader binds the visible note to its selected data
+    // point. It deliberately has no arrowhead, so it cannot be mistaken for a
+    // knowledge relation.
+    if (presentation === "home" && emphasisId) {
+      const point = projectedById.get(emphasisId);
+      if (point?.visible) {
+        const anchor = {
+          x: Math.max(size.width * 0.66, size.width - Math.min(330, size.width * 0.42) - 92),
+          y: size.height - 142,
+        };
+        const elbow = { x: Math.max(point.x + 22, anchor.x - 28), y: anchor.y };
+        context.save();
+        context.strokeStyle = "rgba(238,171,77,.38)";
+        context.fillStyle = "rgba(255,197,111,.82)";
+        context.lineWidth = 0.8;
+        context.setLineDash([2, 5]);
+        context.beginPath();
+        context.moveTo(point.x, point.y);
+        context.lineTo(elbow.x, elbow.y);
+        context.lineTo(anchor.x, anchor.y);
+        context.stroke();
+        context.setLineDash([]);
+        context.beginPath(); context.arc(anchor.x, anchor.y, 2.2, 0, Math.PI * 2); context.fill();
+        context.restore();
+      }
     }
 
     // Keep the engineering triad in Explore, where camera orientation is an
@@ -921,7 +1299,7 @@ export function LivingGraphCanvas({
       }
       context.restore();
     }
-  }, [camera, clusterById, clusterCoordinates, coordinateById, districtId, districtRoutes, documentMarks, focusId, graph, hidden, nodeById, presentation, projectedById, scene, selection, size, traceProgress]);
+  }, [camera, clusterById, clusterCoordinates, coordinateById, districtId, districtRoutes, documentMarks, focusId, graph, hidden, hoverId, nodeById, presentation, projectedById, scene, selection, size, traceProgress]);
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (mobile) return;
@@ -944,7 +1322,24 @@ export function LivingGraphCanvas({
 
   const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     const drag = dragRef.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
+    if (!drag || drag.pointerId !== event.pointerId) {
+      if (mobile) return;
+      const bounds = event.currentTarget.getBoundingClientRect();
+      const x = event.clientX - bounds.left;
+      const y = event.clientY - bounds.top;
+      const hit = [...selection.nodes]
+        .map((node) => ({ node, point: projectedById.get(node.id), coordinate: coordinateById.get(node.id) }))
+        .filter((item) => item.point?.visible && item.coordinate)
+        .sort((left, right) => (right.point?.depth ?? 0) - (left.point?.depth ?? 0))
+        .find((item) => {
+          const radius = Math.max(13, (item.coordinate?.radius ?? 6) * (item.point?.scale ?? 1) * 1.62);
+          return Math.hypot((item.point?.x ?? 0) - x, (item.point?.y ?? 0) - y) <= radius;
+        });
+      const nextHoverId = hit?.node.id ?? null;
+      setHoverId((current) => current === nextHoverId ? current : nextHoverId);
+      onHover?.(nextHoverId);
+      return;
+    }
     const dx = event.clientX - drag.startX;
     const dy = event.clientY - drag.startY;
     const elapsed = Math.max(8, event.timeStamp - drag.lastTime);
@@ -1023,11 +1418,18 @@ export function LivingGraphCanvas({
       data-camera-yaw={camera.yaw.toFixed(4)}
       data-camera-pitch={camera.pitch.toFixed(4)}
       data-camera-zoom={camera.zoom.toFixed(4)}
+      data-hover-id={hoverId ?? ""}
       aria-label={`3차원 방향 지식 그래프. 노드 ${selection.nodes.length}개, 허브 관계 ${selection.edges.length}개, 구역 방향 항로 ${districtRoutes.length}개. X는 구역, Y는 최신성, Z는 구조 깊이입니다.`}
       tabIndex={0}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onPointerLeave={() => {
+        if (!dragRef.current) {
+          setHoverId(null);
+          onHover?.(null);
+        }
+      }}
       onPointerCancel={(event) => {
         if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
         dragRef.current = null;
