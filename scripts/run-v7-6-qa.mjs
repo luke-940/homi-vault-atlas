@@ -1126,7 +1126,7 @@ export async function executeJourney(page, route) {
     await page.locator(".global-journey-fallback").waitFor({ state: "visible" });
     await page.locator(".brand-lockup").focus();
     await page.keyboard.press("Tab");
-    details.safeWorkspace = await page.locator(".atlas-app").getAttribute("data-workspace");
+    details.safeWorkspace = await page.locator("[data-workspace]").getAttribute("data-workspace");
     if (details.safeWorkspace !== route.workspace) throw new Error(`Malformed URL did not recover to ${route.workspace}`);
   } else if (route.journey === "focus-reload") {
     await page.waitForFunction(() => Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus")));
@@ -1529,7 +1529,7 @@ export async function runQa(environment = process.env) {
           const targetUrl = new URL(route.hash, baseUrl).href;
           const navigationStartedAt = Date.now();
           await page.goto(targetUrl, { waitUntil: "domcontentloaded", timeout: 30_000 });
-          await page.locator(".atlas-app").waitFor({ state: "visible" });
+          await page.locator("[data-workspace]").waitFor({ state: "visible" });
           await page.locator(route.readySelector).first().waitFor({ state: "visible" });
           await settleRenderedPage(page);
           const readinessMs = Date.now() - navigationStartedAt;
