@@ -357,29 +357,25 @@ function buildOperationalCompass(graph, agency) {
   const moc = districtId(graph, ["MOC", "중심 지식"]);
   const papers = districtId(graph, ["Papers", "연구 논거"]);
   const signals = districtId(graph, ["Signals", "신호"]);
-  const consoleDistrict = districtId(graph, ["Console", "운영 기반"]);
+  const coreDomains = [moc, papers, signals].filter(Boolean);
+  const independentProjects = districtId(graph, ["Independent Projects"]);
+  const rocket = districtId(graph, ["Rocket"]) ?? independentProjects;
+  const groot = districtId(graph, ["Groot"]) ?? independentProjects;
+  const intelligenceLayer = districtId(graph, ["Intelligence Layer"]) ?? independentProjects;
   const rows = [
     {
       id: "meaning:alignment:direction",
       kind: "direction",
       actorId: agency.principal.id,
-      domainIds: [moc, papers, signals].filter(Boolean),
+      domainIds: coreDomains,
       label: "Direction",
       statement: "Luke가 지식 시스템이 풀어야 할 방향을 정합니다.",
-    },
-    {
-      id: "meaning:alignment:stewardship",
-      kind: "stewardship",
-      actorId: actorId(agency, "Control Plane"),
-      domainIds: [consoleDistrict].filter(Boolean),
-      label: "Stewardship",
-      statement: "Control Plane은 소유 경계와 검증 일관성을 관찰합니다.",
     },
     {
       id: "meaning:alignment:circulation",
       kind: "circulation",
       actorId: actorId(agency, "Daily Runner"),
-      domainIds: [moc, papers, signals].filter(Boolean),
+      domainIds: coreDomains,
       label: "Circulation",
       statement: "Daily Runner는 신호와 근거가 중심 지식으로 순환하도록 돕습니다.",
     },
@@ -387,17 +383,41 @@ function buildOperationalCompass(graph, agency) {
       id: "meaning:alignment:translation",
       kind: "translation",
       actorId: actorId(agency, "Atlas Builder"),
-      domainIds: [moc, papers, signals].filter(Boolean),
+      domainIds: coreDomains,
       label: "Translation",
       statement: "Atlas Builder는 Vault의 의미를 사람이 이해할 수 있는 제품으로 번역합니다.",
     },
     {
       id: "meaning:alignment:observation",
       kind: "observation",
-      actorId: actorId(agency, "Intelligence Layer Manager"),
-      domainIds: [signals].filter(Boolean),
+      actorId: actorId(agency, "Control Plane"),
+      domainIds: coreDomains,
       label: "Observation",
-      statement: "Intelligence Layer는 검증된 외부 신호가 commons에 기여할 수 있는 경계를 소유합니다.",
+      statement: "Control Plane은 owner 결과와 충돌 경계를 관찰해 전체 지식계의 일관성을 지킵니다.",
+    },
+    {
+      id: "meaning:alignment:stewardship:rocket",
+      kind: "stewardship",
+      actorId: actorId(agency, "Rocket Manager"),
+      domainIds: [rocket].filter(Boolean),
+      label: "Stewardship · Rocket",
+      statement: "Rocket Manager는 Rocket의 연구와 제품 지식을 독립적으로 소유합니다.",
+    },
+    {
+      id: "meaning:alignment:stewardship:groot",
+      kind: "stewardship",
+      actorId: actorId(agency, "Groot Manager"),
+      domainIds: [groot].filter(Boolean),
+      label: "Stewardship · Groot",
+      statement: "Groot Manager는 Groot의 전략과 제품 인큐베이션 지식을 독립적으로 소유합니다.",
+    },
+    {
+      id: "meaning:alignment:stewardship:intelligence-layer",
+      kind: "stewardship",
+      actorId: actorId(agency, "Intelligence Layer Manager"),
+      domainIds: [intelligenceLayer].filter(Boolean),
+      label: "Stewardship · Intelligence Layer",
+      statement: "Intelligence Layer Manager는 소스·접근·컨텍스트 그래프 지식을 독립적으로 소유합니다.",
     },
   ];
   return rows.filter((row) => row.actorId && row.domainIds.length > 0);

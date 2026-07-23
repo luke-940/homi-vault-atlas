@@ -181,6 +181,59 @@ describe("Atlas v7.6 semantic meaning contract", () => {
     expect(constellation?.outgoingEdgeIds.length).toBeGreaterThan(0);
   });
 
+  test("keeps Control Plane observational and independent owners in stewardship", () => {
+    const graph = readPack("graph");
+    const agency = readPack("agency");
+    const current = readPack("meaning");
+    const identity = snapshotIdentity(graph);
+    const dossiers = current.protagonists.map((item: {
+      nodeId: string;
+      role: string;
+      thesis: string;
+      caveat: string;
+      metrics: Record<string, unknown>;
+    }) => ({
+      nodeId: item.nodeId,
+      role: item.role,
+      thesis: item.thesis,
+      caveat: item.caveat,
+      metrics: item.metrics,
+    }));
+    const meaning = buildAtlasMeaningV1({
+      graph,
+      agency,
+      generatedAt: current.generatedAt,
+      baseline: identity,
+      baselineGraph: graph,
+      current: identity,
+      dossiers,
+    });
+    const controlPlane = agency.actors.find(
+      (actor: { label: string }) => actor.label === "Control Plane",
+    );
+    const stewardshipActorIds = meaning.operationalCompass
+      .filter((item: { kind: string }) => item.kind === "stewardship")
+      .map((item: { actorId: string }) => item.actorId)
+      .sort();
+
+    expect(meaning.operationalCompass.find(
+      (item: { actorId: string }) => item.actorId === controlPlane?.id,
+    )?.kind).toBe("observation");
+    expect(meaning.operationalCompass.some(
+      (item: { actorId: string; kind: string }) =>
+        item.actorId === controlPlane?.id && item.kind === "stewardship",
+    )).toBe(false);
+    expect(stewardshipActorIds).toEqual([
+      "actor:groot-manager",
+      "actor:intelligence-layer-manager",
+      "actor:rocket-manager",
+    ]);
+    expect(meaning.operationalCompass.every(
+      (item: { actorId: string; domainIds: string[] }) =>
+        Boolean(item.actorId) && item.domainIds.length > 0,
+    )).toBe(true);
+  });
+
   test("is deterministic for identical graph, agency, dossier, and snapshot inputs", () => {
     const graph = readPack("graph");
     const agency = readPack("agency");

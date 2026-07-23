@@ -61,9 +61,9 @@
       "id": "insight:v76:movement",
       "kind": "latest_pulse",
       "question": "이전 릴리스 이후 무엇이 검증 가능하게 달라졌는가",
-      "headline": "공개할 수 있는 검증된 변화가 없습니다.",
+      "headline": "검증된 공개 지식 투영 변화",
       "metric": {
-        "value": 0,
+        "value": 1,
         "label": "verified movements",
         "unit": "개"
       },
@@ -79,8 +79,8 @@
         "workspace": "time",
         "scene": "version-evolution"
       },
-      "confidence": "low",
-      "caveat": "부재를 변화 0이나 활동 부재로 추정하지 않습니다.",
+      "confidence": "high",
+      "caveat": "공개 이름 정책 변화와 비공개 원문 변화는 공개 화면에서 개별 문서 활동으로 추정하지 않습니다.",
       "publicSafe": true
     },
     {
@@ -89,7 +89,7 @@
       "question": "어떤 역할이 지식의 방향·순환·번역·관찰을 맡는가",
       "headline": "Agent 역할을 지식 노드와 섞지 않고 운영 의미를 설명합니다.",
       "metric": {
-        "value": 5,
+        "value": 7,
         "label": "operational alignments",
         "unit": "개"
       },

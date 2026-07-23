@@ -43,7 +43,7 @@ const HOME_SCENES: Array<{
   {
     id: "protagonists",
     index: "02",
-    shortLabel: "Key nodes",
+    shortLabel: "Nodes",
     label: "Protagonist Constellations",
     eyebrow: "PROTAGONIST CONSTELLATIONS",
     title: "중요한 지식은\n실제 관계로 빛난다.",

@@ -1089,6 +1089,11 @@ export function LivingGraphCanvas({
       const point = projectedById.get(command.targetId);
       return point?.visible ? [{ command, point }] : [];
     });
+    const stageRect = containerRef.current?.getBoundingClientRect();
+    const visibleStageLeft = stageRect ? Math.max(0, -stageRect.left) : 0;
+    const visibleStageRight = stageRect
+      ? Math.min(size.width, window.innerWidth - stageRect.left)
+      : size.width;
     const operationalActorPlate = operationalTargetPoints.length && operationalAlignment
       ? (() => {
         const targetCenterX = operationalTargetPoints.reduce((sum, item) => sum + item.point.x, 0) / operationalTargetPoints.length;
@@ -1105,8 +1110,11 @@ export function LivingGraphCanvas({
         );
         const height = mobile ? 44 : 48;
         const x = Math.max(
-          width / 2 + 18,
-          Math.min(size.width - width / 2 - 18, targetCenterX - (mobile ? 0 : size.width * 0.1)),
+          visibleStageLeft + width / 2 + 18,
+          Math.min(
+            visibleStageRight - width / 2 - 18,
+            targetCenterX - (mobile ? 0 : size.width * 0.1),
+          ),
         );
         const y = Math.max(
           height / 2 + 18,

@@ -4,10 +4,10 @@
   "generatedAt": "2026-07-23T09:26:27.311Z",
   "baseline": {
     "release": "v7.5.0",
-    "asOfDate": "2026-07-23",
-    "graphSemanticDigest": "829fd86aa099a8dfc0a4a802ccec4c21bdcf3c92d9f53eaacad49daaa28c3b2b",
-    "graphNodeCount": 54,
-    "graphEdgeCount": 67
+    "asOfDate": "2026-07-22",
+    "graphSemanticDigest": "b0ed906319546b7783925b7d446a0dc65b9bde97419c054a0fc86fa29d3f199f",
+    "graphNodeCount": 50,
+    "graphEdgeCount": 42
   },
   "current": {
     "release": "v7.6.0-rc",
@@ -466,7 +466,28 @@
       ]
     }
   ],
-  "movements": [],
+  "movements": [
+    {
+      "id": "meaning:movement:public-projection-delta",
+      "kind": "node_added",
+      "label": "검증된 공개 지식 투영 변화",
+      "nodeIds": [],
+      "edgeIds": [],
+      "previousValue": {
+        "nodes": 50,
+        "edges": 42
+      },
+      "currentValue": {
+        "nodes": 54,
+        "edges": 67
+      },
+      "evidenceRefs": [
+        "graph:semantic:b0ed906319546b7783925b7d446a0dc65b9bde97419c054a0fc86fa29d3f199f",
+        "graph:semantic:829fd86aa099a8dfc0a4a802ccec4c21bdcf3c92d9f53eaacad49daaa28c3b2b"
+      ],
+      "caveat": "공개 이름 정책 변화와 비공개 원문 변화는 공개 화면에서 개별 문서 활동으로 추정하지 않습니다."
+    }
+  ],
   "operationalCompass": [
     {
       "id": "meaning:alignment:direction",
@@ -479,16 +500,6 @@
       ],
       "label": "Direction",
       "statement": "Luke가 지식 시스템이 풀어야 할 방향을 정합니다."
-    },
-    {
-      "id": "meaning:alignment:stewardship",
-      "kind": "stewardship",
-      "actorId": "actor:control-plane",
-      "domainIds": [
-        "district:pub:gcjmfjnihkncgmcfea"
-      ],
-      "label": "Stewardship",
-      "statement": "Control Plane은 소유 경계와 검증 일관성을 관찰합니다."
     },
     {
       "id": "meaning:alignment:circulation",
@@ -517,12 +528,44 @@
     {
       "id": "meaning:alignment:observation",
       "kind": "observation",
-      "actorId": "actor:intelligence-layer-manager",
+      "actorId": "actor:control-plane",
       "domainIds": [
+        "district:pub:iifenbocdbbaijbjgf",
+        "district:pub:gdoehndnngjokincll",
         "district:pub:ebgmlojhnbdnphamdm"
       ],
       "label": "Observation",
-      "statement": "Intelligence Layer는 검증된 외부 신호가 commons에 기여할 수 있는 경계를 소유합니다."
+      "statement": "Control Plane은 owner 결과와 충돌 경계를 관찰해 전체 지식계의 일관성을 지킵니다."
+    },
+    {
+      "id": "meaning:alignment:stewardship:rocket",
+      "kind": "stewardship",
+      "actorId": "actor:rocket-manager",
+      "domainIds": [
+        "district:pub:bmfohnipgjoniceokh"
+      ],
+      "label": "Stewardship · Rocket",
+      "statement": "Rocket Manager는 Rocket의 연구와 제품 지식을 독립적으로 소유합니다."
+    },
+    {
+      "id": "meaning:alignment:stewardship:groot",
+      "kind": "stewardship",
+      "actorId": "actor:groot-manager",
+      "domainIds": [
+        "district:pub:bmfohnipgjoniceokh"
+      ],
+      "label": "Stewardship · Groot",
+      "statement": "Groot Manager는 Groot의 전략과 제품 인큐베이션 지식을 독립적으로 소유합니다."
+    },
+    {
+      "id": "meaning:alignment:stewardship:intelligence-layer",
+      "kind": "stewardship",
+      "actorId": "actor:intelligence-layer-manager",
+      "domainIds": [
+        "district:pub:bmfohnipgjoniceokh"
+      ],
+      "label": "Stewardship · Intelligence Layer",
+      "statement": "Intelligence Layer Manager는 소스·접근·컨텍스트 그래프 지식을 독립적으로 소유합니다."
     }
   ],
   "scenes": [
@@ -562,21 +605,25 @@
         "district:pub:iifenbocdbbaijbjgf",
         "district:pub:gdoehndnngjokincll",
         "district:pub:ebgmlojhnbdnphamdm",
-        "district:pub:gcjmfjnihkncgmcfea",
         "district:pub:iifenbocdbbaijbjgf",
         "district:pub:gdoehndnngjokincll",
         "district:pub:ebgmlojhnbdnphamdm",
         "district:pub:iifenbocdbbaijbjgf",
         "district:pub:gdoehndnngjokincll",
         "district:pub:ebgmlojhnbdnphamdm",
-        "district:pub:ebgmlojhnbdnphamdm"
+        "district:pub:iifenbocdbbaijbjgf",
+        "district:pub:gdoehndnngjokincll",
+        "district:pub:ebgmlojhnbdnphamdm",
+        "district:pub:bmfohnipgjoniceokh",
+        "district:pub:bmfohnipgjoniceokh",
+        "district:pub:bmfohnipgjoniceokh"
       ]
     }
   ],
   "manifest": {
     "protagonistCount": 5,
     "constellationCount": 5,
-    "movementCount": 0,
-    "projectionDigest": "fc8928ba4000ac203936146af662a1d211c11680d486bfa39be2ce6ef521c6b3"
+    "movementCount": 1,
+    "projectionDigest": "909701aa41224a81e775a26c664b8566f16b578ab70158e89fcf482fbd9df1ff"
   }
 }

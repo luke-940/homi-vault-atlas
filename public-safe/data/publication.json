@@ -2,7 +2,7 @@
   "schema": "atlas.publication.v1",
   "profile": "public",
   "generatedAt": "2026-07-23T09:26:27.311Z",
-  "publicSnapshotDigest": "841d05f8264e350724c06043035bdb4cc01d594356cc9f9b36b6f6f381dcfb6e",
+  "publicSnapshotDigest": "fa2f8e8d837f23ba84695551c72724d773040909a50429d2c369fd5a2511e744",
   "allowedSurfaces": [
     "district_role_aggregate",
     "reference_boundary",
