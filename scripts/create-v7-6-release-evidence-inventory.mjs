@@ -2,13 +2,13 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { CI_ROUTE_CASES } from "./run-v7-4-qa.mjs";
+import { CI_ROUTE_CASES } from "./run-v7-6-qa.mjs";
 import {
-  V74_INDEPENDENT_VISUAL_QA_RECEIPT_PATH,
-  V74_INDEPENDENT_VISUAL_QA_SCHEMA_PATH,
+  V76_INDEPENDENT_VISUAL_QA_RECEIPT_PATH,
+  V76_INDEPENDENT_VISUAL_QA_SCHEMA_PATH,
   independentVisualQaEvidencePath,
   resolveVisualGoldenCases,
-} from "./lib/v7-4-visual-golden.mjs";
+} from "./lib/v7-6-visual-golden.mjs";
 
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outputDir = path.join(projectDir, "artifacts", "ci-binding");
@@ -25,11 +25,11 @@ const fixedEvidence = [
   ["publication_audit", "artifacts/publication/v7-4-publication-audit.json"],
   ["release_manifest", "artifacts/release/release-artifact-manifest.json"],
   ["release_checksums", "artifacts/release/SHA256SUMS"],
-  ["browser_qa", "artifacts/v7-4-browser-qa/v7-4-ci-browser-qa.json"],
-  ["server_shutdown", "artifacts/v7-4-browser-qa/server-shutdown.json"],
+  ["browser_qa", "artifacts/v7-6-browser-qa/v7-6-ci-browser-qa.json"],
+  ["server_shutdown", "artifacts/v7-6-browser-qa/server-shutdown.json"],
   ["visual_manifest", "tests-visual/approved-baselines.json"],
-  ["independent_visual_qa_receipt", V74_INDEPENDENT_VISUAL_QA_RECEIPT_PATH],
-  ["independent_visual_qa_schema", V74_INDEPENDENT_VISUAL_QA_SCHEMA_PATH],
+  ["independent_visual_qa_receipt", V76_INDEPENDENT_VISUAL_QA_RECEIPT_PATH],
+  ["independent_visual_qa_schema", V76_INDEPENDENT_VISUAL_QA_SCHEMA_PATH],
 ];
 const caseEvidence = goldenCases.flatMap((entry) => [
   ["ubuntu_visual_baseline", entry.baselinePath],
@@ -44,12 +44,12 @@ for (const [role, relative] of [...fixedEvidence, ...caseEvidence]) {
 const byPath = new Map(files.map((entry) => [entry.path, entry]));
 const [visualManifest, independentReceipt, browserQa, shutdown, releaseManifest] = await Promise.all([
   readFile(path.join(projectDir, "tests-visual", "approved-baselines.json"), "utf8").then(JSON.parse),
-  readFile(path.join(projectDir, V74_INDEPENDENT_VISUAL_QA_RECEIPT_PATH), "utf8").then(JSON.parse),
-  readFile(path.join(projectDir, "artifacts", "v7-4-browser-qa", "v7-4-ci-browser-qa.json"), "utf8").then(JSON.parse),
-  readFile(path.join(projectDir, "artifacts", "v7-4-browser-qa", "server-shutdown.json"), "utf8").then(JSON.parse),
+  readFile(path.join(projectDir, V76_INDEPENDENT_VISUAL_QA_RECEIPT_PATH), "utf8").then(JSON.parse),
+  readFile(path.join(projectDir, "artifacts", "v7-6-browser-qa", "v7-6-ci-browser-qa.json"), "utf8").then(JSON.parse),
+  readFile(path.join(projectDir, "artifacts", "v7-6-browser-qa", "server-shutdown.json"), "utf8").then(JSON.parse),
   readFile(path.join(projectDir, "artifacts", "release", "release-artifact-manifest.json"), "utf8").then(JSON.parse),
 ]);
-if (visualManifest.reviewEvidenceDigest !== byPath.get(V74_INDEPENDENT_VISUAL_QA_RECEIPT_PATH)?.sha256
+if (visualManifest.reviewEvidenceDigest !== byPath.get(V76_INDEPENDENT_VISUAL_QA_RECEIPT_PATH)?.sha256
   || independentReceipt.status !== "approved_independent_visual_qa"
   || browserQa.pass !== true
   || shutdown.pass !== true
@@ -58,10 +58,10 @@ if (visualManifest.reviewEvidenceDigest !== byPath.get(V74_INDEPENDENT_VISUAL_QA
 }
 
 const inventory = {
-  schema: "homi.atlas_v7_4.release_evidence_inventory.v1",
+  schema: "homi.atlas_v7_6.release_evidence_inventory.v1",
   sourceCommit,
   evidenceFiles: files,
-  independentVisualQaReceiptSha256: byPath.get(V74_INDEPENDENT_VISUAL_QA_RECEIPT_PATH).sha256,
+  independentVisualQaReceiptSha256: byPath.get(V76_INDEPENDENT_VISUAL_QA_RECEIPT_PATH).sha256,
   createdAt: new Date().toISOString(),
 };
 const body = Buffer.from(`${JSON.stringify(inventory, null, 2)}\n`, "utf8");

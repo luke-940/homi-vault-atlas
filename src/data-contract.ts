@@ -518,6 +518,90 @@ const graphValidator = objectOf({
   }, { exact: true })),
 }, { exact: true });
 
+const meaningSnapshotValidator = objectOf({
+  release: required(nonEmptyString),
+  asOfDate: required(isoDate),
+  graphSemanticDigest: required(stringValue({ length: 64 })),
+  graphNodeCount: required(positiveInteger),
+  graphEdgeCount: required(nonNegativeInteger),
+}, { exact: true });
+
+const meaningValidator = objectOf({
+  schema: required(literal("atlas.meaning.v1")),
+  profile: required(oneOf(ATLAS_PROFILES)),
+  generatedAt: required(nonEmptyString),
+  baseline: required(meaningSnapshotValidator),
+  current: required(meaningSnapshotValidator),
+  protagonists: required(arrayOf(objectOf({
+    id: required(nonEmptyString),
+    nodeId: required(nonEmptyString),
+    role: required(oneOf(["gravity_anchor", "cross_domain_bridge", "frontier_signal"])),
+    thesis: required(nonEmptyString),
+    caveat: required(nonEmptyString),
+    metrics: required(objectOf({
+      gravity: required(nonNegativeInteger),
+      occurrences: required(nonNegativeInteger),
+      crossDomainReach: required(nonNegativeInteger),
+      bridgeCentrality: required(nonNegativeNumber),
+      meaningfulDate: required(nullable(isoDate)),
+      incomingCount: required(nonNegativeInteger),
+      outgoingCount: required(nonNegativeInteger),
+    }, { exact: true })),
+    evidenceRefs: required(stringArray),
+    selectionMode: required(literal("atlas_builder_judgment")),
+  }, { exact: true }))),
+  constellations: required(arrayOf(objectOf({
+    id: required(nonEmptyString),
+    focalNodeId: required(nonEmptyString),
+    incomingEdgeIds: required(stringArray),
+    outgoingEdgeIds: required(stringArray),
+    boundedPathEdgeIds: required(stringArray),
+    explanations: required(arrayOf(objectOf({
+      edgeId: required(nonEmptyString),
+      direction: required(oneOf(["incoming", "outgoing"])),
+      statement: required(nonEmptyString),
+    }, { exact: true }))),
+  }, { exact: true }))),
+  movements: required(arrayOf(objectOf({
+    id: required(nonEmptyString),
+    kind: required(oneOf([
+      "node_added",
+      "edge_added",
+      "edge_removed",
+      "gravity_shift",
+      "meaningfully_updated",
+      "verified_handoff",
+    ])),
+    label: required(nonEmptyString),
+    nodeIds: required(stringArray),
+    edgeIds: required(stringArray),
+    previousValue: required(nullable(recordOf(anyValue))),
+    currentValue: required(nullable(recordOf(anyValue))),
+    evidenceRefs: required(stringArray),
+    caveat: required(nonEmptyString),
+  }, { exact: true }))),
+  operationalCompass: required(arrayOf(objectOf({
+    id: required(nonEmptyString),
+    kind: required(oneOf(["direction", "stewardship", "circulation", "translation", "observation"])),
+    actorId: required(nonEmptyString),
+    domainIds: required(stringArray),
+    label: required(nonEmptyString),
+    statement: required(nonEmptyString),
+  }, { exact: true }))),
+  scenes: required(arrayOf(objectOf({
+    id: required(oneOf(["core-gravity", "protagonists", "vault-in-motion", "operational-compass"])),
+    label: required(nonEmptyString),
+    thesis: required(nonEmptyString),
+    focusIds: required(stringArray),
+  }, { exact: true }), { min: 4, max: 4 })),
+  manifest: required(objectOf({
+    protagonistCount: required(nonNegativeInteger),
+    constellationCount: required(nonNegativeInteger),
+    movementCount: required(nonNegativeInteger),
+    projectionDigest: required(stringValue({ length: 64 })),
+  }, { exact: true })),
+}, { exact: true });
+
 const relationValidator = objectOf({
   districtOrder: required(arrayOf(string, { min: 1 })),
   matrix: required(arrayOf(matrixValidator)),
@@ -661,6 +745,7 @@ const atlasValidator = objectOf({
   bootstrap: required(bootstrapValidator),
   inventory: required(inventoryValidator),
   graph: required(graphValidator),
+  meaning: required(meaningValidator),
   relation: required(relationValidator),
   flow: required(flowValidator),
   temporal: required(temporalValidator),

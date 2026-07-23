@@ -1,24 +1,24 @@
 {
   "schema": "atlas.inventory.v1",
   "profile": "atlas-public",
-  "generatedAt": "2026-07-22T08:44:46.744Z",
-  "asOfDate": "2026-07-22",
-  "physicalMarkdownCount": 878,
-  "namedCount": 15,
-  "aggregateCount": 621,
-  "excludedCount": 242,
+  "generatedAt": "2026-07-23T09:26:27.311Z",
+  "asOfDate": "2026-07-23",
+  "physicalMarkdownCount": 889,
+  "namedCount": 17,
+  "aggregateCount": 629,
+  "excludedCount": 243,
   "unclassifiedCount": 0,
   "reconciliation": {
-    "classifiedTotal": 878,
+    "classifiedTotal": 889,
     "pass": true
   },
   "coverage": [
     {
       "id": "coverage:bmfohnipgjoniceo",
       "label": "Independent Projects",
-      "physical": 235,
+      "physical": 244,
       "named": 0,
-      "aggregate": 235,
+      "aggregate": 244,
       "excluded": 0
     },
     {
@@ -32,10 +32,10 @@
     {
       "id": "coverage:bnpdeghebdmopjhn",
       "label": "연구 기록",
-      "physical": 113,
+      "physical": 115,
       "named": 0,
-      "aggregate": 19,
-      "excluded": 94
+      "aggregate": 20,
+      "excluded": 95
     },
     {
       "id": "coverage:gdoehndnngjokinc",
@@ -65,8 +65,8 @@
       "id": "coverage:iifenbocdbbaijbj",
       "label": "중심 지식",
       "physical": 161,
-      "named": 6,
-      "aggregate": 155,
+      "named": 8,
+      "aggregate": 153,
       "excluded": 0
     }
   ],
@@ -83,7 +83,7 @@
       "archive": 54,
       "scaffolding": 24,
       "control_internal": 70,
-      "raw_daily": 94,
+      "raw_daily": 95,
       "explicit_policy": 0,
       "public_name_not_approved": 0
     }

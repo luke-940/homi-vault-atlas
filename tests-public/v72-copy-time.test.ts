@@ -139,7 +139,7 @@ describe("v7.2 recorded-only time semantics", () => {
     expect(timeModel.recordedLifecycleStates(temporal.eras, evidenceIds)).toEqual([]);
   });
 
-  test("renders an honest empty state instead of an invented timeline", async () => {
+  test("renders only verified version movement when a release delta exists", async () => {
     const React = await import("react");
     const { renderToStaticMarkup } = await import("react-dom/server");
     const { AtlasStateProvider } = await import("../src/state");
@@ -147,8 +147,8 @@ describe("v7.2 recorded-only time semantics", () => {
     const markup = renderToStaticMarkup(
       React.createElement(AtlasStateProvider, null, React.createElement(TimeView)),
     );
-    expect(markup).toContain("공개할 수 있는 시간 증거가 아직 없습니다");
-    expect(markup).toContain("검증된 공개 chronology가 없습니다");
+    expect(markup).toContain("이전 릴리스 이후 검증된 지식 변화만 읽습니다");
+    expect(markup).toContain("파일 mtime과 실행 건수는 지식 변화로 세지 않습니다");
     expect(markup).not.toContain("data-testid=\"era-small-multiples\"");
     expect(markup).not.toMatch(/새로 생김 집계 \d+|미확정 변화 \d+/);
   });

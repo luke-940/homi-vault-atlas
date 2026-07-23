@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
 
-const names = ["agency", "bootstrap", "inventory", "graph", "relation", "flow", "temporal", "entity", "health", "insight", "publication"] as const;
+const names = ["agency", "bootstrap", "inventory", "graph", "meaning", "relation", "flow", "temporal", "entity", "health", "insight", "publication"] as const;
 const dataDir = path.resolve("public-safe", "data");
 const packs = Object.fromEntries(names.map((name) => [name, JSON.parse(readFileSync(path.join(dataDir, `${name}.json`), "utf8"))]));
 
@@ -43,13 +43,18 @@ describe("public Atlas v7.5 data contract", () => {
       else if (value && typeof value === "object") Object.values(value).forEach(visit);
     };
     visit(packs);
-    expect(hashes.sort()).toEqual([
+    const allowed = new Set([
       packs.agency.projectionDigest,
       packs.graph.manifest.semanticDigest,
       packs.graph.manifest.layoutDigest,
       packs.graph.manifest.projectionDigest,
+      packs.meaning.baseline.graphSemanticDigest,
+      packs.meaning.current.graphSemanticDigest,
+      packs.meaning.manifest.projectionDigest,
       packs.publication.publicSnapshotDigest,
-    ].sort());
+    ]);
+    expect(new Set(hashes)).toEqual(allowed);
+    expect(hashes.every((hash) => allowed.has(hash))).toBe(true);
   });
 
   test("keeps graph units and directions distinct", () => {
@@ -90,9 +95,17 @@ describe("public Atlas v7.5 data contract", () => {
   });
 
   test("contains four evidence-backed public insights", () => {
-    const ids = new Set(packs.entity.entities.map((entity: { id: string }) => entity.id));
+    const ids = new Set([
+      ...packs.entity.entities.map((entity: { id: string }) => entity.id),
+      ...packs.graph.nodes.map((node: { id: string }) => node.id),
+      ...packs.graph.edges.map((edge: { id: string }) => edge.id),
+      ...packs.agency.actors.map((actor: { id: string }) => actor.id),
+      packs.agency.principal.id,
+    ]);
     expect(packs.insight.items).toHaveLength(4);
     expect(packs.insight.items.every((item: { publicSafe: boolean; evidenceRefs: string[] }) =>
-      item.publicSafe && item.evidenceRefs.length > 0 && item.evidenceRefs.every((id) => ids.has(id)))).toBe(true);
+      item.publicSafe
+      && item.evidenceRefs.length > 0
+      && item.evidenceRefs.every((id) => ids.has(id) || /^graph:semantic:[a-f0-9]{64}$/.test(id)))).toBe(true);
   });
 });

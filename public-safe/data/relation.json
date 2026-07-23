@@ -26,14 +26,14 @@
       "id": "pair:%EC%A4%91%EC%8B%AC%20%EC%A7%80%EC%8B%9D:%EC%A0%84%EB%9E%B5",
       "source": "중심 지식",
       "target": "전략",
-      "wikilink": 1133,
+      "wikilink": 1136,
       "wikilinkForward": 379,
-      "wikilinkReverse": 754,
+      "wikilinkReverse": 757,
       "typed": 0,
       "typedForward": 0,
       "typedReverse": 0,
       "route": 0,
-      "total": 1133
+      "total": 1136
     },
     {
       "id": "pair:%EC%A4%91%EC%8B%AC%20%EC%A7%80%EC%8B%9D:%EC%8B%A0%ED%98%B8",
@@ -120,7 +120,7 @@
   ],
   "coverage": {
     "resolvedLinkPairs": 6,
-    "resolvedLinkWeight": 8245,
+    "resolvedLinkWeight": 8248,
     "unresolvedLinks": {},
     "unresolvedLinkTotal": 0,
     "ambiguousLinks": 0,
@@ -128,10 +128,10 @@
     "layers": {
       "wikilink": {
         "unit": "resolved_link_occurrence",
-        "total": 8245,
-        "interDistrict": 2406,
+        "total": 8248,
+        "interDistrict": 2409,
         "intraDistrict": 5839,
-        "displayed": 2406,
+        "displayed": 2409,
         "reconciled": true,
         "boundary": "fresh capture에서 유일하게 해결된 represented hub 사이의 wikilink occurrence 집계"
       },

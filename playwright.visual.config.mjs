@@ -11,7 +11,7 @@ if (!new Set(["verify", "candidate"]).has(mode)) {
 
 export default defineConfig({
   testDir: "./tests-visual",
-  testMatch: "v7-4-golden.spec.mjs",
+  testMatch: "v7-6-golden.spec.mjs",
   fullyParallel: false,
   workers: 1,
   retries: 0,
@@ -27,10 +27,10 @@ export default defineConfig({
   },
   updateSnapshots: mode === "candidate" ? "all" : "none",
   snapshotPathTemplate: "{testDir}/__screenshots__/{testFilePath}/{arg}-{projectName}-{platform}{ext}",
-  outputDir: "artifacts/v7-4-visual-golden/test-results",
+  outputDir: "artifacts/v7-6-visual-golden/test-results",
   reporter: [
     ["line"],
-    ["html", { outputFolder: "artifacts/v7-4-visual-golden/report", open: "never" }],
+    ["html", { outputFolder: "artifacts/v7-6-visual-golden/report", open: "never" }],
   ],
   projects: [{
     name: "chromium",

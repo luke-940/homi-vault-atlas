@@ -1,97 +1,112 @@
 {
   "schema": "atlas.insight.v1",
-  "generatedAt": "2026-07-22T08:44:46.744Z",
-  "evidenceBoundary": "공개 스냅샷의 집계 수량과 정제된 관계만 사용하며 내부 문서 본문과 실행 증거는 포함하지 않는다.",
+  "generatedAt": "2026-07-23T09:26:27.311Z",
+  "evidenceBoundary": "atlas.meaning.v1의 검증된 주인공·실제 관계·버전 변화·운영 정렬에서 생성한 호환 adapter입니다.",
   "items": [
     {
-      "id": "insight:latest-pulse",
-      "kind": "latest_pulse",
-      "question": "가장 최근 신호는 어디에 닿았나",
-      "headline": "검증된 공개 허브 경로 6개를 실제 위키링크로 확인했다",
-      "metric": {
-        "value": 6,
-        "label": "검증된 공개 경로",
-        "unit": "개"
-      },
-      "evidenceRefs": [
-        "doc:pub:05496b59819cd2759f"
-      ],
-      "targetScene": {
-        "workspace": "flow",
-        "scene": "routes",
-        "routeId": "verified:aeemhpbakgabkk"
-      },
-      "confidence": "high",
-      "caveat": "Owner 전용 원장과 내부 운영 경로를 공개판에 추정하거나 자리표시자로 복제하지 않는다.",
-      "publicSafe": true
-    },
-    {
-      "id": "insight:strongest-relation",
-      "kind": "strongest_relation",
-      "question": "어떤 두 지식 구역의 양방향 해결 링크 합계가 가장 큰가",
-      "headline": "전략 ↔ 중심 지식의 양방향 해결 링크 합계가 1133회로 가장 많다",
-      "metric": {
-        "value": 1133,
-        "label": "양방향 해결 링크 합계",
-        "unit": "회"
-      },
-      "evidenceRefs": [
-        "doc:pub:d2edeb88f1fb207d2e",
-        "doc:pub:1bffb5c1b821510923"
-      ],
-      "targetScene": {
-        "workspace": "observe",
-        "scene": "global-relation",
-        "focusId": "district:pub:mdbopkghhgbcjimojl",
-        "relationPairId": "pair:%EC%A4%91%EC%8B%AC%20%EC%A7%80%EC%8B%9D:%EC%A0%84%EB%9E%B5",
-        "relationLayer": "wikilink"
-      },
-      "confidence": "high",
-      "caveat": "합계 1133회는 전략 → 중심 지식 754회와 중심 지식 → 전략 379회를 더한 fresh resolved link occurrence이며 두 방향은 따로 보존한다.",
-      "publicSafe": true
-    },
-    {
-      "id": "insight:concentration",
+      "id": "insight:v76:core-gravity",
       "kind": "knowledge_concentration",
-      "question": "지식은 어디에 가장 많이 모여 있나",
-      "headline": "Independent Projects이 225개 표현 기록으로 가장 큰 구역이다",
+      "question": "Vault의 중심 지식 영역은 무엇을 담당하는가",
+      "headline": "Homi를 중심으로 MOC는 구조화하고, Papers는 근거를 공급하며, Signals는 변화를 감지합니다.",
       "metric": {
-        "value": 225,
-        "label": "표현된 기록",
+        "value": 3,
+        "label": "core domains",
         "unit": "개"
       },
       "evidenceRefs": [
-        "doc:pub:05496b59819cd2759f"
-      ],
-      "targetScene": {
-        "workspace": "explore",
-        "scene": "districts",
-        "focusId": "district:pub:bmfohnipgjoniceokh",
-        "lens": "city"
-      },
-      "confidence": "high",
-      "caveat": "크기는 named + aggregate로 reconciliation된 표현 기록 수이며 중요도나 활동량을 뜻하지 않는다.",
-      "publicSafe": true
-    },
-    {
-      "id": "insight:attention",
-      "kind": "attention",
-      "question": "공개판이 의도적으로 감춘 범위는 무엇인가",
-      "headline": "전체 878개 중 242개는 공개 경계에서 제외됐다",
-      "metric": {
-        "value": 242,
-        "label": "제외 문서",
-        "unit": "개"
-      },
-      "evidenceRefs": [
+        "doc:pub:fbf013c19a7edb91f7",
+        "doc:pub:d2edeb88f1fb207d2e",
+        "doc:pub:81d024b4d7d014815c",
+        "doc:pub:0c24e7fbc0aca2c4a9",
+        "doc:pub:1bffb5c1b821510923",
         "doc:pub:05496b59819cd2759f"
       ],
       "targetScene": {
         "workspace": "home",
-        "scene": "coverage-boundary"
+        "scene": "core-gravity"
       },
       "confidence": "high",
-      "caveat": "제외는 archive·scaffolding·control internal·raw Daily·명시 정책 우선순위로 재계산하며 활동 부재를 뜻하지 않는다.",
+      "caveat": "세 영역은 역할 설명이며 중요도 점수가 아닙니다.",
+      "publicSafe": true
+    },
+    {
+      "id": "insight:v76:strongest-relation",
+      "kind": "strongest_relation",
+      "question": "공개 구역 사이에서 가장 강한 양방향 참조 쌍은 무엇인가",
+      "headline": "중심 지식 ↔ 전략의 양방향 해결 링크 합계가 1136회로 가장 많다",
+      "metric": {
+        "value": 1136,
+        "label": "양방향 해결 링크 합계",
+        "unit": "회"
+      },
+      "evidenceRefs": [
+        "doc:pub:fbf013c19a7edb91f7",
+        "doc:pub:d2edeb88f1fb207d2e",
+        "doc:pub:81d024b4d7d014815c",
+        "doc:pub:0c24e7fbc0aca2c4a9",
+        "doc:pub:1bffb5c1b821510923",
+        "doc:pub:05496b59819cd2759f"
+      ],
+      "targetScene": {
+        "workspace": "observe",
+        "scene": "global-relations",
+        "relationPairId": "pair:%EC%A4%91%EC%8B%AC%20%EC%A7%80%EC%8B%9D:%EC%A0%84%EB%9E%B5",
+        "relationLayer": "wikilink"
+      },
+      "confidence": "high",
+      "caveat": "합계 1136회는 중심 지식 → 전략 379회와 전략 → 중심 지식 757회를 더한 fresh resolved link occurrence이며 두 방향은 따로 보존합니다.",
+      "publicSafe": true
+    },
+    {
+      "id": "insight:v76:movement",
+      "kind": "latest_pulse",
+      "question": "이전 릴리스 이후 무엇이 검증 가능하게 달라졌는가",
+      "headline": "검증된 공개 지식 투영 변화",
+      "metric": {
+        "value": 1,
+        "label": "verified movements",
+        "unit": "개"
+      },
+      "evidenceRefs": [
+        "doc:pub:fbf013c19a7edb91f7",
+        "doc:pub:d2edeb88f1fb207d2e",
+        "doc:pub:81d024b4d7d014815c",
+        "doc:pub:0c24e7fbc0aca2c4a9",
+        "doc:pub:1bffb5c1b821510923",
+        "doc:pub:05496b59819cd2759f"
+      ],
+      "targetScene": {
+        "workspace": "time",
+        "scene": "version-evolution"
+      },
+      "confidence": "high",
+      "caveat": "공개 이름 정책 변화와 비공개 원문 변화는 공개 화면에서 개별 문서 활동으로 추정하지 않습니다.",
+      "publicSafe": true
+    },
+    {
+      "id": "insight:v76:compass",
+      "kind": "attention",
+      "question": "어떤 역할이 지식의 방향·순환·번역·관찰을 맡는가",
+      "headline": "Agent 역할을 지식 노드와 섞지 않고 운영 의미를 설명합니다.",
+      "metric": {
+        "value": 7,
+        "label": "operational alignments",
+        "unit": "개"
+      },
+      "evidenceRefs": [
+        "doc:pub:fbf013c19a7edb91f7",
+        "doc:pub:d2edeb88f1fb207d2e",
+        "doc:pub:81d024b4d7d014815c",
+        "doc:pub:0c24e7fbc0aca2c4a9",
+        "doc:pub:1bffb5c1b821510923",
+        "doc:pub:05496b59819cd2759f"
+      ],
+      "targetScene": {
+        "workspace": "home",
+        "scene": "operational-compass"
+      },
+      "confidence": "high",
+      "caveat": "정렬선은 command·approval·실시간 상태를 뜻하지 않습니다.",
       "publicSafe": true
     }
   ]

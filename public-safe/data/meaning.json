@@ -1,0 +1,629 @@
+{
+  "schema": "atlas.meaning.v1",
+  "profile": "atlas-public",
+  "generatedAt": "2026-07-23T09:26:27.311Z",
+  "baseline": {
+    "release": "v7.5.0",
+    "asOfDate": "2026-07-22",
+    "graphSemanticDigest": "b0ed906319546b7783925b7d446a0dc65b9bde97419c054a0fc86fa29d3f199f",
+    "graphNodeCount": 50,
+    "graphEdgeCount": 42
+  },
+  "current": {
+    "release": "v7.6.0-rc",
+    "asOfDate": "2026-07-23",
+    "graphSemanticDigest": "829fd86aa099a8dfc0a4a802ccec4c21bdcf3c92d9f53eaacad49daaa28c3b2b",
+    "graphNodeCount": 54,
+    "graphEdgeCount": 67
+  },
+  "protagonists": [
+    {
+      "id": "meaning:protagonist:hub:pub:fpklgapieidgcbiinb",
+      "nodeId": "hub:pub:fpklgapieidgcbiinb",
+      "role": "gravity_anchor",
+      "thesis": "Vault의 가장 강한 지식 중력은 모델 성능보다 AI 산출물이 검증·인계·복구 가능한가에 모인다.",
+      "caveat": "연결 밀도는 중요도를 지지하지만 개별 신뢰 주장이나 제품 효능을 독립적으로 증명하지 않는다.",
+      "metrics": {
+        "gravity": 304,
+        "occurrences": 1167,
+        "crossDomainReach": 3,
+        "bridgeCentrality": 5201.281868,
+        "meaningfulDate": "2026-07-06",
+        "incomingCount": 15,
+        "outgoingCount": 5
+      },
+      "evidenceRefs": [
+        "hub:pub:fpklgapieidgcbiinb",
+        "association:pub:bklpgebpgjbkcamona",
+        "association:pub:ldiokbboikpkoadkdh",
+        "association:pub:idackeloionhlnmohk",
+        "association:pub:fgffdnbfkggipnffbk",
+        "association:pub:bodllgenmeiohgdahp",
+        "association:pub:iemfkaobgjmejlojgl",
+        "association:pub:adkihgilpnddbogdgo",
+        "association:pub:blohabhfhcjmohhapl",
+        "association:pub:jnmmddlcnamodoglie",
+        "association:pub:oaphnmnehmobhiimho",
+        "association:pub:occhlkcioekogmamcd"
+      ],
+      "selectionMode": "atlas_builder_judgment"
+    },
+    {
+      "id": "meaning:protagonist:hub:pub:opnaegbkakkicfenem",
+      "nodeId": "hub:pub:opnaegbkakkicfenem",
+      "role": "gravity_anchor",
+      "thesis": "Vault의 에이전트는 답변 기능이 아니라 도구·권한·메모리·실행·검증을 가진 작업자이자 관리 가능한 작업 표면이다.",
+      "caveat": "capability 시연은 채택이나 신뢰의 증거가 아니다. identity·permission·trace·stop·recovery가 함께 있어야 한다.",
+      "metrics": {
+        "gravity": 229,
+        "occurrences": 631,
+        "crossDomainReach": 3,
+        "bridgeCentrality": 2663.149886,
+        "meaningfulDate": "2026-07-03",
+        "incomingCount": 15,
+        "outgoingCount": 6
+      },
+      "evidenceRefs": [
+        "hub:pub:opnaegbkakkicfenem",
+        "association:pub:obeafeombikiccgfnm",
+        "association:pub:enmnnkdiigmhddlocg",
+        "association:pub:hoopjleadiookohkok",
+        "association:pub:djedlibkndkdljpmdl",
+        "association:pub:dpldggkijjhkpkngce",
+        "association:pub:akndanaophlbiaakln",
+        "association:pub:iimlnmbmgnofjhcgcc",
+        "association:pub:pcghfofknboalmfbbp",
+        "association:pub:opgakbhgbfneikeebe",
+        "association:pub:fpimkdkonifppbjbne",
+        "association:pub:mnjddeffalmilcbiho",
+        "association:pub:padeojldpfpniphkpm"
+      ],
+      "selectionMode": "atlas_builder_judgment"
+    },
+    {
+      "id": "meaning:protagonist:hub:pub:bfagboebicphemllcd",
+      "nodeId": "hub:pub:bfagboebicphemllcd",
+      "role": "frontier_signal",
+      "thesis": "OpenAI는 회사 소개가 아니라 Homi의 범용 업무·코딩·연결·실행 가설에 압력을 주는 provider circuit의 핵심 진입점이다.",
+      "caveat": "provider의 방향은 계정 권한·가격·지역·쿼터·실측 benchmark를 자동으로 증명하지 않는다. 화면은 pressure circuit만 주장한다.",
+      "metrics": {
+        "gravity": 167,
+        "occurrences": 512,
+        "crossDomainReach": 3,
+        "bridgeCentrality": 2213.024389,
+        "meaningfulDate": "2026-07-10",
+        "incomingCount": 6,
+        "outgoingCount": 6
+      },
+      "evidenceRefs": [
+        "hub:pub:bfagboebicphemllcd",
+        "association:pub:okkpjbbaeclnggmodj",
+        "association:pub:hdfpagjnbggjkbhijj",
+        "association:pub:ocknlepgfdddbbkhmc",
+        "association:pub:codjhpnbgbkopbgcla",
+        "association:pub:oaphnmnehmobhiimho",
+        "association:pub:padeojldpfpniphkpm",
+        "association:pub:bodllgenmeiohgdahp",
+        "association:pub:nehamcjfnpikfbhafo",
+        "association:pub:bmfgbibncejjidnphl",
+        "association:pub:nieldmmacakpobjkee",
+        "association:pub:djedlibkndkdljpmdl",
+        "association:pub:ngmigkofmmddahilgg"
+      ],
+      "selectionMode": "atlas_builder_judgment"
+    },
+    {
+      "id": "meaning:protagonist:hub:pub:cddiapjcnpfekmchpc",
+      "nodeId": "hub:pub:cddiapjcnpfekmchpc",
+      "role": "cross_domain_bridge",
+      "thesis": "AI and Society Papers는 기술 성능을 사람·조직·경제·거버넌스의 영향과 검증 질문으로 바꾸는 사회적 증거 관문이다.",
+      "caveat": "gateway의 link·paper 수는 증거 범위를 보여주지만 사회적 효과나 정책 결론의 강도를 합산하지 않는다.",
+      "metrics": {
+        "gravity": 79,
+        "occurrences": 209,
+        "crossDomainReach": 3,
+        "bridgeCentrality": 41.595524,
+        "meaningfulDate": "2026-07-03",
+        "incomingCount": 0,
+        "outgoingCount": 2
+      },
+      "evidenceRefs": [
+        "hub:pub:cddiapjcnpfekmchpc",
+        "association:pub:iemfkaobgjmejlojgl",
+        "association:pub:lbdcjceojekblolboj"
+      ],
+      "selectionMode": "atlas_builder_judgment"
+    },
+    {
+      "id": "meaning:protagonist:hub:pub:honjgcnmnhhiajpdce",
+      "nodeId": "hub:pub:honjgcnmnhhiajpdce",
+      "role": "cross_domain_bridge",
+      "thesis": "Agent Papers는 에이전트·신뢰·기억·평가를 제품 홍보가 아니라 실패·행동·회복을 검증하는 연구 증거로 공급한다.",
+      "caveat": "gateway의 paper count와 link occurrence는 각 논문의 재현성이나 제품 효능을 합산해 증명하지 않는다.",
+      "metrics": {
+        "gravity": 58,
+        "occurrences": 164,
+        "crossDomainReach": 3,
+        "bridgeCentrality": 87.269869,
+        "meaningfulDate": "2026-07-03",
+        "incomingCount": 0,
+        "outgoingCount": 3
+      },
+      "evidenceRefs": [
+        "hub:pub:honjgcnmnhhiajpdce",
+        "association:pub:obeafeombikiccgfnm",
+        "association:pub:bklpgebpgjbkcamona",
+        "association:pub:dihmpjpbbgkkapfbke"
+      ],
+      "selectionMode": "atlas_builder_judgment"
+    }
+  ],
+  "constellations": [
+    {
+      "id": "meaning:constellation:hub:pub:fpklgapieidgcbiinb",
+      "focalNodeId": "hub:pub:fpklgapieidgcbiinb",
+      "incomingEdgeIds": [
+        "association:pub:bklpgebpgjbkcamona",
+        "association:pub:ldiokbboikpkoadkdh",
+        "association:pub:idackeloionhlnmohk",
+        "association:pub:fgffdnbfkggipnffbk",
+        "association:pub:bodllgenmeiohgdahp",
+        "association:pub:iemfkaobgjmejlojgl"
+      ],
+      "outgoingEdgeIds": [
+        "association:pub:adkihgilpnddbogdgo",
+        "association:pub:blohabhfhcjmohhapl",
+        "association:pub:jnmmddlcnamodoglie",
+        "association:pub:oaphnmnehmobhiimho",
+        "association:pub:occhlkcioekogmamcd"
+      ],
+      "boundedPathEdgeIds": [
+        "association:pub:bklpgebpgjbkcamona",
+        "association:pub:adkihgilpnddbogdgo"
+      ],
+      "explanations": [
+        {
+          "edgeId": "association:pub:bklpgebpgjbkcamona",
+          "direction": "incoming",
+          "statement": "Agent Papers에서 AI 신뢰성로 실제 참조가 들어옵니다."
+        },
+        {
+          "edgeId": "association:pub:ldiokbboikpkoadkdh",
+          "direction": "incoming",
+          "statement": "Anthropic에서 AI 신뢰성로 실제 참조가 들어옵니다."
+        },
+        {
+          "edgeId": "association:pub:idackeloionhlnmohk",
+          "direction": "incoming",
+          "statement": "Google에서 AI 신뢰성로 실제 참조가 들어옵니다."
+        },
+        {
+          "edgeId": "association:pub:fgffdnbfkggipnffbk",
+          "direction": "incoming",
+          "statement": "Foundation Model Papers에서 AI 신뢰성로 실제 참조가 들어옵니다."
+        },
+        {
+          "edgeId": "association:pub:bodllgenmeiohgdahp",
+          "direction": "incoming",
+          "statement": "OpenAI에서 AI 신뢰성로 실제 참조가 들어옵니다."
+        },
+        {
+          "edgeId": "association:pub:iemfkaobgjmejlojgl",
+          "direction": "incoming",
+          "statement": "AI and Society Papers에서 AI 신뢰성로 실제 참조가 들어옵니다."
+        },
+        {
+          "edgeId": "association:pub:adkihgilpnddbogdgo",
+          "direction": "outgoing",
+          "statement": "AI 신뢰성에서 MCP로 실제 참조가 나갑니다."
+        },
+        {
+          "edgeId": "association:pub:blohabhfhcjmohhapl",
+          "direction": "outgoing",
+          "statement": "AI 신뢰성에서 에이전트로 실제 참조가 나갑니다."
+        },
+        {
+          "edgeId": "association:pub:jnmmddlcnamodoglie",
+          "direction": "outgoing",
+          "statement": "AI 신뢰성에서 Anthropic로 실제 참조가 나갑니다."
+        },
+        {
+          "edgeId": "association:pub:oaphnmnehmobhiimho",
+          "direction": "outgoing",
+          "statement": "AI 신뢰성에서 OpenAI로 실제 참조가 나갑니다."
+        },
+        {
+          "edgeId": "association:pub:occhlkcioekogmamcd",
+          "direction": "outgoing",
+          "statement": "AI 신뢰성에서 Google로 실제 참조가 나갑니다."
+        }
+      ]
+    },
+    {
+      "id": "meaning:constellation:hub:pub:opnaegbkakkicfenem",
+      "focalNodeId": "hub:pub:opnaegbkakkicfenem",
+      "incomingEdgeIds": [
+        "association:pub:obeafeombikiccgfnm",
+        "association:pub:enmnnkdiigmhddlocg",
+        "association:pub:hoopjleadiookohkok",
+        "association:pub:djedlibkndkdljpmdl",
+        "association:pub:dpldggkijjhkpkngce",
+        "association:pub:akndanaophlbiaakln"
+      ],
+      "outgoingEdgeIds": [
+        "association:pub:iimlnmbmgnofjhcgcc",
+        "association:pub:pcghfofknboalmfbbp",
+        "association:pub:opgakbhgbfneikeebe",
+        "association:pub:fpimkdkonifppbjbne",
+        "association:pub:mnjddeffalmilcbiho",
+        "association:pub:padeojldpfpniphkpm"
+      ],
+      "boundedPathEdgeIds": [
+        "association:pub:obeafeombikiccgfnm",
+        "association:pub:iimlnmbmgnofjhcgcc"
+      ],
+      "explanations": [
+        {
+          "edgeId": "association:pub:obeafeombikiccgfnm",
+          "direction": "incoming",
+          "statement": "Agent Papers에서 에이전트로 실제 참조가 들어옵니다."
+        },
+        {
+          "edgeId": "association:pub:enmnnkdiigmhddlocg",
+          "direction": "incoming",
+          "statement": "VLM Papers에서 에이전트로 실제 참조가 들어옵니다."
+        },
+        {
+          "edgeId": "association:pub:hoopjleadiookohkok",
+          "direction": "incoming",
+          "statement": "MCP에서 에이전트로 실제 참조가 들어옵니다."
+        },
+        {
+          "edgeId": "association:pub:djedlibkndkdljpmdl",
+          "direction": "incoming",
+          "statement": "OpenAI에서 에이전트로 실제 참조가 들어옵니다."
+        },
+        {
+          "edgeId": "association:pub:dpldggkijjhkpkngce",
+          "direction": "incoming",
+          "statement": "Foundation Model Papers에서 에이전트로 실제 참조가 들어옵니다."
+        },
+        {
+          "edgeId": "association:pub:akndanaophlbiaakln",
+          "direction": "incoming",
+          "statement": "Image Papers에서 에이전트로 실제 참조가 들어옵니다."
+        },
+        {
+          "edgeId": "association:pub:iimlnmbmgnofjhcgcc",
+          "direction": "outgoing",
+          "statement": "에이전트에서 MCP로 실제 참조가 나갑니다."
+        },
+        {
+          "edgeId": "association:pub:pcghfofknboalmfbbp",
+          "direction": "outgoing",
+          "statement": "에이전트에서 AI 신뢰성로 실제 참조가 나갑니다."
+        },
+        {
+          "edgeId": "association:pub:opgakbhgbfneikeebe",
+          "direction": "outgoing",
+          "statement": "에이전트에서 Google로 실제 참조가 나갑니다."
+        },
+        {
+          "edgeId": "association:pub:fpimkdkonifppbjbne",
+          "direction": "outgoing",
+          "statement": "에이전트에서 Anthropic로 실제 참조가 나갑니다."
+        },
+        {
+          "edgeId": "association:pub:mnjddeffalmilcbiho",
+          "direction": "outgoing",
+          "statement": "에이전트에서 Claude로 실제 참조가 나갑니다."
+        },
+        {
+          "edgeId": "association:pub:padeojldpfpniphkpm",
+          "direction": "outgoing",
+          "statement": "에이전트에서 OpenAI로 실제 참조가 나갑니다."
+        }
+      ]
+    },
+    {
+      "id": "meaning:constellation:hub:pub:bfagboebicphemllcd",
+      "focalNodeId": "hub:pub:bfagboebicphemllcd",
+      "incomingEdgeIds": [
+        "association:pub:okkpjbbaeclnggmodj",
+        "association:pub:hdfpagjnbggjkbhijj",
+        "association:pub:ocknlepgfdddbbkhmc",
+        "association:pub:codjhpnbgbkopbgcla",
+        "association:pub:oaphnmnehmobhiimho",
+        "association:pub:padeojldpfpniphkpm"
+      ],
+      "outgoingEdgeIds": [
+        "association:pub:bodllgenmeiohgdahp",
+        "association:pub:nehamcjfnpikfbhafo",
+        "association:pub:bmfgbibncejjidnphl",
+        "association:pub:nieldmmacakpobjkee",
+        "association:pub:djedlibkndkdljpmdl",
+        "association:pub:ngmigkofmmddahilgg"
+      ],
+      "boundedPathEdgeIds": [
+        "association:pub:okkpjbbaeclnggmodj",
+        "association:pub:bodllgenmeiohgdahp"
+      ],
+      "explanations": [
+        {
+          "edgeId": "association:pub:okkpjbbaeclnggmodj",
+          "direction": "incoming",
+          "statement": "MCP에서 OpenAI로 실제 참조가 들어옵니다."
+        },
+        {
+          "edgeId": "association:pub:hdfpagjnbggjkbhijj",
+          "direction": "incoming",
+          "statement": "Google에서 OpenAI로 실제 참조가 들어옵니다."
+        },
+        {
+          "edgeId": "association:pub:ocknlepgfdddbbkhmc",
+          "direction": "incoming",
+          "statement": "Anthropic에서 OpenAI로 실제 참조가 들어옵니다."
+        },
+        {
+          "edgeId": "association:pub:codjhpnbgbkopbgcla",
+          "direction": "incoming",
+          "statement": "Claude에서 OpenAI로 실제 참조가 들어옵니다."
+        },
+        {
+          "edgeId": "association:pub:oaphnmnehmobhiimho",
+          "direction": "incoming",
+          "statement": "AI 신뢰성에서 OpenAI로 실제 참조가 들어옵니다."
+        },
+        {
+          "edgeId": "association:pub:padeojldpfpniphkpm",
+          "direction": "incoming",
+          "statement": "에이전트에서 OpenAI로 실제 참조가 들어옵니다."
+        },
+        {
+          "edgeId": "association:pub:bodllgenmeiohgdahp",
+          "direction": "outgoing",
+          "statement": "OpenAI에서 AI 신뢰성로 실제 참조가 나갑니다."
+        },
+        {
+          "edgeId": "association:pub:nehamcjfnpikfbhafo",
+          "direction": "outgoing",
+          "statement": "OpenAI에서 MCP로 실제 참조가 나갑니다."
+        },
+        {
+          "edgeId": "association:pub:bmfgbibncejjidnphl",
+          "direction": "outgoing",
+          "statement": "OpenAI에서 Google로 실제 참조가 나갑니다."
+        },
+        {
+          "edgeId": "association:pub:nieldmmacakpobjkee",
+          "direction": "outgoing",
+          "statement": "OpenAI에서 Anthropic로 실제 참조가 나갑니다."
+        },
+        {
+          "edgeId": "association:pub:djedlibkndkdljpmdl",
+          "direction": "outgoing",
+          "statement": "OpenAI에서 에이전트로 실제 참조가 나갑니다."
+        },
+        {
+          "edgeId": "association:pub:ngmigkofmmddahilgg",
+          "direction": "outgoing",
+          "statement": "OpenAI에서 Claude로 실제 참조가 나갑니다."
+        }
+      ]
+    },
+    {
+      "id": "meaning:constellation:hub:pub:cddiapjcnpfekmchpc",
+      "focalNodeId": "hub:pub:cddiapjcnpfekmchpc",
+      "incomingEdgeIds": [],
+      "outgoingEdgeIds": [
+        "association:pub:iemfkaobgjmejlojgl",
+        "association:pub:lbdcjceojekblolboj"
+      ],
+      "boundedPathEdgeIds": [
+        "association:pub:iemfkaobgjmejlojgl"
+      ],
+      "explanations": [
+        {
+          "edgeId": "association:pub:iemfkaobgjmejlojgl",
+          "direction": "outgoing",
+          "statement": "AI and Society Papers에서 AI 신뢰성로 실제 참조가 나갑니다."
+        },
+        {
+          "edgeId": "association:pub:lbdcjceojekblolboj",
+          "direction": "outgoing",
+          "statement": "AI and Society Papers에서 에이전트로 실제 참조가 나갑니다."
+        }
+      ]
+    },
+    {
+      "id": "meaning:constellation:hub:pub:honjgcnmnhhiajpdce",
+      "focalNodeId": "hub:pub:honjgcnmnhhiajpdce",
+      "incomingEdgeIds": [],
+      "outgoingEdgeIds": [
+        "association:pub:obeafeombikiccgfnm",
+        "association:pub:bklpgebpgjbkcamona",
+        "association:pub:dihmpjpbbgkkapfbke"
+      ],
+      "boundedPathEdgeIds": [
+        "association:pub:obeafeombikiccgfnm"
+      ],
+      "explanations": [
+        {
+          "edgeId": "association:pub:obeafeombikiccgfnm",
+          "direction": "outgoing",
+          "statement": "Agent Papers에서 에이전트로 실제 참조가 나갑니다."
+        },
+        {
+          "edgeId": "association:pub:bklpgebpgjbkcamona",
+          "direction": "outgoing",
+          "statement": "Agent Papers에서 AI 신뢰성로 실제 참조가 나갑니다."
+        },
+        {
+          "edgeId": "association:pub:dihmpjpbbgkkapfbke",
+          "direction": "outgoing",
+          "statement": "Agent Papers에서 MCP로 실제 참조가 나갑니다."
+        }
+      ]
+    }
+  ],
+  "movements": [
+    {
+      "id": "meaning:movement:public-projection-delta",
+      "kind": "node_added",
+      "label": "검증된 공개 지식 투영 변화",
+      "nodeIds": [],
+      "edgeIds": [],
+      "previousValue": {
+        "nodes": 50,
+        "edges": 42
+      },
+      "currentValue": {
+        "nodes": 54,
+        "edges": 67
+      },
+      "evidenceRefs": [
+        "graph:semantic:b0ed906319546b7783925b7d446a0dc65b9bde97419c054a0fc86fa29d3f199f",
+        "graph:semantic:829fd86aa099a8dfc0a4a802ccec4c21bdcf3c92d9f53eaacad49daaa28c3b2b"
+      ],
+      "caveat": "공개 이름 정책 변화와 비공개 원문 변화는 공개 화면에서 개별 문서 활동으로 추정하지 않습니다."
+    }
+  ],
+  "operationalCompass": [
+    {
+      "id": "meaning:alignment:direction",
+      "kind": "direction",
+      "actorId": "agency:principal:luke",
+      "domainIds": [
+        "district:pub:iifenbocdbbaijbjgf",
+        "district:pub:gdoehndnngjokincll",
+        "district:pub:ebgmlojhnbdnphamdm"
+      ],
+      "label": "Direction",
+      "statement": "Luke가 지식 시스템이 풀어야 할 방향을 정합니다."
+    },
+    {
+      "id": "meaning:alignment:circulation",
+      "kind": "circulation",
+      "actorId": "actor:daily-runner",
+      "domainIds": [
+        "district:pub:iifenbocdbbaijbjgf",
+        "district:pub:gdoehndnngjokincll",
+        "district:pub:ebgmlojhnbdnphamdm"
+      ],
+      "label": "Circulation",
+      "statement": "Daily Runner는 신호와 근거가 중심 지식으로 순환하도록 돕습니다."
+    },
+    {
+      "id": "meaning:alignment:translation",
+      "kind": "translation",
+      "actorId": "actor:atlas-builder",
+      "domainIds": [
+        "district:pub:iifenbocdbbaijbjgf",
+        "district:pub:gdoehndnngjokincll",
+        "district:pub:ebgmlojhnbdnphamdm"
+      ],
+      "label": "Translation",
+      "statement": "Atlas Builder는 Vault의 의미를 사람이 이해할 수 있는 제품으로 번역합니다."
+    },
+    {
+      "id": "meaning:alignment:observation",
+      "kind": "observation",
+      "actorId": "actor:control-plane",
+      "domainIds": [
+        "district:pub:iifenbocdbbaijbjgf",
+        "district:pub:gdoehndnngjokincll",
+        "district:pub:ebgmlojhnbdnphamdm"
+      ],
+      "label": "Observation",
+      "statement": "Control Plane은 owner 결과와 충돌 경계를 관찰해 전체 지식계의 일관성을 지킵니다."
+    },
+    {
+      "id": "meaning:alignment:stewardship:rocket",
+      "kind": "stewardship",
+      "actorId": "actor:rocket-manager",
+      "domainIds": [
+        "district:pub:bmfohnipgjoniceokh"
+      ],
+      "label": "Stewardship · Rocket",
+      "statement": "Rocket Manager는 Rocket의 연구와 제품 지식을 독립적으로 소유합니다."
+    },
+    {
+      "id": "meaning:alignment:stewardship:groot",
+      "kind": "stewardship",
+      "actorId": "actor:groot-manager",
+      "domainIds": [
+        "district:pub:bmfohnipgjoniceokh"
+      ],
+      "label": "Stewardship · Groot",
+      "statement": "Groot Manager는 Groot의 전략과 제품 인큐베이션 지식을 독립적으로 소유합니다."
+    },
+    {
+      "id": "meaning:alignment:stewardship:intelligence-layer",
+      "kind": "stewardship",
+      "actorId": "actor:intelligence-layer-manager",
+      "domainIds": [
+        "district:pub:bmfohnipgjoniceokh"
+      ],
+      "label": "Stewardship · Intelligence Layer",
+      "statement": "Intelligence Layer Manager는 소스·접근·컨텍스트 그래프 지식을 독립적으로 소유합니다."
+    }
+  ],
+  "scenes": [
+    {
+      "id": "core-gravity",
+      "label": "Core Domain Gravity",
+      "thesis": "Homi를 중심으로 MOC는 구조화하고, Papers는 근거를 공급하며, Signals는 변화를 감지합니다.",
+      "focusIds": [
+        "district:pub:iifenbocdbbaijbjgf",
+        "district:pub:gdoehndnngjokincll",
+        "district:pub:ebgmlojhnbdnphamdm"
+      ]
+    },
+    {
+      "id": "protagonists",
+      "label": "Protagonist Constellations",
+      "thesis": "선정된 주인공의 실제 incoming·outgoing 관계만 밝힙니다.",
+      "focusIds": [
+        "hub:pub:fpklgapieidgcbiinb",
+        "hub:pub:opnaegbkakkicfenem",
+        "hub:pub:bfagboebicphemllcd",
+        "hub:pub:cddiapjcnpfekmchpc",
+        "hub:pub:honjgcnmnhhiajpdce"
+      ]
+    },
+    {
+      "id": "vault-in-motion",
+      "label": "Vault in Motion",
+      "thesis": "이전 릴리스와 현재 캡처 사이의 검증된 변화만 보여줍니다.",
+      "focusIds": []
+    },
+    {
+      "id": "operational-compass",
+      "label": "Operational Compass",
+      "thesis": "지식 관계와 분리된 문법으로 방향·순환·번역·관찰 책임을 설명합니다.",
+      "focusIds": [
+        "district:pub:iifenbocdbbaijbjgf",
+        "district:pub:gdoehndnngjokincll",
+        "district:pub:ebgmlojhnbdnphamdm",
+        "district:pub:iifenbocdbbaijbjgf",
+        "district:pub:gdoehndnngjokincll",
+        "district:pub:ebgmlojhnbdnphamdm",
+        "district:pub:iifenbocdbbaijbjgf",
+        "district:pub:gdoehndnngjokincll",
+        "district:pub:ebgmlojhnbdnphamdm",
+        "district:pub:iifenbocdbbaijbjgf",
+        "district:pub:gdoehndnngjokincll",
+        "district:pub:ebgmlojhnbdnphamdm",
+        "district:pub:bmfohnipgjoniceokh",
+        "district:pub:bmfohnipgjoniceokh",
+        "district:pub:bmfohnipgjoniceokh"
+      ]
+    }
+  ],
+  "manifest": {
+    "protagonistCount": 5,
+    "constellationCount": 5,
+    "movementCount": 1,
+    "projectionDigest": "909701aa41224a81e775a26c664b8566f16b578ab70158e89fcf482fbd9df1ff"
+  }
+}

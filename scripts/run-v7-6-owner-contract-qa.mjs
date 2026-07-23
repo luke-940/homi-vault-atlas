@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 
 const execFileAsync = promisify(execFile);
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const artifactDir = path.join(projectDir, "artifacts", "v7-4-owner-qa");
+const artifactDir = path.join(projectDir, "artifacts", "v7-6-owner-qa");
 const reportPath = path.join(artifactDir, "vitest-report.json");
 const receiptPath = path.join(artifactDir, "owner-contract-qa.json");
 const ownerProjectionPath = path.join(projectDir, ".generated", "owner", "atlas-owner.json");
@@ -19,7 +19,7 @@ await readFile(ownerProjectionPath);
 await execFileAsync(process.execPath, [
   path.join(projectDir, "node_modules", "vitest", "vitest.mjs"),
   "run",
-  "tests-public/v74-data-boundary.test.ts",
+  "tests-public/v75-data-boundary.test.ts",
   "--maxWorkers=1",
   "--reporter=json",
   `--outputFile=${reportPath}`,
@@ -32,11 +32,11 @@ await execFileAsync(process.execPath, [
 const reportBody = await readFile(reportPath);
 const report = JSON.parse(reportBody.toString("utf8"));
 const receipt = {
-  schema: "homi.atlas_v7_4.owner_contract_qa.v1",
+  schema: "homi.atlas_v7_6.owner_contract_qa.v1",
   profile: "owner-local",
   verdict: report.success === true ? "pass" : "fail",
   ownerBytesEnteredCi: false,
-  testFile: "tests-public/v74-data-boundary.test.ts",
+  testFile: "tests-public/v75-data-boundary.test.ts",
   testResults: {
     total: report.numTotalTests,
     passed: report.numPassedTests,
@@ -44,7 +44,7 @@ const receipt = {
     pending: report.numPendingTests,
   },
   report: {
-    path: "artifacts/v7-4-owner-qa/vitest-report.json",
+    path: "artifacts/v7-6-owner-qa/vitest-report.json",
     bytes: reportBody.length,
     sha256: sha256(reportBody),
   },

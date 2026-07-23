@@ -1,8 +1,8 @@
 {
   "schema": "atlas.publication.v1",
   "profile": "public",
-  "generatedAt": "2026-07-22T08:44:46.744Z",
-  "publicSnapshotDigest": "44ef58d8318989aa7a79f4b2cf17d2d42e18dd3f8dd3773113172b7adfbd980a",
+  "generatedAt": "2026-07-23T09:26:27.311Z",
+  "publicSnapshotDigest": "fa2f8e8d837f23ba84695551c72724d773040909a50429d2c369fd5a2511e744",
   "allowedSurfaces": [
     "district_role_aggregate",
     "reference_boundary",
@@ -12,7 +12,10 @@
     "agency_role_projection",
     "inventory_coverage",
     "named_or_alias_hub",
-    "semantic_freshness_aggregate"
+    "semantic_freshness_aggregate",
+    "meaning_constellation",
+    "verified_version_movement",
+    "operational_compass"
   ],
   "excludedFields": [
     "absolute_path",
@@ -30,18 +33,18 @@
     "archive"
   ],
   "redactionCounts": {
-    "sourceEntities": 878,
+    "sourceEntities": 889,
     "publicEntities": 6,
-    "namedSourceDocuments": 15,
-    "aggregateSourceDocuments": 621,
-    "aggregatedSourceDocuments": 636,
-    "representedSourceDocuments": 636,
-    "excludedEntities": 242,
-    "excludedSourceDocuments": 242,
+    "namedSourceDocuments": 17,
+    "aggregateSourceDocuments": 629,
+    "aggregatedSourceDocuments": 646,
+    "representedSourceDocuments": 646,
+    "excludedEntities": 243,
+    "excludedSourceDocuments": 243,
     "archiveExcluded": 54,
     "scaffoldingExcluded": 24,
     "controlDocumentsExcluded": 70,
-    "rawDailyExcluded": 94,
+    "rawDailyExcluded": 95,
     "explicitPolicyExcluded": 0,
     "publicNameNotApproved": 0
   },

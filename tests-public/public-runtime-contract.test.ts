@@ -66,7 +66,7 @@ function renderWorkspace(hash: string, View: React.ComponentType) {
   );
 }
 
-describe("public Atlas v7.5 runtime contracts", () => {
+describe("public Atlas v7.6 runtime contracts", () => {
   test("resolves every public district into the Living Graph", () => {
     const graph = readJson("graph");
     for (const cluster of graph.clusters) {
@@ -98,25 +98,26 @@ describe("public Atlas v7.5 runtime contracts", () => {
     }
   });
 
-  test("hides Time when chronology is empty and keeps keyboard tray intent", () => {
+  test("restores Time for verified version movement and keeps keyboard tray intent", () => {
     const command = renderWorkspace("#home", commandModule.CommandBar);
     expect(command).toContain('id="workspace-tab-home"');
     expect(command).toContain('id="workspace-tab-explore"');
     expect(command).toContain('id="workspace-tab-agency"');
-    expect(command).not.toContain('id="workspace-tab-time"');
-    expect(command.match(/class="workspace-tab(?: |")/g)).toHaveLength(4);
+    expect(command).toContain('id="workspace-tab-time"');
+    expect(command.match(/class="workspace-tab(?: |")/g)).toHaveLength(5);
     expect(command).toContain("Explore");
     expect(command).toContain("Observe");
     expect(command).toContain("Flow");
+    expect(command).toContain("Time");
     expect(command).toContain("Agency");
     expect(trayModule.trayDialogKeyIntent("Escape", true, false)).toBe("close");
     expect(trayModule.trayDialogKeyIntent("Tab", true, false)).toBe("trap-focus");
   });
 
-  test("uses four canonical v7.5 Home scenes and graph district journeys", () => {
+  test("uses four canonical v7.6 Home scenes and graph district journeys", () => {
     const environment = { reducedMotion: false, mobileSibling: false };
     const initial = stateModule.createAtlasState("#home", environment);
-    const expected = ["knowledge-field", "knowledge-gravity", "freshness-field", "link-trace"];
+    const expected = ["core-gravity", "protagonists", "vault-in-motion", "operational-compass"];
     expect(navigatorModule.navigatorHomeScenes().map((scene) => scene.id)).toEqual(expected);
     for (const scene of expected) {
       const next = stateModule.reduceAtlasState(initial, {
@@ -139,25 +140,87 @@ describe("public Atlas v7.5 runtime contracts", () => {
     }
   });
 
+  test("keeps transient graph preview out of committed URL state and dedupes repeated pointer frames", () => {
+    const environment = { reducedMotion: false, mobileSibling: false };
+    const graph = readJson("graph");
+    const focusId = graph.nodes[0].id;
+    const previewId = graph.nodes.find((node: { id: string }) => node.id !== focusId)?.id;
+    expect(previewId).toBeTruthy();
+    const initial = stateModule.createAtlasState(
+      `#explore?scene=graph&focus=${encodeURIComponent(focusId)}`,
+      environment,
+    );
+    const previewed = stateModule.reduceAtlasState(initial, { type: "preview", focusId: previewId });
+    expect(previewed).not.toBe(initial);
+    expect(previewed.focusId).toBe(focusId);
+    expect(previewed.previewId).toBe(previewId);
+    expect(stateModule.stateToHash(previewed)).toBe(stateModule.stateToHash(initial));
+    expect(stateModule.reduceAtlasState(previewed, { type: "preview", focusId: previewId })).toBe(previewed);
+
+    const restored = stateModule.reduceAtlasState(previewed, { type: "preview", focusId: null });
+    expect(restored.focusId).toBe(focusId);
+    expect(restored.previewId).toBeNull();
+    expect(stateModule.stateToHash(restored)).toBe(stateModule.stateToHash(initial));
+    expect(stateModule.reduceAtlasState(restored, { type: "preview", focusId: null })).toBe(restored);
+  });
+
   test("canonicalizes v7.3 and v7.4 aliases without ghost scenes", () => {
     const environment = { reducedMotion: false, mobileSibling: false };
     expect(stateModule.createAtlasState("#home?scene=living-terrain", environment).sceneId)
-      .toBe("knowledge-field");
+      .toBe("core-gravity");
     expect(stateModule.createAtlasState("#home?scene=coverage-boundary", environment).sceneId)
-      .toBe("link-trace");
+      .toBe("operational-compass");
     expect(stateModule.createAtlasState("#explore?scene=city-focus", environment).sceneId)
-      .toBe("clusters");
+      .toBe("constellations");
     expect(stateModule.createAtlasState("#observe?scene=entity-relation", environment).sceneId)
-      .toBe("hub-relations");
+      .toBe("protagonist-lens");
     expect(stateModule.createAtlasState("#explore?scene=unknown", environment).fallbackReason)
       .toContain("기본 장면");
   });
 
-  test("recovers old Time URLs into honest Explore freshness context", () => {
+  test("recovers old Time URLs into verified version evolution", () => {
     const environment = { reducedMotion: false, mobileSibling: false };
     const state = stateModule.createAtlasState("#time?scene=chronology", environment);
-    expect(state).toMatchObject({ workspace: "explore", sceneId: "graph" });
-    expect(state.fallbackReason).toContain("chronology");
+    expect(state).toMatchObject({ workspace: "time", sceneId: "version-evolution" });
+    expect(state.fallbackReason).toBeNull();
+  });
+
+  test("round-trips an available version change or rejects a phantom without legacy era state", () => {
+    const environment = { reducedMotion: false, mobileSibling: false };
+    const movement = readJson("meaning").movements[0];
+    if (!movement) {
+      const state = stateModule.createAtlasState(
+        "#time?scene=version-evolution&change=meaning%3Amovement%3Aphantom&era=1",
+        environment,
+      );
+      expect(state.changeId).toBeNull();
+      expect(stateModule.stateToHash(state)).not.toContain("change=");
+      expect(stateModule.stateToHash(state)).not.toContain("era=");
+      return;
+    }
+    const state = stateModule.createAtlasState(
+      `#time?scene=version-evolution&change=${encodeURIComponent(movement.id)}&era=1`,
+      environment,
+    );
+    expect(state.changeId).toBe(movement.id);
+    expect(stateModule.stateToHash(state)).toContain(`change=${encodeURIComponent(movement.id)}`);
+    expect(stateModule.stateToHash(state)).not.toContain("era=");
+    const result = {
+      id: movement.id,
+      label: movement.label,
+      meta: "검증된 변화",
+      kind: "change" as const,
+      section: "changes" as const,
+    };
+    expect(searchModule.createSearchSelectionPlan(result, "home", "wikilink").actions[0])
+      .toMatchObject({
+        type: "journey",
+        target: {
+          workspace: "time",
+          sceneId: "version-evolution",
+          changeId: movement.id,
+        },
+      });
   });
 
   test("round-trips graph district, freshness, focus, and directed path URL state", () => {
@@ -174,6 +237,19 @@ describe("public Atlas v7.5 runtime contracts", () => {
     expect(state).toMatchObject({ workspace: "explore", sceneId: "graph", focusId: from, districtId: district, freshness: "1y", pathFrom: from, pathTo: to });
     expect(stateModule.createAtlasState(stateModule.stateToHash(state), environment))
       .toMatchObject({ workspace: "explore", sceneId: "graph", focusId: from, districtId: district, freshness: "1y", pathFrom: from, pathTo: to });
+  });
+
+  test("round-trips each partially selected directed path endpoint", () => {
+    const environment = { reducedMotion: false, mobileSibling: false };
+    const graph = readJson("graph");
+    const from = graph.nodes[0].id;
+    const fromState = stateModule.createAtlasState(
+      `#explore?scene=graph&from=${encodeURIComponent(from)}`,
+      environment,
+    );
+    expect(fromState).toMatchObject({ pathFrom: from, pathTo: null });
+    expect(stateModule.createAtlasState(stateModule.stateToHash(fromState), environment))
+      .toMatchObject({ pathFrom: from, pathTo: null });
   });
 
   test("links every Agency knowledge district into Explore Graph", () => {
@@ -194,35 +270,42 @@ describe("public Atlas v7.5 runtime contracts", () => {
     const districts = agencyModule.agencyKnowledgeDistricts();
     const fills = districts.map((district) => paletteModule.colorForDistrict(district.label));
     const strokes = districts.map((district) => paletteModule.strokeColorForDistrict(district.label));
-    expect(fills.every((color) => color !== "var(--district-neutral-fill)")).toBe(true);
-    expect(strokes.every((color) => color !== "var(--district-neutral)")).toBe(true);
+    expect(fills.every((color) => String(color) !== "var(--district-neutral-fill)")).toBe(true);
+    expect(strokes.every((color) => String(color) !== "var(--district-neutral)")).toBe(true);
     expect(new Set(fills)).toHaveLength(districts.length);
     expect(new Set(strokes)).toHaveLength(districts.length);
   });
 
-  test("renders actual Living Graph semantics and reconciled coverage on Home", () => {
-    const markup = renderWorkspace("#home?scene=knowledge-field", homeModule.HomeView);
+  test("renders Homi system anchor, core domains, and factual graph semantics on Home", () => {
+    const markup = renderWorkspace("#home?scene=core-gravity", homeModule.HomeView);
     const inventory = readJson("inventory");
     const graph = readJson("graph");
-    expect(markup).toContain("HOMI VAULT ATLAS");
-    expect(markup).toContain("지식이 어디에 있고,");
-    expect(markup).toContain("관계의 흐름을 따라");
-    expect(markup).toContain(inventory.physicalMarkdownCount.toLocaleString("ko-KR"));
-    expect(markup).toContain(`${inventory.namedCount.toLocaleString("ko-KR")} named`);
-    expect(markup).toContain(`${inventory.aggregateCount.toLocaleString("ko-KR")} aggregated`);
-    expect(markup).toContain(`${inventory.excludedCount.toLocaleString("ko-KR")} policy-excluded`);
-    expect(markup).toContain(graph.manifest.edgeCount.toLocaleString("ko-KR"));
+    expect(markup).toContain("home-v76-system-origin");
+    expect(markup).toContain("Homi system origin");
+    expect(markup).not.toContain("HOMI</strong>");
+    expect(markup).toContain('aria-label="Homi 협업 구조 자세히 보기"');
+    expect(markup).toContain('<img src="data:image/svg+xml');
+    expect(markup).toContain("지식의 주인공과,");
+    expect(markup).toContain("그들이 움직이는 방향을 본다.");
+    expect(markup).toContain("<strong>MOC</strong>");
+    expect(markup).toContain("<strong>PAPERS</strong>");
+    expect(markup).toContain("<strong>SIGNALS</strong>");
+    expect(markup).toContain(
+      `이름으로 표현 ${inventory.namedCount.toLocaleString("ko-KR")}`,
+    );
+    expect(markup).toContain(`data-node-count="${graph.manifest.nodeCount}"`);
+    expect(markup).toContain("district_corridor");
     expect(markup).toContain("날짜 미기록");
     expect(markup).toContain("검증된 버전 스냅샷");
     expect(markup).not.toContain("표현 기록");
     expect(inventory.reconciliation.pass).toBe(true);
   });
 
-  test("keeps gravity, freshness, and link trace as distinct full-screen Home pages", () => {
+  test("keeps protagonists, movement, and compass as distinct full-screen Home pages", () => {
     for (const [scene, title] of [
-      ["knowledge-gravity", "많이 참조되는 지식이"],
-      ["freshness-field", "최근의 지식은 위로"],
-      ["link-trace", "하나의 참조가"],
+      ["protagonists", "중요한 지식은"],
+      ["vault-in-motion", "Vault의 변화는"],
+      ["operational-compass", "사람과 Agent가"],
     ] as const) {
       const markup = renderWorkspace(`#home?scene=${scene}`, homeModule.HomeView);
       expect(markup).toContain(`data-home-page=\"${scene}\"`);

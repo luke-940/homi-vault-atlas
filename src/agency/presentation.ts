@@ -66,7 +66,7 @@ export const AGENCY_SCENES: ReadonlyArray<{
 }> = [
   { id: "system", label: "System", description: "Luke, 여섯 역할, 여섯 책임 표면의 전체 구조" },
   { id: "roles", label: "Roles", description: "선택 역할의 목적·결과·증거·중지 경계" },
-  { id: "evolution", label: "Evolution", description: "통합 역할 중심에서 세 지속 책임으로의 전문화" },
+  { id: "compass", label: "Compass", description: "방향·순환·번역·관찰과 지식 영역의 정렬" },
 ] as const;
 
 export const MOTION_SECONDS = {

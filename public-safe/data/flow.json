@@ -124,6 +124,35 @@
       ]
     },
     {
+      "id": "verified:dfadimhbbbfmlc",
+      "label": "Google → AI 신뢰성",
+      "question": "실제 해석 가능한 위키링크가 어떤 지식 허브를 연결하는가",
+      "weight": 9,
+      "members": [
+        "hub:pub:kepcmpibkjchmgoljn",
+        "hub:pub:fpklgapieidgcbiinb"
+      ],
+      "provenance": "resolved_wikilink_path",
+      "classifier": "캡처 시점의 canonical 위키링크를 유일하게 해석한 허브 간 경로이며 weight 단위는 link occurrence다.",
+      "sourceRefs": [],
+      "stations": [
+        {
+          "id": "station:dfadimhbbbfmlc:1",
+          "label": "Google",
+          "order": 0,
+          "entityId": "hub:pub:kepcmpibkjchmgoljn",
+          "external": false
+        },
+        {
+          "id": "station:dfadimhbbbfmlc:2",
+          "label": "AI 신뢰성",
+          "order": 1,
+          "entityId": "hub:pub:fpklgapieidgcbiinb",
+          "external": false
+        }
+      ]
+    },
+    {
       "id": "verified:dnmagkilieflgo",
       "label": "에이전트 → MCP",
       "question": "실제 해석 가능한 위키링크가 어떤 지식 허브를 연결하는가",
@@ -148,35 +177,6 @@
           "label": "MCP",
           "order": 1,
           "entityId": "hub:pub:kmfbcbjcjobaplfndc",
-          "external": false
-        }
-      ]
-    },
-    {
-      "id": "verified:jdccohcdcacjbg",
-      "label": "Foundation Model Papers → AI 신뢰성",
-      "question": "실제 해석 가능한 위키링크가 어떤 지식 허브를 연결하는가",
-      "weight": 8,
-      "members": [
-        "hub:pub:dfchpoahnmmondanci",
-        "hub:pub:fpklgapieidgcbiinb"
-      ],
-      "provenance": "resolved_wikilink_path",
-      "classifier": "캡처 시점의 canonical 위키링크를 유일하게 해석한 허브 간 경로이며 weight 단위는 link occurrence다.",
-      "sourceRefs": [],
-      "stations": [
-        {
-          "id": "station:jdccohcdcacjbg:1",
-          "label": "Foundation Model Papers",
-          "order": 0,
-          "entityId": "hub:pub:dfchpoahnmmondanci",
-          "external": false
-        },
-        {
-          "id": "station:jdccohcdcacjbg:2",
-          "label": "AI 신뢰성",
-          "order": 1,
-          "entityId": "hub:pub:fpklgapieidgcbiinb",
           "external": false
         }
       ]

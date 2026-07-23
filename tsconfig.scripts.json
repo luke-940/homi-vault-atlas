@@ -9,18 +9,24 @@
   },
   "include": [
     "scripts/build-public-profile.mjs",
+    "scripts/build-owner-site.mjs",
     "scripts/build-public-site.mjs",
+    "scripts/build-v76-protagonist-dossiers.mjs",
+    "scripts/create-v7-6-release-evidence-inventory.mjs",
     "scripts/audit-public-bundle.mjs",
     "scripts/public-field-contract.mjs",
     "scripts/lint-source-contract.mjs",
     "scripts/package-release-artifact.mjs",
     "scripts/readback-production.mjs",
-    "scripts/run-v7-3-qa.mjs",
-    "scripts/verify-v7-3-visual-golden.mjs",
-    "scripts/lib/v7-3-visual-golden.mjs",
+    "scripts/run-v7-6-owner-contract-qa.mjs",
+    "scripts/run-v7-6-qa.mjs",
+    "scripts/verify-v7-6-visual-golden.mjs",
+    "scripts/lib/v7-6-visual-golden.mjs",
     "scripts/lib/agency-contract.mjs",
     "scripts/lib/agency-source-witness.mjs",
     "scripts/lib/privacy-scanner.mjs",
+    "scripts/lib/atlas-graph-v1.mjs",
+    "scripts/lib/atlas-meaning-v1.mjs",
     "scripts/lib/public-audit-boundary.mjs",
     "scripts/lib/public-data-wire.mjs",
     "scripts/lib/public-entity-digest.mjs",
@@ -29,6 +35,7 @@
     "scripts/lib/pretendard-subset.mjs",
     "scripts/lib/public-package.mjs",
     "scripts/lib/release-artifact.mjs",
-    "scripts/lib/repository-source-manifest.mjs"
+    "scripts/lib/repository-source-manifest.mjs",
+    "scripts/lib/runtime-class-aliases.mjs"
   ]
 }

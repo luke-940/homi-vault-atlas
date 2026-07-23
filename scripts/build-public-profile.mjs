@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 import { createPublicPackArtifacts } from "./lib/public-data-wire.mjs";
 import { computePublicSnapshotDigest } from "./lib/public-snapshot-digest.mjs";
 import { buildAtlasGraphV1, verifyAtlasGraphV1 } from "./lib/atlas-graph-v1.mjs";
+import { buildAtlasMeaningV1, meaningInsightAdapter } from "./lib/atlas-meaning-v1.mjs";
+import { agencyProjectionDigest } from "./lib/agency-contract.mjs";
 import {
   aggregateLinkMetrics,
   assertOwnerPublicSeparation,
@@ -36,11 +38,21 @@ const allowlistPath = path.join(projectDir, "public-safe", "public-title-allowli
 const promotePublicSafe = process.argv.includes("--promote-public-safe");
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 const compareText = (left, right) => left < right ? -1 : left > right ? 1 : 0;
+const readOptionalJson = async (candidate) => {
+  if (!candidate) return null;
+  try {
+    return JSON.parse(await readFile(path.resolve(candidate), "utf8"));
+  } catch (error) {
+    if (error?.code === "ENOENT") return null;
+    throw error;
+  }
+};
 const packNames = [
   "agency",
   "bootstrap",
   "inventory",
   "graph",
+  "meaning",
   "relation",
   "flow",
   "temporal",
@@ -912,11 +924,61 @@ async function ownerActivity() {
   };
 }
 
-const legacyPackNames = packNames.filter((name) => name !== "inventory" && name !== "graph");
+const legacyPackNames = packNames.filter((name) => !["inventory", "graph", "meaning"].includes(name));
 const legacyPacks = Object.fromEntries(await Promise.all(
   legacyPackNames
     .map(async (name) => [name, JSON.parse(await readFile(path.join(publicSafeDataRoot, `${name}.json`), "utf8"))]),
 ));
+const baselinePublicGraphPath = process.env.ATLAS_V7_6_BASELINE_PUBLIC_GRAPH
+  ? path.resolve(process.env.ATLAS_V7_6_BASELINE_PUBLIC_GRAPH)
+  : path.join(publicSafeDataRoot, "graph.json");
+const baselinePublicGraph = JSON.parse(await readFile(baselinePublicGraphPath, "utf8"));
+const meaningDossierPack = await readOptionalJson(process.env.ATLAS_V7_6_DOSSIER_PATH);
+const meaningGraphDelta = await readOptionalJson(process.env.ATLAS_V7_6_GRAPH_DELTA_PATH);
+const movementJudgmentPath = process.env.ATLAS_V7_6_MOVEMENT_JUDGMENT_PATH;
+const meaningMovementJudgments = movementJudgmentPath
+  ? JSON.parse(await readFile(path.resolve(movementJudgmentPath), "utf8"))
+  : null;
+const meaningDossiers = Array.isArray(meaningDossierPack?.protagonists)
+  ? meaningDossierPack.protagonists
+  : [];
+const {
+  projectionDigest: _legacyAgencyProjectionDigest,
+  ...legacyAgencyWithoutDigest
+} = legacyPacks.agency;
+const agencyV76WithoutDigest = {
+  ...legacyAgencyWithoutDigest,
+  generatedAt,
+  snapshot: {
+    ...legacyPacks.agency.snapshot,
+    asOfDate: generatedAt.slice(0, 10),
+  },
+  actors: legacyPacks.agency.actors.map((actor) => {
+    if (actor.id === "actor:control-plane") return {
+      ...actor,
+      purpose: "Homi 전역의 소유 경계, 검증 일관성, 충돌 가능성을 관찰한다.",
+      publicOutput: "일관된 제어면 경계와 관찰 결과",
+      stopBoundary: "다른 owner의 의미 판단·제품·릴리스를 지휘하거나 승인하지 않는다.",
+    };
+    if (actor.id === "actor:daily-runner") return {
+      ...actor,
+      purpose: "MOC·Signals·Insights·Paper Atlas로 증거가 순환하는 반복 지식 회로를 책임진다.",
+      publicOutput: "정제되어 commons로 순환한 지식",
+    };
+    if (actor.id === "actor:atlas-builder") return {
+      ...actor,
+      purpose: "Vault의 전체 지형과 흐름을 이해하고 사람이 읽을 수 있는 Atlas로 번역한다.",
+      publicOutput: "Homi Vault Atlas · human-readable knowledge diplomacy",
+      proof: "화면의 의미 주장과 실제 Vault 증거의 일치",
+    };
+    return actor;
+  }),
+  evidenceBoundary: "검증된 버전 스냅샷의 역할·소유·증거 반환만 표현하며 command·approval·실시간 상태를 암시하지 않는다.",
+};
+const agencyV76 = {
+  ...agencyV76WithoutDigest,
+  projectionDigest: agencyProjectionDigest(agencyV76WithoutDigest),
+};
 const publicEntityPack = refreshPublicEntityPack(legacyPacks.entity);
 // atlas.structure.v2 is now a build-boundary intermediate generated from the
 // fresh canonical capture. No legacy structure pack is needed or published.
@@ -936,13 +998,40 @@ const ownerGraphFailures = verifyAtlasGraphV1(ownerGraphPack);
 if (publicGraphFailures.length || ownerGraphFailures.length) {
   throw new Error(`Graph projection blocked: ${[...publicGraphFailures, ...ownerGraphFailures].join(", ")}.`);
 }
+const snapshotIdentity = (release, graph, fallback = null) => ({
+  release,
+  asOfDate: String(fallback?.capturedAt ?? graph.generatedAt).slice(0, 10),
+  graphSemanticDigest: fallback?.semanticDigest ?? graph.manifest.semanticDigest,
+  graphNodeCount: Number(fallback?.graphNodeCount ?? graph.manifest.nodeCount),
+  graphEdgeCount: Number(fallback?.graphEdgeCount ?? graph.manifest.edgeCount),
+});
+const publicMeaningPack = buildAtlasMeaningV1({
+  graph: publicGraphPack,
+  agency: agencyV76,
+  generatedAt,
+  baseline: snapshotIdentity("v7.5.0", baselinePublicGraph),
+  baselineGraph: baselinePublicGraph,
+  current: snapshotIdentity("v7.6.0-rc", publicGraphPack),
+  dossiers: meaningDossiers,
+});
+const ownerMeaningPack = buildAtlasMeaningV1({
+  graph: ownerGraphPack,
+  agency: agencyV76,
+  generatedAt,
+  baseline: snapshotIdentity("v7.5.0", ownerGraphPack, meaningGraphDelta?.baseline),
+  current: snapshotIdentity("v7.6.0-rc", ownerGraphPack, meaningGraphDelta?.current),
+  dossiers: meaningDossiers,
+  graphDelta: meaningGraphDelta,
+  movementJudgments: meaningMovementJudgments,
+});
 const publicFlowPack = verifiedFlowForStructure(publicStructurePack, "atlas-public");
 const publicRelationPack = buildFreshPublicRelation(legacyPacks.relation, ownerStructurePack);
 const publicPacks = {
   ...legacyPacks,
+  agency: agencyV76,
   bootstrap: {
     ...legacyPacks.bootstrap,
-    version: "7.5.0-public",
+    version: "7.6.0-public-rc",
     generatedAt,
     proofBoundary: {
       ...legacyPacks.bootstrap.proofBoundary,
@@ -952,6 +1041,7 @@ const publicPacks = {
   },
   inventory: publicReconciliation.inventory,
   graph: publicGraphPack,
+  meaning: publicMeaningPack,
   entity: publicEntityPack,
   flow: publicFlowPack,
   relation: publicRelationPack,
@@ -1045,6 +1135,7 @@ publicPacks.insight = {
         }
       : item),
 };
+publicPacks.insight = meaningInsightAdapter(publicMeaningPack, publicRelationPack, publicEntityPack);
 publicPacks.publication = {
   ...legacyPacks.publication,
   generatedAt,
@@ -1069,6 +1160,9 @@ publicPacks.publication = {
     "inventory_coverage",
     "named_or_alias_hub",
     "semantic_freshness_aggregate",
+    "meaning_constellation",
+    "verified_version_movement",
+    "operational_compass",
   ])],
   redactionCounts: {
     sourceEntities: publicReconciliation.inventory.physicalMarkdownCount,
@@ -1129,6 +1223,7 @@ const ownerProjection = {
   generatedAt,
   inventory: ownerReconciliation.inventory,
   graph: ownerGraphPack,
+  meaning: ownerMeaningPack,
   paperDimension: ownerPaperDimension,
   activity: ownerActivityPack,
   sourceIndex: ownerReconciliation.classified
@@ -1141,24 +1236,11 @@ const ownerProjection = {
       disposition: record.classification.disposition,
     })),
 };
-const publicV2DistrictLabelById = new Map(publicGraphPack.nodes
-  .filter((node) => node.kind === "district")
-  .map((node) => [node.id, node.label]));
-const ownerV2DistrictIdByPublicLabel = new Map(ownerGraphPack.nodes
-  .filter((node) => node.kind === "district")
-  .map((node) => [allowlist.districtLabels[node.label] ?? node.label, node.id]));
-const retargetOwnerInsightFocus = (item) => {
-  const publicLabel = publicV2DistrictLabelById.get(item.targetScene.focusId);
-  const ownerFocusId = publicLabel ? ownerV2DistrictIdByPublicLabel.get(publicLabel) : null;
-  return ownerFocusId
-    ? { ...item, targetScene: { ...item.targetScene, focusId: ownerFocusId } }
-    : item;
-};
 const ownerRuntimePacks = {
   ...publicPacks,
   bootstrap: {
     ...publicPacks.bootstrap,
-    version: "7.5.0-owner",
+    version: "7.6.0-owner-rc",
     proofBoundary: {
       ...publicPacks.bootstrap.proofBoundary,
       inventory: "Owner 전용 전체 구조와 공개 제외 사유를 포함하는 로컬 투영",
@@ -1166,25 +1248,9 @@ const ownerRuntimePacks = {
   },
   inventory: ownerProjection.inventory,
   graph: ownerGraphPack,
+  meaning: ownerMeaningPack,
   flow: ownerFlowPack,
-  insight: {
-    ...publicPacks.insight,
-    items: publicPacks.insight.items.map((publicItem) => {
-      const item = retargetOwnerInsightFocus(publicItem);
-      return item.kind === "latest_pulse" ? {
-          ...item,
-          headline: ownerFlowPack.routes.length
-            ? `검증된 Owner 허브 경로 ${ownerFlowPack.routes.length}개를 실제 위키링크로 확인했다`
-            : "검증 가능한 Owner 허브 경로가 없어 빈 상태로 남긴다",
-          metric: { value: ownerFlowPack.routes.length, label: "검증된 Owner 경로", unit: "개" },
-          targetScene: {
-            workspace: "flow",
-            scene: "routes",
-            ...(ownerFlowPack.routes[0] ? { routeId: ownerFlowPack.routes[0].id } : {}),
-          },
-        } : item;
-    }),
-  },
+  insight: meaningInsightAdapter(ownerMeaningPack, publicRelationPack, publicEntityPack),
   publication: {
     ...publicPacks.publication,
     profile: "owner",
@@ -1192,6 +1258,7 @@ const ownerRuntimePacks = {
     allowedSurfaces: [
       "owner_inventory",
       "owner_graph",
+      "owner_meaning",
       "owner_activity_aggregate",
       "owner_verified_hub_path",
     ],
@@ -1223,6 +1290,7 @@ await writeFile(path.join(ownerRoot, "paper-dimension-receipt.json"), `${JSON.st
 for (const [name, value] of Object.entries({
   inventory: ownerProjection.inventory,
   graph: ownerProjection.graph,
+  meaning: ownerProjection.meaning,
   activity: ownerProjection.activity,
 })) {
   await writeFile(path.join(ownerRoot, `${name}.json`), `${JSON.stringify(value, null, 2)}\n`, "utf8");
@@ -1269,6 +1337,9 @@ const receipt = {
     referenceEdges: ownerProjection.graph.edges.length,
     semanticDigest: ownerProjection.graph.manifest.semanticDigest,
     layoutDigest: ownerProjection.graph.manifest.layoutDigest,
+    meaningDigest: ownerProjection.meaning.manifest.projectionDigest,
+    protagonists: ownerProjection.meaning.protagonists.length,
+    movements: ownerProjection.meaning.movements.length,
     paperDimension: ownerPaperDimension,
     verifiedFlowRoutes: ownerRuntimePacks.flow.routes.length,
     activityAggregates: ownerProjection.activity.aggregates.length,
@@ -1281,6 +1352,9 @@ const receipt = {
     referenceEdges: publicPacks.graph.edges.length,
     semanticDigest: publicPacks.graph.manifest.semanticDigest,
     layoutDigest: publicPacks.graph.manifest.layoutDigest,
+    meaningDigest: publicPacks.meaning.manifest.projectionDigest,
+    protagonists: publicPacks.meaning.protagonists.length,
+    movements: publicPacks.meaning.movements.length,
     verifiedFlowRoutes: publicPacks.flow.routes.length,
     publicKnowledgeEntities: publicPacks.entity.entities.length,
     activityPackPresent: false,

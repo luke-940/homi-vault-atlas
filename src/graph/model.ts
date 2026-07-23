@@ -1,12 +1,84 @@
-import type { AtlasGraphEdgeV1, AtlasGraphNodeV1, AtlasGraphV1, GraphFreshness, MatrixCell } from "../types";
+import type {
+  AtlasGraphEdgeV1,
+  AtlasGraphNodeKind,
+  AtlasGraphNodeV1,
+  AtlasGraphV1,
+  GraphFreshness,
+  MatrixCell,
+  MeaningMovementKind,
+  MeaningProtagonistRole,
+} from "../types";
 
 export type FreshnessBucket = GraphFreshness;
 
+function humanReadableKnowledgeSegment(segment: string) {
+  const cleaned = segment
+    .replace(/^(?:(?:SI|SR)-\d+\s*(?:[-–—:]\s*)?)+/i, "")
+    .replace(/^(?:HIL)\s+(?=[A-Z가-힣])/i, "")
+    .replace(/\bWP\d+(?:-[A-Z]?\d+)*\b\s*/gi, "")
+    .replace(/^\d{2}\s*[-–—]\s*/, "")
+    .replace(/^\s*\[\d+\]\s*/, "")
+    .replace(/\s*\[\d+\]\s*$/, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+  const datedRadar = cleaned.match(/^(\d{4}-\d{2}-\d{2})\s*[-–—]\s*(?:HIL\s+)?Daily Radar$/i);
+  if (datedRadar) return `Intelligence Layer 외부 신호 레이더 · ${datedRadar[1]}`;
+  return cleaned;
+}
+
+export function humanReadableKnowledgeLabel(label: string) {
+  return label
+    .replace(/\s*·\s*공개 안전 원천 집계$/, "")
+    .split(/\s*›\s*/)
+    .map(humanReadableKnowledgeSegment)
+    .filter(Boolean)
+    .join(" › ");
+}
+
 export function graphNodeLabel(node: AtlasGraphNodeV1) {
-  const label = node.label.replace(/\s*·\s*공개 안전 원천 집계$/, "");
+  const label = humanReadableKnowledgeLabel(node.label);
   if (node.kind === "district") return `${label} 구역`;
   if (node.kind === "aggregate_boundary") return `${label} 집계`;
   return label;
+}
+
+export function canonicalGraphNodeLabel(node: AtlasGraphNodeV1) {
+  return node.label;
+}
+
+export function graphNodeKindLabel(kind: AtlasGraphNodeKind) {
+  return ({
+    district: "지식 구역",
+    moc_hub: "핵심 지식 지도",
+    paper_gateway: "연구 근거 관문",
+    strategy_insight: "전략 인사이트",
+    strategy_request: "전략 요청",
+    project: "프로젝트",
+    project_stage: "프로젝트 단계",
+    signal_domain: "변화 신호 영역",
+    signal_storyline: "변화 신호 흐름",
+    source_document: "원천 기록",
+    aggregate_boundary: "집계 경계",
+  } as const)[kind];
+}
+
+export function protagonistRoleLabel(role: MeaningProtagonistRole) {
+  return ({
+    gravity_anchor: "지식 중심",
+    cross_domain_bridge: "영역 연결",
+    frontier_signal: "프론티어 신호",
+  } as const)[role];
+}
+
+export function movementKindLabel(kind: MeaningMovementKind) {
+  return ({
+    node_added: "새 지식",
+    edge_added: "새 연결",
+    edge_removed: "사라진 연결",
+    gravity_shift: "중력 변화",
+    meaningfully_updated: "의미 갱신",
+    verified_handoff: "검증 인계",
+  } as const)[kind];
 }
 
 export function freshnessMatches(node: AtlasGraphNodeV1, bucket: FreshnessBucket, asOf: string) {

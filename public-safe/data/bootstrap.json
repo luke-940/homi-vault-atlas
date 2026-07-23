@@ -1,7 +1,7 @@
 {
   "schema": "atlas.snapshot.v7",
-  "version": "7.5.0-public",
-  "generatedAt": "2026-07-22T08:44:46.744Z",
+  "version": "7.6.0-public-rc",
+  "generatedAt": "2026-07-23T09:26:27.311Z",
   "snapshot": {
     "memoryEngineSchema": "public-curated-snapshot.v1",
     "memoryFiles": 6,

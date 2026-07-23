@@ -7,11 +7,16 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { scanOperatingExposure, scanPrivacyText } from "./lib/privacy-scanner.mjs";
+import { aliasRuntimeSelector } from "./lib/runtime-class-aliases.mjs";
 
 const execFileAsync = promisify(execFile);
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-export const V74_QA_SCHEMA = "homi.atlas_v7_4.resource_safe_browser_qa.v1";
+function runtimeLocator(page, selector) {
+  return page.locator(aliasRuntimeSelector(selector));
+}
+
+export const V76_QA_SCHEMA = "homi.atlas_v7_6.resource_safe_browser_qa.v1";
 export const PNG_SIGNATURE_HEX = "89504e470d0a1a0a";
 
 export const QA_PERFORMANCE_BUDGETS = Object.freeze({
@@ -37,33 +42,22 @@ export const LOCAL_RESOURCE_POLICY = Object.freeze({
 
 const GEOMETRY_GROUPS = Object.freeze({
   home: [
-    ".living-terrain",
-    ".home-v74-copy .eyebrow",
-    ".home-v74-copy h1",
-    ".home-v74-copy > p",
-    ".home-v74-actions > button",
-    ".home-v74-proof > div",
-    ".home-v74-proof dt",
-    ".home-v74-proof dd",
-    ".home-v74-proof small",
-    ".v74-scene-rail > button",
-    ".v74-scene-rail strong",
-    ".terrain-intro > div",
-    ".terrain-district",
-    ".terrain-district > span",
-    ".terrain-hub",
-    ".terrain-hub > span",
-    ".terrain-relation-readout",
-    ".terrain-honest-empty",
-    ".coverage-ledger > header",
-    ".coverage-ledger-grid > div",
-    ".provenance-owner",
-    ".provenance-groups > div",
-    ".provenance-groups > div > span",
-    ".provenance-groups button",
-    ".home-workspace-launcher > button",
-    ".home-workspace-launcher > button strong",
-    ".home-v74-snapshot",
+    ".home-v75-page",
+    ".home-v75-graph-shell",
+    ".living-graph-canvas.is-home",
+    ".home-v75-copy-block .home-v75-eyebrow",
+    ".home-v75-copy-block h1",
+    ".home-v75-copy-block > p",
+    ".home-v75-actions > button",
+    ".home-v75-evidence",
+    ".home-v75-evidence-primary > *",
+    ".home-v75-evidence-secondary > *",
+    ".home-v76-system-anchor",
+    ".home-v76-domain-legend > button",
+    ".home-v76-rail > button",
+    ".home-v75-scenes > button",
+    ".home-v75-boundary > *",
+    ".graph-label-layer > button",
   ],
   agency: [
     ".agency-intro .eyebrow",
@@ -79,21 +73,23 @@ const GEOMETRY_GROUPS = Object.freeze({
     ".agency-knowledge-context > div > span",
   ],
   explore: [
-    ".explore-level-browser > header",
-    ".explore-level-columns > section > h2",
-    ".explore-level-columns > section.is-active .explore-node-list > div > button",
-    ".explore-level-columns > section.is-active .explore-level-empty",
-    "[data-testid='city-map'] .city-block.depth-2 > text",
-    "[data-testid='city-map'] .city-district-anchor > text",
-    ".city-accessible-index > button",
-    ".mobile-ranked-list > button",
-    ".mobile-district-map button",
+    ".explore-v75",
+    ".explore-command-rail > *",
+    ".explore-v75-graph-panel",
+    ".explore-v75-graph-panel .living-graph-canvas",
+    ".explore-v75-mobile-clusters > button",
+    ".explore-evidence-rail > *",
+    ".explore-v75-clusters > button",
+    ".explore-v75-list-layout > header",
+    ".graph-ranked-list > button",
+    ".explore-path-disclosure",
+    ".explore-v75-boundary",
   ],
   observe: [
     ".workspace-scene-switch > button",
     "[data-testid='relation-matrix'] .matrix-cell[role='button']",
     ".hub-relations-surface > header",
-    ".hub-relations-grid .hub-ego-node",
+    ".hub-relations-grid .hub-ego-stage .living-graph-canvas",
     ".hub-relations-grid li > button",
     ".hub-relations-surface .workspace-honest-empty",
     ".mobile-ranked-list > button",
@@ -101,16 +97,17 @@ const GEOMETRY_GROUPS = Object.freeze({
   ],
   flow: [
     ".flow-honest-empty",
-    "[data-testid='vault-metro'] .metro-route.is-active .metro-station[role='button']",
+    ".route-rail > button",
+    ".flow-spatial-stage .living-graph-canvas",
+    ".flow-evidence-rail > *",
     ".mobile-stepper > li",
-    ".mobile-route-switch > button",
   ],
   time: [
-    ".time-honest-empty",
-    "[data-testid='era-small-multiples'] .era-strata-mark",
-    ".era-rail > button",
-    ".mobile-era-scrubber > button",
-    ".mobile-ranked-list .mobile-era-row",
+    ".version-seam__brief > *",
+    ".version-seam__anchor > *",
+    ".version-seam__movement",
+    ".version-seam__movement-card > *",
+    ".version-seam__empty",
   ],
   search: [
     ".search-input-row > input",
@@ -131,13 +128,11 @@ const GEOMETRY_GROUPS = Object.freeze({
 
 const REQUIRED_GEOMETRY_SELECTORS = Object.freeze({
   home: [
-    ".home-v74-copy h1",
-    ".living-terrain",
-    ".v74-scene-rail > button",
-    ".coverage-ledger > header",
-    ".provenance-owner",
-    ".provenance-groups > div",
-    ".home-workspace-launcher > button",
+    ".home-v75-copy-block h1",
+    ".living-graph-canvas.is-home",
+    ".home-v75-evidence",
+    ".home-v75-scenes > button",
+    ".home-v75-boundary",
   ],
   agencySystem: [
     ".agency-intro h1",
@@ -152,14 +147,24 @@ const REQUIRED_GEOMETRY_SELECTORS = Object.freeze({
   agencyEvolution: [
     ".agency-intro h1",
     ".agency-scene-rail > button",
-    ".agency-evolution-before",
-    ".agency-evolution-current .agency-actor-row",
-    ".agency-evolution-independent .agency-actor-row",
+    ".agency-compass",
+    ".agency-compass-grid .agency-compass-row",
   ],
   explore: [
-    ".explore-level-browser > header",
-    ".explore-level-columns > section > h2",
-    ".explore-level-columns > section.is-active .explore-node-list > div > button, .explore-level-columns > section.is-active .explore-level-empty",
+    ".explore-v75",
+    ".explore-command-rail",
+  ],
+  exploreGraph: [
+    ".explore-v75-graph-panel",
+    ".explore-v75-graph-panel .living-graph-canvas",
+  ],
+  exploreConstellations: [
+    ".explore-v75-clusters",
+    ".explore-v75-clusters > button",
+  ],
+  exploreList: [
+    ".explore-v75-list-layout",
+    ".graph-ranked-list",
   ],
   observeGlobal: [
     ".workspace-scene-switch > button",
@@ -174,12 +179,18 @@ const REQUIRED_GEOMETRY_SELECTORS = Object.freeze({
   observeHub: [
     ".workspace-scene-switch > button",
     ".hub-relations-surface > header",
-    ".hub-relations-grid .hub-ego-node, .hub-relations-surface .workspace-honest-empty",
+    ".hub-relations-grid .hub-ego-stage .living-graph-canvas, .hub-relations-surface .workspace-honest-empty",
   ],
   flow: [
-    ".flow-honest-empty, [data-testid='vault-metro'] .metro-route.is-active .metro-station[role='button'], .mobile-stepper > li",
+    ".flow-honest-empty, .route-rail > button",
+    ".flow-honest-empty, .flow-spatial-stage .living-graph-canvas",
   ],
-  time: [".time-honest-empty"],
+  time: [
+    ".version-seam",
+    ".version-seam__anchor--baseline",
+    ".version-seam__anchor--current",
+    ".version-seam__movements, .version-seam__empty",
+  ],
   search: [
     ".search-input-row > input",
     ".search-input-row > button",
@@ -201,11 +212,19 @@ function geometryRequirementsFor(definition) {
   }
   if (definition.workspace === "search") return REQUIRED_GEOMETRY_SELECTORS.search;
   if (definition.workspace === "agency") {
-    if (definition.journey === "agency-scene" && definition.targetScene === "evolution") return REQUIRED_GEOMETRY_SELECTORS.agencyEvolution;
+    if (definition.journey === "agency-scene" && definition.targetScene === "compass") return REQUIRED_GEOMETRY_SELECTORS.agencyEvolution;
     if (["agency-actor", "agency-actor-cycle"].includes(definition.journey)) return REQUIRED_GEOMETRY_SELECTORS.agencyRoles;
     return REQUIRED_GEOMETRY_SELECTORS.agencySystem;
   }
-  if (definition.workspace === "explore") return REQUIRED_GEOMETRY_SELECTORS.explore;
+  if (definition.workspace === "explore") {
+    if (definition.targetScene === "constellations" || definition.journey === "explore-constellations") {
+      return [...REQUIRED_GEOMETRY_SELECTORS.explore, ...REQUIRED_GEOMETRY_SELECTORS.exploreConstellations];
+    }
+    if (definition.targetScene === "list" || definition.journey === "explore-list") {
+      return [...REQUIRED_GEOMETRY_SELECTORS.explore, ...REQUIRED_GEOMETRY_SELECTORS.exploreList];
+    }
+    return [...REQUIRED_GEOMETRY_SELECTORS.explore, ...REQUIRED_GEOMETRY_SELECTORS.exploreGraph];
+  }
   if (definition.workspace === "observe") {
     if (mobileSibling) return REQUIRED_GEOMETRY_SELECTORS.observeMobile;
     return definition.journey === "hub-relations" ? REQUIRED_GEOMETRY_SELECTORS.observeHub : REQUIRED_GEOMETRY_SELECTORS.observeGlobal;
@@ -245,16 +264,16 @@ function qaCase({ key, id = key, reducedMotion = false, firstEntry = false, touc
 
 export const CORE_ROUTE_CASES = Object.freeze([
   qaCase({
-    key: "home-default", workspace: "home", hash: "#home?scene=living-terrain",
-    readySelector: ".home-view-v74[data-scene='living-terrain']",
-    finalReadySelector: ".home-view-v74[data-scene='living-terrain']", geometryGroups: GEOMETRY_GROUPS.home,
-    viewport: { width: 1440, height: 920 }, firstEntry: true, journey: "home-scene", targetScene: "living-terrain",
+    key: "home-default", workspace: "home", hash: "#home?scene=core-gravity",
+    readySelector: ".home-v76[data-home-page='core-gravity']",
+    finalReadySelector: ".home-v76[data-home-page='core-gravity']", geometryGroups: GEOMETRY_GROUPS.home,
+    viewport: { width: 1440, height: 920 }, firstEntry: true, journey: "home-scene", targetScene: "core-gravity",
   }),
   qaCase({
-    key: "home-selected", workspace: "home", hash: "#home?scene=living-terrain",
-    readySelector: ".home-view-v74[data-scene='living-terrain']",
-    finalReadySelector: ".home-view-v74[data-scene='knowledge-gravity']", geometryGroups: GEOMETRY_GROUPS.home,
-    viewport: { width: 1180, height: 720 }, journey: "home-scene", targetScene: "knowledge-gravity",
+    key: "home-selected", workspace: "home", hash: "#home?scene=core-gravity",
+    readySelector: ".home-v76[data-home-page='core-gravity']",
+    finalReadySelector: ".home-v76[data-home-page='protagonists']", geometryGroups: GEOMETRY_GROUPS.home,
+    viewport: { width: 1180, height: 720 }, journey: "home-scene", targetScene: "protagonists",
   }),
   qaCase({
     key: "agency-default", workspace: "agency", hash: "#agency?scene=system",
@@ -268,9 +287,9 @@ export const CORE_ROUTE_CASES = Object.freeze([
     viewport: { width: 390, height: 844 }, touch: true, journey: "agency-actor", actorId: "actor:atlas-builder",
   }),
   qaCase({
-    key: "explore", workspace: "explore", hash: "#explore?scene=districts",
-    readySelector: ".explore-view, .mobile-explore", finalReadySelector: ".explore-view, .mobile-explore",
-    geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 320, height: 844 }, touch: true, journey: "explore-three-level",
+    key: "explore", workspace: "explore", hash: "#explore?scene=graph",
+    readySelector: ".explore-v75 .living-graph-canvas", finalReadySelector: ".explore-v75 .living-graph-canvas",
+    geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 320, height: 844 }, touch: true, journey: "explore-graph", targetScene: "graph",
   }),
   qaCase({
     key: "observe", workspace: "observe", hash: "#observe?scene=global-relations&layer=wikilink",
@@ -278,29 +297,29 @@ export const CORE_ROUTE_CASES = Object.freeze([
     geometryGroups: GEOMETRY_GROUPS.observe, viewport: { width: 844, height: 390 }, touch: true, journey: "observe-relation",
   }),
   qaCase({
-    key: "flow", workspace: "flow", hash: "#flow?scene=routes",
+    key: "flow", workspace: "flow", hash: "#flow?scene=verified-trails",
     readySelector: ".flow-view", finalReadySelector: ".flow-view",
     geometryGroups: GEOMETRY_GROUPS.flow, viewport: { width: 390, height: 844 }, touch: true, journey: "flow-verified-or-empty",
   }),
   qaCase({
-    key: "time", workspace: "time", hash: "#time?scene=chronology",
-    readySelector: ".time-view .time-honest-empty", finalReadySelector: ".time-view .time-honest-empty",
-    geometryGroups: GEOMETRY_GROUPS.time, viewport: { width: 320, height: 844 }, touch: true, journey: "time-empty-public",
+    key: "time", workspace: "time", hash: "#time?scene=version-evolution",
+    readySelector: ".time-v76 .version-seam", finalReadySelector: ".time-v76 .version-seam",
+    geometryGroups: GEOMETRY_GROUPS.time, viewport: { width: 320, height: 844 }, touch: true, journey: "time-version-evolution",
   }),
 ]);
 
 const CI_ONLY_ROUTE_CASES = Object.freeze([
   qaCase({
-    key: "home-activity", workspace: "home", hash: "#home?scene=living-terrain",
-    readySelector: ".home-view-v74[data-scene='living-terrain']",
-    finalReadySelector: ".home-view-v74[data-scene='verified-activity']", geometryGroups: GEOMETRY_GROUPS.home,
-    viewport: { width: 1024, height: 768 }, reducedMotion: true, journey: "home-scene", targetScene: "verified-activity",
+    key: "home-movement", workspace: "home", hash: "#home?scene=core-gravity",
+    readySelector: ".home-v76[data-home-page='core-gravity']",
+    finalReadySelector: ".home-v76[data-home-page='vault-in-motion']", geometryGroups: GEOMETRY_GROUPS.home,
+    viewport: { width: 1024, height: 768 }, reducedMotion: true, journey: "home-scene", targetScene: "vault-in-motion",
   }),
   qaCase({
-    key: "home-coverage", workspace: "home", hash: "#home?scene=living-terrain",
-    readySelector: ".home-view-v74[data-scene='living-terrain']",
-    finalReadySelector: ".home-view-v74[data-scene='coverage-boundary']", geometryGroups: GEOMETRY_GROUPS.home,
-    viewport: { width: 390, height: 844 }, touch: true, journey: "home-scene", targetScene: "coverage-boundary",
+    key: "home-compass", workspace: "home", hash: "#home?scene=core-gravity",
+    readySelector: ".home-v76[data-home-page='core-gravity']",
+    finalReadySelector: ".home-v76[data-home-page='operational-compass']", geometryGroups: GEOMETRY_GROUPS.home,
+    viewport: { width: 390, height: 844 }, touch: true, journey: "home-scene", targetScene: "operational-compass",
   }),
   qaCase({
     key: "agency-control-plane", workspace: "agency", hash: "#agency?scene=roles&actor=actor%3Aatlas-builder",
@@ -308,39 +327,39 @@ const CI_ONLY_ROUTE_CASES = Object.freeze([
     geometryGroups: GEOMETRY_GROUPS.agency, viewport: { width: 1440, height: 920 }, journey: "agency-actor", actorId: "actor:control-plane",
   }),
   qaCase({
-    key: "agency-evolution", workspace: "agency", hash: "#agency?scene=system",
-    readySelector: ".agency-view[data-scene='system']", finalReadySelector: ".agency-view[data-scene='evolution'] .agency-evolution",
+    key: "agency-compass", workspace: "agency", hash: "#agency?scene=system",
+    readySelector: ".agency-view[data-scene='system']", finalReadySelector: ".agency-view[data-scene='compass'] .agency-compass",
     geometryGroups: GEOMETRY_GROUPS.agency, viewport: { width: 768, height: 1024 }, reducedMotion: true,
-    journey: "agency-scene", targetScene: "evolution",
+    journey: "agency-scene", targetScene: "compass",
   }),
   qaCase({
-    key: "explore-hubs", workspace: "explore", hash: "#explore?scene=districts",
-    readySelector: ".explore-level-columns[data-level='districts']", finalReadySelector: ".explore-level-columns[data-level='hubs']",
-    geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 1280, height: 720 }, journey: "explore-hubs",
+    key: "explore-constellations", workspace: "explore", hash: "#explore?scene=constellations",
+    readySelector: ".explore-v75-clusters", finalReadySelector: ".explore-v75-graph-panel .living-graph-canvas",
+    geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 1280, height: 720 }, journey: "explore-constellations", targetScene: "constellations",
   }),
   qaCase({
-    key: "explore-sources", workspace: "explore", hash: "#explore?scene=districts",
-    readySelector: ".explore-level-columns[data-level='districts']", finalReadySelector: ".explore-level-columns[data-level='sources']",
-    geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 768, height: 1024 }, journey: "explore-three-level",
+    key: "explore-list", workspace: "explore", hash: "#explore?scene=list",
+    readySelector: ".explore-v75-list-layout", finalReadySelector: ".explore-v75-list-layout",
+    geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 768, height: 1024 }, journey: "explore-list", targetScene: "list",
   }),
   qaCase({
-    key: "observe-hub", workspace: "observe", hash: "#observe?scene=hub-relations",
+    key: "observe-protagonist", workspace: "observe", hash: "#observe?scene=protagonist-lens",
     readySelector: ".hub-relations-surface", finalReadySelector: ".hub-relations-surface",
     geometryGroups: GEOMETRY_GROUPS.observe, viewport: { width: 1180, height: 720 }, journey: "hub-relations",
   }),
   qaCase({
-    key: "search-overlay", workspace: "search", hash: "#home?scene=living-terrain",
-    readySelector: ".home-view-v74", finalReadySelector: ".search-dialog", geometryGroups: GEOMETRY_GROUPS.search,
+    key: "search-overlay", workspace: "search", hash: "#home?scene=core-gravity",
+    readySelector: ".home-v76", finalReadySelector: ".search-dialog", geometryGroups: GEOMETRY_GROUPS.search,
     viewport: { width: 1440, height: 920 }, journey: "search-overlay",
   }),
   qaCase({
-    key: "search-escape-focus", workspace: "home", hash: "#home?scene=living-terrain",
-    readySelector: ".home-view-v74", finalReadySelector: ".home-view-v74", geometryGroups: GEOMETRY_GROUPS.home,
+    key: "search-escape-focus", workspace: "home", hash: "#home?scene=core-gravity",
+    readySelector: ".home-v76", finalReadySelector: ".home-v76", geometryGroups: GEOMETRY_GROUPS.home,
     viewport: { width: 390, height: 844 }, touch: true, journey: "search-escape-focus",
   }),
   qaCase({
-    key: "data-overlay", workspace: "explore", hash: "#explore?scene=districts",
-    readySelector: ".explore-view, .mobile-explore", finalReadySelector: ".data-tray", geometryGroups: GEOMETRY_GROUPS.dataOverlay,
+    key: "data-overlay", workspace: "explore", hash: "#explore?scene=graph",
+    readySelector: ".explore-v75", finalReadySelector: ".data-tray", geometryGroups: GEOMETRY_GROUPS.dataOverlay,
     viewport: { width: 390, height: 844 }, touch: true, journey: "data-overlay",
   }),
   qaCase({
@@ -349,24 +368,24 @@ const CI_ONLY_ROUTE_CASES = Object.freeze([
     geometryGroups: GEOMETRY_GROUPS.observe, viewport: { width: 1280, height: 720 }, journey: "malformed-recovery",
   }),
   qaCase({
-    key: "deep-link-reload", workspace: "explore", hash: "#explore?scene=districts",
-    readySelector: ".explore-view, .mobile-explore", finalReadySelector: ".explore-view, .mobile-explore",
-    geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 390, height: 844 }, touch: true, journey: "focus-reload",
+    key: "deep-link-reload", workspace: "explore", hash: "#explore?scene=graph",
+    readySelector: ".explore-v75", finalReadySelector: ".explore-v75",
+    geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 390, height: 844 }, touch: true, journey: "focus-reload", targetScene: "graph",
   }),
   qaCase({
-    key: "history-back-forward", workspace: "home", hash: "#home?scene=living-terrain",
-    readySelector: ".home-view-v74[data-scene='living-terrain']", finalReadySelector: ".home-view-v74[data-scene='knowledge-gravity']",
+    key: "history-back-forward", workspace: "home", hash: "#home?scene=core-gravity",
+    readySelector: ".home-v76[data-home-page='core-gravity']", finalReadySelector: ".home-v76[data-home-page='protagonists']",
     geometryGroups: GEOMETRY_GROUPS.home, viewport: { width: 1440, height: 920 }, journey: "back-forward",
   }),
   qaCase({
-    key: "keyboard-navigation", workspace: "observe", hash: "#explore?scene=districts",
-    readySelector: ".explore-view, .mobile-explore", finalReadySelector: ".observe-view, .mobile-observe",
+    key: "keyboard-navigation", workspace: "observe", hash: "#explore?scene=graph",
+    readySelector: ".explore-v75", finalReadySelector: ".observe-view, .mobile-observe",
     geometryGroups: GEOMETRY_GROUPS.observe, viewport: { width: 1024, height: 768 }, journey: "keyboard-workspace",
   }),
   qaCase({
-    key: "webkit-svg-focus", workspace: "explore", hash: "#explore?scene=districts",
-    readySelector: "[data-testid='city-map']", finalReadySelector: "[data-testid='city-map']", geometryGroups: GEOMETRY_GROUPS.explore,
-    viewport: { width: 1024, height: 768 }, browserName: "webkit", longTaskRequired: false, journey: "webkit-svg-focus",
+    key: "webkit-graph-focus", workspace: "explore", hash: "#explore?scene=graph",
+    readySelector: ".explore-v75 .living-graph-canvas", finalReadySelector: ".explore-v75 .living-graph-canvas", geometryGroups: GEOMETRY_GROUPS.explore,
+    viewport: { width: 1024, height: 768 }, browserName: "webkit", longTaskRequired: false, journey: "webkit-graph-focus", targetScene: "graph",
   }),
   qaCase({
     key: "agency-all-actors", workspace: "agency", hash: "#agency?scene=roles&actor=actor%3Acontrol-plane",
@@ -399,7 +418,7 @@ export function resolveQaPlan(environment = process.env) {
 
 export function requiredAtlasUrl(environment = process.env, { allowFile = false } = {}) {
   const raw = environment.ATLAS_URL?.trim();
-  if (!raw) throw new Error("ATLAS_URL is required; v7.4 QA never starts or discovers a web server");
+  if (!raw) throw new Error("ATLAS_URL is required; v7.6 QA never starts or discovers a web server");
   const parsed = new URL(raw);
   if (parsed.protocol === "file:" && allowFile) {
     if (parsed.username || parsed.password) throw new Error("ATLAS_URL must not contain credentials");
@@ -581,14 +600,14 @@ function jsonText(value) {
 
 async function ownerQaBindingForPlan(plan, environment) {
   if (plan.mode !== "local-rc") return null;
-  const expectedPath = path.join(projectDir, "artifacts", "v7-4-owner-qa", "owner-contract-qa.json");
+  const expectedPath = path.join(projectDir, "artifacts", "v7-6-owner-qa", "owner-contract-qa.json");
   const supplied = environment.ATLAS_OWNER_QA_RECEIPT?.trim();
   if (!supplied || path.resolve(supplied) !== expectedPath) {
     throw new Error("Local RC requires the exact owner-local QA receipt before browser work.");
   }
   const body = await readFile(expectedPath);
   const receipt = JSON.parse(body.toString("utf8"));
-  if (receipt.schema !== "homi.atlas_v7_4.owner_contract_qa.v1"
+  if (receipt.schema !== "homi.atlas_v7_6.owner_contract_qa.v1"
     || receipt.profile !== "owner-local"
     || receipt.verdict !== "pass"
     || receipt.ownerBytesEnteredCi !== false
@@ -598,7 +617,7 @@ async function ownerQaBindingForPlan(plan, environment) {
     throw new Error("Local RC owner-local QA receipt is incomplete or not PASS.");
   }
   const reportPath = path.resolve(projectDir, receipt.report?.path ?? "");
-  const expectedReportRoot = path.join(projectDir, "artifacts", "v7-4-owner-qa");
+  const expectedReportRoot = path.join(projectDir, "artifacts", "v7-6-owner-qa");
   if (!reportPath.startsWith(`${expectedReportRoot}${path.sep}`)) {
     throw new Error("Local RC owner QA report path escaped its evidence boundary.");
   }
@@ -760,7 +779,14 @@ async function createResourceMonitor({ local, startedAtMs, baselinePids, started
 }
 
 async function measureGeometry(page, groupSelectors, route) {
-  return page.evaluate(({ selectors, requiredSelectors, workspace, mobileNavigationRequired, mobileSiblingRequired }) => {
+  return page.evaluate(({
+    selectors,
+    requiredSelectors,
+    workspace,
+    mobileNavigationRequired,
+    mobileSiblingRequired,
+    runtimeSelectors,
+  }) => {
     const isRendered = (node) => {
       const style = getComputedStyle(node);
       const rect = node.getBoundingClientRect();
@@ -846,10 +872,10 @@ async function measureGeometry(page, groupSelectors, route) {
     }
 
     const textSelector = [
-      ".atlas-app button", ".atlas-app a", ".atlas-app label", ".atlas-app input",
-      ".atlas-app h1", ".atlas-app h2", ".atlas-app h3", ".atlas-app h4",
-      ".atlas-app p", ".atlas-app dt", ".atlas-app dd", ".atlas-app li",
-      ".atlas-app small", ".atlas-app span", ".atlas-app [role='button']", ".atlas-app svg text",
+      `${runtimeSelectors.app} button`, `${runtimeSelectors.app} a`, `${runtimeSelectors.app} label`, `${runtimeSelectors.app} input`,
+      `${runtimeSelectors.app} h1`, `${runtimeSelectors.app} h2`, `${runtimeSelectors.app} h3`, `${runtimeSelectors.app} h4`,
+      `${runtimeSelectors.app} p`, `${runtimeSelectors.app} dt`, `${runtimeSelectors.app} dd`, `${runtimeSelectors.app} li`,
+      `${runtimeSelectors.app} small`, `${runtimeSelectors.app} span`, `${runtimeSelectors.app} [role='button']`, `${runtimeSelectors.app} svg text`,
     ].join(",");
     const undersizedText = [...document.querySelectorAll(textSelector)]
       .filter(isRendered)
@@ -861,7 +887,7 @@ async function measureGeometry(page, groupSelectors, route) {
     const bodyWidth = document.body.scrollWidth;
     const rootWidth = document.documentElement.scrollWidth;
     const mobileSibling = matchMedia("(max-width: 820px), (max-width: 900px) and (max-height: 520px)").matches;
-    const headline = document.querySelector(".home-v74-copy h1");
+    const headline = document.querySelector(runtimeSelectors.homeHeadline);
     const lineCount = (() => {
       if (!headline || !isRendered(headline)) return 0;
       const tops = [];
@@ -880,18 +906,18 @@ async function measureGeometry(page, groupSelectors, route) {
       }
       return tops.length;
     })();
-    const terrain = document.querySelector(".living-terrain");
+    const terrain = document.querySelector(runtimeSelectors.homeTerrain);
     const terrainRect = terrain?.getBoundingClientRect();
-    const navigation = document.querySelector(".mobile-navigation");
+    const navigation = document.querySelector(runtimeSelectors.mobileNavigation);
     const navigationRect = navigation?.getBoundingClientRect();
     const navigationButtons = navigation ? [...navigation.querySelectorAll("button")].filter(isRendered) : [];
     const navigationMinimumTarget = navigationButtons.length > 0
       ? Math.min(...navigationButtons.map((node) => Math.min(node.getBoundingClientRect().width, node.getBoundingClientRect().height)))
       : 0;
-    const sibling = document.querySelector(".mobile-sibling");
+    const sibling = document.querySelector(runtimeSelectors.mobileSibling);
     const siblingRect = sibling?.getBoundingClientRect();
     const mobileInteractiveNodes = mobileSibling
-      ? [...document.querySelectorAll(".atlas-app button:not([disabled]), .atlas-app a[href], .atlas-app input:not([disabled]), .atlas-app select:not([disabled]), .atlas-app textarea:not([disabled]), .atlas-app [role='button']:not([aria-disabled='true'])")]
+      ? [...document.querySelectorAll(runtimeSelectors.mobileInteractive)]
         .filter(isRendered)
       : [];
     const undersizedInteractive = mobileInteractiveNodes.flatMap((node) => {
@@ -942,11 +968,19 @@ async function measureGeometry(page, groupSelectors, route) {
       },
     };
   }, {
-    selectors: groupSelectors,
-    requiredSelectors: route.geometryRequiredSelectors,
+    selectors: groupSelectors.map(aliasRuntimeSelector),
+    requiredSelectors: route.geometryRequiredSelectors.map(aliasRuntimeSelector),
     workspace: route.workspace,
     mobileNavigationRequired: route.workspace !== "search" && route.journey !== "data-overlay",
     mobileSiblingRequired: ["explore", "observe", "flow", "time"].includes(route.workspace) && route.journey !== "data-overlay",
+    runtimeSelectors: {
+      app: aliasRuntimeSelector(".atlas-app"),
+      homeHeadline: aliasRuntimeSelector(".home-v75-copy-block h1"),
+      homeTerrain: aliasRuntimeSelector(".living-graph-canvas.is-home"),
+      mobileNavigation: aliasRuntimeSelector(".mobile-navigation"),
+      mobileSibling: aliasRuntimeSelector(".mobile-sibling"),
+      mobileInteractive: aliasRuntimeSelector(".atlas-app button:not([disabled]), .atlas-app a[href], .atlas-app input:not([disabled]), .atlas-app select:not([disabled]), .atlas-app textarea:not([disabled]), .atlas-app [role='button']:not([aria-disabled='true'])"),
+    },
   });
 }
 
@@ -985,33 +1019,33 @@ export async function executeJourney(page, route) {
   const startedAt = Date.now();
   const details = { journey: route.journey };
   const homeSceneIndex = {
-    "living-terrain": 0,
-    "knowledge-gravity": 1,
-    "verified-activity": 2,
-    "coverage-boundary": 3,
+    "core-gravity": 0,
+    protagonists: 1,
+    "vault-in-motion": 2,
+    "operational-compass": 3,
   };
-  const agencySceneIndex = { system: 0, roles: 1, evolution: 2 };
+  const agencySceneIndex = { system: 0, roles: 1, compass: 2 };
 
   if (route.journey === "home-scene") {
-    await activateLocator(page, page.locator(".v74-scene-rail > button").nth(homeSceneIndex[route.targetScene]), route.touch);
-    await page.locator(`.home-view-v74[data-scene='${route.targetScene}']`).waitFor({ state: "visible" });
+    await activateLocator(page, runtimeLocator(page, ".home-v75-scenes > button").nth(homeSceneIndex[route.targetScene]), route.touch);
+    await runtimeLocator(page, `.home-v76[data-home-page='${route.targetScene}']`).waitFor({ state: "visible" });
     details.scene = route.targetScene;
   } else if (route.journey === "agency-system-roundtrip") {
-    await activateLocator(page, page.locator(".agency-scene-rail > button").nth(agencySceneIndex.roles), false);
-    await page.locator(".agency-view[data-scene='roles']").waitFor({ state: "visible" });
-    await activateLocator(page, page.locator(".agency-scene-rail > button").nth(agencySceneIndex.system), false);
-    await page.locator(".agency-view[data-scene='system']").waitFor({ state: "visible" });
+    await activateLocator(page, runtimeLocator(page, ".agency-scene-rail > button").nth(agencySceneIndex.roles), false);
+    await runtimeLocator(page, ".agency-view[data-scene='roles']").waitFor({ state: "visible" });
+    await activateLocator(page, runtimeLocator(page, ".agency-scene-rail > button").nth(agencySceneIndex.system), false);
+    await runtimeLocator(page, ".agency-view[data-scene='system']").waitFor({ state: "visible" });
     details.sceneSequence = ["roles", "system"];
   } else if (route.journey === "agency-scene") {
-    await activateLocator(page, page.locator(".agency-scene-rail > button").nth(agencySceneIndex[route.targetScene]), route.touch);
-    await page.locator(`.agency-view[data-scene='${route.targetScene}']`).waitFor({ state: "visible" });
+    await activateLocator(page, runtimeLocator(page, ".agency-scene-rail > button").nth(agencySceneIndex[route.targetScene]), route.touch);
+    await runtimeLocator(page, `.agency-view[data-scene='${route.targetScene}']`).waitFor({ state: "visible" });
     details.scene = route.targetScene;
   } else if (route.journey === "agency-actor") {
     const label = actorLabel(route.actorId);
     if (!label) throw new Error(`Unknown actor journey target: ${route.actorId}`);
-    await activateLocator(page, page.locator(".agency-actor-row:visible").filter({ hasText: label }), route.touch);
+    await activateLocator(page, runtimeLocator(page, ".agency-actor-row:visible").filter({ hasText: label }), route.touch);
     await page.waitForFunction((expectedActor) => new URLSearchParams(location.hash.split("?")[1] ?? "").get("actor") === expectedActor, route.actorId);
-    const roleTitle = page.locator("#agency-role-detail-title");
+    const roleTitle = runtimeLocator(page, "#agency-role-detail-title");
     await roleTitle.waitFor({ state: "visible" });
     if ((await roleTitle.innerText()).trim() !== label) throw new Error(`Agency actor selection did not resolve ${label}`);
     details.actorId = route.actorId;
@@ -1022,48 +1056,53 @@ export async function executeJourney(page, route) {
     for (const actorId of actorIds) {
       const label = actorLabel(actorId);
       if (!label) throw new Error(`Unknown actor journey target: ${actorId}`);
-      await activateLocator(page, page.locator(".agency-actor-row:visible").filter({ hasText: label }), false);
+      await activateLocator(page, runtimeLocator(page, ".agency-actor-row:visible").filter({ hasText: label }), false);
       await page.waitForFunction((expectedActor) => new URLSearchParams(location.hash.split("?")[1] ?? "").get("actor") === expectedActor, actorId);
-      const roleTitle = page.locator("#agency-role-detail-title");
+      const roleTitle = runtimeLocator(page, "#agency-role-detail-title");
       await roleTitle.waitFor({ state: "visible" });
       if ((await roleTitle.innerText()).trim() !== label) throw new Error(`Agency actor selection did not resolve ${label}`);
       visited.push(actorId);
     }
     details.actorIds = visited;
-  } else if (route.journey === "explore-hubs" || route.journey === "explore-three-level") {
-    const district = page.locator(".explore-level-columns > section:nth-of-type(1) .explore-node-list button:visible");
-    await activateLocator(page, district, route.touch);
-    await page.locator(".explore-level-columns[data-level='hubs']").waitFor({ state: "visible" });
-    details.levels = ["districts", "hubs"];
-    if (route.journey === "explore-three-level") {
-      const hub = page.locator(".explore-level-columns > section:nth-of-type(2) .explore-node-list button:visible");
-      await activateLocator(page, hub, route.touch);
-      await page.locator(".explore-level-columns[data-level='sources']").waitFor({ state: "visible" });
-      details.levels.push("sources");
-      details.sources = await page.locator(".explore-level-columns > section:nth-of-type(3) .explore-node-list button:visible").count();
-      details.honestEmpty = await page.locator(".explore-level-columns > section:nth-of-type(3) .explore-level-empty:visible").count() === 1;
-      if (details.sources === 0 && !details.honestEmpty) throw new Error("Explore Sources exposed neither approved sources nor its honest boundary state");
+  } else if (route.journey === "explore-graph") {
+    const graph = runtimeLocator(page, ".explore-v75 .living-graph-canvas");
+    await graph.waitFor({ state: "visible" });
+    const counts = await graph.evaluate((node) => ({
+      nodes: Number(node.getAttribute("data-node-count") ?? 0),
+      edges: Number(node.getAttribute("data-edge-count") ?? 0),
+      renderer: node.getAttribute("data-renderer"),
+    }));
+    if (counts.nodes < 1 || counts.renderer !== "canvas2d-projected-3d") {
+      throw new Error("Explore Graph did not render the v7.6 deterministic spatial field");
     }
-  } else if (route.journey === "explore-focus") {
-    const target = page.locator(".mobile-district-map button:visible, .city-district-anchor[role='button']:visible");
+    details.graph = counts;
+  } else if (route.journey === "explore-constellations") {
+    const target = runtimeLocator(page, ".explore-v75-clusters > button:visible").first();
+    await activateLocator(page, target, route.touch);
+    await runtimeLocator(page, ".explore-v75-graph-panel .living-graph-canvas").waitFor({ state: "visible" });
+    await page.waitForFunction(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("scene") === "graph"
+      && Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus")));
+    details.focus = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
+  } else if (route.journey === "explore-list") {
+    const target = runtimeLocator(page, ".graph-ranked-list > button:visible").first();
     await activateLocator(page, target, route.touch);
     await page.waitForFunction(() => Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus")));
     details.focus = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
   } else if (route.journey === "observe-relation" || route.journey === "touch-observe-relation") {
-    const target = page.locator(".mobile-ranked-list > button:visible, [data-testid='relation-matrix'] .matrix-cell[role='button']:visible");
+    const target = runtimeLocator(page, ".mobile-ranked-list > button:visible, [data-testid='relation-matrix'] .matrix-cell[role='button']:visible");
     await activateLocator(page, target, route.touch || route.journey === "touch-observe-relation");
     await page.waitForFunction(() => Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("pair")));
     details.pair = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("pair"));
   } else if (route.journey === "flow-verified-or-empty") {
-    const emptyCount = await page.locator(".flow-honest-empty:visible").count();
-    const routeCount = await page.locator(".route-rail > button:visible").count();
-    const metroCount = await page.locator("[data-testid='vault-metro']:visible").count();
+    const emptyCount = await runtimeLocator(page, ".flow-honest-empty:visible").count();
+    const routeCount = await runtimeLocator(page, ".route-rail > button:visible").count();
+    const graphCount = await runtimeLocator(page, ".flow-spatial-stage .living-graph-canvas:visible").count();
     if (emptyCount === 1) {
-      if (routeCount !== 0 || metroCount !== 0) throw new Error("Flow empty state retained clickable or drawn zero-member routes");
+      if (routeCount !== 0 || graphCount !== 0) throw new Error("Flow empty state retained clickable or drawn zero-member routes");
       details.mode = "honest-empty";
     } else {
-      if (routeCount < 1 || metroCount !== 1) throw new Error("Flow must render only verified member-bearing routes");
-      const target = page.locator(".mobile-route-switch > button:not(.is-active):visible, .route-rail > button:not(.is-active):visible");
+      if (routeCount < 1 || graphCount !== 1) throw new Error("Flow must render one factual graph for verified member-bearing routes");
+      const target = runtimeLocator(page, ".route-rail > button:not(.is-active):visible");
       if (await target.count()) {
         await activateLocator(page, target, route.touch);
         await page.waitForFunction(() => Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("route")));
@@ -1071,97 +1110,215 @@ export async function executeJourney(page, route) {
       details.mode = "verified-routes";
       details.routeCount = routeCount;
     }
-    const flowText = await page.locator(".flow-view").innerText();
+    const flowText = await runtimeLocator(page, ".flow-view").innerText();
     if (/역할 경계\s*\d+|새로 생김 집계|미확정 변화/.test(flowText)) throw new Error("Flow rendered a prohibited generated placeholder");
-  } else if (route.journey === "time-empty-public") {
-    const empty = page.locator(".time-honest-empty:visible");
-    if (await empty.count() !== 1) throw new Error("Public Time must render the honest chronology boundary");
-    if (await page.locator(".era-rail:visible, [data-testid='era-small-multiples']:visible").count() !== 0) {
-      throw new Error("Public Time empty state retained fabricated lifecycle controls");
+  } else if (route.journey === "time-version-evolution") {
+    const movementCount = await runtimeLocator(page, ".version-seam__movement:visible").count();
+    const emptyCount = await runtimeLocator(page, ".version-seam__empty:visible").count();
+    if (movementCount === 0 && emptyCount !== 1) {
+      throw new Error("Time exposed neither verified movements nor its honest no-movement boundary");
     }
-    const timeText = await page.locator(".time-view").innerText();
+    const timeText = await runtimeLocator(page, ".time-v76").innerText();
     if (/새로 생김 집계\s*\d+|미확정 변화\s*\d+|소멸 집계\s*\d+/.test(timeText)) throw new Error("Time rendered a prohibited generated placeholder");
-    details.mode = "honest-empty-not-zero";
-  } else if (route.journey === "time-era") {
-    const before = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("era"));
-    const target = page.locator(".mobile-era-scrubber > button:not(.is-active):visible, .era-rail > button:not(.is-active):visible");
-    await activateLocator(page, target, route.touch);
-    await page.waitForFunction((previous) => {
-      const current = new URLSearchParams(location.hash.split("?")[1] ?? "").get("era");
-      return Boolean(current && current !== previous);
-    }, before);
-    details.era = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("era"));
+    details.mode = movementCount > 0 ? "verified-version-movements" : "honest-empty-not-zero";
+    details.movementCount = movementCount;
   } else if (route.journey === "search-overlay") {
-    await page.locator(".search-trigger").focus();
+    await runtimeLocator(page, ".search-trigger").focus();
     await page.keyboard.press(process.platform === "darwin" ? "Meta+K" : "Control+K");
-    await page.locator(".search-dialog").waitFor({ state: "visible" });
+    await runtimeLocator(page, ".search-dialog").waitFor({ state: "visible" });
     await page.waitForFunction(() => document.activeElement?.id === "atlas-search-input");
-    await page.locator("#atlas-search-input").fill("Atlas");
+    await runtimeLocator(page, "#atlas-search-input").fill("Atlas");
     details.overlay = "search";
   } else if (route.journey === "search-escape-focus") {
-    const trigger = page.locator(".search-trigger");
+    const trigger = runtimeLocator(page, ".search-trigger");
     await trigger.focus();
     await page.keyboard.press(process.platform === "darwin" ? "Meta+K" : "Control+K");
-    await page.locator(".search-dialog").waitFor({ state: "visible" });
+    await runtimeLocator(page, ".search-dialog").waitFor({ state: "visible" });
     await page.keyboard.press("Escape");
-    await page.locator(".search-dialog").waitFor({ state: "detached" });
+    await runtimeLocator(page, ".search-dialog").waitFor({ state: "detached" });
     await page.waitForFunction(() => document.activeElement?.classList.contains("search-trigger"));
     details.focusRestored = true;
   } else if (route.journey === "data-overlay") {
-    await activateLocator(page, page.locator(".mobile-data-trigger:visible, #data-trigger:visible"), route.touch);
-    await page.locator(".data-tray").waitFor({ state: "visible" });
+    await activateLocator(page, runtimeLocator(page, ".mobile-data-trigger:visible, #data-trigger:visible"), route.touch);
+    await runtimeLocator(page, ".data-tray").waitFor({ state: "visible" });
     details.overlay = "data";
   } else if (route.journey === "malformed-recovery") {
-    await page.locator(".global-journey-fallback").waitFor({ state: "visible" });
-    await page.locator(".brand-lockup").focus();
+    await runtimeLocator(page, ".global-journey-fallback").waitFor({ state: "visible" });
+    await runtimeLocator(page, ".brand-lockup").focus();
     await page.keyboard.press("Tab");
-    details.safeWorkspace = await page.locator(".atlas-app").getAttribute("data-workspace");
+    details.safeWorkspace = await runtimeLocator(page, "[data-workspace]").getAttribute("data-workspace");
     if (details.safeWorkspace !== route.workspace) throw new Error(`Malformed URL did not recover to ${route.workspace}`);
   } else if (route.journey === "focus-reload") {
-    const target = page.locator(".mobile-district-map button:visible, .city-district-anchor[role='button']:visible");
-    await activateLocator(page, target, route.touch);
     await page.waitForFunction(() => Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus")));
     const focusBefore = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
     await page.reload({ waitUntil: "domcontentloaded" });
-    await page.locator(".explore-view, .mobile-explore").first().waitFor({ state: "visible" });
+    await runtimeLocator(page, ".explore-v75").waitFor({ state: "visible" });
     const focusAfter = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
     if (!focusBefore || focusBefore !== focusAfter) throw new Error("Focus deep link did not survive reload");
     details.focus = focusAfter;
   } else if (route.journey === "back-forward") {
-    await activateLocator(page, page.locator(".v74-scene-rail > button").nth(1), false);
-    await page.locator(".home-view-v74[data-scene='knowledge-gravity']").waitFor({ state: "visible" });
+    await activateLocator(page, runtimeLocator(page, ".home-v75-scenes > button").nth(1), false);
+    await runtimeLocator(page, ".home-v76[data-home-page='protagonists']").waitFor({ state: "visible" });
     await page.goBack({ waitUntil: "domcontentloaded" });
-    await page.locator(".home-view-v74[data-scene='living-terrain']").waitFor({ state: "visible" });
+    await runtimeLocator(page, ".home-v76[data-home-page='core-gravity']").waitFor({ state: "visible" });
     await page.goForward({ waitUntil: "domcontentloaded" });
-    await page.locator(".home-view-v74[data-scene='knowledge-gravity']").waitFor({ state: "visible" });
-    details.history = ["knowledge-gravity", "living-terrain", "knowledge-gravity"];
+    await runtimeLocator(page, ".home-v76[data-home-page='protagonists']").waitFor({ state: "visible" });
+    details.history = ["protagonists", "core-gravity", "protagonists"];
   } else if (route.journey === "keyboard-workspace") {
-    const exploreTab = page.locator("#workspace-tab-explore");
+    const exploreTab = runtimeLocator(page, "#workspace-tab-explore");
     await exploreTab.focus();
     await page.keyboard.press("ArrowRight");
-    await page.locator(".observe-view, .mobile-observe").first().waitFor({ state: "visible" });
+    await runtimeLocator(page, ".observe-view, .mobile-observe").first().waitFor({ state: "visible" });
     await page.waitForFunction(() => document.activeElement?.id === "workspace-tab-observe");
     details.keyboardDestination = "observe";
   } else if (route.journey === "hub-relations") {
-    const surface = page.locator(".hub-relations-surface");
+    const surface = runtimeLocator(page, ".hub-relations-surface");
     await surface.waitFor({ state: "visible" });
-    const neighborCount = await surface.locator(".hub-relations-grid li > button:visible").count();
-    const honestEmpty = await surface.locator(".workspace-honest-empty:visible").count();
+    const neighborCount = await surface.locator(aliasRuntimeSelector(".hub-relations-grid li > button:visible")).count();
+    const honestEmpty = await surface.locator(aliasRuntimeSelector(".workspace-honest-empty:visible")).count();
     if (neighborCount === 0 && honestEmpty !== 1) throw new Error("Hub Relations exposed neither verified neighbors nor an honest empty state");
     details.neighborCount = neighborCount;
     details.honestEmpty = honestEmpty === 1;
-  } else if (route.journey === "webkit-svg-focus") {
-    const target = page.locator("[data-testid='city-map'] .city-district-anchor[role='button']:visible").first();
+  } else if (route.journey === "webkit-graph-focus") {
+    const graph = runtimeLocator(page, "[data-renderer='canvas2d-projected-3d']").first();
+    await graph.waitFor({ state: "visible" });
+    const captureGraphState = () => graph.evaluate((node) => {
+      const rendered = (element) => {
+        const style = getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0;
+      };
+      const rounded = (value) => Math.round(value * 1000) / 1000;
+      const nodeKeys = [...node.querySelectorAll("ol[aria-label='현재 그래프 노드 목록'] button")]
+        .map((button) => button.textContent?.trim().replace(/\s+/g, " ") ?? "")
+        .sort((left, right) => left.localeCompare(right, "ko"));
+      const labelRects = [...node.querySelectorAll("button[aria-pressed]")]
+        .filter(rendered)
+        .map((button) => {
+          const rect = button.getBoundingClientRect();
+          return {
+            key: button.getAttribute("aria-label") ?? button.textContent?.trim() ?? "",
+            rect: [rounded(rect.left), rounded(rect.top), rounded(rect.width), rounded(rect.height)],
+          };
+        })
+        .sort((left, right) => left.key.localeCompare(right.key, "ko"));
+      return {
+        nodeCount: Number(node.getAttribute("data-node-count") ?? 0),
+        nodeKeys,
+        labelRects,
+        layoutFocusId: node.getAttribute("data-layout-focus-id") ?? "",
+        committedId: node.getAttribute("data-committed-id") ?? "",
+        previewId: node.getAttribute("data-preview-id") ?? "",
+        previewOverlayNodeCount: Number(node.getAttribute("data-preview-overlay-node-count") ?? 0),
+        edgeCount: Number(node.getAttribute("data-edge-count") ?? 0),
+        camera: {
+          yaw: node.getAttribute("data-camera-yaw") ?? "",
+          pitch: node.getAttribute("data-camera-pitch") ?? "",
+          zoom: node.getAttribute("data-camera-zoom") ?? "",
+        },
+        url: location.href,
+      };
+    });
+    const invariantIdentity = (snapshot) => JSON.stringify({
+      nodeCount: snapshot.nodeCount,
+      nodeKeys: snapshot.nodeKeys,
+      labelRects: snapshot.labelRects,
+      layoutFocusId: snapshot.layoutFocusId,
+      committedId: snapshot.committedId,
+      camera: snapshot.camera,
+      url: snapshot.url,
+    });
+
+    const target = graph.locator("button[aria-pressed]:visible").first();
     await target.focus();
-    if (!await target.evaluate((node) => node === document.activeElement)) throw new Error("WebKit SVG district anchor did not receive keyboard focus");
+    if (!await target.evaluate((node) => node === document.activeElement)) throw new Error("WebKit graph label did not receive keyboard focus");
     await page.keyboard.press("Enter");
-    await page.waitForFunction(() => Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus")));
+    await page.waitForFunction(() => {
+      const focusId = new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus");
+      return Boolean(focusId)
+        && document.querySelector("[data-renderer='canvas2d-projected-3d']")?.getAttribute("data-committed-id") === focusId;
+    });
+    await page.evaluate(() => {
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    });
+    await page.waitForFunction(() => document.querySelector("[data-renderer='canvas2d-projected-3d']")?.getAttribute("data-preview-id") === "");
+    await page.waitForTimeout(560);
+    await settleRenderedPage(page);
+
+    const baseline = await captureGraphState();
+    if (baseline.nodeCount !== baseline.nodeKeys.length) {
+      throw new Error(`WebKit graph base node contract drifted: ${baseline.nodeCount} rendered versus ${baseline.nodeKeys.length} accessible`);
+    }
+    if (!baseline.committedId || baseline.previewId) throw new Error("WebKit graph did not settle to a committed, preview-free baseline");
+
+    const hoverTarget = graph.locator("button[aria-pressed='false']:visible").first();
+    if (await hoverTarget.count() === 0) throw new Error("WebKit graph hover regression requires a second visible label");
+    await hoverTarget.hover();
+    await page.waitForFunction(() => Boolean(
+      document.querySelector("[data-renderer='canvas2d-projected-3d']")?.getAttribute("data-preview-id"),
+    ));
+    await settleRenderedPage(page);
+    const hoverFrameA = await captureGraphState();
+    await settleRenderedPage(page);
+    const hoverFrameB = await captureGraphState();
+
+    const baselineIdentity = invariantIdentity(baseline);
+    if (invariantIdentity(hoverFrameA) !== baselineIdentity || invariantIdentity(hoverFrameB) !== baselineIdentity) {
+      throw new Error("Transient WebKit hover changed the base node set, layout focus, committed focus, camera, URL, or label geometry");
+    }
+    if (
+      !hoverFrameA.previewId
+      || hoverFrameA.previewId !== hoverFrameB.previewId
+      || hoverFrameA.previewOverlayNodeCount !== hoverFrameB.previewOverlayNodeCount
+      || hoverFrameA.edgeCount !== hoverFrameB.edgeCount
+    ) {
+      throw new Error("Transient WebKit preview did not remain stable across animation frames");
+    }
+
+    const graphBox = await graph.boundingBox();
+    const viewport = page.viewportSize();
+    if (!graphBox || !viewport) throw new Error("WebKit graph has no viewport geometry for pointer-leave verification");
+    const outsidePoint = await graph.evaluate((node) => {
+      const rect = node.getBoundingClientRect();
+      const clamp = (value, maximum) => Math.max(1, Math.min(maximum - 2, value));
+      const candidates = [
+        { x: rect.left - 5, y: rect.top + rect.height / 2 },
+        { x: rect.right + 5, y: rect.top + rect.height / 2 },
+        { x: rect.left + rect.width / 2, y: rect.top - 5 },
+        { x: rect.left + rect.width / 2, y: rect.bottom + 5 },
+      ].map((point) => ({ x: clamp(point.x, innerWidth), y: clamp(point.y, innerHeight) }));
+      return candidates.find((point) => (
+        point.x < rect.left || point.x > rect.right || point.y < rect.top || point.y > rect.bottom
+      )) ?? null;
+    });
+    if (!outsidePoint) throw new Error("WebKit graph pointer-leave target could not be resolved outside the canvas");
+    await page.mouse.move(outsidePoint.x, outsidePoint.y);
+    await page.waitForFunction(() => document.querySelector("[data-renderer='canvas2d-projected-3d']")?.getAttribute("data-preview-id") === "");
+    await settleRenderedPage(page);
+    const afterLeave = await captureGraphState();
+    if (afterLeave.previewId || invariantIdentity(afterLeave) !== baselineIdentity) {
+      throw new Error("WebKit graph pointer leave did not clear preview and restore the committed geometry");
+    }
+
     details.focus = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
+    details.hoverStability = {
+      nodeCount: baseline.nodeCount,
+      labelCount: baseline.labelRects.length,
+      committedId: baseline.committedId,
+      layoutFocusId: baseline.layoutFocusId,
+      previewId: hoverFrameA.previewId,
+      previewFrames: 2,
+      edgeCounts: {
+        baseline: baseline.edgeCount,
+        preview: hoverFrameA.edgeCount,
+        restored: afterLeave.edgeCount,
+      },
+    };
   } else {
     throw new Error(`Unsupported QA journey: ${route.journey}`);
   }
 
-  await page.locator(route.finalReadySelector ?? route.readySelector).first().waitFor({ state: "visible" });
+  await runtimeLocator(page, route.finalReadySelector ?? route.readySelector).first().waitFor({ state: "visible" });
   await settleRenderedPage(page);
   return { pass: true, durationMs: Date.now() - startedAt, details };
 }
@@ -1170,10 +1327,10 @@ async function collectAccessibilityAndExposure(page, route) {
   const axeResult = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
-  const bodyText = await page.locator("body").innerText();
-  const bodyHtml = await page.locator("body").evaluate((node) => node.outerHTML);
-  const ariaSnapshot = await page.locator("body").ariaSnapshot();
-  const languageContract = await page.evaluate(() => {
+  const bodyText = await runtimeLocator(page, "body").innerText();
+  const bodyHtml = await runtimeLocator(page, "body").evaluate((node) => node.outerHTML);
+  const ariaSnapshot = await runtimeLocator(page, "body").ariaSnapshot();
+  const languageContract = await page.evaluate((runtimeSelectors) => {
     const normalized = (value) => value?.trim().replace(/\s+/g, " ") ?? "";
     const control = (selector, expected) => {
       const node = document.querySelector(selector);
@@ -1190,7 +1347,7 @@ async function collectAccessibilityAndExposure(page, route) {
           && accessibleLabel.toLocaleLowerCase("en").startsWith(expected.toLocaleLowerCase("en")),
       };
     };
-    const overlayLanguages = [...document.querySelectorAll(".search-dialog, .navigator-tray, .inspector-tray, .data-tray")]
+    const overlayLanguages = [...document.querySelectorAll(runtimeSelectors.overlays)]
       .filter((node) => {
         const style = getComputedStyle(node);
         const rect = node.getBoundingClientRect();
@@ -1199,8 +1356,8 @@ async function collectAccessibilityAndExposure(page, route) {
       .map((node) => ({ selector: `.${[...node.classList].join(".")}`, lang: node.getAttribute("lang") }));
     return {
       htmlLang: document.documentElement.lang,
-      commandBarLang: document.querySelector(".command-bar")?.getAttribute("lang") ?? null,
-      workspaceMainLang: document.querySelector(".workspace-main")?.getAttribute("lang") ?? null,
+      commandBarLang: document.querySelector(runtimeSelectors.commandBar)?.getAttribute("lang") ?? null,
+      workspaceMainLang: document.querySelector(runtimeSelectors.workspaceMain)?.getAttribute("lang") ?? null,
       overlayLanguages,
       chromeControls: [
         control("#workspace-tab-home", "Homi Vault Atlas"),
@@ -1209,9 +1366,14 @@ async function collectAccessibilityAndExposure(page, route) {
         control("#workspace-tab-flow", "Flow"),
         control("#workspace-tab-time", "Time"),
         control("#workspace-tab-agency", "Agency"),
-        control(".search-trigger", "Search"),
+        control(runtimeSelectors.searchTrigger, "Search"),
       ],
     };
+  }, {
+    overlays: aliasRuntimeSelector(".search-dialog, .navigator-tray, .inspector-tray, .data-tray"),
+    commandBar: aliasRuntimeSelector(".command-bar"),
+    workspaceMain: aliasRuntimeSelector(".workspace-main"),
+    searchTrigger: aliasRuntimeSelector(".search-trigger"),
   });
   const snapshot = {
     violations: axeResult.violations.map((violation) => ({
@@ -1241,7 +1403,7 @@ async function collectAccessibilityAndExposure(page, route) {
 
 async function collectLongTasks(page) {
   return page.evaluate(() => {
-    const state = (/** @type {any} */ (window)).__atlasV74QaLongTasks;
+    const state = (/** @type {any} */ (window)).__atlasV76QaLongTasks;
     if (!state?.supported) return { supported: false, thresholdMs: 50, count: 0, totalMs: 0, maximumMs: 0, entries: [] };
     const entries = state.entries.map((entry) => ({ startTime: entry.startTime, duration: entry.duration }));
     return {
@@ -1287,9 +1449,9 @@ export async function runQa(environment = process.env) {
   const plan = resolveQaPlan(environment);
   const ownerContractQa = await ownerQaBindingForPlan(plan, environment);
   const baseUrl = requiredAtlasUrl(environment, { allowFile: plan.mode === "file-smoke" });
-  const artifactDir = path.resolve(environment.ATLAS_QA_ARTIFACT_DIR?.trim() || path.join(projectDir, "artifacts", "v7-4-browser-qa"));
+  const artifactDir = path.resolve(environment.ATLAS_QA_ARTIFACT_DIR?.trim() || path.join(projectDir, "artifacts", "v7-6-browser-qa"));
   const screenshotDir = path.join(artifactDir, "screenshots");
-  const receiptPath = path.join(artifactDir, `v7-4-${plan.mode}-browser-qa.json`);
+  const receiptPath = path.join(artifactDir, `v7-6-${plan.mode}-browser-qa.json`);
   await mkdir(screenshotDir, { recursive: true });
 
   const baselineRows = await processTable();
@@ -1355,7 +1517,7 @@ export async function runQa(environment = process.env) {
           context.once("close", () => { lifecycle.contextsClosed += 1; });
           if (!route.firstEntry) {
             await context.addInitScript(() => {
-              try { window.sessionStorage.setItem("homi-atlas-v7-4-opening-seen", "1"); } catch { /* optional */ }
+              try { window.sessionStorage.setItem("homi-atlas-v7-6-entry-seen", "1"); } catch { /* optional */ }
               try { window.localStorage.setItem("homi-atlas-v7-1-guide-seen", "1"); } catch { /* optional */ }
             });
           }
@@ -1366,7 +1528,7 @@ export async function runQa(environment = process.env) {
               entries: [],
               observer: null,
             };
-            (/** @type {any} */ (window)).__atlasV74QaLongTasks = qaLongTasks;
+            (/** @type {any} */ (window)).__atlasV76QaLongTasks = qaLongTasks;
             if (!globalThis.PerformanceObserver?.supportedEntryTypes?.includes("longtask")) return;
             qaLongTasks.supported = true;
             qaLongTasks.observer = new PerformanceObserver((list) => {
@@ -1392,24 +1554,24 @@ export async function runQa(environment = process.env) {
           const targetUrl = new URL(route.hash, baseUrl).href;
           const navigationStartedAt = Date.now();
           await page.goto(targetUrl, { waitUntil: "domcontentloaded", timeout: 30_000 });
-          await page.locator(".atlas-app").waitFor({ state: "visible" });
-          await page.locator(route.readySelector).first().waitFor({ state: "visible" });
+          await runtimeLocator(page, "[data-workspace]").waitFor({ state: "visible" });
+          await runtimeLocator(page, route.readySelector).first().waitFor({ state: "visible" });
           await settleRenderedPage(page);
           const readinessMs = Date.now() - navigationStartedAt;
           let openingEvidence = null;
           if (route.firstEntry && !route.reducedMotion) {
-            const initial = await page.locator(".home-view-v74").getAttribute("data-opening");
+            const initial = await page.evaluate(() => sessionStorage.getItem("homi-atlas-v7-6-entry-seen"));
             await page.waitForTimeout(850);
-            const settled = await page.locator(".home-view-v74").getAttribute("data-opening");
+            const settled = await page.evaluate(() => sessionStorage.getItem("homi-atlas-v7-6-entry-seen"));
             await page.reload({ waitUntil: "domcontentloaded" });
-            await page.locator(route.readySelector).first().waitFor({ state: "visible" });
+            await runtimeLocator(page, route.readySelector).first().waitFor({ state: "visible" });
             await settleRenderedPage(page);
-            const revisit = await page.locator(".home-view-v74").getAttribute("data-opening");
+            const revisit = await page.evaluate(() => sessionStorage.getItem("homi-atlas-v7-6-entry-seen"));
             openingEvidence = {
               initial,
               settled,
               revisit,
-              pass: initial === "true" && settled === "false" && revisit === "false",
+              pass: initial === "1" && settled === "1" && revisit === "1",
             };
           }
           monitor.throwIfStopped();
@@ -1499,7 +1661,7 @@ export async function runQa(environment = process.env) {
     && lifecycleGate.pass
     && !monitor?.stopReason;
   const receipt = {
-    schema: V74_QA_SCHEMA,
+    schema: V76_QA_SCHEMA,
     startedAt,
     completedAt: new Date().toISOString(),
     mode: plan.mode,

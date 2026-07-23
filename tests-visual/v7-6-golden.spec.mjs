@@ -4,8 +4,8 @@ import {
   executeJourney,
   requiredAtlasUrl,
   settleRenderedPage,
-} from "../scripts/run-v7-4-qa.mjs";
-import { resolveVisualGoldenCases } from "../scripts/lib/v7-4-visual-golden.mjs";
+} from "../scripts/run-v7-6-qa.mjs";
+import { resolveVisualGoldenCases } from "../scripts/lib/v7-6-visual-golden.mjs";
 
 const baseUrl = requiredAtlasUrl(process.env);
 const goldenCases = resolveVisualGoldenCases(CI_ROUTE_CASES);
@@ -24,7 +24,7 @@ for (const route of goldenCases) {
     });
     try {
       await context.addInitScript(() => {
-        try { window.sessionStorage.setItem("homi-atlas-v7-4-opening-seen", "1"); } catch { /* optional */ }
+        try { window.sessionStorage.setItem("homi-atlas-v7-6-entry-seen", "1"); } catch { /* optional */ }
         try { window.localStorage.setItem("homi-atlas-v7-1-guide-seen", "1"); } catch { /* optional */ }
       });
       const page = await context.newPage();

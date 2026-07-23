@@ -1,5 +1,4 @@
 import {
-  ArrowDown,
   Ban,
   Box,
   CheckCircle2,
@@ -22,7 +21,6 @@ import {
   AGENCY_SCENES,
   currentAgencyScene,
   MOTION_SECONDS,
-  strongestKnowledgeRelation,
 } from "../agency/presentation";
 import { useAtlasState } from "../state";
 import type { AgencyActor, AgencyScene } from "../types";
@@ -176,60 +174,45 @@ function MobileRolePicker({ selectedActorId }: { selectedActorId: string }) {
   );
 }
 
-function EvolutionScene() {
+function CompassScene() {
   const { dispatch } = useAtlasState();
-  const core = atlasData.agency.actors.filter((actor) => actor.groupId === "agency:group:homi-core");
-  const independent = atlasData.agency.actors.filter((actor) => actor.groupId === "agency:group:independent");
-  const strongest = strongestKnowledgeRelation(atlasData);
-  const knowledgeItems = agencyKnowledgeDistricts();
+  const knowledgeById = new Map(atlasData.graph.nodes.map((node) => [node.id, node]));
   return (
-    <section className="agency-evolution" aria-label="역할 전문화 전환">
+    <section className="agency-evolution agency-compass" aria-label="운영 나침반">
       <div className="agency-principal">
         <UserRound size={22} strokeWidth={1.65} aria-hidden="true" />
-        <span><strong>Luke</strong><small>Human Owner · unchanged direction</small></span>
+        <span><strong>Luke</strong><small>Human Owner · sets direction</small></span>
       </div>
-      <div className="agency-evolution-grid">
-        <div className="agency-evolution-specialization">
-          <div className="agency-evolution-before">
-            <span>BEFORE</span>
-            <strong>HISTORICAL MODEL · NON-ACTOR</strong>
-            <p>단일 관리 세션 중심</p>
-          </div>
-          <div className="agency-evolution-transition" aria-hidden="true">
-            <ArrowDown size={22} />
-            <span>RESPONSIBILITY SPECIALIZATION</span>
-          </div>
-          <div className="agency-evolution-current">
-            <span>CURRENT · HOMI CORE</span>
-            <div>
-              {core.map((actor) => <ActorButton key={actor.id} actor={actor} selected={false} />)}
-            </div>
-          </div>
-        </div>
-        <div className="agency-evolution-independent">
-          <span>UNCHANGED BOUNDARY · INDEPENDENT PROJECT OWNERS</span>
-          <div>
-            {independent.map((actor) => <ActorButton key={actor.id} actor={actor} selected={false} />)}
-          </div>
-        </div>
+      <div className="agency-compass-grid">
+        {atlasData.meaning.operationalCompass.map((alignment) => {
+          const actorLabel = alignment.actorId === atlasData.agency.principal.id
+            ? atlasData.agency.principal.label
+            : atlasData.agency.actors.find((actor) => actor.id === alignment.actorId)?.label;
+          const domains = alignment.domainIds
+            .map((id) => knowledgeById.get(id))
+            .filter((node): node is NonNullable<typeof node> => Boolean(node));
+          return (
+            <article key={alignment.id} className={`agency-compass-row is-${alignment.kind}`}>
+              <span>{alignment.label}</span>
+              <strong>{actorLabel ?? "Operating Role"}</strong>
+              <p>{alignment.statement}</p>
+              <div>
+                {domains.map((domain) => (
+                  <button
+                    key={domain.id}
+                    type="button"
+                    style={{ color: strokeColorForDistrict(domain.label) }}
+                    onClick={() => dispatch({ type: "journey", target: agencyKnowledgeTarget(domain.id) })}
+                  >
+                    {domain.label}
+                  </button>
+                ))}
+              </div>
+            </article>
+          );
+        })}
       </div>
-      <section className="agency-knowledge-context" aria-label="전문화 전후 동일한 지식 지형 문맥">
-        <header><span>KNOWLEDGE TERRAIN · UNCHANGED CONTEXT</span><strong>{strongest ? `가장 강한 관계 ${strongest.wikilink.toLocaleString("ko-KR")}회` : "공개 집계"}</strong></header>
-        <div>
-          {knowledgeItems.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              style={{ color: strokeColorForDistrict(item.label) }}
-              aria-label={`${item.label} ${item.representedDocuments.toLocaleString("ko-KR")}개 표현 기록, Explore에서 열기`}
-              onClick={() => dispatch({ type: "journey", target: agencyKnowledgeTarget(item.id) })}
-            >
-              <b>{item.label}</b><small>{item.representedDocuments.toLocaleString("ko-KR")}개</small>
-            </button>
-          ))}
-        </div>
-      </section>
-      <p>SCHEMATIC · NOT WORKLOAD</p>
+      <p>RESPONSIBILITY ALIGNMENT · NOT COMMAND, APPROVAL OR LIVE STATUS</p>
     </section>
   );
 }
@@ -263,7 +246,7 @@ export function AgencyView() {
         key={scene}
         initial={directRolesEntry || shouldReduceMotion ? false : { x: 24, scale: 0.995 }}
         animate={{ x: 0, scale: 1 }}
-      transition={{ duration: shouldReduceMotion ? MOTION_SECONDS.fast : scene === "evolution" ? MOTION_SECONDS.emphasis : MOTION_SECONDS.scene }}
+      transition={{ duration: shouldReduceMotion ? MOTION_SECONDS.fast : scene === "compass" ? MOTION_SECONDS.emphasis : MOTION_SECONDS.scene }}
       >
         {scene === "system" && <CurrentSystem selectedActorId={null} />}
         {scene === "roles" && selectedActor && (
@@ -274,7 +257,7 @@ export function AgencyView() {
             <RoleDetail actor={selectedActor} reducedMotion={Boolean(shouldReduceMotion)} animateEntry={!directRolesEntry} />
           </div>
         )}
-        {scene === "evolution" && <EvolutionScene />}
+        {scene === "compass" && <CompassScene />}
       </m.div>
 
       <footer className="agency-snapshot-boundary">

@@ -2,20 +2,20 @@ import { createHash } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { CI_ROUTE_CASES } from "./run-v7-4-qa.mjs";
+import { CI_ROUTE_CASES } from "./run-v7-6-qa.mjs";
 import {
-  V74_INDEPENDENT_VISUAL_QA_EVIDENCE_ROOT,
-  V74_INDEPENDENT_VISUAL_QA_RECEIPT_PATH,
+  V76_INDEPENDENT_VISUAL_QA_EVIDENCE_ROOT,
+  V76_INDEPENDENT_VISUAL_QA_RECEIPT_PATH,
   hasVisualGoldenPngMagic,
   resolveVisualGoldenCases,
   validateVisualGoldenManifest,
-} from "./lib/v7-4-visual-golden.mjs";
+} from "./lib/v7-6-visual-golden.mjs";
 
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const manifestPath = path.join(projectDir, "tests-visual", "approved-baselines.json");
-const screenshotRoot = path.join(projectDir, "tests-visual", "__screenshots__", "v7-4-golden.spec.mjs");
-const independentReceiptPath = path.join(projectDir, V74_INDEPENDENT_VISUAL_QA_RECEIPT_PATH);
-const independentEvidenceRoot = path.join(projectDir, V74_INDEPENDENT_VISUAL_QA_EVIDENCE_ROOT);
+const screenshotRoot = path.join(projectDir, "tests-visual", "__screenshots__", "v7-6-golden.spec.mjs");
+const independentReceiptPath = path.join(projectDir, V76_INDEPENDENT_VISUAL_QA_RECEIPT_PATH);
+const independentEvidenceRoot = path.join(projectDir, V76_INDEPENDENT_VISUAL_QA_EVIDENCE_ROOT);
 
 function sha256(body) {
   return createHash("sha256").update(body).digest("hex");

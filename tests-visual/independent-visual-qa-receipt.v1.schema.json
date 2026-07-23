@@ -1,14 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "homi.atlas_v7_4.independent_visual_qa_receipt.v1",
-  "title": "Homi Atlas v7.4 independent visual QA receipt",
+  "$id": "homi.atlas_v7_6.independent_visual_qa_receipt.v1",
+  "title": "Homi Atlas v7.6 independent visual QA receipt",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema", "status", "releaseVersion", "reviewerSeparation", "scope", "cases", "completedAt"],
   "properties": {
-    "schema": { "const": "homi.atlas_v7_4.independent_visual_qa_receipt.v1" },
+    "schema": { "const": "homi.atlas_v7_6.independent_visual_qa_receipt.v1" },
     "status": { "enum": ["pending_independent_review", "approved_independent_visual_qa"] },
-    "releaseVersion": { "const": "7.4.0" },
+    "releaseVersion": { "const": "7.6.0" },
     "reviewerSeparation": {
       "type": "object",
       "additionalProperties": false,
