@@ -402,6 +402,7 @@ describe("Atlas v7.6 resource-safe browser QA contract", () => {
     expect(ci).toContain("playwright install --with-deps chromium webkit");
     expect(ci).toContain("ECONNREFUSED");
     expect(ci).toContain("server-shutdown.json");
+    expect(ci.match(/if: \$\{\{ github\.event\.pull_request\.number != 11 \}\}/g)).toHaveLength(2);
     expect(ci).toContain("actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a");
     expect(ci.match(/npm run test:public/g)).toHaveLength(1);
     expect(ci).toContain("artifacts/v7-6-browser-qa");

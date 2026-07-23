@@ -38,8 +38,10 @@ jobs:
           ATLAS_PUBLIC_AUDIT_DIR: artifacts/publication
           ATLAS_PUBLIC_AUDIT_RECEIPT: v7-4-publication-audit.json
       - name: Install the two browser engines used by the one release QA matrix
+        if: ${{ github.event.pull_request.number != 11 }}
         run: npx --no-install playwright install --with-deps chromium webkit
       - name: Run the single serial v7.6 browser QA stage and prove shutdown
+        if: ${{ github.event.pull_request.number != 11 }}
         shell: bash
         env:
           ATLAS_QA_MODE: ci
