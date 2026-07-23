@@ -1,5 +1,5 @@
 {
-  "schema": "homi.atlas_v7_4.visual_golden_manifest.v1",
+  "schema": "homi.atlas_v7_6.visual_golden_manifest.v1",
   "status": "incomplete_pending_iab_and_ubuntu_review",
   "environment": {
     "runner": "ubuntu-24.04",
@@ -10,21 +10,21 @@
   "reviewEvidencePath": "tests-visual/independent-visual-qa-receipt.json",
   "reviewEvidenceDigest": null,
   "cases": [
-    { "id": "home-default", "viewport": { "width": 1440, "height": 920 }, "baselinePath": "tests-visual/__screenshots__/v7-4-golden.spec.mjs/home-default-1440x920-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
-    { "id": "home-selected", "viewport": { "width": 1180, "height": 720 }, "baselinePath": "tests-visual/__screenshots__/v7-4-golden.spec.mjs/home-selected-1180x720-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
-    { "id": "home-activity", "viewport": { "width": 1024, "height": 768 }, "baselinePath": "tests-visual/__screenshots__/v7-4-golden.spec.mjs/home-activity-1024x768-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
-    { "id": "home-coverage", "viewport": { "width": 390, "height": 844 }, "baselinePath": "tests-visual/__screenshots__/v7-4-golden.spec.mjs/home-coverage-390x844-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
-    { "id": "agency-default", "viewport": { "width": 1280, "height": 720 }, "baselinePath": "tests-visual/__screenshots__/v7-4-golden.spec.mjs/agency-default-1280x720-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
-    { "id": "agency-actor", "viewport": { "width": 390, "height": 844 }, "baselinePath": "tests-visual/__screenshots__/v7-4-golden.spec.mjs/agency-actor-390x844-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
-    { "id": "agency-evolution", "viewport": { "width": 768, "height": 1024 }, "baselinePath": "tests-visual/__screenshots__/v7-4-golden.spec.mjs/agency-evolution-768x1024-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
-    { "id": "explore", "viewport": { "width": 320, "height": 844 }, "baselinePath": "tests-visual/__screenshots__/v7-4-golden.spec.mjs/explore-320x844-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
-    { "id": "explore-hubs", "viewport": { "width": 1280, "height": 720 }, "baselinePath": "tests-visual/__screenshots__/v7-4-golden.spec.mjs/explore-hubs-1280x720-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
-    { "id": "explore-sources", "viewport": { "width": 768, "height": 1024 }, "baselinePath": "tests-visual/__screenshots__/v7-4-golden.spec.mjs/explore-sources-768x1024-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
-    { "id": "observe", "viewport": { "width": 844, "height": 390 }, "baselinePath": "tests-visual/__screenshots__/v7-4-golden.spec.mjs/observe-844x390-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
-    { "id": "observe-hub", "viewport": { "width": 1180, "height": 720 }, "baselinePath": "tests-visual/__screenshots__/v7-4-golden.spec.mjs/observe-hub-1180x720-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
-    { "id": "flow", "viewport": { "width": 390, "height": 844 }, "baselinePath": "tests-visual/__screenshots__/v7-4-golden.spec.mjs/flow-390x844-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
-    { "id": "time", "viewport": { "width": 320, "height": 844 }, "baselinePath": "tests-visual/__screenshots__/v7-4-golden.spec.mjs/time-320x844-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
-    { "id": "search-overlay", "viewport": { "width": 1440, "height": 920 }, "baselinePath": "tests-visual/__screenshots__/v7-4-golden.spec.mjs/search-overlay-1440x920-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
-    { "id": "data-overlay", "viewport": { "width": 390, "height": 844 }, "baselinePath": "tests-visual/__screenshots__/v7-4-golden.spec.mjs/data-overlay-390x844-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" }
+    { "id": "home-default", "viewport": { "width": 1440, "height": 920 }, "baselinePath": "tests-visual/__screenshots__/v7-6-golden.spec.mjs/home-default-1440x920-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
+    { "id": "home-selected", "viewport": { "width": 1180, "height": 720 }, "baselinePath": "tests-visual/__screenshots__/v7-6-golden.spec.mjs/home-selected-1180x720-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
+    { "id": "home-movement", "viewport": { "width": 1024, "height": 768 }, "baselinePath": "tests-visual/__screenshots__/v7-6-golden.spec.mjs/home-movement-1024x768-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
+    { "id": "home-compass", "viewport": { "width": 390, "height": 844 }, "baselinePath": "tests-visual/__screenshots__/v7-6-golden.spec.mjs/home-compass-390x844-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
+    { "id": "agency-default", "viewport": { "width": 1280, "height": 720 }, "baselinePath": "tests-visual/__screenshots__/v7-6-golden.spec.mjs/agency-default-1280x720-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
+    { "id": "agency-actor", "viewport": { "width": 390, "height": 844 }, "baselinePath": "tests-visual/__screenshots__/v7-6-golden.spec.mjs/agency-actor-390x844-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
+    { "id": "agency-compass", "viewport": { "width": 768, "height": 1024 }, "baselinePath": "tests-visual/__screenshots__/v7-6-golden.spec.mjs/agency-compass-768x1024-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
+    { "id": "explore", "viewport": { "width": 320, "height": 844 }, "baselinePath": "tests-visual/__screenshots__/v7-6-golden.spec.mjs/explore-320x844-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
+    { "id": "explore-constellations", "viewport": { "width": 1280, "height": 720 }, "baselinePath": "tests-visual/__screenshots__/v7-6-golden.spec.mjs/explore-constellations-1280x720-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
+    { "id": "explore-list", "viewport": { "width": 768, "height": 1024 }, "baselinePath": "tests-visual/__screenshots__/v7-6-golden.spec.mjs/explore-list-768x1024-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
+    { "id": "observe", "viewport": { "width": 844, "height": 390 }, "baselinePath": "tests-visual/__screenshots__/v7-6-golden.spec.mjs/observe-844x390-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
+    { "id": "observe-protagonist", "viewport": { "width": 1180, "height": 720 }, "baselinePath": "tests-visual/__screenshots__/v7-6-golden.spec.mjs/observe-protagonist-1180x720-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
+    { "id": "flow", "viewport": { "width": 390, "height": 844 }, "baselinePath": "tests-visual/__screenshots__/v7-6-golden.spec.mjs/flow-390x844-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
+    { "id": "time", "viewport": { "width": 320, "height": 844 }, "baselinePath": "tests-visual/__screenshots__/v7-6-golden.spec.mjs/time-320x844-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
+    { "id": "search-overlay", "viewport": { "width": 1440, "height": 920 }, "baselinePath": "tests-visual/__screenshots__/v7-6-golden.spec.mjs/search-overlay-1440x920-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" },
+    { "id": "data-overlay", "viewport": { "width": 390, "height": 844 }, "baselinePath": "tests-visual/__screenshots__/v7-6-golden.spec.mjs/data-overlay-390x844-chromium-linux.png", "baselineSha256": null, "iabEvidenceSha256": null, "verdict": "pending_review" }
   ]
 }

@@ -43,7 +43,7 @@ const publicProfileReceiptPath = path.resolve(
 );
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 const compareText = (left, right) => left < right ? -1 : left > right ? 1 : 0;
-const publicPackNames = ["agency", "bootstrap", "inventory", "graph", "relation", "flow", "temporal", "entity", "health", "insight", "publication"];
+const publicPackNames = ["agency", "bootstrap", "inventory", "graph", "meaning", "relation", "flow", "temporal", "entity", "health", "insight", "publication"];
 const textExtensions = new Set([".css", ".html", ".js", ".json", ".md", ".mjs", ".svg", ".ts", ".tsx", ".txt", ".webmanifest"]);
 const trackedTextExtensions = new Set([...textExtensions, ".yml", ".yaml", ".toml"]);
 
@@ -296,6 +296,9 @@ const allowedPublicHashPaths = new Set([
   "graph.manifest.semanticDigest",
   "graph.manifest.layoutDigest",
   "graph.manifest.projectionDigest",
+  "meaning.baseline.graphSemanticDigest",
+  "meaning.current.graphSemanticDigest",
+  "meaning.manifest.projectionDigest",
   "publication.publicSnapshotDigest",
 ]);
 const visitPublicHashes = (value, currentPath) => {

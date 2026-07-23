@@ -3,7 +3,7 @@ import path from "node:path";
 import { describe, expect, test } from "vitest";
 import { auditPublicFieldContract } from "../scripts/public-field-contract.mjs";
 
-const names = ["bootstrap", "inventory", "graph", "relation", "flow", "temporal", "entity", "health", "insight", "publication"];
+const names = ["bootstrap", "inventory", "graph", "relation", "flow", "temporal", "entity", "health", "insight", "meaning", "publication"];
 const loadPacks = () => Object.fromEntries(names.map((name) => [
   name,
   JSON.parse(readFileSync(path.resolve("public-safe", "data", `${name}.json`), "utf8")),
@@ -27,5 +27,14 @@ describe("public field allowlist", () => {
     const packs = loadPacks();
     packs.graph.nodes[0].documentBody = "private body";
     expect(auditPublicFieldContract(packs)).toContainEqual({ id: "public-field-not-allowed", path: "graph.nodes[].documentBody" });
+  });
+
+  test("blocks injected meaning protagonist fields", () => {
+    const packs = loadPacks();
+    packs.meaning.protagonists[0].sourcePath = "/private/vault/path";
+    expect(auditPublicFieldContract(packs)).toContainEqual({
+      id: "public-field-not-allowed",
+      path: "meaning.protagonists[].sourcePath",
+    });
   });
 });

@@ -10,10 +10,6 @@
   --homi-amber: #e9a23d;
   --homi-amber-strong: #ffc069;
   --homi-amber-wash: #2b1d12;
-  --group-core: #101917;
-  --group-independent: #15131e;
-  --historical: #918b80;
-  --historical-wash: #16151a;
   --district-knowledge: #4fd5b9;
   --district-research: #6f91f4;
   --district-strategy: #f0a04b;
@@ -33,17 +29,14 @@
   --map-bg: #0b0a11;
   --ink-soft: var(--ink-muted);
   --ink-faint: #77717e;
-  --mint: #6acbb8;
   --mint-deep: #4fd5b9;
   --amber: #e9a23d;
-  --pulse-teal: #4fd5b9;
   --focus: var(--focus-ring);
   --proof: #ae82e3;
   --warning: #ff8b6d;
   --control-radius: 6px;
   --surface-radius: 8px;
   --shadow-tray: 0 28px 64px rgba(0, 0, 0, .34);
-  --command-height: 64px;
   --workspace-header-height: 84px;
   --font-brand: "Space Grotesk", var(--font-sans);
   --font-sans: "Pretendard Variable", Pretendard, "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -75,13 +68,18 @@ body {
 
 button,
 input {
+  background: transparent;
   color: inherit;
   font: inherit;
 }
 
 button {
   border: 0;
+  cursor: pointer;
 }
+
+button:disabled { cursor: default; }
+summary { cursor: pointer; }
 
 button:focus-visible,
 input:focus-visible,
@@ -96,17 +94,6 @@ kbd {
 }
 
 small { font-size: 12px; }
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    animation-duration: 1ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 1ms !important;
-  }
-}
 
 .sr-only {
   position: absolute;

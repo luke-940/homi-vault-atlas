@@ -4,7 +4,7 @@ import { SpatialWorkspaceFrame } from "../components/SpatialWorkspaceFrame";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { atlasData, graphNodeById } from "../data-runtime";
 import { LivingGraphCanvas } from "../graph/LivingGraphCanvas";
-import { graphNodeLabel, shortestDirectedPath } from "../graph/model";
+import { graphNodeLabel, humanReadableKnowledgeLabel, shortestDirectedPath } from "../graph/model";
 import { useAtlasState } from "../state";
 import type { Route } from "../types";
 
@@ -27,6 +27,24 @@ function routeNodeIds(route: Route) {
   return route.stations
     .map((station) => station.entityId)
     .filter((id): id is string => Boolean(id && graphNodeById.has(id)));
+}
+
+function routeDisplayLabel(route: Route) {
+  const nodeIds = routeNodeIds(route);
+  const source = nodeIds[0] ? graphNodeById.get(nodeIds[0]) : null;
+  const target = nodeIds.at(-1) ? graphNodeById.get(nodeIds.at(-1)!) : null;
+  if (source && target) return `${graphNodeLabel(source)} → ${graphNodeLabel(target)}`;
+  return humanReadableKnowledgeLabel(route.label) || "검증된 지식 경로";
+}
+
+function routeProvenanceLabel(provenance: string) {
+  if (provenance === "atlas.graph.v1") return "Atlas 방향 지식 그래프";
+  if (provenance === "resolved_wikilink_path") return "실제 문서 참조 경로";
+  return humanReadableKnowledgeLabel(provenance.replaceAll("_", " "));
+}
+
+function routeQuestionLabel(question: string) {
+  return question.replaceAll("위키링크", "문서 참조");
 }
 
 export function revealSelectedRoute(target: Pick<HTMLElement, "scrollIntoView"> | null) {
@@ -58,14 +76,14 @@ export function FlowView() {
         titleId="flow-title"
         eyebrow="FLOW · VERIFIED ROUTES"
         title="검증된 경로를 실제 지식 좌표 위에서 추적한다"
-        question="선택한 경로의 endpoint, 방향, occurrence만 남기고 다른 경로는 숨깁니다."
+        question="선택한 경로의 실제 지점, 참조 방향, 전체 참조 횟수만 남기고 다른 경로는 숨깁니다."
         answer={!route
           ? "현재 프로필에서 실제 구성원이 확인된 경로가 없습니다. 빈 상태는 활동 부재를 뜻하지 않습니다."
-          : `${route.label}은 ${routeIds.length}개 확인된 endpoint와 link occurrence ${route.weight}건을 결속합니다.`}
+          : `${routeDisplayLabel(route)}은 ${routeIds.length}개 확인된 지점과 전체 참조 ${route.weight}건을 연결합니다.`}
         keyItems={[
-          { label: "actual endpoint", className: "key-focus" },
-          { label: "directed trace", className: "key-proof" },
-          { label: "other routes hidden", className: "key-readable" },
+          { label: "실제 경로 지점", className: "key-focus" },
+          { label: "참조 방향 추적", className: "key-proof" },
+          { label: "비선택 경로 숨김", className: "key-readable" },
         ]}
       />
 
@@ -73,28 +91,28 @@ export function FlowView() {
         <div className="workspace-honest-empty flow-honest-empty" role="note">
           <ShieldCheck size={24} aria-hidden="true" />
           <h2>표시할 검증 경로가 없습니다.</h2>
-          <p>구성원이 없는 placeholder나 0개 경로는 시각화하지 않습니다.</p>
+          <p>구성원이 없는 자리표시자나 빈 경로는 시각화하지 않습니다.</p>
         </div>
       ) : (
         <>
-          <nav className="route-rail" aria-label="검증된 지식 경로 선택">
+          <nav className="scrollbar-clean spatial-editorial-index flow-route-index route-rail" aria-label="검증된 지식 경로 선택">
             {routes.map((item) => (
               <button
                 key={item.id}
                 ref={item.id === route.id ? activeRouteRef : undefined}
                 type="button"
-                className={item.id === route.id ? "is-active" : ""}
+                className={`spatial-editorial-index__item${item.id === route.id ? " is-active" : ""}`}
                 aria-pressed={item.id === route.id}
                 onClick={() => dispatch({ type: "route", routeId: item.id })}
               >
                 <i style={{ background: routeColor(item.id) }} aria-hidden="true" />
-                <span><strong>{item.label}</strong><small>{routeNodeIds(item).length} endpoint · occurrence {item.weight}</small></span>
+                <span><strong>{routeDisplayLabel(item)}</strong><small>경로 지점 {routeNodeIds(item).length}개 · 전체 참조 {item.weight}회</small></span>
               </button>
             ))}
           </nav>
 
-          <div className="flow-spatial-layout">
-            <main className="flow-spatial-stage">
+          {!state.mobileSibling && <div className="desktop-visual-surface spatial-stage-layout flow-spatial-layout">
+            <main className="spatial-stage spatial-stage--full-bleed flow-spatial-stage">
               <LivingGraphCanvas
                 graph={atlasData.graph}
                 scene="trace"
@@ -109,29 +127,31 @@ export function FlowView() {
                 onHover={(focusId) => dispatch({ type: "preview", focusId })}
               />
             </main>
-            <aside className="flow-spatial-evidence" aria-live="polite">
-              <span className="eyebrow">SELECTED VERIFIED ROUTE</span>
-              <h2>{route.label}</h2>
-              <p>{route.question}</p>
-              <dl>
-                <div><dt>Direction</dt><dd>{from && to ? `${graphNodeLabel(graphNodeById.get(from)!)} → ${graphNodeLabel(graphNodeById.get(to)!)}` : "미확인"}</dd></div>
-                <div><dt>Occurrence</dt><dd>{route.weight.toLocaleString("ko-KR")}</dd></div>
-                <div><dt>Path hops</dt><dd>{Math.max(0, path.length - 1)}</dd></div>
-                <div><dt>Provenance</dt><dd>{route.provenance}</dd></div>
+            <aside className="spatial-evidence-rail spatial-evidence-rail--typographic flow-evidence-rail flow-spatial-evidence" aria-live="polite">
+              <header className="spatial-evidence-rail__header">
+                <span className="eyebrow">SELECTED VERIFIED ROUTE</span>
+                <h2>{routeDisplayLabel(route)}</h2>
+                <p>{routeQuestionLabel(route.question)}</p>
+              </header>
+              <dl className="spatial-evidence-rail__metrics">
+                <div><dt>참조 방향</dt><dd>{from && to ? `${graphNodeLabel(graphNodeById.get(from)!)} → ${graphNodeLabel(graphNodeById.get(to)!)}` : "미확인"}</dd></div>
+                <div><dt>전체 참조 횟수</dt><dd>{route.weight.toLocaleString("ko-KR")}</dd></div>
+                <div><dt>관계 단계</dt><dd>{Math.max(0, path.length - 1)}</dd></div>
+                <div><dt>근거 유형</dt><dd>{routeProvenanceLabel(route.provenance)}</dd></div>
               </dl>
               {selectedNode && (
-                <button type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "explore", sceneId: "graph", focusId: selectedNode.id } })}>
+                <button className="spatial-evidence-rail__action" type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "explore", sceneId: "graph", focusId: selectedNode.id } })}>
                   {graphNodeLabel(selectedNode)} · Explore에서 보기 <ArrowRight size={14} aria-hidden="true" />
                 </button>
               )}
               {!publicProfile && atlasData.flow.pulse.chains.length > 0 && (
-                <p className="flow-version-proof"><CircleCheck size={15} aria-hidden="true" /> 검증된 활동 관계 {atlasData.flow.pulse.chains.length}개 · 실시간 상태 아님</p>
+                <p className="spatial-evidence-rail__proof flow-version-proof"><CircleCheck size={15} aria-hidden="true" /> 검증된 활동 관계 {atlasData.flow.pulse.chains.length}개 · 실시간 상태 아님</p>
               )}
             </aside>
-          </div>
+          </div>}
 
           <MobileFlow route={route} />
-          <div className="sr-only" aria-live="polite">선택 경로 {route.label}: {route.question}</div>
+          <div className="sr-only" aria-live="polite">선택 경로 {routeDisplayLabel(route)}: {routeQuestionLabel(route.question)}</div>
         </>
       )}
     </SpatialWorkspaceFrame>
@@ -144,8 +164,8 @@ function MobileFlow({ route }: { route: Route }) {
     <div className="mobile-sibling mobile-flow">
       <section className="mobile-selection">
         <span className="eyebrow">선택 경로</span>
-        <h2>{route.label}</h2>
-        <p>{route.question}</p>
+        <h2>{routeDisplayLabel(route)}</h2>
+        <p>{routeQuestionLabel(route.question)}</p>
       </section>
       <ol className="mobile-stepper">
         {route.stations.map((station, index) => (
@@ -158,13 +178,13 @@ function MobileFlow({ route }: { route: Route }) {
               onBlur={() => dispatch({ type: "preview", focusId: null })}
               onClick={() => station.entityId && dispatch({ type: "focus", focusId: station.entityId })}
             >
-              <strong>{station.entityId && graphNodeById.has(station.entityId) ? graphNodeLabel(graphNodeById.get(station.entityId)!) : station.label}</strong>
-              <small>{String(index + 1).padStart(2, "0")} · {station.entityId ? "실제 endpoint" : "외부 경계"}</small>
+              <strong>{station.entityId && graphNodeById.has(station.entityId) ? graphNodeLabel(graphNodeById.get(station.entityId)!) : humanReadableKnowledgeLabel(station.label)}</strong>
+              <small>{String(index + 1).padStart(2, "0")} · {station.entityId ? "실제 경로 지점" : "외부 경계"}</small>
             </button>
           </li>
         ))}
       </ol>
-      <div className="mobile-flow-proof"><CircleCheck size={18} /><span>link occurrence {route.weight}건 · 실행 상태가 아닌 검증된 지식 경로</span></div>
+      <div className="mobile-flow-proof"><CircleCheck size={18} /><span>전체 참조 {route.weight}건 · 실행 상태가 아닌 검증된 지식 경로</span></div>
       <button className="mobile-theatre-action" type="button" onClick={() => dispatch({ type: "theatre", open: true })}>경로 읽기 집중 보기</button>
     </div>
   );

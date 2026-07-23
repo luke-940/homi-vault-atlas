@@ -181,12 +181,14 @@ export function semanticEdgeCommands(options: {
 }) {
   const activeId = options.previewId ?? options.focusId;
   const activeNode = activeId ? options.graph.nodes.find((node) => node.id === activeId) ?? null : null;
-  if (options.scene === "trace") return directedPathCommands(options.graph, options.from, options.to).commands;
-  if (options.scene === "freshness") return [];
+  if (options.scene === "trace" && options.from && options.to) {
+    return directedPathCommands(options.graph, options.from, options.to).commands;
+  }
   if (activeNode?.kind === "district") {
     return focusedDistrictCorridorCommands(options.graph, options.matrix, activeNode.id);
   }
   if (activeNode) return focusedReferenceCommands(options.graph, activeNode.id).commands;
+  if (options.scene === "freshness" || options.scene === "trace") return [];
   if (options.presentation === "home") return defaultDistrictCorridorCommands(options.graph, options.matrix, 4);
   return [];
 }

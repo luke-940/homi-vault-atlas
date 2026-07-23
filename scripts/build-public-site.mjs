@@ -1,10 +1,12 @@
 import { build } from "esbuild";
+import { transform as transformCss } from "lightningcss";
 import { createHash } from "node:crypto";
 import { access, cp, mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { subsetPretendardAssets } from "./lib/pretendard-subset.mjs";
 import { validatePublicPackShapes } from "./lib/public-shape-validation.mjs";
+import { aliasRuntimeClasses } from "./lib/runtime-class-aliases.mjs";
 
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outputDir = path.resolve(process.env.ATLAS_PUBLIC_OUTPUT_DIR ?? path.join(projectDir, "dist-public"));
@@ -14,7 +16,7 @@ const defaultDataDir = process.env.GITHUB_ACTIONS === "true"
 const dataDir = path.resolve(process.env.ATLAS_PUBLIC_DATA_DIR ?? defaultDataDir);
 const stagingDir = path.join(path.dirname(outputDir), `.${path.basename(outputDir)}-staging-${process.pid}`);
 const previousDir = path.join(path.dirname(outputDir), `.${path.basename(outputDir)}-previous-${process.pid}`);
-const packNames = ["agency", "bootstrap", "inventory", "graph", "relation", "flow", "temporal", "entity", "health", "insight", "publication"];
+const packNames = ["agency", "bootstrap", "inventory", "graph", "meaning", "relation", "flow", "temporal", "entity", "health", "insight", "publication"];
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 
 function packageNameFromInput(inputPath) {
@@ -122,8 +124,21 @@ const buildResult = await build({
   define: { "process.env.NODE_ENV": '"production"' },
 });
 
-const jsBody = await readFile(path.join(stagingDir, "app.js"));
-const cssBody = await readFile(path.join(stagingDir, "app.css"));
+const rawJsBody = await readFile(path.join(stagingDir, "app.js"), "utf8");
+const rawCssBody = Buffer.from(transformCss({
+  filename: "app.css",
+  code: await readFile(path.join(stagingDir, "app.css")),
+  minify: true,
+  sourceMap: false,
+}).code).toString("utf8");
+const runtimeClasses = aliasRuntimeClasses({
+  javascript: rawJsBody,
+  stylesheet: rawCssBody,
+});
+const jsBody = Buffer.from(runtimeClasses.javascript);
+const cssBody = Buffer.from(runtimeClasses.stylesheet);
+await writeFile(path.join(stagingDir, "app.js"), jsBody);
+await writeFile(path.join(stagingDir, "app.css"), cssBody);
 const jsName = `app.${sha256(jsBody).slice(0, 16)}.js`;
 const cssName = `app.${sha256(cssBody).slice(0, 16)}.css`;
 await rename(path.join(stagingDir, "app.js"), path.join(stagingDir, jsName));
@@ -200,6 +215,7 @@ const assetManifest = {
     stylesheet: { path: cssName, bytes: cssBody.length, sha256: sha256(cssBody) },
   },
   fontSubset,
+  runtimeClassAliases: runtimeClasses.applied.length,
   unhashedJavaScriptOrCss: [],
 };
 await writeFile(path.join(stagingDir, "asset-manifest.json"), `${JSON.stringify(assetManifest, null, 2)}\n`, "utf8");

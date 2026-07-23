@@ -1,8 +1,8 @@
 {
   "schema": "atlas.agency.v1",
-  "generatedAt": "2026-07-16T11:43:38.408Z",
+  "generatedAt": "2026-07-23T09:26:27.311Z",
   "snapshot": {
-    "asOfDate": "2026-07-16",
+    "asOfDate": "2026-07-23",
     "status": "current_at_release_capture",
     "live": false,
     "caveat": "검증된 버전 스냅샷이며 실시간 작업 상태가 아닙니다."
@@ -39,19 +39,19 @@
       "id": "actor:control-plane",
       "label": "Control Plane",
       "groupId": "agency:group:homi-core",
-      "purpose": "Homi 전역의 순서, 소유 경계, 검증 일관성을 조정한다.",
+      "purpose": "Homi 전역의 소유 경계, 검증 일관성, 충돌 가능성을 관찰한다.",
       "ownedSurfaceId": "surface:homi-control-plane",
-      "publicOutput": "검증 가능한 제어면 경계",
+      "publicOutput": "일관된 제어면 경계와 관찰 결과",
       "proof": "경계와 검증 결과의 일치",
-      "stopBoundary": "Atlas와 독립 프로젝트 owner를 지휘하거나 승인하지 않는다."
+      "stopBoundary": "다른 owner의 의미 판단·제품·릴리스를 지휘하거나 승인하지 않는다."
     },
     {
       "id": "actor:daily-runner",
       "label": "Daily Runner",
       "groupId": "agency:group:homi-core",
-      "purpose": "반복되는 Daily와 Weekly 지식 회로를 책임진다.",
+      "purpose": "MOC·Signals·Insights·Paper Atlas로 증거가 순환하는 반복 지식 회로를 책임진다.",
       "ownedSurfaceId": "surface:daily-weekly-intelligence",
-      "publicOutput": "정제된 반복 지식 흐름",
+      "publicOutput": "정제되어 commons로 순환한 지식",
       "proof": "입력, 변환, 전파 경계의 검증",
       "stopBoundary": "다른 책임 주체의 제품과 공식 지식 표면을 수정하지 않는다."
     },
@@ -59,10 +59,10 @@
       "id": "actor:atlas-builder",
       "label": "Atlas Builder",
       "groupId": "agency:group:homi-core",
-      "purpose": "Atlas 제품, 공개 경계, QA와 릴리스를 책임진다.",
+      "purpose": "Vault의 전체 지형과 흐름을 이해하고 사람이 읽을 수 있는 Atlas로 번역한다.",
       "ownedSurfaceId": "surface:atlas-product-release",
-      "publicOutput": "Homi Vault Atlas",
-      "proof": "데이터, 시각, 발행 결과의 검증",
+      "publicOutput": "Homi Vault Atlas · human-readable knowledge diplomacy",
+      "proof": "화면의 의미 주장과 실제 Vault 증거의 일치",
       "stopBoundary": "Luke Vault와 다른 책임 주체의 공식 지식 표면에는 쓰지 않는다."
     },
     {
@@ -286,6 +286,6 @@
     ],
     "evidenceStatus": "verified_operating_model"
   },
-  "evidenceBoundary": "공개 Agency 투영은 기준일에 검증된 역할, 소유 표면, 결과와 증거 반환 구조만 설명합니다. 실시간 운영 정보는 제공하지 않습니다.",
-  "projectionDigest": "f247521c5b8b77a666b0481ad5c0b6dc2db9f563841d7686a4463311b6ae75c7"
+  "evidenceBoundary": "검증된 버전 스냅샷의 역할·소유·증거 반환만 표현하며 command·approval·실시간 상태를 암시하지 않는다.",
+  "projectionDigest": "5f83a023377b70fd87e06c3e9474b63a46d642997e760e44ae3ac2dbc132390c"
 }

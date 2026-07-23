@@ -27,7 +27,7 @@ import {
 } from "../src/graph/semantic-edge-model";
 
 const publicPackNames = [
-  "agency", "bootstrap", "inventory", "graph", "relation", "flow",
+  "agency", "bootstrap", "inventory", "graph", "meaning", "relation", "flow",
   "temporal", "entity", "health", "insight", "publication",
 ] as const;
 
@@ -126,7 +126,7 @@ describe("Atlas v7.5 graph and dual-profile boundary", () => {
     expect(focused.commands.length).toBeLessThanOrEqual(12);
     expect(focused.commands.every((command) => command.semanticKind === "exact_reference"
       && (command.sourceId === focus.id || command.targetId === focus.id))).toBe(true);
-    expect(semanticEdgeCommands({
+    const freshnessFocus = semanticEdgeCommands({
       graph,
       matrix: relation.matrix,
       scene: "freshness",
@@ -135,7 +135,10 @@ describe("Atlas v7.5 graph and dual-profile boundary", () => {
       from: null,
       to: null,
       presentation: "home",
-    })).toEqual([]);
+    });
+    expect(freshnessFocus).toEqual(focused.commands);
+    expect(freshnessFocus.every((command) => command.semanticKind === "exact_reference"
+      && (command.sourceId === focus.id || command.targetId === focus.id))).toBe(true);
   });
 
   test("keeps preview transient and path or isolated evidence exact", () => {
@@ -335,7 +338,7 @@ describe("Atlas v7.5 graph and dual-profile boundary", () => {
 
   test("withholds project-specific counts and stages from public surfaces", () => {
     const packs = readPackSet(path.resolve("public-safe", "data"), publicPackNames);
-    expect(collectPublicProjectCountDisclosureFailures(packs)).toEqual([]);
+    expect(collectPublicProjectCountDisclosureFailures(packs as never)).toEqual([]);
     expect(packs.inventory.coverage.filter((row: { label: string }) => ["Rocket", "Groot", "Intelligence Layer"].includes(row.label)))
       .toHaveLength(0);
     expect(packs.inventory.coverage.filter((row: { label: string }) => row.label === "Independent Projects"))
@@ -344,7 +347,7 @@ describe("Atlas v7.5 graph and dual-profile boundary", () => {
 
     const injected = structuredClone(packs);
     injected.inventory.coverage.push({ id: "coverage:forbidden", label: "Rocket", physical: 1, named: 0, aggregate: 1, excluded: 0 });
-    expect(() => validateAtlasPacksAtBoundary(injected)).toThrow(/프로젝트 수 비공개 계약/i);
+    expect(() => validateAtlasPacksAtBoundary(injected as never)).toThrow(/프로젝트 수 비공개 계약/i);
   });
 
   test.each([...publicPackNames])("binds %s JavaScript to exact JSON bytes", (name) => {

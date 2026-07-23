@@ -1,10 +1,12 @@
 import { build } from "esbuild";
+import { transform as transformCss } from "lightningcss";
 import { createHash } from "node:crypto";
 import { cp, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { subsetPretendardAssets } from "./lib/pretendard-subset.mjs";
 import { validatePublicPackShapes } from "./lib/public-shape-validation.mjs";
+import { aliasRuntimeClasses } from "./lib/runtime-class-aliases.mjs";
 
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const generatedRoot = path.join(projectDir, ".generated");
@@ -12,7 +14,7 @@ const dataDir = path.join(generatedRoot, "owner", "data");
 const outputDir = path.join(generatedRoot, "owner-site");
 const stagingDir = path.join(generatedRoot, `.owner-site-staging-${process.pid}`);
 const packNames = [
-  "agency", "bootstrap", "inventory", "graph", "relation", "flow",
+  "agency", "bootstrap", "inventory", "graph", "meaning", "relation", "flow",
   "temporal", "entity", "health", "insight", "publication", "activity",
 ];
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
@@ -53,8 +55,21 @@ const buildResult = await build({
   loader: { ".svg": "dataurl" },
   define: { "process.env.NODE_ENV": '"production"' },
 });
-const jsBody = await readFile(path.join(stagingDir, "app.js"));
-const cssBody = await readFile(path.join(stagingDir, "app.css"));
+const rawJsBody = await readFile(path.join(stagingDir, "app.js"), "utf8");
+const rawCssBody = Buffer.from(transformCss({
+  filename: "app.css",
+  code: await readFile(path.join(stagingDir, "app.css")),
+  minify: true,
+  sourceMap: false,
+}).code).toString("utf8");
+const runtimeClasses = aliasRuntimeClasses({
+  javascript: rawJsBody,
+  stylesheet: rawCssBody,
+});
+const jsBody = Buffer.from(runtimeClasses.javascript);
+const cssBody = Buffer.from(runtimeClasses.stylesheet);
+await writeFile(path.join(stagingDir, "app.js"), jsBody);
+await writeFile(path.join(stagingDir, "app.css"), cssBody);
 const jsName = `app.${sha256(jsBody).slice(0, 16)}.js`;
 const cssName = `app.${sha256(cssBody).slice(0, 16)}.css`;
 await rename(path.join(stagingDir, "app.js"), path.join(stagingDir, jsName));
@@ -105,6 +120,7 @@ const receipt = {
   graphEdges: packs.graph.edges.length,
   verifiedFlowRoutes: packs.flow.routes.length,
   fontSubset,
+  runtimeClassAliases: runtimeClasses.applied.length,
   esbuildInputs: Object.keys(buildResult.metafile.inputs).length,
 };
 await writeFile(path.join(stagingDir, "owner-build-receipt.json"), `${JSON.stringify(receipt, null, 2)}\n`, "utf8");

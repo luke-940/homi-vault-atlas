@@ -1,10 +1,12 @@
-import { ArrowRight, CircleDot, Grid3X3, Link2, Route, ShieldCheck, Waypoints } from "lucide-react";
+import { ArrowRight, Grid3X3, Link2, Route, ShieldCheck, Waypoints } from "lucide-react";
 import { interpolateRgbBasis } from "d3-interpolate";
 import { scaleBand, scaleSequential } from "d3-scale";
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { SpatialWorkspaceFrame } from "../components/SpatialWorkspaceFrame";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { atlasData, entityById, graphNodeById } from "../data-runtime";
+import { LivingGraphCanvas } from "../graph/LivingGraphCanvas";
+import { graphNodeLabel } from "../graph/model";
 import { useElementSize } from "../hooks/useElementSize";
 import {
   dominantRelationDirection,
@@ -335,11 +337,7 @@ export function ObserveView() {
             : relationAnswer(strongestPair, state.relationLayer, null, false)}
         keyItems={availableLayerItems.map((item) => ({ label: item.label, className: `key-${item.id}` }))}
         controls={
-          availableLayerItems.length <= 1 ? (() => {
-            const item = availableLayerItems[0];
-            const Icon = item.icon;
-            return <div className="relation-layer-static" aria-label={`관계층: ${item.label}`}><Icon size={16} aria-hidden="true" /><span>{item.label}</span></div>;
-          })() : <div className="view-switch relation-layer-switch" role="tablist" aria-label="관계층">
+          availableLayerItems.length <= 1 ? null : <div className="view-switch relation-layer-switch" role="tablist" aria-label="관계층">
             {availableLayerItems.map((item, index) => {
               const Icon = item.icon;
               return (
@@ -362,7 +360,7 @@ export function ObserveView() {
           </div>
         }
       />
-      {state.sceneId === "hub-relations" ? <HubRelations /> : (
+      {state.sceneId === "protagonist-lens" ? <HubRelations /> : (
         <div
           className="desktop-visual-surface observation-surface"
           id="observe-relation-panel"
@@ -375,7 +373,7 @@ export function ObserveView() {
               <div><span className="eyebrow">확인된 관계</span><h2>구역 간 관계표</h2></div>
               <span className="panel-readout">{relationCoverageReadout(state.relationLayer)}</span>
             </div>
-            <RelationMatrix onPreviewPair={setPreviewPairId} />
+            <RelationMatrix contextPair={displayPair} onPreviewPair={setPreviewPairId} />
           </section>
           <section className="chord-panel pair-lens-panel" aria-label="선택한 방향 관계쌍">
             <div className="panel-title-row">
@@ -403,7 +401,7 @@ function HubRelations() {
       .map((edge) => {
         const outgoing = edge.source === selectedNode.id;
         const target = graphNodeById.get(outgoing ? edge.target : edge.source);
-        return target ? { id: target.id, label: target.label, direction: outgoing ? "outgoing" : "incoming", weight: edge.occurrenceCount } : null;
+        return target ? { id: target.id, label: graphNodeLabel(target), direction: outgoing ? "outgoing" : "incoming", weight: edge.occurrenceCount } : null;
       })
       .filter((neighbor): neighbor is NonNullable<typeof neighbor> => Boolean(neighbor))
     : [];
@@ -417,24 +415,41 @@ function HubRelations() {
     .sort((a, b) => b.weight - a.weight || a.id.localeCompare(b.id))
     .slice(0, 14);
   const max = Math.max(1, ...neighbors.map((neighbor) => neighbor.weight));
-  const label = selectedNode?.label ?? entity?.displayLabel ?? "선택된 허브 없음";
+  const label = selectedNode ? graphNodeLabel(selectedNode) : entity?.displayLabel ?? "선택된 허브 없음";
   const district = selectedNode ? graphNodeById.get(selectedNode.districtId)?.label : entity?.district;
   return (
     <section className="hub-relations-surface" id="observe-relation-panel" aria-labelledby="observe-title">
       <header>
-        <div><span className="eyebrow" lang="en">Hub Relations</span><h2>{label}</h2></div>
+        <div><span className="eyebrow" lang="en">Protagonist Lens</span><h2>{selectedNode ? graphNodeLabel(selectedNode) : label}</h2></div>
         <div style={{ display: "grid", justifyItems: "end", gap: 7 }}>
-          <p>{selectedNode ? `${district ?? "지식 구역"} · 실제 방향 wikilink 기준 ego 관계` : entity ? `${entity.district} · ${layerLabel(state.relationLayer)} 기준 ego 관계` : "허브를 선택하면 실제 이웃 관계를 표시합니다."}</p>
+          <p>{selectedNode ? `${district ?? "지식 구역"} · 실제 방향 문서 참조를 기준으로 한 선택 항목 중심 관계` : entity ? `${entity.district} · ${layerLabel(state.relationLayer)} 기준 이웃 관계` : "허브를 선택하면 실제 이웃 관계를 표시합니다."}</p>
           {selectedNode && <div className="view-switch"><button type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "explore", sceneId: "graph", focusId: selectedNode.id } })}>Explore에서 위치 보기 <ArrowRight size={14} aria-hidden="true" /></button></div>}
         </div>
       </header>
       {(selectedNode || entity) && neighbors.length ? (
         <div className="hub-relations-grid">
-          <div className="hub-ego-node">
-            <CircleDot size={22} aria-hidden="true" />
-            <strong>{label}</strong>
-            <span>{district}</span>
-          </div>
+          {selectedNode ? (
+            <div className="hub-ego-stage" aria-label={`${label} 실제 방향 관계 그래프`}>
+              <LivingGraphCanvas
+                graph={atlasData.graph}
+                scene="trace"
+                focusId={selectedNode.id}
+                previewId={state.previewId}
+                from={null}
+                to={null}
+                mobile={state.mobileSibling}
+                reducedMotion={state.reducedMotion}
+                presentation="workspace"
+                onSelect={(focusId) => dispatch({ type: "focus", focusId })}
+                onHover={(focusId) => dispatch({ type: "preview", focusId })}
+              />
+            </div>
+          ) : (
+            <div className="hub-ego-node">
+              <strong>{label}</strong>
+              <span>{district}</span>
+            </div>
+          )}
           <ol>
             {neighbors.map((neighbor) => {
               const target = graphNodeById.get(neighbor.id) ?? entityById.get(neighbor.id);
@@ -485,7 +500,13 @@ function directionFor(cell: MatrixCell | undefined, source: string, target: stri
   return source === cell.source && target === cell.target ? "forward" : "reverse";
 }
 
-function RelationMatrix({ onPreviewPair }: { onPreviewPair: (pairId: string | null) => void }) {
+function RelationMatrix({
+  contextPair,
+  onPreviewPair,
+}: {
+  contextPair?: MatrixCell;
+  onPreviewPair: (pairId: string | null) => void;
+}) {
   const { state, dispatch } = useAtlasState();
   const mobileSibling = state.mobileSibling && !state.theatre;
   const { ref, width, height } = useElementSize<HTMLDivElement>();
@@ -534,6 +555,15 @@ function RelationMatrix({ onPreviewPair }: { onPreviewPair: (pairId: string | nu
   );
   const renderWidth = Math.max(width, margin.left + margin.right + minimumPlotExtent);
   const renderHeight = Math.max(height, margin.top + margin.bottom + minimumPlotExtent);
+  const focusedGraphNode = graphNodeById.get(state.previewId ?? state.focusId ?? "");
+  const focusedDistrict = focusedGraphNode?.kind === "district"
+    ? focusedGraphNode.label
+    : entityById.get(state.focusId ?? "")?.district;
+  const contextDistricts = new Set([
+    contextPair?.source,
+    contextPair?.target,
+    focusedDistrict,
+  ].filter((district): district is string => Boolean(district)));
   const x = scaleBand<string>()
     .domain(order)
     .range([margin.left, Math.max(margin.left + 1, renderWidth - margin.right)])
@@ -575,8 +605,8 @@ function RelationMatrix({ onPreviewPair }: { onPreviewPair: (pairId: string | nu
         >
           {order.map((district) => (
             <g key={`labels-${district}`}>
-              <text className="matrix-row-label" x={margin.left - 10} y={(y(district) ?? 0) + (y.bandwidth() / 2) + 4} textAnchor="end">{shortDistrictLabel(district)}</text>
-              <text className="matrix-column-label" transform={`translate(${(x(district) ?? 0) + x.bandwidth() / 2},${margin.top - 10}) rotate(-48)`} textAnchor="start">{shortDistrictLabel(district)}</text>
+              <text className={`matrix-row-label${contextDistricts.has(district) ? " is-context" : ""}`} x={margin.left - 10} y={(y(district) ?? 0) + (y.bandwidth() / 2) + 4} textAnchor="end">{shortDistrictLabel(district)}</text>
+              <text className={`matrix-column-label${contextDistricts.has(district) ? " is-context" : ""}`} transform={`translate(${(x(district) ?? 0) + x.bandwidth() / 2},${margin.top - 10}) rotate(-48)`} textAnchor="start">{shortDistrictLabel(district)}</text>
             </g>
           ))}
           {order.flatMap((source, row) =>
@@ -588,8 +618,7 @@ function RelationMatrix({ onPreviewPair }: { onPreviewPair: (pairId: string | nu
             const selected = cell?.id === state.relationPairId && (
               !isDirectedRelationLayer(state.relationLayer) || state.relationDirection === direction
             );
-            const focusedDistrict = entityById.get(state.focusId ?? "")?.district;
-            const focused = source === focusedDistrict || target === focusedDistrict;
+            const focused = contextDistricts.has(source) || contextDistricts.has(target);
             const markInteractive = Boolean(navigationEntry) && !mobileSibling;
             const highContrast = value / max >= 0.48;
             return (
@@ -709,10 +738,10 @@ function DirectionalPairLens({ pair }: { pair?: MatrixCell }) {
         {pair && counts.forward > 0 && <path d={forwardPath} fill="none" stroke="#ffc069" strokeWidth={forwardWidth} strokeOpacity=".86" strokeLinecap="round" markerEnd="url(#pair-lens-arrow-forward)" />}
         {pair && counts.reverse > 0 && <path d={reversePath} fill="none" stroke="#8fc6ff" strokeWidth={reverseWidth} strokeOpacity=".72" strokeLinecap="round" markerEnd="url(#pair-lens-arrow-reverse)" />}
         {pair && <>
-          <circle cx={sourceX} cy={centerY} r="24" fill="#100e12" stroke={colorForDistrict(pair.source)} strokeWidth="4" />
-          <circle cx={targetX} cy={centerY} r="24" fill="#100e12" stroke={colorForDistrict(pair.target)} strokeWidth="4" />
-          <circle cx={sourceX} cy={centerY} r="5" fill={colorForDistrict(pair.source)} />
-          <circle cx={targetX} cy={centerY} r="5" fill={colorForDistrict(pair.target)} />
+          <circle className="pair-lens-node is-source" cx={sourceX} cy={centerY} r="24" fill="#100e12" stroke={colorForDistrict(pair.source)} strokeWidth="4" />
+          <circle className="pair-lens-node is-target" cx={targetX} cy={centerY} r="24" fill="#100e12" stroke={colorForDistrict(pair.target)} strokeWidth="4" />
+          <circle className="pair-lens-core" cx={sourceX} cy={centerY} r="5" fill={colorForDistrict(pair.source)} />
+          <circle className="pair-lens-core" cx={targetX} cy={centerY} r="5" fill={colorForDistrict(pair.target)} />
           <text x={sourceX} y={centerY + 48} textAnchor="middle" className="chord-label">{shortDistrictLabel(pair.source)}</text>
           <text x={targetX} y={centerY + 48} textAnchor="middle" className="chord-label">{shortDistrictLabel(pair.target)}</text>
           <text x={width / 2} y={centerY - arcHeight - 12} textAnchor="middle" className="pair-lens-count">{counts.forward} →</text>

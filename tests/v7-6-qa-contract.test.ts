@@ -16,11 +16,11 @@ import {
   parseThermalPressure,
   requiredAtlasUrl,
   resolveQaPlan,
-} from "../scripts/run-v7-4-qa.mjs";
+} from "../scripts/run-v7-6-qa.mjs";
 
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-describe("Atlas v7.4 resource-safe browser QA contract", () => {
+describe("Atlas v7.6 resource-safe browser QA contract", () => {
   it("uses the exact eight representative routes once in default dev mode", () => {
     const plan = resolveQaPlan({});
 
@@ -74,13 +74,13 @@ describe("Atlas v7.4 resource-safe browser QA contract", () => {
       "observe",
       "flow",
       "time",
-      "home-activity",
-      "home-coverage",
+      "home-movement",
+      "home-compass",
       "agency-control-plane",
-      "agency-evolution",
-      "explore-hubs",
-      "explore-sources",
-      "observe-hub",
+      "agency-compass",
+      "explore-constellations",
+      "explore-list",
+      "observe-protagonist",
       "search-overlay",
       "search-escape-focus",
       "data-overlay",
@@ -88,7 +88,7 @@ describe("Atlas v7.4 resource-safe browser QA contract", () => {
       "deep-link-reload",
       "history-back-forward",
       "keyboard-navigation",
-      "webkit-svg-focus",
+      "webkit-graph-focus",
       "agency-all-actors",
     ]);
     expect(new Set(CI_ROUTE_CASES.map((route) => route.hash)).size).toBeGreaterThanOrEqual(10);
@@ -106,10 +106,10 @@ describe("Atlas v7.4 resource-safe browser QA contract", () => {
     const journeys = new Set(CI_ROUTE_CASES.map((route) => route.journey));
 
     expect(homeScenes).toEqual(new Set([
-      "living-terrain",
-      "knowledge-gravity",
-      "verified-activity",
-      "coverage-boundary",
+      "core-gravity",
+      "protagonists",
+      "vault-in-motion",
+      "operational-compass",
     ]));
     expect(actorIds).toEqual(new Set([
       "actor:control-plane",
@@ -129,11 +129,13 @@ describe("Atlas v7.4 resource-safe browser QA contract", () => {
       "focus-reload",
       "back-forward",
       "keyboard-workspace",
-      "explore-three-level",
+      "explore-graph",
+      "explore-constellations",
+      "explore-list",
       "hub-relations",
       "flow-verified-or-empty",
-      "time-empty-public",
-      "webkit-svg-focus",
+      "time-version-evolution",
+      "webkit-graph-focus",
       "agency-actor-cycle",
     ]) expect(journeys.has(journey)).toBe(true);
     expect(CI_ROUTE_CASES.some((route) => route.firstEntry)).toBe(true);
@@ -159,11 +161,11 @@ describe("Atlas v7.4 resource-safe browser QA contract", () => {
 
   it("binds every route to explicit rendered-selector applicability instead of a non-empty aggregate", () => {
     for (const route of CI_ROUTE_CASES) {
-      expect(route.geometryRequiredSelectors.length, route.id).toBeGreaterThan(0);
+      expect(route.geometryRequiredSelectors?.length ?? 0, route.id).toBeGreaterThan(0);
     }
-    expect(CORE_ROUTE_CASES[0].geometryRequiredSelectors).toContain(".home-v74-copy h1");
-    expect(CORE_ROUTE_CASES[0].geometryRequiredSelectors).toContain(".living-terrain");
-    expect(CORE_ROUTE_CASES[0].geometryRequiredSelectors).toContain(".provenance-groups > div");
+    expect(CORE_ROUTE_CASES[0].geometryRequiredSelectors).toContain(".home-v75-copy-block h1");
+    expect(CORE_ROUTE_CASES[0].geometryRequiredSelectors).toContain(".living-graph-canvas.is-home");
+    expect(CORE_ROUTE_CASES[0].geometryRequiredSelectors).toContain(".home-v75-boundary");
     expect(CORE_ROUTE_CASES.find((route) => route.id === "observe")?.geometryRequiredSelectors)
       .toContain(".mobile-relation-preview");
   });
@@ -335,10 +337,10 @@ describe("Atlas v7.4 resource-safe browser QA contract", () => {
   });
 
   it("keeps the resource harness server-free and delegates pixel goldens to the CI-only Playwright suite", async () => {
-    const source = await readFile(path.join(projectDir, "scripts", "run-v7-4-qa.mjs"), "utf8");
-    const visualSpec = await readFile(path.join(projectDir, "tests-visual", "v7-4-golden.spec.mjs"), "utf8");
+    const source = await readFile(path.join(projectDir, "scripts", "run-v7-6-qa.mjs"), "utf8");
+    const visualSpec = await readFile(path.join(projectDir, "tests-visual", "v7-6-golden.spec.mjs"), "utf8");
     const visualConfig = await readFile(path.join(projectDir, "playwright.visual.config.mjs"), "utf8");
-    const visualVerifier = await readFile(path.join(projectDir, "scripts", "verify-v7-4-visual-golden.mjs"), "utf8");
+    const visualVerifier = await readFile(path.join(projectDir, "scripts", "verify-v7-6-visual-golden.mjs"), "utf8");
     const packageJson = JSON.parse(await readFile(path.join(projectDir, "package.json"), "utf8"));
 
     expect(source).not.toMatch(/createServer\s*\(/);
@@ -360,9 +362,9 @@ describe("Atlas v7.4 resource-safe browser QA contract", () => {
     expect(source).toContain('control("#workspace-tab-agency", "Agency")');
     expect(source).toContain('comparisonScope: "global-cross-selector"');
     expect(source).toContain('applicability: requiredSelectorSet.has(selector) ? "required" : "contextual"');
-    expect(source).toContain('document.querySelector(".home-v74-copy h1")');
-    expect(source).toContain('document.querySelector(".living-terrain")');
-    expect(source).not.toContain('.provenance-groups > section');
+    expect(source).toContain('document.querySelector(".home-v75-copy-block h1")');
+    expect(source).toContain('document.querySelector(".living-graph-canvas.is-home")');
+    expect(source).not.toContain(".home-view-v74");
     expect(source).toContain('".atlas-app small", ".atlas-app span"');
     expect(source).toContain("mobile-interactive-target-under-44px");
     expect(source).toContain('comparison: "evidence-only-no-golden-baseline"');
@@ -375,15 +377,15 @@ describe("Atlas v7.4 resource-safe browser QA contract", () => {
     expect(visualConfig).toContain('maxDiffPixelRatio: 0.0005');
     expect(visualConfig).not.toMatch(/mask\s*:/);
     expect(visualVerifier).toContain("blocked before browser start");
-    expect(visualVerifier).toContain("V74_INDEPENDENT_VISUAL_QA_RECEIPT_PATH");
+    expect(visualVerifier).toContain("V76_INDEPENDENT_VISUAL_QA_RECEIPT_PATH");
     expect(source).toContain('journey: "flow-verified-or-empty"');
-    expect(source).toContain('journey: "time-empty-public"');
+    expect(source).toContain('journey: "time-version-evolution"');
     expect(source).toContain('browserName: "webkit"');
     expect(packageJson.scripts.test).toBe("npm run test:public");
     expect(packageJson.scripts["test:public"]).toContain("ATLAS_TEST_PROFILE=public-ci");
     expect(packageJson.scripts["test:owner"]).toContain("ATLAS_TEST_PROFILE=owner-local");
-    expect(packageJson.scripts["qa:local"]).toContain("ATLAS_OWNER_QA_RECEIPT=artifacts/v7-4-owner-qa/owner-contract-qa.json");
-    expect(packageJson.scripts["qa:ci"]).toBe("ATLAS_QA_MODE=ci node scripts/run-v7-4-qa.mjs");
+    expect(packageJson.scripts["qa:local"]).toContain("ATLAS_OWNER_QA_RECEIPT=artifacts/v7-6-owner-qa/owner-contract-qa.json");
+    expect(packageJson.scripts["qa:ci"]).toBe("ATLAS_QA_MODE=ci node scripts/run-v7-6-qa.mjs");
     expect(packageJson.scripts["qa:visual:ci"]).toContain("npm run qa:visual:manifest &&");
     expect(packageJson.scripts["qa:visual:ci"]).toContain("ATLAS_VISUAL_BASELINE_MODE=verify");
     expect(packageJson.scripts["qa:visual:candidate:ci"]).toContain("ATLAS_VISUAL_BASELINE_MODE=candidate");
@@ -398,9 +400,9 @@ describe("Atlas v7.4 resource-safe browser QA contract", () => {
     expect(ci).toContain("ECONNREFUSED");
     expect(ci).toContain("server-shutdown.json");
     expect(ci).toContain("actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a");
-    expect(ci).toContain("atlas-v7-4-public-${{ github.event.pull_request.head.sha }}");
-    expect(ci).toContain("npm run release:evidence");
-    expect(ci).toContain("tests-visual/independent-visual-qa-receipt.json");
+    expect(ci.match(/npm run test:public/g)).toHaveLength(1);
+    expect(ci).toContain("artifacts/v7-6-browser-qa");
+    expect(ci).toContain("atlas-public-${{ github.event.pull_request.head.sha }}");
 
     expect(pages).toContain("actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c");
     expect(pages).toContain("artifact_digest");
@@ -412,8 +414,8 @@ describe("Atlas v7.4 resource-safe browser QA contract", () => {
     expect(pages).toContain("ATLAS_PUBLIC_OUTPUT_DIR=validated-artifact/dist-public");
     expect(pages).not.toMatch(/rg -a -n [^\n]+ validated-artifact\/dist-public/);
     expect(pages).not.toMatch(/npm ci|npm run (?:lint|typecheck|test|build|qa:ci|qa:visual)/);
-    expect(pages).toContain("RELEASE_EVIDENCE.json");
-    expect(pages).toContain("independent-visual-qa-receipt.json");
+    expect(pages).toContain("artifacts/main-release/evidence");
+    expect(pages).toContain("DIST_PUBLIC_SHA256SUMS");
     expect(pages).toContain("without rebuilding or retesting");
   });
 });

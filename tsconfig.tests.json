@@ -15,12 +15,17 @@
     "tests/responsive-mode-contract.test.ts",
     "tests/runtime-data-structural-contract.test.ts",
     "tests/v7-3-qa-contract.test.ts",
+    "tests/v7-6-qa-contract.test.ts",
     "tests/visual-golden-contract.test.ts",
     "tests/atlas-packs.fixture.ts",
     "tests-public/agency-public-contract.test.ts",
     "tests-public/public-field-contract.test.ts",
+    "tests-public/public-data-contract.test.ts",
+    "tests-public/public-runtime-contract.test.ts",
     "tests-public/pretendard-subset-contract.test.ts",
     "tests-public/release-delivery-contract.test.ts",
+    "tests-public/v75-data-boundary.test.ts",
+    "tests-public/v76-meaning-contract.test.ts",
     "tests-public/atlas-packs.fixture.ts"
   ]
 }

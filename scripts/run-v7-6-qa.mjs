@@ -11,7 +11,7 @@ import { scanOperatingExposure, scanPrivacyText } from "./lib/privacy-scanner.mj
 const execFileAsync = promisify(execFile);
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-export const V74_QA_SCHEMA = "homi.atlas_v7_4.resource_safe_browser_qa.v1";
+export const V76_QA_SCHEMA = "homi.atlas_v7_6.resource_safe_browser_qa.v1";
 export const PNG_SIGNATURE_HEX = "89504e470d0a1a0a";
 
 export const QA_PERFORMANCE_BUDGETS = Object.freeze({
@@ -37,33 +37,22 @@ export const LOCAL_RESOURCE_POLICY = Object.freeze({
 
 const GEOMETRY_GROUPS = Object.freeze({
   home: [
-    ".living-terrain",
-    ".home-v74-copy .eyebrow",
-    ".home-v74-copy h1",
-    ".home-v74-copy > p",
-    ".home-v74-actions > button",
-    ".home-v74-proof > div",
-    ".home-v74-proof dt",
-    ".home-v74-proof dd",
-    ".home-v74-proof small",
-    ".v74-scene-rail > button",
-    ".v74-scene-rail strong",
-    ".terrain-intro > div",
-    ".terrain-district",
-    ".terrain-district > span",
-    ".terrain-hub",
-    ".terrain-hub > span",
-    ".terrain-relation-readout",
-    ".terrain-honest-empty",
-    ".coverage-ledger > header",
-    ".coverage-ledger-grid > div",
-    ".provenance-owner",
-    ".provenance-groups > div",
-    ".provenance-groups > div > span",
-    ".provenance-groups button",
-    ".home-workspace-launcher > button",
-    ".home-workspace-launcher > button strong",
-    ".home-v74-snapshot",
+    ".home-v75-page",
+    ".home-v75-graph-shell",
+    ".living-graph-canvas.is-home",
+    ".home-v75-copy-block .home-v75-eyebrow",
+    ".home-v75-copy-block h1",
+    ".home-v75-copy-block > p",
+    ".home-v75-actions > button",
+    ".home-v75-evidence",
+    ".home-v75-evidence-primary > *",
+    ".home-v75-evidence-secondary > *",
+    ".home-v76-system-anchor",
+    ".home-v76-domain-legend > button",
+    ".home-v76-rail > button",
+    ".home-v75-scenes > button",
+    ".home-v75-boundary > *",
+    ".graph-label-layer > button",
   ],
   agency: [
     ".agency-intro .eyebrow",
@@ -79,21 +68,23 @@ const GEOMETRY_GROUPS = Object.freeze({
     ".agency-knowledge-context > div > span",
   ],
   explore: [
-    ".explore-level-browser > header",
-    ".explore-level-columns > section > h2",
-    ".explore-level-columns > section.is-active .explore-node-list > div > button",
-    ".explore-level-columns > section.is-active .explore-level-empty",
-    "[data-testid='city-map'] .city-block.depth-2 > text",
-    "[data-testid='city-map'] .city-district-anchor > text",
-    ".city-accessible-index > button",
-    ".mobile-ranked-list > button",
-    ".mobile-district-map button",
+    ".explore-v75",
+    ".explore-command-rail > *",
+    ".explore-v75-graph-panel",
+    ".explore-v75-graph-panel .living-graph-canvas",
+    ".explore-v75-mobile-clusters > button",
+    ".explore-evidence-rail > *",
+    ".explore-v75-clusters > button",
+    ".explore-v75-list-layout > header",
+    ".graph-ranked-list > button",
+    ".explore-path-disclosure",
+    ".explore-v75-boundary",
   ],
   observe: [
     ".workspace-scene-switch > button",
     "[data-testid='relation-matrix'] .matrix-cell[role='button']",
     ".hub-relations-surface > header",
-    ".hub-relations-grid .hub-ego-node",
+    ".hub-relations-grid .hub-ego-stage .living-graph-canvas",
     ".hub-relations-grid li > button",
     ".hub-relations-surface .workspace-honest-empty",
     ".mobile-ranked-list > button",
@@ -101,16 +92,17 @@ const GEOMETRY_GROUPS = Object.freeze({
   ],
   flow: [
     ".flow-honest-empty",
-    "[data-testid='vault-metro'] .metro-route.is-active .metro-station[role='button']",
+    ".route-rail > button",
+    ".flow-spatial-stage .living-graph-canvas",
+    ".flow-evidence-rail > *",
     ".mobile-stepper > li",
-    ".mobile-route-switch > button",
   ],
   time: [
-    ".time-honest-empty",
-    "[data-testid='era-small-multiples'] .era-strata-mark",
-    ".era-rail > button",
-    ".mobile-era-scrubber > button",
-    ".mobile-ranked-list .mobile-era-row",
+    ".version-seam__brief > *",
+    ".version-seam__anchor > *",
+    ".version-seam__movement",
+    ".version-seam__movement-card > *",
+    ".version-seam__empty",
   ],
   search: [
     ".search-input-row > input",
@@ -131,13 +123,11 @@ const GEOMETRY_GROUPS = Object.freeze({
 
 const REQUIRED_GEOMETRY_SELECTORS = Object.freeze({
   home: [
-    ".home-v74-copy h1",
-    ".living-terrain",
-    ".v74-scene-rail > button",
-    ".coverage-ledger > header",
-    ".provenance-owner",
-    ".provenance-groups > div",
-    ".home-workspace-launcher > button",
+    ".home-v75-copy-block h1",
+    ".living-graph-canvas.is-home",
+    ".home-v75-evidence",
+    ".home-v75-scenes > button",
+    ".home-v75-boundary",
   ],
   agencySystem: [
     ".agency-intro h1",
@@ -152,14 +142,24 @@ const REQUIRED_GEOMETRY_SELECTORS = Object.freeze({
   agencyEvolution: [
     ".agency-intro h1",
     ".agency-scene-rail > button",
-    ".agency-evolution-before",
-    ".agency-evolution-current .agency-actor-row",
-    ".agency-evolution-independent .agency-actor-row",
+    ".agency-compass",
+    ".agency-compass-grid .agency-compass-row",
   ],
   explore: [
-    ".explore-level-browser > header",
-    ".explore-level-columns > section > h2",
-    ".explore-level-columns > section.is-active .explore-node-list > div > button, .explore-level-columns > section.is-active .explore-level-empty",
+    ".explore-v75",
+    ".explore-command-rail",
+  ],
+  exploreGraph: [
+    ".explore-v75-graph-panel",
+    ".explore-v75-graph-panel .living-graph-canvas",
+  ],
+  exploreConstellations: [
+    ".explore-v75-clusters",
+    ".explore-v75-clusters > button",
+  ],
+  exploreList: [
+    ".explore-v75-list-layout",
+    ".graph-ranked-list",
   ],
   observeGlobal: [
     ".workspace-scene-switch > button",
@@ -174,12 +174,18 @@ const REQUIRED_GEOMETRY_SELECTORS = Object.freeze({
   observeHub: [
     ".workspace-scene-switch > button",
     ".hub-relations-surface > header",
-    ".hub-relations-grid .hub-ego-node, .hub-relations-surface .workspace-honest-empty",
+    ".hub-relations-grid .hub-ego-stage .living-graph-canvas, .hub-relations-surface .workspace-honest-empty",
   ],
   flow: [
-    ".flow-honest-empty, [data-testid='vault-metro'] .metro-route.is-active .metro-station[role='button'], .mobile-stepper > li",
+    ".flow-honest-empty, .route-rail > button",
+    ".flow-honest-empty, .flow-spatial-stage .living-graph-canvas",
   ],
-  time: [".time-honest-empty"],
+  time: [
+    ".version-seam",
+    ".version-seam__anchor--baseline",
+    ".version-seam__anchor--current",
+    ".version-seam__movements, .version-seam__empty",
+  ],
   search: [
     ".search-input-row > input",
     ".search-input-row > button",
@@ -201,11 +207,19 @@ function geometryRequirementsFor(definition) {
   }
   if (definition.workspace === "search") return REQUIRED_GEOMETRY_SELECTORS.search;
   if (definition.workspace === "agency") {
-    if (definition.journey === "agency-scene" && definition.targetScene === "evolution") return REQUIRED_GEOMETRY_SELECTORS.agencyEvolution;
+    if (definition.journey === "agency-scene" && definition.targetScene === "compass") return REQUIRED_GEOMETRY_SELECTORS.agencyEvolution;
     if (["agency-actor", "agency-actor-cycle"].includes(definition.journey)) return REQUIRED_GEOMETRY_SELECTORS.agencyRoles;
     return REQUIRED_GEOMETRY_SELECTORS.agencySystem;
   }
-  if (definition.workspace === "explore") return REQUIRED_GEOMETRY_SELECTORS.explore;
+  if (definition.workspace === "explore") {
+    if (definition.targetScene === "constellations" || definition.journey === "explore-constellations") {
+      return [...REQUIRED_GEOMETRY_SELECTORS.explore, ...REQUIRED_GEOMETRY_SELECTORS.exploreConstellations];
+    }
+    if (definition.targetScene === "list" || definition.journey === "explore-list") {
+      return [...REQUIRED_GEOMETRY_SELECTORS.explore, ...REQUIRED_GEOMETRY_SELECTORS.exploreList];
+    }
+    return [...REQUIRED_GEOMETRY_SELECTORS.explore, ...REQUIRED_GEOMETRY_SELECTORS.exploreGraph];
+  }
   if (definition.workspace === "observe") {
     if (mobileSibling) return REQUIRED_GEOMETRY_SELECTORS.observeMobile;
     return definition.journey === "hub-relations" ? REQUIRED_GEOMETRY_SELECTORS.observeHub : REQUIRED_GEOMETRY_SELECTORS.observeGlobal;
@@ -245,16 +259,16 @@ function qaCase({ key, id = key, reducedMotion = false, firstEntry = false, touc
 
 export const CORE_ROUTE_CASES = Object.freeze([
   qaCase({
-    key: "home-default", workspace: "home", hash: "#home?scene=living-terrain",
-    readySelector: ".home-view-v74[data-scene='living-terrain']",
-    finalReadySelector: ".home-view-v74[data-scene='living-terrain']", geometryGroups: GEOMETRY_GROUPS.home,
-    viewport: { width: 1440, height: 920 }, firstEntry: true, journey: "home-scene", targetScene: "living-terrain",
+    key: "home-default", workspace: "home", hash: "#home?scene=core-gravity",
+    readySelector: ".home-v76[data-home-page='core-gravity']",
+    finalReadySelector: ".home-v76[data-home-page='core-gravity']", geometryGroups: GEOMETRY_GROUPS.home,
+    viewport: { width: 1440, height: 920 }, firstEntry: true, journey: "home-scene", targetScene: "core-gravity",
   }),
   qaCase({
-    key: "home-selected", workspace: "home", hash: "#home?scene=living-terrain",
-    readySelector: ".home-view-v74[data-scene='living-terrain']",
-    finalReadySelector: ".home-view-v74[data-scene='knowledge-gravity']", geometryGroups: GEOMETRY_GROUPS.home,
-    viewport: { width: 1180, height: 720 }, journey: "home-scene", targetScene: "knowledge-gravity",
+    key: "home-selected", workspace: "home", hash: "#home?scene=core-gravity",
+    readySelector: ".home-v76[data-home-page='core-gravity']",
+    finalReadySelector: ".home-v76[data-home-page='protagonists']", geometryGroups: GEOMETRY_GROUPS.home,
+    viewport: { width: 1180, height: 720 }, journey: "home-scene", targetScene: "protagonists",
   }),
   qaCase({
     key: "agency-default", workspace: "agency", hash: "#agency?scene=system",
@@ -268,9 +282,9 @@ export const CORE_ROUTE_CASES = Object.freeze([
     viewport: { width: 390, height: 844 }, touch: true, journey: "agency-actor", actorId: "actor:atlas-builder",
   }),
   qaCase({
-    key: "explore", workspace: "explore", hash: "#explore?scene=districts",
-    readySelector: ".explore-view, .mobile-explore", finalReadySelector: ".explore-view, .mobile-explore",
-    geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 320, height: 844 }, touch: true, journey: "explore-three-level",
+    key: "explore", workspace: "explore", hash: "#explore?scene=graph",
+    readySelector: ".explore-v75 .living-graph-canvas", finalReadySelector: ".explore-v75 .living-graph-canvas",
+    geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 320, height: 844 }, touch: true, journey: "explore-graph", targetScene: "graph",
   }),
   qaCase({
     key: "observe", workspace: "observe", hash: "#observe?scene=global-relations&layer=wikilink",
@@ -278,29 +292,29 @@ export const CORE_ROUTE_CASES = Object.freeze([
     geometryGroups: GEOMETRY_GROUPS.observe, viewport: { width: 844, height: 390 }, touch: true, journey: "observe-relation",
   }),
   qaCase({
-    key: "flow", workspace: "flow", hash: "#flow?scene=routes",
+    key: "flow", workspace: "flow", hash: "#flow?scene=verified-trails",
     readySelector: ".flow-view", finalReadySelector: ".flow-view",
     geometryGroups: GEOMETRY_GROUPS.flow, viewport: { width: 390, height: 844 }, touch: true, journey: "flow-verified-or-empty",
   }),
   qaCase({
-    key: "time", workspace: "time", hash: "#time?scene=chronology",
-    readySelector: ".time-view .time-honest-empty", finalReadySelector: ".time-view .time-honest-empty",
-    geometryGroups: GEOMETRY_GROUPS.time, viewport: { width: 320, height: 844 }, touch: true, journey: "time-empty-public",
+    key: "time", workspace: "time", hash: "#time?scene=version-evolution",
+    readySelector: ".time-v76 .version-seam", finalReadySelector: ".time-v76 .version-seam",
+    geometryGroups: GEOMETRY_GROUPS.time, viewport: { width: 320, height: 844 }, touch: true, journey: "time-version-evolution",
   }),
 ]);
 
 const CI_ONLY_ROUTE_CASES = Object.freeze([
   qaCase({
-    key: "home-activity", workspace: "home", hash: "#home?scene=living-terrain",
-    readySelector: ".home-view-v74[data-scene='living-terrain']",
-    finalReadySelector: ".home-view-v74[data-scene='verified-activity']", geometryGroups: GEOMETRY_GROUPS.home,
-    viewport: { width: 1024, height: 768 }, reducedMotion: true, journey: "home-scene", targetScene: "verified-activity",
+    key: "home-movement", workspace: "home", hash: "#home?scene=core-gravity",
+    readySelector: ".home-v76[data-home-page='core-gravity']",
+    finalReadySelector: ".home-v76[data-home-page='vault-in-motion']", geometryGroups: GEOMETRY_GROUPS.home,
+    viewport: { width: 1024, height: 768 }, reducedMotion: true, journey: "home-scene", targetScene: "vault-in-motion",
   }),
   qaCase({
-    key: "home-coverage", workspace: "home", hash: "#home?scene=living-terrain",
-    readySelector: ".home-view-v74[data-scene='living-terrain']",
-    finalReadySelector: ".home-view-v74[data-scene='coverage-boundary']", geometryGroups: GEOMETRY_GROUPS.home,
-    viewport: { width: 390, height: 844 }, touch: true, journey: "home-scene", targetScene: "coverage-boundary",
+    key: "home-compass", workspace: "home", hash: "#home?scene=core-gravity",
+    readySelector: ".home-v76[data-home-page='core-gravity']",
+    finalReadySelector: ".home-v76[data-home-page='operational-compass']", geometryGroups: GEOMETRY_GROUPS.home,
+    viewport: { width: 390, height: 844 }, touch: true, journey: "home-scene", targetScene: "operational-compass",
   }),
   qaCase({
     key: "agency-control-plane", workspace: "agency", hash: "#agency?scene=roles&actor=actor%3Aatlas-builder",
@@ -308,39 +322,39 @@ const CI_ONLY_ROUTE_CASES = Object.freeze([
     geometryGroups: GEOMETRY_GROUPS.agency, viewport: { width: 1440, height: 920 }, journey: "agency-actor", actorId: "actor:control-plane",
   }),
   qaCase({
-    key: "agency-evolution", workspace: "agency", hash: "#agency?scene=system",
-    readySelector: ".agency-view[data-scene='system']", finalReadySelector: ".agency-view[data-scene='evolution'] .agency-evolution",
+    key: "agency-compass", workspace: "agency", hash: "#agency?scene=system",
+    readySelector: ".agency-view[data-scene='system']", finalReadySelector: ".agency-view[data-scene='compass'] .agency-compass",
     geometryGroups: GEOMETRY_GROUPS.agency, viewport: { width: 768, height: 1024 }, reducedMotion: true,
-    journey: "agency-scene", targetScene: "evolution",
+    journey: "agency-scene", targetScene: "compass",
   }),
   qaCase({
-    key: "explore-hubs", workspace: "explore", hash: "#explore?scene=districts",
-    readySelector: ".explore-level-columns[data-level='districts']", finalReadySelector: ".explore-level-columns[data-level='hubs']",
-    geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 1280, height: 720 }, journey: "explore-hubs",
+    key: "explore-constellations", workspace: "explore", hash: "#explore?scene=constellations",
+    readySelector: ".explore-v75-clusters", finalReadySelector: ".explore-v75-graph-panel .living-graph-canvas",
+    geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 1280, height: 720 }, journey: "explore-constellations", targetScene: "constellations",
   }),
   qaCase({
-    key: "explore-sources", workspace: "explore", hash: "#explore?scene=districts",
-    readySelector: ".explore-level-columns[data-level='districts']", finalReadySelector: ".explore-level-columns[data-level='sources']",
-    geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 768, height: 1024 }, journey: "explore-three-level",
+    key: "explore-list", workspace: "explore", hash: "#explore?scene=list",
+    readySelector: ".explore-v75-list-layout", finalReadySelector: ".explore-v75-list-layout",
+    geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 768, height: 1024 }, journey: "explore-list", targetScene: "list",
   }),
   qaCase({
-    key: "observe-hub", workspace: "observe", hash: "#observe?scene=hub-relations",
+    key: "observe-protagonist", workspace: "observe", hash: "#observe?scene=protagonist-lens",
     readySelector: ".hub-relations-surface", finalReadySelector: ".hub-relations-surface",
     geometryGroups: GEOMETRY_GROUPS.observe, viewport: { width: 1180, height: 720 }, journey: "hub-relations",
   }),
   qaCase({
-    key: "search-overlay", workspace: "search", hash: "#home?scene=living-terrain",
-    readySelector: ".home-view-v74", finalReadySelector: ".search-dialog", geometryGroups: GEOMETRY_GROUPS.search,
+    key: "search-overlay", workspace: "search", hash: "#home?scene=core-gravity",
+    readySelector: ".home-v76", finalReadySelector: ".search-dialog", geometryGroups: GEOMETRY_GROUPS.search,
     viewport: { width: 1440, height: 920 }, journey: "search-overlay",
   }),
   qaCase({
-    key: "search-escape-focus", workspace: "home", hash: "#home?scene=living-terrain",
-    readySelector: ".home-view-v74", finalReadySelector: ".home-view-v74", geometryGroups: GEOMETRY_GROUPS.home,
+    key: "search-escape-focus", workspace: "home", hash: "#home?scene=core-gravity",
+    readySelector: ".home-v76", finalReadySelector: ".home-v76", geometryGroups: GEOMETRY_GROUPS.home,
     viewport: { width: 390, height: 844 }, touch: true, journey: "search-escape-focus",
   }),
   qaCase({
-    key: "data-overlay", workspace: "explore", hash: "#explore?scene=districts",
-    readySelector: ".explore-view, .mobile-explore", finalReadySelector: ".data-tray", geometryGroups: GEOMETRY_GROUPS.dataOverlay,
+    key: "data-overlay", workspace: "explore", hash: "#explore?scene=graph",
+    readySelector: ".explore-v75", finalReadySelector: ".data-tray", geometryGroups: GEOMETRY_GROUPS.dataOverlay,
     viewport: { width: 390, height: 844 }, touch: true, journey: "data-overlay",
   }),
   qaCase({
@@ -349,24 +363,24 @@ const CI_ONLY_ROUTE_CASES = Object.freeze([
     geometryGroups: GEOMETRY_GROUPS.observe, viewport: { width: 1280, height: 720 }, journey: "malformed-recovery",
   }),
   qaCase({
-    key: "deep-link-reload", workspace: "explore", hash: "#explore?scene=districts",
-    readySelector: ".explore-view, .mobile-explore", finalReadySelector: ".explore-view, .mobile-explore",
-    geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 390, height: 844 }, touch: true, journey: "focus-reload",
+    key: "deep-link-reload", workspace: "explore", hash: "#explore?scene=graph",
+    readySelector: ".explore-v75", finalReadySelector: ".explore-v75",
+    geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 390, height: 844 }, touch: true, journey: "focus-reload", targetScene: "graph",
   }),
   qaCase({
-    key: "history-back-forward", workspace: "home", hash: "#home?scene=living-terrain",
-    readySelector: ".home-view-v74[data-scene='living-terrain']", finalReadySelector: ".home-view-v74[data-scene='knowledge-gravity']",
+    key: "history-back-forward", workspace: "home", hash: "#home?scene=core-gravity",
+    readySelector: ".home-v76[data-home-page='core-gravity']", finalReadySelector: ".home-v76[data-home-page='protagonists']",
     geometryGroups: GEOMETRY_GROUPS.home, viewport: { width: 1440, height: 920 }, journey: "back-forward",
   }),
   qaCase({
-    key: "keyboard-navigation", workspace: "observe", hash: "#explore?scene=districts",
-    readySelector: ".explore-view, .mobile-explore", finalReadySelector: ".observe-view, .mobile-observe",
+    key: "keyboard-navigation", workspace: "observe", hash: "#explore?scene=graph",
+    readySelector: ".explore-v75", finalReadySelector: ".observe-view, .mobile-observe",
     geometryGroups: GEOMETRY_GROUPS.observe, viewport: { width: 1024, height: 768 }, journey: "keyboard-workspace",
   }),
   qaCase({
-    key: "webkit-svg-focus", workspace: "explore", hash: "#explore?scene=districts",
-    readySelector: "[data-testid='city-map']", finalReadySelector: "[data-testid='city-map']", geometryGroups: GEOMETRY_GROUPS.explore,
-    viewport: { width: 1024, height: 768 }, browserName: "webkit", longTaskRequired: false, journey: "webkit-svg-focus",
+    key: "webkit-graph-focus", workspace: "explore", hash: "#explore?scene=graph",
+    readySelector: ".explore-v75 .living-graph-canvas", finalReadySelector: ".explore-v75 .living-graph-canvas", geometryGroups: GEOMETRY_GROUPS.explore,
+    viewport: { width: 1024, height: 768 }, browserName: "webkit", longTaskRequired: false, journey: "webkit-graph-focus", targetScene: "graph",
   }),
   qaCase({
     key: "agency-all-actors", workspace: "agency", hash: "#agency?scene=roles&actor=actor%3Acontrol-plane",
@@ -399,7 +413,7 @@ export function resolveQaPlan(environment = process.env) {
 
 export function requiredAtlasUrl(environment = process.env, { allowFile = false } = {}) {
   const raw = environment.ATLAS_URL?.trim();
-  if (!raw) throw new Error("ATLAS_URL is required; v7.4 QA never starts or discovers a web server");
+  if (!raw) throw new Error("ATLAS_URL is required; v7.6 QA never starts or discovers a web server");
   const parsed = new URL(raw);
   if (parsed.protocol === "file:" && allowFile) {
     if (parsed.username || parsed.password) throw new Error("ATLAS_URL must not contain credentials");
@@ -581,14 +595,14 @@ function jsonText(value) {
 
 async function ownerQaBindingForPlan(plan, environment) {
   if (plan.mode !== "local-rc") return null;
-  const expectedPath = path.join(projectDir, "artifacts", "v7-4-owner-qa", "owner-contract-qa.json");
+  const expectedPath = path.join(projectDir, "artifacts", "v7-6-owner-qa", "owner-contract-qa.json");
   const supplied = environment.ATLAS_OWNER_QA_RECEIPT?.trim();
   if (!supplied || path.resolve(supplied) !== expectedPath) {
     throw new Error("Local RC requires the exact owner-local QA receipt before browser work.");
   }
   const body = await readFile(expectedPath);
   const receipt = JSON.parse(body.toString("utf8"));
-  if (receipt.schema !== "homi.atlas_v7_4.owner_contract_qa.v1"
+  if (receipt.schema !== "homi.atlas_v7_6.owner_contract_qa.v1"
     || receipt.profile !== "owner-local"
     || receipt.verdict !== "pass"
     || receipt.ownerBytesEnteredCi !== false
@@ -598,7 +612,7 @@ async function ownerQaBindingForPlan(plan, environment) {
     throw new Error("Local RC owner-local QA receipt is incomplete or not PASS.");
   }
   const reportPath = path.resolve(projectDir, receipt.report?.path ?? "");
-  const expectedReportRoot = path.join(projectDir, "artifacts", "v7-4-owner-qa");
+  const expectedReportRoot = path.join(projectDir, "artifacts", "v7-6-owner-qa");
   if (!reportPath.startsWith(`${expectedReportRoot}${path.sep}`)) {
     throw new Error("Local RC owner QA report path escaped its evidence boundary.");
   }
@@ -861,7 +875,7 @@ async function measureGeometry(page, groupSelectors, route) {
     const bodyWidth = document.body.scrollWidth;
     const rootWidth = document.documentElement.scrollWidth;
     const mobileSibling = matchMedia("(max-width: 820px), (max-width: 900px) and (max-height: 520px)").matches;
-    const headline = document.querySelector(".home-v74-copy h1");
+    const headline = document.querySelector(".home-v75-copy-block h1");
     const lineCount = (() => {
       if (!headline || !isRendered(headline)) return 0;
       const tops = [];
@@ -880,7 +894,7 @@ async function measureGeometry(page, groupSelectors, route) {
       }
       return tops.length;
     })();
-    const terrain = document.querySelector(".living-terrain");
+    const terrain = document.querySelector(".living-graph-canvas.is-home");
     const terrainRect = terrain?.getBoundingClientRect();
     const navigation = document.querySelector(".mobile-navigation");
     const navigationRect = navigation?.getBoundingClientRect();
@@ -985,16 +999,16 @@ export async function executeJourney(page, route) {
   const startedAt = Date.now();
   const details = { journey: route.journey };
   const homeSceneIndex = {
-    "living-terrain": 0,
-    "knowledge-gravity": 1,
-    "verified-activity": 2,
-    "coverage-boundary": 3,
+    "core-gravity": 0,
+    protagonists: 1,
+    "vault-in-motion": 2,
+    "operational-compass": 3,
   };
-  const agencySceneIndex = { system: 0, roles: 1, evolution: 2 };
+  const agencySceneIndex = { system: 0, roles: 1, compass: 2 };
 
   if (route.journey === "home-scene") {
-    await activateLocator(page, page.locator(".v74-scene-rail > button").nth(homeSceneIndex[route.targetScene]), route.touch);
-    await page.locator(`.home-view-v74[data-scene='${route.targetScene}']`).waitFor({ state: "visible" });
+    await activateLocator(page, page.locator(".home-v75-scenes > button").nth(homeSceneIndex[route.targetScene]), route.touch);
+    await page.locator(`.home-v76[data-home-page='${route.targetScene}']`).waitFor({ state: "visible" });
     details.scene = route.targetScene;
   } else if (route.journey === "agency-system-roundtrip") {
     await activateLocator(page, page.locator(".agency-scene-rail > button").nth(agencySceneIndex.roles), false);
@@ -1030,22 +1044,27 @@ export async function executeJourney(page, route) {
       visited.push(actorId);
     }
     details.actorIds = visited;
-  } else if (route.journey === "explore-hubs" || route.journey === "explore-three-level") {
-    const district = page.locator(".explore-level-columns > section:nth-of-type(1) .explore-node-list button:visible");
-    await activateLocator(page, district, route.touch);
-    await page.locator(".explore-level-columns[data-level='hubs']").waitFor({ state: "visible" });
-    details.levels = ["districts", "hubs"];
-    if (route.journey === "explore-three-level") {
-      const hub = page.locator(".explore-level-columns > section:nth-of-type(2) .explore-node-list button:visible");
-      await activateLocator(page, hub, route.touch);
-      await page.locator(".explore-level-columns[data-level='sources']").waitFor({ state: "visible" });
-      details.levels.push("sources");
-      details.sources = await page.locator(".explore-level-columns > section:nth-of-type(3) .explore-node-list button:visible").count();
-      details.honestEmpty = await page.locator(".explore-level-columns > section:nth-of-type(3) .explore-level-empty:visible").count() === 1;
-      if (details.sources === 0 && !details.honestEmpty) throw new Error("Explore Sources exposed neither approved sources nor its honest boundary state");
+  } else if (route.journey === "explore-graph") {
+    const graph = page.locator(".explore-v75 .living-graph-canvas");
+    await graph.waitFor({ state: "visible" });
+    const counts = await graph.evaluate((node) => ({
+      nodes: Number(node.getAttribute("data-node-count") ?? 0),
+      edges: Number(node.getAttribute("data-edge-count") ?? 0),
+      renderer: node.getAttribute("data-renderer"),
+    }));
+    if (counts.nodes < 1 || counts.renderer !== "canvas2d-projected-3d") {
+      throw new Error("Explore Graph did not render the v7.6 deterministic spatial field");
     }
-  } else if (route.journey === "explore-focus") {
-    const target = page.locator(".mobile-district-map button:visible, .city-district-anchor[role='button']:visible");
+    details.graph = counts;
+  } else if (route.journey === "explore-constellations") {
+    const target = page.locator(".explore-v75-clusters > button:visible").first();
+    await activateLocator(page, target, route.touch);
+    await page.locator(".explore-v75-graph-panel .living-graph-canvas").waitFor({ state: "visible" });
+    await page.waitForFunction(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("scene") === "graph"
+      && Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus")));
+    details.focus = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
+  } else if (route.journey === "explore-list") {
+    const target = page.locator(".graph-ranked-list > button:visible").first();
     await activateLocator(page, target, route.touch);
     await page.waitForFunction(() => Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus")));
     details.focus = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
@@ -1057,13 +1076,13 @@ export async function executeJourney(page, route) {
   } else if (route.journey === "flow-verified-or-empty") {
     const emptyCount = await page.locator(".flow-honest-empty:visible").count();
     const routeCount = await page.locator(".route-rail > button:visible").count();
-    const metroCount = await page.locator("[data-testid='vault-metro']:visible").count();
+    const graphCount = await page.locator(".flow-spatial-stage .living-graph-canvas:visible").count();
     if (emptyCount === 1) {
-      if (routeCount !== 0 || metroCount !== 0) throw new Error("Flow empty state retained clickable or drawn zero-member routes");
+      if (routeCount !== 0 || graphCount !== 0) throw new Error("Flow empty state retained clickable or drawn zero-member routes");
       details.mode = "honest-empty";
     } else {
-      if (routeCount < 1 || metroCount !== 1) throw new Error("Flow must render only verified member-bearing routes");
-      const target = page.locator(".mobile-route-switch > button:not(.is-active):visible, .route-rail > button:not(.is-active):visible");
+      if (routeCount < 1 || graphCount !== 1) throw new Error("Flow must render one factual graph for verified member-bearing routes");
+      const target = page.locator(".route-rail > button:not(.is-active):visible");
       if (await target.count()) {
         await activateLocator(page, target, route.touch);
         await page.waitForFunction(() => Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("route")));
@@ -1073,24 +1092,16 @@ export async function executeJourney(page, route) {
     }
     const flowText = await page.locator(".flow-view").innerText();
     if (/역할 경계\s*\d+|새로 생김 집계|미확정 변화/.test(flowText)) throw new Error("Flow rendered a prohibited generated placeholder");
-  } else if (route.journey === "time-empty-public") {
-    const empty = page.locator(".time-honest-empty:visible");
-    if (await empty.count() !== 1) throw new Error("Public Time must render the honest chronology boundary");
-    if (await page.locator(".era-rail:visible, [data-testid='era-small-multiples']:visible").count() !== 0) {
-      throw new Error("Public Time empty state retained fabricated lifecycle controls");
+  } else if (route.journey === "time-version-evolution") {
+    const movementCount = await page.locator(".version-seam__movement:visible").count();
+    const emptyCount = await page.locator(".version-seam__empty:visible").count();
+    if (movementCount === 0 && emptyCount !== 1) {
+      throw new Error("Time exposed neither verified movements nor its honest no-movement boundary");
     }
-    const timeText = await page.locator(".time-view").innerText();
+    const timeText = await page.locator(".time-v76").innerText();
     if (/새로 생김 집계\s*\d+|미확정 변화\s*\d+|소멸 집계\s*\d+/.test(timeText)) throw new Error("Time rendered a prohibited generated placeholder");
-    details.mode = "honest-empty-not-zero";
-  } else if (route.journey === "time-era") {
-    const before = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("era"));
-    const target = page.locator(".mobile-era-scrubber > button:not(.is-active):visible, .era-rail > button:not(.is-active):visible");
-    await activateLocator(page, target, route.touch);
-    await page.waitForFunction((previous) => {
-      const current = new URLSearchParams(location.hash.split("?")[1] ?? "").get("era");
-      return Boolean(current && current !== previous);
-    }, before);
-    details.era = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("era"));
+    details.mode = movementCount > 0 ? "verified-version-movements" : "honest-empty-not-zero";
+    details.movementCount = movementCount;
   } else if (route.journey === "search-overlay") {
     await page.locator(".search-trigger").focus();
     await page.keyboard.press(process.platform === "darwin" ? "Meta+K" : "Control+K");
@@ -1118,23 +1129,21 @@ export async function executeJourney(page, route) {
     details.safeWorkspace = await page.locator(".atlas-app").getAttribute("data-workspace");
     if (details.safeWorkspace !== route.workspace) throw new Error(`Malformed URL did not recover to ${route.workspace}`);
   } else if (route.journey === "focus-reload") {
-    const target = page.locator(".mobile-district-map button:visible, .city-district-anchor[role='button']:visible");
-    await activateLocator(page, target, route.touch);
     await page.waitForFunction(() => Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus")));
     const focusBefore = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
     await page.reload({ waitUntil: "domcontentloaded" });
-    await page.locator(".explore-view, .mobile-explore").first().waitFor({ state: "visible" });
+    await page.locator(".explore-v75").waitFor({ state: "visible" });
     const focusAfter = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
     if (!focusBefore || focusBefore !== focusAfter) throw new Error("Focus deep link did not survive reload");
     details.focus = focusAfter;
   } else if (route.journey === "back-forward") {
-    await activateLocator(page, page.locator(".v74-scene-rail > button").nth(1), false);
-    await page.locator(".home-view-v74[data-scene='knowledge-gravity']").waitFor({ state: "visible" });
+    await activateLocator(page, page.locator(".home-v75-scenes > button").nth(1), false);
+    await page.locator(".home-v76[data-home-page='protagonists']").waitFor({ state: "visible" });
     await page.goBack({ waitUntil: "domcontentloaded" });
-    await page.locator(".home-view-v74[data-scene='living-terrain']").waitFor({ state: "visible" });
+    await page.locator(".home-v76[data-home-page='core-gravity']").waitFor({ state: "visible" });
     await page.goForward({ waitUntil: "domcontentloaded" });
-    await page.locator(".home-view-v74[data-scene='knowledge-gravity']").waitFor({ state: "visible" });
-    details.history = ["knowledge-gravity", "living-terrain", "knowledge-gravity"];
+    await page.locator(".home-v76[data-home-page='protagonists']").waitFor({ state: "visible" });
+    details.history = ["protagonists", "core-gravity", "protagonists"];
   } else if (route.journey === "keyboard-workspace") {
     const exploreTab = page.locator("#workspace-tab-explore");
     await exploreTab.focus();
@@ -1150,10 +1159,10 @@ export async function executeJourney(page, route) {
     if (neighborCount === 0 && honestEmpty !== 1) throw new Error("Hub Relations exposed neither verified neighbors nor an honest empty state");
     details.neighborCount = neighborCount;
     details.honestEmpty = honestEmpty === 1;
-  } else if (route.journey === "webkit-svg-focus") {
-    const target = page.locator("[data-testid='city-map'] .city-district-anchor[role='button']:visible").first();
+  } else if (route.journey === "webkit-graph-focus") {
+    const target = page.locator(".explore-v75 .graph-label-layer > button:visible").first();
     await target.focus();
-    if (!await target.evaluate((node) => node === document.activeElement)) throw new Error("WebKit SVG district anchor did not receive keyboard focus");
+    if (!await target.evaluate((node) => node === document.activeElement)) throw new Error("WebKit graph label did not receive keyboard focus");
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus")));
     details.focus = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
@@ -1241,7 +1250,7 @@ async function collectAccessibilityAndExposure(page, route) {
 
 async function collectLongTasks(page) {
   return page.evaluate(() => {
-    const state = (/** @type {any} */ (window)).__atlasV74QaLongTasks;
+    const state = (/** @type {any} */ (window)).__atlasV76QaLongTasks;
     if (!state?.supported) return { supported: false, thresholdMs: 50, count: 0, totalMs: 0, maximumMs: 0, entries: [] };
     const entries = state.entries.map((entry) => ({ startTime: entry.startTime, duration: entry.duration }));
     return {
@@ -1287,9 +1296,9 @@ export async function runQa(environment = process.env) {
   const plan = resolveQaPlan(environment);
   const ownerContractQa = await ownerQaBindingForPlan(plan, environment);
   const baseUrl = requiredAtlasUrl(environment, { allowFile: plan.mode === "file-smoke" });
-  const artifactDir = path.resolve(environment.ATLAS_QA_ARTIFACT_DIR?.trim() || path.join(projectDir, "artifacts", "v7-4-browser-qa"));
+  const artifactDir = path.resolve(environment.ATLAS_QA_ARTIFACT_DIR?.trim() || path.join(projectDir, "artifacts", "v7-6-browser-qa"));
   const screenshotDir = path.join(artifactDir, "screenshots");
-  const receiptPath = path.join(artifactDir, `v7-4-${plan.mode}-browser-qa.json`);
+  const receiptPath = path.join(artifactDir, `v7-6-${plan.mode}-browser-qa.json`);
   await mkdir(screenshotDir, { recursive: true });
 
   const baselineRows = await processTable();
@@ -1355,7 +1364,7 @@ export async function runQa(environment = process.env) {
           context.once("close", () => { lifecycle.contextsClosed += 1; });
           if (!route.firstEntry) {
             await context.addInitScript(() => {
-              try { window.sessionStorage.setItem("homi-atlas-v7-4-opening-seen", "1"); } catch { /* optional */ }
+              try { window.sessionStorage.setItem("homi-atlas-v7-6-entry-seen", "1"); } catch { /* optional */ }
               try { window.localStorage.setItem("homi-atlas-v7-1-guide-seen", "1"); } catch { /* optional */ }
             });
           }
@@ -1366,7 +1375,7 @@ export async function runQa(environment = process.env) {
               entries: [],
               observer: null,
             };
-            (/** @type {any} */ (window)).__atlasV74QaLongTasks = qaLongTasks;
+            (/** @type {any} */ (window)).__atlasV76QaLongTasks = qaLongTasks;
             if (!globalThis.PerformanceObserver?.supportedEntryTypes?.includes("longtask")) return;
             qaLongTasks.supported = true;
             qaLongTasks.observer = new PerformanceObserver((list) => {
@@ -1398,18 +1407,18 @@ export async function runQa(environment = process.env) {
           const readinessMs = Date.now() - navigationStartedAt;
           let openingEvidence = null;
           if (route.firstEntry && !route.reducedMotion) {
-            const initial = await page.locator(".home-view-v74").getAttribute("data-opening");
+            const initial = await page.evaluate(() => sessionStorage.getItem("homi-atlas-v7-6-entry-seen"));
             await page.waitForTimeout(850);
-            const settled = await page.locator(".home-view-v74").getAttribute("data-opening");
+            const settled = await page.evaluate(() => sessionStorage.getItem("homi-atlas-v7-6-entry-seen"));
             await page.reload({ waitUntil: "domcontentloaded" });
             await page.locator(route.readySelector).first().waitFor({ state: "visible" });
             await settleRenderedPage(page);
-            const revisit = await page.locator(".home-view-v74").getAttribute("data-opening");
+            const revisit = await page.evaluate(() => sessionStorage.getItem("homi-atlas-v7-6-entry-seen"));
             openingEvidence = {
               initial,
               settled,
               revisit,
-              pass: initial === "true" && settled === "false" && revisit === "false",
+              pass: initial === "1" && settled === "1" && revisit === "1",
             };
           }
           monitor.throwIfStopped();
@@ -1499,7 +1508,7 @@ export async function runQa(environment = process.env) {
     && lifecycleGate.pass
     && !monitor?.stopReason;
   const receipt = {
-    schema: V74_QA_SCHEMA,
+    schema: V76_QA_SCHEMA,
     startedAt,
     completedAt: new Date().toISOString(),
     mode: plan.mode,

@@ -17,32 +17,32 @@ export type WorkspaceSceneDefinition = {
 export const workspaceSceneRegistry: Readonly<Record<Workspace, WorkspaceSceneDefinition>> = Object.freeze({
   home: {
     label: "Home",
-    title: "Meaningful Space Living Graph",
-    defaultScene: "knowledge-field",
+    title: "Semantic Constellations",
+    defaultScene: "core-gravity",
     scenes: [
       {
-        id: "knowledge-field",
-        label: "Knowledge Field",
-        title: "방향 지식 지형",
-        aliases: ["living-terrain", "system-overview", "terrain-convergence"],
+        id: "core-gravity",
+        label: "Core Domain Gravity",
+        title: "핵심 지식 영역",
+        aliases: ["knowledge-field", "living-terrain", "system-overview", "terrain-convergence"],
       },
       {
-        id: "knowledge-gravity",
-        label: "Knowledge Gravity",
-        title: "지식 중력",
-        aliases: ["knowledge-return"],
+        id: "protagonists",
+        label: "Protagonist Constellations",
+        title: "지식의 주인공",
+        aliases: ["knowledge-gravity", "knowledge-return"],
       },
       {
-        id: "freshness-field",
-        label: "Freshness Field",
-        title: "의미 있는 최신성",
-        aliases: ["responsibility-partition"],
+        id: "vault-in-motion",
+        label: "Vault in Motion",
+        title: "검증된 지식 변화",
+        aliases: ["freshness-field", "responsibility-partition"],
       },
       {
-        id: "link-trace",
-        label: "Link Trace",
-        title: "실제 방향 경로",
-        aliases: ["coverage-boundary", "independent-ownership", "public-boundary"],
+        id: "operational-compass",
+        label: "Operational Compass",
+        title: "운영 방향과 책임",
+        aliases: ["link-trace", "coverage-boundary", "independent-ownership", "public-boundary"],
       },
     ],
   },
@@ -52,7 +52,7 @@ export const workspaceSceneRegistry: Readonly<Record<Workspace, WorkspaceSceneDe
     defaultScene: "graph",
     scenes: [
       { id: "graph", label: "Graph", title: "방향 지식 그래프", aliases: ["explore", "city-overview", "districts", "hubs", "sources"] },
-      { id: "clusters", label: "Clusters", title: "구역별 밀도", aliases: ["city-focus", "city-concentration"] },
+      { id: "constellations", label: "Constellations", title: "주인공 별자리", aliases: ["clusters", "city-focus", "city-concentration"] },
       { id: "list", label: "List", title: "접근 가능한 순위 목록", aliases: ["attention-isolate"] },
     ],
   },
@@ -62,23 +62,23 @@ export const workspaceSceneRegistry: Readonly<Record<Workspace, WorkspaceSceneDe
     defaultScene: "global-relations",
     scenes: [
       { id: "global-relations", label: "Global Relations", title: "구역 관계", aliases: ["observe", "global-relation"] },
-      { id: "hub-relations", label: "Hub Relations", title: "허브 관계", aliases: ["entity-relation"] },
+      { id: "protagonist-lens", label: "Protagonist Lens", title: "주인공 관계", aliases: ["hub-relations", "entity-relation"] },
     ],
   },
   flow: {
     label: "Flow",
     title: "Knowledge Flow",
-    defaultScene: "routes",
+    defaultScene: "verified-trails",
     scenes: [
-      { id: "routes", label: "Verified Routes", title: "확인된 경로", aliases: ["flow", "latest-pulse"] },
+      { id: "verified-trails", label: "Verified Trails", title: "검증된 경로", aliases: ["routes", "flow", "latest-pulse"] },
     ],
   },
   time: {
     label: "Time",
-    title: "Recorded Time",
-    defaultScene: "chronology",
+    title: "Version Evolution",
+    defaultScene: "version-evolution",
     scenes: [
-      { id: "chronology", label: "Recorded Chronology", title: "기록된 시간", aliases: ["time"] },
+      { id: "version-evolution", label: "Version Evolution", title: "버전 간 변화", aliases: ["chronology", "time"] },
     ],
   },
   agency: {
@@ -88,7 +88,7 @@ export const workspaceSceneRegistry: Readonly<Record<Workspace, WorkspaceSceneDe
     scenes: [
       { id: "system", label: "System", title: "협업 구조" },
       { id: "roles", label: "Roles", title: "책임과 증거" },
-      { id: "evolution", label: "Evolution", title: "역할 전문화" },
+      { id: "compass", label: "Compass", title: "운영 나침반", aliases: ["evolution"] },
     ],
   },
 });

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ChevronRight, Database, Maximize2, Minimize2 } from "lucide-react";
 import { useAtlasState } from "../state";
 import { atlasData, entityById, graphNodeById } from "../data-runtime";
+import { graphNodeLabel } from "../graph/model";
 import { workspaceScene, workspaceSceneRegistry } from "./workspaceSceneRegistry";
 
 export function WorkspaceHeader({
@@ -26,7 +27,11 @@ export function WorkspaceHeader({
   const currentScene = workspaceScene(state.workspace, state.sceneId);
   const selection = state.workspace === "agency"
     ? atlasData.agency.actors.find((actor) => actor.id === state.actorId)?.label
-    : entityById.get(state.focusId ?? "")?.displayLabel ?? graphNodeById.get(state.focusId ?? "")?.label;
+    : entityById.get(state.focusId ?? "")?.displayLabel
+      ?? (() => {
+        const node = graphNodeById.get(state.focusId ?? "");
+        return node ? graphNodeLabel(node) : undefined;
+      })();
   return (
     <header className="workspace-header">
       <div className="workspace-title">

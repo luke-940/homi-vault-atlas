@@ -9,6 +9,7 @@ const REQUIRED_RUNTIME_PACKS = [
   "bootstrap",
   "inventory",
   "graph",
+  "meaning",
   "relation",
   "flow",
   "temporal",
@@ -85,6 +86,8 @@ export function collectAtlasReferenceFailures(candidate: AtlasData): string[] {
   const edgeIds = new Set(candidate.graph.edges.map((edge) => edge.id));
   const routeIds = new Set(candidate.flow.routes.map((route) => route.id));
   const eraIds = new Set(candidate.temporal.eras.map((era) => era.id));
+  const actorIds = new Set(candidate.agency.actors.map((actor) => actor.id));
+  const principalIds = new Set<string>([candidate.agency.principal.id]);
 
   failures.push(...agencyTruthFailures(candidate.agency).map((failure) => `agency:${failure}`));
   if (nodeIds.size !== candidate.graph.nodes.length) failures.push("graph-node-duplicate");
@@ -115,6 +118,42 @@ export function collectAtlasReferenceFailures(candidate: AtlasData): string[] {
     || candidate.graph.manifest.edgeCount !== candidate.graph.edges.length
     || candidate.graph.manifest.clusterCount !== candidate.graph.clusters.length) failures.push("graph-manifest-count");
   if (candidate.inventory.profile !== candidate.graph.profile) failures.push("graph-profile-mismatch");
+  if (candidate.meaning.profile !== candidate.graph.profile) failures.push("meaning-profile-mismatch");
+  if (candidate.meaning.current.graphSemanticDigest !== candidate.graph.manifest.semanticDigest
+    || candidate.meaning.current.graphNodeCount !== candidate.graph.nodes.length
+    || candidate.meaning.current.graphEdgeCount !== candidate.graph.edges.length) {
+    failures.push("meaning-current-identity");
+  }
+  if (candidate.meaning.manifest.protagonistCount !== candidate.meaning.protagonists.length
+    || candidate.meaning.manifest.constellationCount !== candidate.meaning.constellations.length
+    || candidate.meaning.manifest.movementCount !== candidate.meaning.movements.length) {
+    failures.push("meaning-manifest-count");
+  }
+  if (candidate.meaning.protagonists.some((item) => {
+    const node = candidate.graph.nodes.find((candidateNode) => candidateNode.id === item.nodeId);
+    return !node
+      || node.gravity !== item.metrics.gravity
+      || node.occurrences !== item.metrics.occurrences
+      || candidate.graph.edges.filter((edge) => edge.target === item.nodeId).length !== item.metrics.incomingCount
+      || candidate.graph.edges.filter((edge) => edge.source === item.nodeId).length !== item.metrics.outgoingCount;
+  })) failures.push("meaning-protagonist-truth");
+  if (candidate.meaning.constellations.some((item) => {
+    if (!nodeIds.has(item.focalNodeId)) return true;
+    const incoming = item.incomingEdgeIds.map((id) => candidate.graph.edges.find((edge) => edge.id === id));
+    const outgoing = item.outgoingEdgeIds.map((id) => candidate.graph.edges.find((edge) => edge.id === id));
+    return incoming.some((edge) => !edge || edge.target !== item.focalNodeId)
+      || outgoing.some((edge) => !edge || edge.source !== item.focalNodeId)
+      || item.boundedPathEdgeIds.some((id) => !edgeIds.has(id))
+      || item.explanations.some((entry) => !edgeIds.has(entry.edgeId));
+  })) failures.push("meaning-constellation-truth");
+  if (candidate.meaning.movements.some((item) =>
+    item.nodeIds.some((id) => !nodeIds.has(id))
+    || item.edgeIds.some((id) => !edgeIds.has(id)))) failures.push("meaning-movement-reference");
+  if (candidate.meaning.operationalCompass.some((item) =>
+    (!actorIds.has(item.actorId) && !principalIds.has(item.actorId))
+    || item.domainIds.some((id) => !nodeIds.has(id)))) failures.push("meaning-operational-reference");
+  if (candidate.meaning.scenes.some((scene) =>
+    scene.focusIds.some((id) => !nodeIds.has(id)))) failures.push("meaning-scene-reference");
 
   const inventoryTotal = candidate.inventory.namedCount + candidate.inventory.aggregateCount + candidate.inventory.excludedCount;
   if (candidate.inventory.unclassifiedCount !== 0

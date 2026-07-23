@@ -1,6 +1,7 @@
 import { ChevronRight, Clock3, FileText, FolderTree, Home, Route, Rows3, UsersRound, X } from "lucide-react";
 import { Fragment, useLayoutEffect, useRef, type KeyboardEvent } from "react";
-import { atlasData } from "../data-runtime";
+import { atlasData, graphNodeById } from "../data-runtime";
+import { graphNodeLabel, humanReadableKnowledgeLabel, movementKindLabel } from "../graph/model";
 import { useAtlasState } from "../state";
 import { trayDialogKeyIntent } from "./tray-accessibility";
 import { workspaceSceneRegistry } from "./workspaceSceneRegistry";
@@ -119,7 +120,11 @@ export function NavigatorTray() {
             { id: "flow", label: "Flow", icon: Route },
             { id: "time", label: "Time", icon: Clock3 },
             { id: "agency", label: "Agency", icon: UsersRound },
-          ].filter((item) => item.id !== "time" || atlasData.temporal.eras.length > 0).map((item) => {
+          ].filter((item) => (
+            item.id !== "time"
+            || atlasData.temporal.eras.length > 0
+            || atlasData.meaning.movements.length > 0
+          )).map((item) => {
             const Icon = item.icon;
             return (
               <button
@@ -231,22 +236,30 @@ export function NavigatorTray() {
 
         {state.workspace === "time" && (
           <div className="navigator-list">
-            {atlasData.temporal.eras.map((era) => (
+            {atlasData.meaning.movements.map((movement) => {
+              const node = movement.nodeIds
+                .map((nodeId) => graphNodeById.get(nodeId))
+                .find((candidate) => candidate !== undefined);
+              return (
               <button
-                key={era.id}
+                key={movement.id}
                 type="button"
-                className={era.id === state.eraId ? "is-active" : ""}
-                aria-current={era.id === state.eraId ? "true" : undefined}
+                className={movement.id === state.changeId ? "is-active" : ""}
+                aria-current={movement.id === state.changeId ? "true" : undefined}
                 onClick={() => {
-                  dispatch({ type: "era", eraId: era.id });
+                  dispatch({ type: "change", changeId: movement.id });
                   finishMobileSelection();
                 }}
               >
-                <span className="era-number">{String(era.id).padStart(2, "0")}</span>
-                <span><strong>{era.title}</strong><small>{era.range}</small></span>
+                <Clock3 size={16} aria-hidden="true" />
+                <span>
+                  <strong>{node ? graphNodeLabel(node) : humanReadableKnowledgeLabel(movement.label)}</strong>
+                  <small>{movementKindLabel(movement.kind)}</small>
+                </span>
                 <ChevronRight size={15} aria-hidden="true" />
               </button>
-            ))}
+              );
+            })}
           </div>
         )}
 

@@ -1,31 +1,31 @@
 import { createHash } from "node:crypto";
 import path from "node:path";
 
-export const V74_VISUAL_GOLDEN_SCHEMA = "homi.atlas_v7_4.visual_golden_manifest.v1";
-export const V74_VISUAL_GOLDEN_APPROVED_STATUS = "approved_iab_and_ubuntu_parity";
-export const V74_VISUAL_GOLDEN_PENDING_STATUS = "incomplete_pending_iab_and_ubuntu_review";
-export const V74_VISUAL_GOLDEN_RUNNER = "ubuntu-24.04";
-export const V74_VISUAL_GOLDEN_PROJECT = "chromium";
-export const V74_VISUAL_GOLDEN_PLATFORM = "linux";
-export const V74_VISUAL_GOLDEN_SPEC = "v7-4-golden.spec.mjs";
-export const V74_INDEPENDENT_VISUAL_QA_SCHEMA = "homi.atlas_v7_4.independent_visual_qa_receipt.v1";
-export const V74_INDEPENDENT_VISUAL_QA_APPROVED_STATUS = "approved_independent_visual_qa";
-export const V74_INDEPENDENT_VISUAL_QA_RECEIPT_PATH = "tests-visual/independent-visual-qa-receipt.json";
-export const V74_INDEPENDENT_VISUAL_QA_SCHEMA_PATH = "tests-visual/independent-visual-qa-receipt.v1.schema.json";
-export const V74_INDEPENDENT_VISUAL_QA_EVIDENCE_ROOT = "tests-visual/independent-evidence";
-export const V74_VISUAL_GOLDEN_ROUTE_IDS = Object.freeze([
+export const V76_VISUAL_GOLDEN_SCHEMA = "homi.atlas_v7_6.visual_golden_manifest.v1";
+export const V76_VISUAL_GOLDEN_APPROVED_STATUS = "approved_iab_and_ubuntu_parity";
+export const V76_VISUAL_GOLDEN_PENDING_STATUS = "incomplete_pending_iab_and_ubuntu_review";
+export const V76_VISUAL_GOLDEN_RUNNER = "ubuntu-24.04";
+export const V76_VISUAL_GOLDEN_PROJECT = "chromium";
+export const V76_VISUAL_GOLDEN_PLATFORM = "linux";
+export const V76_VISUAL_GOLDEN_SPEC = "v7-6-golden.spec.mjs";
+export const V76_INDEPENDENT_VISUAL_QA_SCHEMA = "homi.atlas_v7_6.independent_visual_qa_receipt.v1";
+export const V76_INDEPENDENT_VISUAL_QA_APPROVED_STATUS = "approved_independent_visual_qa";
+export const V76_INDEPENDENT_VISUAL_QA_RECEIPT_PATH = "tests-visual/independent-visual-qa-receipt.json";
+export const V76_INDEPENDENT_VISUAL_QA_SCHEMA_PATH = "tests-visual/independent-visual-qa-receipt.v1.schema.json";
+export const V76_INDEPENDENT_VISUAL_QA_EVIDENCE_ROOT = "tests-visual/independent-evidence";
+export const V76_VISUAL_GOLDEN_ROUTE_IDS = Object.freeze([
   "home-default",
   "home-selected",
-  "home-activity",
-  "home-coverage",
+  "home-movement",
+  "home-compass",
   "agency-default",
   "agency-actor",
-  "agency-evolution",
+  "agency-compass",
   "explore",
-  "explore-hubs",
-  "explore-sources",
+  "explore-constellations",
+  "explore-list",
   "observe",
-  "observe-hub",
+  "observe-protagonist",
   "flow",
   "time",
   "search-overlay",
@@ -51,25 +51,25 @@ export function visualGoldenBaselinePath(route) {
   return posixPath(path.join(
     "tests-visual",
     "__screenshots__",
-    V74_VISUAL_GOLDEN_SPEC,
-    `${name}-${V74_VISUAL_GOLDEN_PROJECT}-${V74_VISUAL_GOLDEN_PLATFORM}.png`,
+    V76_VISUAL_GOLDEN_SPEC,
+    `${name}-${V76_VISUAL_GOLDEN_PROJECT}-${V76_VISUAL_GOLDEN_PLATFORM}.png`,
   ));
 }
 
 export function independentVisualQaEvidencePath(route) {
   return posixPath(path.join(
-    V74_INDEPENDENT_VISUAL_QA_EVIDENCE_ROOT,
+    V76_INDEPENDENT_VISUAL_QA_EVIDENCE_ROOT,
     `${route.id}-${route.viewport.width}x${route.viewport.height}-iab.png`,
   ));
 }
 
 export function resolveVisualGoldenCases(routeCases) {
   const byId = new Map(routeCases.map((route) => [route.id, route]));
-  const missing = V74_VISUAL_GOLDEN_ROUTE_IDS.filter((id) => !byId.has(id));
+  const missing = V76_VISUAL_GOLDEN_ROUTE_IDS.filter((id) => !byId.has(id));
   if (missing.length > 0) {
     throw new Error(`Visual golden route contract drift: missing ${missing.join(", ")}`);
   }
-  return Object.freeze(V74_VISUAL_GOLDEN_ROUTE_IDS.map((id) => {
+  return Object.freeze(V76_VISUAL_GOLDEN_ROUTE_IDS.map((id) => {
     const route = byId.get(id);
     return Object.freeze({
       ...route,
@@ -107,9 +107,9 @@ export function validateIndependentVisualQaReceipt({ receiptBody, expectedCases,
   }
   const receiptSha256 = sha256(receiptBody);
   if (!hasExactKeys(receipt, receiptTopLevelKeys)) failures.push("independent-receipt-top-level-fields");
-  if (receipt.schema !== V74_INDEPENDENT_VISUAL_QA_SCHEMA) failures.push("independent-receipt-schema");
-  if (receipt.status !== V74_INDEPENDENT_VISUAL_QA_APPROVED_STATUS) failures.push("independent-receipt-not-approved");
-  if (receipt.releaseVersion !== "7.4.0") failures.push("independent-receipt-release-version");
+  if (receipt.schema !== V76_INDEPENDENT_VISUAL_QA_SCHEMA) failures.push("independent-receipt-schema");
+  if (receipt.status !== V76_INDEPENDENT_VISUAL_QA_APPROVED_STATUS) failures.push("independent-receipt-not-approved");
+  if (receipt.releaseVersion !== "7.6.0") failures.push("independent-receipt-release-version");
 
   const separation = receipt.reviewerSeparation;
   if (!hasExactKeys(separation, ["identityMode", "implementer", "reviewer", "differentRole", "differentSession"])) {
@@ -192,13 +192,13 @@ export function validateIndependentVisualQaReceipt({ receiptBody, expectedCases,
 
 export function validateVisualGoldenManifest({ manifest, expectedCases, baselineEvidence, independentReview }) {
   const failures = [];
-  if (manifest?.schema !== V74_VISUAL_GOLDEN_SCHEMA) failures.push("manifest-schema");
-  if (manifest?.status !== V74_VISUAL_GOLDEN_APPROVED_STATUS) failures.push("manifest-not-approved");
-  if (manifest?.environment?.runner !== V74_VISUAL_GOLDEN_RUNNER) failures.push("manifest-runner");
-  if (manifest?.environment?.project !== V74_VISUAL_GOLDEN_PROJECT) failures.push("manifest-project");
-  if (manifest?.environment?.platform !== V74_VISUAL_GOLDEN_PLATFORM) failures.push("manifest-platform");
+  if (manifest?.schema !== V76_VISUAL_GOLDEN_SCHEMA) failures.push("manifest-schema");
+  if (manifest?.status !== V76_VISUAL_GOLDEN_APPROVED_STATUS) failures.push("manifest-not-approved");
+  if (manifest?.environment?.runner !== V76_VISUAL_GOLDEN_RUNNER) failures.push("manifest-runner");
+  if (manifest?.environment?.project !== V76_VISUAL_GOLDEN_PROJECT) failures.push("manifest-project");
+  if (manifest?.environment?.platform !== V76_VISUAL_GOLDEN_PLATFORM) failures.push("manifest-platform");
   if (manifest?.environment?.workers !== 1) failures.push("manifest-workers");
-  if (manifest?.reviewEvidencePath !== V74_INDEPENDENT_VISUAL_QA_RECEIPT_PATH) failures.push("manifest-review-evidence-path");
+  if (manifest?.reviewEvidencePath !== V76_INDEPENDENT_VISUAL_QA_RECEIPT_PATH) failures.push("manifest-review-evidence-path");
   const independentResult = validateIndependentVisualQaReceipt({
     receiptBody: independentReview?.receiptBody,
     expectedCases,

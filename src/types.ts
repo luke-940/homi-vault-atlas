@@ -2,7 +2,7 @@ export type Workspace = "home" | "explore" | "observe" | "flow" | "time" | "agen
 export type ExploreLens = "city";
 export type GraphFreshness = "all" | "30d" | "90d" | "1y" | "undated";
 export type RelationLayer = "wikilink" | "typed" | "route";
-export type AgencyScene = "system" | "roles" | "evolution";
+export type AgencyScene = "system" | "roles" | "compass";
 export type AgencyGroupKind = "core" | "independent";
 export type AgencyLinkKind =
   | "sets_direction"
@@ -157,6 +157,108 @@ export interface AtlasGraphV1 {
     clusterCount: number;
     semanticDigest: string;
     layoutDigest: string;
+    projectionDigest: string;
+  };
+}
+
+export type MeaningProtagonistRole = "gravity_anchor" | "cross_domain_bridge" | "frontier_signal";
+export type MeaningMovementKind =
+  | "node_added"
+  | "edge_added"
+  | "edge_removed"
+  | "gravity_shift"
+  | "meaningfully_updated"
+  | "verified_handoff";
+export type OperationalAlignmentKind =
+  | "direction"
+  | "stewardship"
+  | "circulation"
+  | "translation"
+  | "observation";
+
+export interface MeaningSnapshotIdentity {
+  release: string;
+  asOfDate: string;
+  graphSemanticDigest: string;
+  graphNodeCount: number;
+  graphEdgeCount: number;
+}
+
+export interface MeaningProtagonist {
+  id: string;
+  nodeId: string;
+  role: MeaningProtagonistRole;
+  thesis: string;
+  caveat: string;
+  metrics: {
+    gravity: number;
+    occurrences: number;
+    crossDomainReach: number;
+    bridgeCentrality: number;
+    meaningfulDate: string | null;
+    incomingCount: number;
+    outgoingCount: number;
+  };
+  evidenceRefs: string[];
+  selectionMode: "atlas_builder_judgment";
+}
+
+export interface MeaningConstellation {
+  id: string;
+  focalNodeId: string;
+  incomingEdgeIds: string[];
+  outgoingEdgeIds: string[];
+  boundedPathEdgeIds: string[];
+  explanations: Array<{
+    edgeId: string;
+    direction: "incoming" | "outgoing";
+    statement: string;
+  }>;
+}
+
+export interface MeaningMovement {
+  id: string;
+  kind: MeaningMovementKind;
+  label: string;
+  nodeIds: string[];
+  edgeIds: string[];
+  previousValue: Record<string, unknown> | null;
+  currentValue: Record<string, unknown> | null;
+  evidenceRefs: string[];
+  caveat: string;
+}
+
+export interface OperationalAlignment {
+  id: string;
+  kind: OperationalAlignmentKind;
+  actorId: string;
+  domainIds: string[];
+  label: string;
+  statement: string;
+}
+
+export interface EditorialScene {
+  id: "core-gravity" | "protagonists" | "vault-in-motion" | "operational-compass";
+  label: string;
+  thesis: string;
+  focusIds: string[];
+}
+
+export interface AtlasMeaningV1 {
+  schema: "atlas.meaning.v1";
+  profile: AtlasProfile;
+  generatedAt: string;
+  baseline: MeaningSnapshotIdentity;
+  current: MeaningSnapshotIdentity;
+  protagonists: MeaningProtagonist[];
+  constellations: MeaningConstellation[];
+  movements: MeaningMovement[];
+  operationalCompass: OperationalAlignment[];
+  scenes: EditorialScene[];
+  manifest: {
+    protagonistCount: number;
+    constellationCount: number;
+    movementCount: number;
     projectionDigest: string;
   };
 }
@@ -459,6 +561,7 @@ export interface AtlasData {
   bootstrap: SnapshotPack;
   inventory: AtlasInventoryV1;
   graph: AtlasGraphV1;
+  meaning: AtlasMeaningV1;
   relation: {
     districtOrder: string[];
     matrix: MatrixCell[];

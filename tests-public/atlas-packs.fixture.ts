@@ -6,6 +6,7 @@ const names = [
   "bootstrap",
   "inventory",
   "graph",
+  "meaning",
   "relation",
   "flow",
   "temporal",

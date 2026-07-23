@@ -8,6 +8,7 @@ export const publicSnapshotSemanticPackNames = Object.freeze([
   "health",
   "inventory",
   "insight",
+  "meaning",
   "relation",
   "graph",
   "temporal",

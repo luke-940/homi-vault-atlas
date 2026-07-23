@@ -30,7 +30,11 @@ const allWorkspaceItems: Array<{
   { id: "agency", label: "Agency", icon: Network },
 ];
 
-export const workspaceItems = allWorkspaceItems.filter((item) => item.id !== "time" || atlasData.temporal.eras.length > 0);
+export const workspaceItems = allWorkspaceItems.filter((item) => (
+  item.id !== "time"
+  || atlasData.temporal.eras.length > 0
+  || atlasData.meaning.movements.length > 0
+));
 
 const rovingWorkspaceIds: Workspace[] = ["home", ...workspaceItems.map((item) => item.id)];
 

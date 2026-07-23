@@ -128,8 +128,18 @@ function resolveSpatialOverlaps(coordinates, nodes, clusterCount, priorityIds) {
             if (leftPinned && rightPinned) continue;
             const planarDistance = Math.hypot(dx, dz);
             const fallbackAngle = Number.parseInt(sha256(`${left.id}\0${right.id}`).slice(0, 8), 16) / 0xffffffff * Math.PI * 2;
-            const unitX = planarDistance > 0.01 ? dx / planarDistance : Math.cos(fallbackAngle);
-            const unitZ = planarDistance > 0.01 ? dz / planarDistance : Math.sin(fallbackAngle);
+            let unitX = planarDistance > 0.01 ? dx / planarDistance : Math.cos(fallbackAngle);
+            let unitZ = planarDistance > 0.01 ? dz / planarDistance : Math.sin(fallbackAngle);
+            const leftBand = DEPTH_BANDS[left.depthLevel] ?? DEPTH_BANDS[4];
+            const rightBand = DEPTH_BANDS[right.depthLevel] ?? DEPTH_BANDS[4];
+            const depthPinned = Math.abs(left.z - leftBand.min) < 0.1
+              || Math.abs(left.z - leftBand.max) < 0.1
+              || Math.abs(right.z - rightBand.min) < 0.1
+              || Math.abs(right.z - rightBand.max) < 0.1;
+            if (depthPinned && Math.abs(unitX) < 0.16) {
+              unitX = compareText(left.id, right.id) <= 0 ? -0.42 : 0.42;
+              unitZ = Math.sign(unitZ || 1) * Math.sqrt(1 - unitX * unitX);
+            }
             const displacement = (target - distance) * 0.58;
             const leftShare = leftPinned ? 0 : rightPinned ? 1 : 0.5;
             const rightShare = rightPinned ? 0 : leftPinned ? 1 : 0.5;
@@ -153,7 +163,7 @@ function resolveSpatialOverlaps(coordinates, nodes, clusterCount, priorityIds) {
     const priorityMembers = members.filter((coordinate) => priorityIds.has(coordinate.id));
     if (priorityMembers.length > 1) priorityGroups.set(id, priorityMembers);
   }
-  relax(priorityGroups, 72);
+  relax(priorityGroups, 180);
   return coordinates.map((coordinate) => ({
     ...coordinate,
     x: round(coordinate.x),

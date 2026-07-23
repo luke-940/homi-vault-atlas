@@ -29,12 +29,65 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
+      - name: Run the serial unit and release-contract suite once
+        run: npm run test:public
       - name: Build and audit the only deployable public profile
         run: npm run build
         env:
           ATLAS_PUBLIC_AUDIT_CONTEXT: public-ci
           ATLAS_PUBLIC_AUDIT_DIR: artifacts/publication
           ATLAS_PUBLIC_AUDIT_RECEIPT: v7-4-publication-audit.json
+      - name: Install the two browser engines used by the one release QA matrix
+        run: npx --no-install playwright install --with-deps chromium webkit
+      - name: Run the single serial v7.6 browser QA stage and prove shutdown
+        shell: bash
+        env:
+          ATLAS_QA_MODE: ci
+          ATLAS_URL: http://127.0.0.1:4173/
+          ATLAS_QA_ARTIFACT_DIR: artifacts/v7-6-browser-qa
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/v7-6-browser-qa
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-public \
+            > artifacts/v7-6-browser-qa/static-server.log 2>&1 &
+          server_pid="$!"
+          cleanup() {
+            if [[ -n "${server_pid:-}" ]]; then
+              kill "${server_pid}" 2>/dev/null || true
+              wait "${server_pid}" 2>/dev/null || true
+              server_pid=""
+            fi
+            node --input-type=module -e '
+              import { writeFileSync } from "node:fs";
+              import { createConnection } from "node:net";
+              await new Promise((resolve, reject) => {
+                const socket = createConnection({ host: "127.0.0.1", port: 4173 });
+                socket.once("connect", () => {
+                  socket.destroy();
+                  reject(new Error("Atlas CI server remained reachable after shutdown"));
+                });
+                socket.once("error", (error) => {
+                  if (error.code !== "ECONNREFUSED") reject(error);
+                  else resolve();
+                });
+              });
+              writeFileSync(
+                "artifacts/v7-6-browser-qa/server-shutdown.json",
+                `${JSON.stringify({ pass: true, host: "127.0.0.1", port: 4173, status: "ECONNREFUSED" }, null, 2)}\n`,
+              );
+            '
+          }
+          trap cleanup EXIT
+          for attempt in {1..50}; do
+            if curl --fail --silent --show-error "${ATLAS_URL}" >/dev/null; then
+              break
+            fi
+            sleep 0.2
+          done
+          curl --fail --silent --show-error "${ATLAS_URL}" >/dev/null
+          npm run qa:ci
+          cleanup
+          trap - EXIT
       - name: Create and verify the commit-bound public release bundle
         run: npm run release:package && npm run release:verify
         env:
@@ -74,6 +127,7 @@ jobs:
             artifacts/publication
             artifacts/release
             artifacts/ci-binding
+            artifacts/v7-6-browser-qa
           if-no-files-found: warn
           retention-days: 30
       - name: Record the immutable Actions artifact digest

@@ -2,20 +2,20 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
-import { CI_ROUTE_CASES } from "../scripts/run-v7-4-qa.mjs";
+import { CI_ROUTE_CASES } from "../scripts/run-v7-6-qa.mjs";
 import {
-  V74_INDEPENDENT_VISUAL_QA_APPROVED_STATUS,
-  V74_INDEPENDENT_VISUAL_QA_RECEIPT_PATH,
-  V74_INDEPENDENT_VISUAL_QA_SCHEMA,
-  V74_VISUAL_GOLDEN_APPROVED_STATUS,
-  V74_VISUAL_GOLDEN_ROUTE_IDS,
-  V74_VISUAL_GOLDEN_SCHEMA,
+  V76_INDEPENDENT_VISUAL_QA_APPROVED_STATUS,
+  V76_INDEPENDENT_VISUAL_QA_RECEIPT_PATH,
+  V76_INDEPENDENT_VISUAL_QA_SCHEMA,
+  V76_VISUAL_GOLDEN_APPROVED_STATUS,
+  V76_VISUAL_GOLDEN_ROUTE_IDS,
+  V76_VISUAL_GOLDEN_SCHEMA,
   hasVisualGoldenPngMagic,
   independentVisualQaEvidencePath,
   resolveVisualGoldenCases,
   validateIndependentVisualQaReceipt,
   validateVisualGoldenManifest,
-} from "../scripts/lib/v7-4-visual-golden.mjs";
+} from "../scripts/lib/v7-6-visual-golden.mjs";
 
 const goldenCases = resolveVisualGoldenCases(CI_ROUTE_CASES);
 const sha = (digit: string) => digit.repeat(64);
@@ -50,9 +50,9 @@ function approvedFixture() {
     verdict: "approved_independent_visual_qa",
   }));
   const independentReceipt = {
-    schema: V74_INDEPENDENT_VISUAL_QA_SCHEMA,
-    status: V74_INDEPENDENT_VISUAL_QA_APPROVED_STATUS,
-    releaseVersion: "7.4.0",
+    schema: V76_INDEPENDENT_VISUAL_QA_SCHEMA,
+    status: V76_INDEPENDENT_VISUAL_QA_APPROVED_STATUS,
+    releaseVersion: "7.6.0",
     reviewerSeparation: {
       identityMode: "domain_separated_sha256_fingerprint",
       implementer: { role: "atlas_builder", sessionFingerprint: sha("1") },
@@ -81,10 +81,10 @@ function approvedFixture() {
   }));
   return {
     manifest: {
-      schema: V74_VISUAL_GOLDEN_SCHEMA,
-      status: V74_VISUAL_GOLDEN_APPROVED_STATUS,
+      schema: V76_VISUAL_GOLDEN_SCHEMA,
+      status: V76_VISUAL_GOLDEN_APPROVED_STATUS,
       environment: { runner: "ubuntu-24.04", project: "chromium", platform: "linux", workers: 1 },
-      reviewEvidencePath: V74_INDEPENDENT_VISUAL_QA_RECEIPT_PATH,
+      reviewEvidencePath: V76_INDEPENDENT_VISUAL_QA_RECEIPT_PATH,
       reviewEvidenceDigest: createHash("sha256").update(receiptBody).digest("hex"),
       cases,
     },
@@ -98,9 +98,9 @@ function approvedFixture() {
   };
 }
 
-describe("Atlas v7.4 CI-only visual golden contract", () => {
+describe("Atlas v7.6 CI-only visual golden contract", () => {
   test("selects the exact 16 commercial release states without replacing 24-route geometry QA", () => {
-    expect(goldenCases.map((entry) => entry.id)).toEqual([...V74_VISUAL_GOLDEN_ROUTE_IDS]);
+    expect(goldenCases.map((entry) => entry.id)).toEqual([...V76_VISUAL_GOLDEN_ROUTE_IDS]);
     expect(goldenCases).toHaveLength(16);
     expect(new Set(goldenCases.map((entry) => `${entry.viewport.width}x${entry.viewport.height}`))).toEqual(new Set([
       "1440x920",
@@ -113,10 +113,10 @@ describe("Atlas v7.4 CI-only visual golden contract", () => {
       "844x390",
     ]));
     expect(goldenCases.filter((entry) => entry.workspace === "home").map((entry) => entry.targetScene)).toEqual([
-      "living-terrain",
-      "knowledge-gravity",
-      "verified-activity",
-      "coverage-boundary",
+      "core-gravity",
+      "protagonists",
+      "vault-in-motion",
+      "operational-compass",
     ]);
     expect(goldenCases.map((entry) => entry.journey)).toEqual(expect.arrayContaining([
       "agency-system-roundtrip",
@@ -131,13 +131,13 @@ describe("Atlas v7.4 CI-only visual golden contract", () => {
     const paths = goldenCases.map((entry) => entry.baselinePath);
     expect(new Set(paths).size).toBe(16);
     for (const baselinePath of paths) {
-      expect(baselinePath).toMatch(/^tests-visual\/__screenshots__\/v7-4-golden\.spec\.mjs\/.+-chromium-linux\.png$/);
+      expect(baselinePath).toMatch(/^tests-visual\/__screenshots__\/v7-6-golden\.spec\.mjs\/.+-chromium-linux\.png$/);
     }
   });
 
   test("keeps the checked-in manifest pending until review, then validates the approved PNG inventory", () => {
     const manifest = JSON.parse(readFileSync(path.resolve("tests-visual", "approved-baselines.json"), "utf8"));
-    const receiptBody = readFileSync(path.resolve(V74_INDEPENDENT_VISUAL_QA_RECEIPT_PATH));
+    const receiptBody = readFileSync(path.resolve(V76_INDEPENDENT_VISUAL_QA_RECEIPT_PATH));
     if (manifest.status === "incomplete_pending_iab_and_ubuntu_review") {
       const result = validateVisualGoldenManifest({
         manifest,
@@ -145,7 +145,7 @@ describe("Atlas v7.4 CI-only visual golden contract", () => {
         baselineEvidence: [],
         independentReview: { receiptBody, evidence: [] },
       });
-      expect(manifest.reviewEvidencePath).toBe(V74_INDEPENDENT_VISUAL_QA_RECEIPT_PATH);
+      expect(manifest.reviewEvidencePath).toBe(V76_INDEPENDENT_VISUAL_QA_RECEIPT_PATH);
       expect(manifest.reviewEvidenceDigest).toBeNull();
       expect(result.pass).toBe(false);
       expect(result.failures).toEqual(expect.arrayContaining([
@@ -161,7 +161,7 @@ describe("Atlas v7.4 CI-only visual golden contract", () => {
       return;
     }
 
-    expect(manifest.status).toBe(V74_VISUAL_GOLDEN_APPROVED_STATUS);
+    expect(manifest.status).toBe(V76_VISUAL_GOLDEN_APPROVED_STATUS);
     const evidence = goldenCases.map((entry) => {
       const absolutePath = path.resolve(entry.baselinePath);
       expect(existsSync(absolutePath), entry.baselinePath).toBe(true);
@@ -210,7 +210,7 @@ describe("Atlas v7.4 CI-only visual golden contract", () => {
     }).failures).toContain(`case-baseline-hash:${goldenCases[0].id}`);
 
     const extraEvidence = [...fixture.evidence, {
-      path: "tests-visual/__screenshots__/v7-4-golden.spec.mjs/unapproved-chromium-linux.png",
+      path: "tests-visual/__screenshots__/v7-6-golden.spec.mjs/unapproved-chromium-linux.png",
       bytes: 1024,
       sha256: sha("e"),
       pngMagic: true,
@@ -259,7 +259,7 @@ describe("Atlas v7.4 CI-only visual golden contract", () => {
 
   test("ships a strict public-safe JSON schema for the independent receipt", () => {
     const schema = JSON.parse(readFileSync(path.resolve("tests-visual", "independent-visual-qa-receipt.v1.schema.json"), "utf8"));
-    expect(schema.$id).toBe(V74_INDEPENDENT_VISUAL_QA_SCHEMA);
+    expect(schema.$id).toBe(V76_INDEPENDENT_VISUAL_QA_SCHEMA);
     expect(schema.additionalProperties).toBe(false);
     expect(schema.properties.cases.minItems).toBe(16);
     expect(schema.properties.cases.maxItems).toBe(16);

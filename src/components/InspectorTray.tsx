@@ -13,6 +13,12 @@ import {
 import { Fragment, useLayoutEffect, useRef, type KeyboardEvent } from "react";
 import { atlasData, entityById, graphNodeById } from "../data-runtime";
 import { isGraphHub, resolveGraphNodeContext } from "../graph-navigation";
+import {
+  canonicalGraphNodeLabel,
+  graphNodeKindLabel,
+  graphNodeLabel,
+  humanReadableKnowledgeLabel,
+} from "../graph/model";
 import { useAtlasState, type InspectorTab } from "../state";
 import type { AtlasGraphNodeV1, Entity, MatrixCell, Workspace } from "../types";
 import { formatEraRange, lifecycleEvidenceSummary, lifecycleStateLabel } from "../views/time-model";
@@ -51,6 +57,17 @@ const evidenceClassLabels: Record<string, string> = {
 };
 
 const atlasEvidenceIds = new Set(atlasData.entity.entities.map((entity) => entity.id));
+
+function humanReadableRouteLabel(route: (typeof atlasData.flow.routes)[number] | undefined) {
+  if (!route) return "검증된 지식 경로";
+  const routeNodes = route.stations
+    .map((station) => station.entityId ? graphNodeById.get(station.entityId) : undefined)
+    .filter((node): node is AtlasGraphNodeV1 => Boolean(node));
+  const first = routeNodes[0];
+  const last = routeNodes.at(-1);
+  if (first && last && first.id !== last.id) return `${graphNodeLabel(first)} → ${graphNodeLabel(last)}`;
+  return humanReadableKnowledgeLabel(route.label);
+}
 
 function getFocusable(container: HTMLElement | null) {
   return [...(container?.querySelectorAll<HTMLElement>(
@@ -203,10 +220,9 @@ export function InspectorTray() {
   const graphNode = graphNodeById.get(state.focusId ?? "");
   const pair = atlasData.relation.matrix.find((candidate) => candidate.id === state.relationPairId);
   const route = atlasData.flow.routes.find((candidate) => candidate.id === state.routeId);
-  const era = atlasData.temporal.eras.find((candidate) => candidate.id === state.eraId);
   const activePair = state.workspace === "observe" ? pair : undefined;
   const activeRoute = state.workspace === "flow" ? route : undefined;
-  const activeEra = state.workspace === "time" ? era : undefined;
+  const activeEra = undefined;
   const isPublicProfile = atlasData.publication.profile === "public";
   const hasWorkspaceSelection = Boolean(activePair || activeRoute || activeEra);
   const selectionEntity = hasWorkspaceSelection ? undefined : entity;
@@ -225,21 +241,21 @@ export function InspectorTray() {
     state.workspace === "observe" && pair
       ? directionalPairTitle
       : state.workspace === "flow"
-        ? route?.label ?? "작업 흐름"
+        ? humanReadableRouteLabel(route)
         : state.workspace === "time"
-          ? `시대 장면 ${era?.id}`
-          : entity?.title ?? graphNode?.label ?? "Homi Vault";
+          ? "Version Evolution"
+          : entity?.title ?? (graphNode ? graphNodeLabel(graphNode) : "Homi Vault");
   const subtitle =
     state.workspace === "observe" && pair
       ? "선택한 구역 간 관계"
       : state.workspace === "flow"
         ? route?.question ?? ""
         : state.workspace === "time"
-          ? era?.title ?? ""
+          ? `${atlasData.meaning.baseline.release} → ${atlasData.meaning.current.release} · 검증된 지식 변화 ${atlasData.meaning.movements.length}개`
           : entity
             ? roleMeaning[entity.surfaceRole] ?? "Vault 안의 현재 선택"
             : graphNode
-              ? `${graphNode.representedDocuments}개 기록 · 고유 inbound ${graphNode.gravity} · 링크 출현 ${graphNode.occurrences}`
+              ? `${graphNode.representedDocuments}개 기록 · 참조한 고유 문서 ${graphNode.gravity} · 전체 참조 ${graphNode.occurrences}회`
               : "공개 지식 선택";
 
   const tabs: Array<{ id: InspectorTab; label: string; icon: typeof Compass }> = [
@@ -281,6 +297,14 @@ export function InspectorTray() {
         <h2 id="inspector-selection-title">{title}</h2>
         <p>{subtitle}</p>
         {selectionEntity && !isPublicProfile && <code className="selection-path">{selectionEntity.path}</code>}
+        {selectionGraphNode
+          && atlasData.graph.profile === "atlas-owner"
+          && canonicalGraphNodeLabel(selectionGraphNode) !== graphNodeLabel(selectionGraphNode) && (
+            <details className="selection-canonical-label">
+              <summary>원본 제목</summary>
+              <code>{canonicalGraphNodeLabel(selectionGraphNode)}</code>
+            </details>
+          )}
         <button className="mobile-tray-close icon-button" type="button" onClick={close} aria-label="현재 선택 해석 닫기">
           <X size={18} aria-hidden="true" />
         </button>
@@ -318,7 +342,7 @@ export function InspectorTray() {
             const context = resolveGraphNodeContext(atlasData.graph.nodes, selectionGraphNode.id);
             const hubId = context.hubId;
             return hubId && isGraphHub(graphNodeById.get(hubId)) ? (
-            <button type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "observe", sceneId: "hub-relations", focusId: hubId } })}>
+            <button type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "observe", sceneId: "protagonist-lens", focusId: hubId } })}>
               <Link2 size={16} /> 허브 관계 보기
             </button>
             ) : null;
@@ -359,7 +383,7 @@ export function InspectorTray() {
         tabIndex={0}
       >
         {state.inspectorTab === "summary" && (
-          <SummaryContent entity={selectionEntity} graphNode={selectionGraphNode} pair={activePair} route={activeRoute} era={activeEra} scopeLabels={scopeLabels} />
+          <SummaryContent workspace={state.workspace} entity={selectionEntity} graphNode={selectionGraphNode} pair={activePair} route={activeRoute} era={activeEra} scopeLabels={scopeLabels} />
         )}
         {state.inspectorTab === "relations" && (
           <RelationsContent workspace={state.workspace} entity={selectionEntity} pair={activePair} route={activeRoute} era={activeEra} neighbors={neighbors} />
@@ -402,8 +426,8 @@ function ComparisonLedger() {
     const node = graphNodeById.get(id);
     return {
       id,
-      label: entity?.displayLabel ?? node?.label ?? id,
-      authority: entity?.authority ?? node?.kind ?? "graph node",
+      label: entity?.displayLabel ?? (node ? graphNodeLabel(node) : id),
+      authority: entity?.authority ?? (node ? graphNodeKindLabel(node.kind) : "지식 항목"),
       freshness: entity ? (currentnessLabels[entity.currentness] ?? entity.currentness) : node?.freshness ?? "날짜 미기록",
       connections: entity ? (atlasData.relation.neighborhoods[entity.id]?.length ?? 0) : node ? atlasData.graph.edges.filter((edge) => edge.source === node.id || edge.target === node.id).length : 0,
       size: entity
@@ -444,6 +468,7 @@ export function comparisonEntitySize(
 }
 
 function SummaryContent({
+  workspace,
   entity,
   graphNode,
   pair,
@@ -451,6 +476,7 @@ function SummaryContent({
   era,
   scopeLabels,
 }: {
+  workspace: Workspace;
   entity?: Entity;
   graphNode?: AtlasGraphNodeV1;
   pair?: MatrixCell;
@@ -498,14 +524,28 @@ function SummaryContent({
       </>
     );
   }
+  if (workspace === "time") {
+    return (
+      <>
+        <section className="inspector-section">
+          <h3>Version Evolution</h3>
+          <p>{atlasData.meaning.baseline.release}에서 {atlasData.meaning.current.release}까지 실제 근거로 확인된 변화만 보여줍니다. 기록 부재는 소멸이나 실패로 추정하지 않습니다.</p>
+        </section>
+        <dl className="metric-ledger">
+          <div><dt>검증된 변화</dt><dd>{atlasData.meaning.movements.length}</dd></div>
+          <div><dt>기준일</dt><dd>{atlasData.meaning.current.asOfDate}</dd></div>
+        </dl>
+      </>
+    );
+  }
   if (graphNode) {
     return (
       <>
-        <section className="inspector-section"><h3>그래프에서의 역할</h3><p>이 선택은 v7.5 방향 그래프의 {graphNode.kind} 객체다. 문서 엔터티와 관계 수치에 중복 합산하지 않는다.</p></section>
+        <section className="inspector-section"><h3>그래프에서의 역할</h3><p>이 선택은 방향 지식 그래프의 {graphNodeKindLabel(graphNode.kind)}입니다. 문서 엔터티와 관계 수치에 중복 합산하지 않습니다.</p></section>
         <dl className="metric-ledger">
           <div><dt>포함 기록</dt><dd>{graphNode.representedDocuments}</dd></div>
-          <div><dt>고유 inbound 문서</dt><dd>{graphNode.gravity}</dd></div>
-          <div><dt>링크 출현</dt><dd>{graphNode.occurrences}</dd></div>
+          <div><dt>참조한 고유 문서</dt><dd>{graphNode.gravity}</dd></div>
+          <div><dt>전체 참조 횟수</dt><dd>{graphNode.occurrences}</dd></div>
           <div><dt>표현 방식</dt><dd>{graphNode.nameMode === "public_alias" ? "공개 안전 별칭" : graphNode.nameMode === "aggregate" ? "집계" : "승인 이름"}</dd></div>
         </dl>
       </>
@@ -561,12 +601,15 @@ function RelationsContent({
       <section className="inspector-section">
         <h3>경로 경유점</h3>
         <div className="ledger-list">
-          {route.stations.map((station) => (
-            <div key={station.id}>
-              <RouteIcon size={14} />
-              <span><strong>{station.label}</strong><small>{station.entityId ? entityById.get(station.entityId)?.displayLabel ?? "Vault 표면" : "외부 읽기면"}</small></span>
-            </div>
-          ))}
+          {route.stations.map((station) => {
+            const stationNode = station.entityId ? graphNodeById.get(station.entityId) : undefined;
+            return (
+              <div key={station.id}>
+                <RouteIcon size={14} />
+                <span><strong>{stationNode ? graphNodeLabel(stationNode) : humanReadableKnowledgeLabel(station.label)}</strong><small>{station.entityId ? entityById.get(station.entityId)?.displayLabel ?? "Vault 표면" : "외부 읽기면"}</small></span>
+              </div>
+            );
+          })}
         </div>
       </section>
     );
@@ -667,7 +710,7 @@ function HistoryContent({
         <>
           <p>{evidenceClassLabels[era.evidenceClass] ?? "기록 근거를 바탕으로 재구성"}</p>
           <div className="ledger-list">
-            {lifecycle.recordedDeltas.map((delta) => <div key={`${delta.state}:${delta.label}`}><GitBranch size={14} /><span><strong>{delta.label}</strong><small>{lifecycleStateLabel(delta.state)} · 기록 확인</small></span></div>)}
+            {lifecycle.recordedDeltas.map((delta) => <div key={`${delta.state}:${delta.label}`}><GitBranch size={14} /><span><strong>{humanReadableKnowledgeLabel(delta.label)}</strong><small>{lifecycleStateLabel(delta.state)} · 기록 확인</small></span></div>)}
             {lifecycle.unrecordedDeltas.length > 0 && <div><Clock3 size={14} /><span><strong>근거 미기록 변화 {lifecycle.unrecordedDeltas.length}개</strong><small>생애주기 판정에서 제외</small></span></div>}
           </div>
         </>

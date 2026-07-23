@@ -1,4 +1,4 @@
-name: Atlas v7.4 Ubuntu visual candidate
+name: Atlas v7.6 Ubuntu visual candidate
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: atlas-v7-4-visual-candidate-${{ inputs.ref }}
+  group: atlas-v7-6-visual-candidate-${{ inputs.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -79,9 +79,9 @@ jobs:
       - name: Upload review-only PNG candidates
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: atlas-v7-4-ubuntu-visual-candidate-${{ steps.candidate-identity.outputs.sha }}
+          name: atlas-v7-6-ubuntu-visual-candidate-${{ steps.candidate-identity.outputs.sha }}
           path: |
-            tests-visual/__screenshots__/v7-4-golden.spec.mjs
-            artifacts/v7-4-visual-golden
+            tests-visual/__screenshots__/v7-6-golden.spec.mjs
+            artifacts/v7-6-visual-golden
           if-no-files-found: error
           retention-days: 14
