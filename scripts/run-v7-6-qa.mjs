@@ -7,9 +7,14 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { scanOperatingExposure, scanPrivacyText } from "./lib/privacy-scanner.mjs";
+import { aliasRuntimeSelector } from "./lib/runtime-class-aliases.mjs";
 
 const execFileAsync = promisify(execFile);
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+function runtimeLocator(page, selector) {
+  return page.locator(aliasRuntimeSelector(selector));
+}
 
 export const V76_QA_SCHEMA = "homi.atlas_v7_6.resource_safe_browser_qa.v1";
 export const PNG_SIGNATURE_HEX = "89504e470d0a1a0a";
@@ -774,7 +779,14 @@ async function createResourceMonitor({ local, startedAtMs, baselinePids, started
 }
 
 async function measureGeometry(page, groupSelectors, route) {
-  return page.evaluate(({ selectors, requiredSelectors, workspace, mobileNavigationRequired, mobileSiblingRequired }) => {
+  return page.evaluate(({
+    selectors,
+    requiredSelectors,
+    workspace,
+    mobileNavigationRequired,
+    mobileSiblingRequired,
+    runtimeSelectors,
+  }) => {
     const isRendered = (node) => {
       const style = getComputedStyle(node);
       const rect = node.getBoundingClientRect();
@@ -860,10 +872,10 @@ async function measureGeometry(page, groupSelectors, route) {
     }
 
     const textSelector = [
-      ".atlas-app button", ".atlas-app a", ".atlas-app label", ".atlas-app input",
-      ".atlas-app h1", ".atlas-app h2", ".atlas-app h3", ".atlas-app h4",
-      ".atlas-app p", ".atlas-app dt", ".atlas-app dd", ".atlas-app li",
-      ".atlas-app small", ".atlas-app span", ".atlas-app [role='button']", ".atlas-app svg text",
+      `${runtimeSelectors.app} button`, `${runtimeSelectors.app} a`, `${runtimeSelectors.app} label`, `${runtimeSelectors.app} input`,
+      `${runtimeSelectors.app} h1`, `${runtimeSelectors.app} h2`, `${runtimeSelectors.app} h3`, `${runtimeSelectors.app} h4`,
+      `${runtimeSelectors.app} p`, `${runtimeSelectors.app} dt`, `${runtimeSelectors.app} dd`, `${runtimeSelectors.app} li`,
+      `${runtimeSelectors.app} small`, `${runtimeSelectors.app} span`, `${runtimeSelectors.app} [role='button']`, `${runtimeSelectors.app} svg text`,
     ].join(",");
     const undersizedText = [...document.querySelectorAll(textSelector)]
       .filter(isRendered)
@@ -875,7 +887,7 @@ async function measureGeometry(page, groupSelectors, route) {
     const bodyWidth = document.body.scrollWidth;
     const rootWidth = document.documentElement.scrollWidth;
     const mobileSibling = matchMedia("(max-width: 820px), (max-width: 900px) and (max-height: 520px)").matches;
-    const headline = document.querySelector(".home-v75-copy-block h1");
+    const headline = document.querySelector(runtimeSelectors.homeHeadline);
     const lineCount = (() => {
       if (!headline || !isRendered(headline)) return 0;
       const tops = [];
@@ -894,18 +906,18 @@ async function measureGeometry(page, groupSelectors, route) {
       }
       return tops.length;
     })();
-    const terrain = document.querySelector(".living-graph-canvas.is-home");
+    const terrain = document.querySelector(runtimeSelectors.homeTerrain);
     const terrainRect = terrain?.getBoundingClientRect();
-    const navigation = document.querySelector(".mobile-navigation");
+    const navigation = document.querySelector(runtimeSelectors.mobileNavigation);
     const navigationRect = navigation?.getBoundingClientRect();
     const navigationButtons = navigation ? [...navigation.querySelectorAll("button")].filter(isRendered) : [];
     const navigationMinimumTarget = navigationButtons.length > 0
       ? Math.min(...navigationButtons.map((node) => Math.min(node.getBoundingClientRect().width, node.getBoundingClientRect().height)))
       : 0;
-    const sibling = document.querySelector(".mobile-sibling");
+    const sibling = document.querySelector(runtimeSelectors.mobileSibling);
     const siblingRect = sibling?.getBoundingClientRect();
     const mobileInteractiveNodes = mobileSibling
-      ? [...document.querySelectorAll(".atlas-app button:not([disabled]), .atlas-app a[href], .atlas-app input:not([disabled]), .atlas-app select:not([disabled]), .atlas-app textarea:not([disabled]), .atlas-app [role='button']:not([aria-disabled='true'])")]
+      ? [...document.querySelectorAll(runtimeSelectors.mobileInteractive)]
         .filter(isRendered)
       : [];
     const undersizedInteractive = mobileInteractiveNodes.flatMap((node) => {
@@ -956,11 +968,19 @@ async function measureGeometry(page, groupSelectors, route) {
       },
     };
   }, {
-    selectors: groupSelectors,
-    requiredSelectors: route.geometryRequiredSelectors,
+    selectors: groupSelectors.map(aliasRuntimeSelector),
+    requiredSelectors: route.geometryRequiredSelectors.map(aliasRuntimeSelector),
     workspace: route.workspace,
     mobileNavigationRequired: route.workspace !== "search" && route.journey !== "data-overlay",
     mobileSiblingRequired: ["explore", "observe", "flow", "time"].includes(route.workspace) && route.journey !== "data-overlay",
+    runtimeSelectors: {
+      app: aliasRuntimeSelector(".atlas-app"),
+      homeHeadline: aliasRuntimeSelector(".home-v75-copy-block h1"),
+      homeTerrain: aliasRuntimeSelector(".living-graph-canvas.is-home"),
+      mobileNavigation: aliasRuntimeSelector(".mobile-navigation"),
+      mobileSibling: aliasRuntimeSelector(".mobile-sibling"),
+      mobileInteractive: aliasRuntimeSelector(".atlas-app button:not([disabled]), .atlas-app a[href], .atlas-app input:not([disabled]), .atlas-app select:not([disabled]), .atlas-app textarea:not([disabled]), .atlas-app [role='button']:not([aria-disabled='true'])"),
+    },
   });
 }
 
@@ -1007,25 +1027,25 @@ export async function executeJourney(page, route) {
   const agencySceneIndex = { system: 0, roles: 1, compass: 2 };
 
   if (route.journey === "home-scene") {
-    await activateLocator(page, page.locator(".home-v75-scenes > button").nth(homeSceneIndex[route.targetScene]), route.touch);
-    await page.locator(`.home-v76[data-home-page='${route.targetScene}']`).waitFor({ state: "visible" });
+    await activateLocator(page, runtimeLocator(page, ".home-v75-scenes > button").nth(homeSceneIndex[route.targetScene]), route.touch);
+    await runtimeLocator(page, `.home-v76[data-home-page='${route.targetScene}']`).waitFor({ state: "visible" });
     details.scene = route.targetScene;
   } else if (route.journey === "agency-system-roundtrip") {
-    await activateLocator(page, page.locator(".agency-scene-rail > button").nth(agencySceneIndex.roles), false);
-    await page.locator(".agency-view[data-scene='roles']").waitFor({ state: "visible" });
-    await activateLocator(page, page.locator(".agency-scene-rail > button").nth(agencySceneIndex.system), false);
-    await page.locator(".agency-view[data-scene='system']").waitFor({ state: "visible" });
+    await activateLocator(page, runtimeLocator(page, ".agency-scene-rail > button").nth(agencySceneIndex.roles), false);
+    await runtimeLocator(page, ".agency-view[data-scene='roles']").waitFor({ state: "visible" });
+    await activateLocator(page, runtimeLocator(page, ".agency-scene-rail > button").nth(agencySceneIndex.system), false);
+    await runtimeLocator(page, ".agency-view[data-scene='system']").waitFor({ state: "visible" });
     details.sceneSequence = ["roles", "system"];
   } else if (route.journey === "agency-scene") {
-    await activateLocator(page, page.locator(".agency-scene-rail > button").nth(agencySceneIndex[route.targetScene]), route.touch);
-    await page.locator(`.agency-view[data-scene='${route.targetScene}']`).waitFor({ state: "visible" });
+    await activateLocator(page, runtimeLocator(page, ".agency-scene-rail > button").nth(agencySceneIndex[route.targetScene]), route.touch);
+    await runtimeLocator(page, `.agency-view[data-scene='${route.targetScene}']`).waitFor({ state: "visible" });
     details.scene = route.targetScene;
   } else if (route.journey === "agency-actor") {
     const label = actorLabel(route.actorId);
     if (!label) throw new Error(`Unknown actor journey target: ${route.actorId}`);
-    await activateLocator(page, page.locator(".agency-actor-row:visible").filter({ hasText: label }), route.touch);
+    await activateLocator(page, runtimeLocator(page, ".agency-actor-row:visible").filter({ hasText: label }), route.touch);
     await page.waitForFunction((expectedActor) => new URLSearchParams(location.hash.split("?")[1] ?? "").get("actor") === expectedActor, route.actorId);
-    const roleTitle = page.locator("#agency-role-detail-title");
+    const roleTitle = runtimeLocator(page, "#agency-role-detail-title");
     await roleTitle.waitFor({ state: "visible" });
     if ((await roleTitle.innerText()).trim() !== label) throw new Error(`Agency actor selection did not resolve ${label}`);
     details.actorId = route.actorId;
@@ -1036,16 +1056,16 @@ export async function executeJourney(page, route) {
     for (const actorId of actorIds) {
       const label = actorLabel(actorId);
       if (!label) throw new Error(`Unknown actor journey target: ${actorId}`);
-      await activateLocator(page, page.locator(".agency-actor-row:visible").filter({ hasText: label }), false);
+      await activateLocator(page, runtimeLocator(page, ".agency-actor-row:visible").filter({ hasText: label }), false);
       await page.waitForFunction((expectedActor) => new URLSearchParams(location.hash.split("?")[1] ?? "").get("actor") === expectedActor, actorId);
-      const roleTitle = page.locator("#agency-role-detail-title");
+      const roleTitle = runtimeLocator(page, "#agency-role-detail-title");
       await roleTitle.waitFor({ state: "visible" });
       if ((await roleTitle.innerText()).trim() !== label) throw new Error(`Agency actor selection did not resolve ${label}`);
       visited.push(actorId);
     }
     details.actorIds = visited;
   } else if (route.journey === "explore-graph") {
-    const graph = page.locator(".explore-v75 .living-graph-canvas");
+    const graph = runtimeLocator(page, ".explore-v75 .living-graph-canvas");
     await graph.waitFor({ state: "visible" });
     const counts = await graph.evaluate((node) => ({
       nodes: Number(node.getAttribute("data-node-count") ?? 0),
@@ -1057,32 +1077,32 @@ export async function executeJourney(page, route) {
     }
     details.graph = counts;
   } else if (route.journey === "explore-constellations") {
-    const target = page.locator(".explore-v75-clusters > button:visible").first();
+    const target = runtimeLocator(page, ".explore-v75-clusters > button:visible").first();
     await activateLocator(page, target, route.touch);
-    await page.locator(".explore-v75-graph-panel .living-graph-canvas").waitFor({ state: "visible" });
+    await runtimeLocator(page, ".explore-v75-graph-panel .living-graph-canvas").waitFor({ state: "visible" });
     await page.waitForFunction(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("scene") === "graph"
       && Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus")));
     details.focus = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
   } else if (route.journey === "explore-list") {
-    const target = page.locator(".graph-ranked-list > button:visible").first();
+    const target = runtimeLocator(page, ".graph-ranked-list > button:visible").first();
     await activateLocator(page, target, route.touch);
     await page.waitForFunction(() => Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus")));
     details.focus = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
   } else if (route.journey === "observe-relation" || route.journey === "touch-observe-relation") {
-    const target = page.locator(".mobile-ranked-list > button:visible, [data-testid='relation-matrix'] .matrix-cell[role='button']:visible");
+    const target = runtimeLocator(page, ".mobile-ranked-list > button:visible, [data-testid='relation-matrix'] .matrix-cell[role='button']:visible");
     await activateLocator(page, target, route.touch || route.journey === "touch-observe-relation");
     await page.waitForFunction(() => Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("pair")));
     details.pair = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("pair"));
   } else if (route.journey === "flow-verified-or-empty") {
-    const emptyCount = await page.locator(".flow-honest-empty:visible").count();
-    const routeCount = await page.locator(".route-rail > button:visible").count();
-    const graphCount = await page.locator(".flow-spatial-stage .living-graph-canvas:visible").count();
+    const emptyCount = await runtimeLocator(page, ".flow-honest-empty:visible").count();
+    const routeCount = await runtimeLocator(page, ".route-rail > button:visible").count();
+    const graphCount = await runtimeLocator(page, ".flow-spatial-stage .living-graph-canvas:visible").count();
     if (emptyCount === 1) {
       if (routeCount !== 0 || graphCount !== 0) throw new Error("Flow empty state retained clickable or drawn zero-member routes");
       details.mode = "honest-empty";
     } else {
       if (routeCount < 1 || graphCount !== 1) throw new Error("Flow must render one factual graph for verified member-bearing routes");
-      const target = page.locator(".route-rail > button:not(.is-active):visible");
+      const target = runtimeLocator(page, ".route-rail > button:not(.is-active):visible");
       if (await target.count()) {
         await activateLocator(page, target, route.touch);
         await page.waitForFunction(() => Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("route")));
@@ -1090,77 +1110,77 @@ export async function executeJourney(page, route) {
       details.mode = "verified-routes";
       details.routeCount = routeCount;
     }
-    const flowText = await page.locator(".flow-view").innerText();
+    const flowText = await runtimeLocator(page, ".flow-view").innerText();
     if (/역할 경계\s*\d+|새로 생김 집계|미확정 변화/.test(flowText)) throw new Error("Flow rendered a prohibited generated placeholder");
   } else if (route.journey === "time-version-evolution") {
-    const movementCount = await page.locator(".version-seam__movement:visible").count();
-    const emptyCount = await page.locator(".version-seam__empty:visible").count();
+    const movementCount = await runtimeLocator(page, ".version-seam__movement:visible").count();
+    const emptyCount = await runtimeLocator(page, ".version-seam__empty:visible").count();
     if (movementCount === 0 && emptyCount !== 1) {
       throw new Error("Time exposed neither verified movements nor its honest no-movement boundary");
     }
-    const timeText = await page.locator(".time-v76").innerText();
+    const timeText = await runtimeLocator(page, ".time-v76").innerText();
     if (/새로 생김 집계\s*\d+|미확정 변화\s*\d+|소멸 집계\s*\d+/.test(timeText)) throw new Error("Time rendered a prohibited generated placeholder");
     details.mode = movementCount > 0 ? "verified-version-movements" : "honest-empty-not-zero";
     details.movementCount = movementCount;
   } else if (route.journey === "search-overlay") {
-    await page.locator(".search-trigger").focus();
+    await runtimeLocator(page, ".search-trigger").focus();
     await page.keyboard.press(process.platform === "darwin" ? "Meta+K" : "Control+K");
-    await page.locator(".search-dialog").waitFor({ state: "visible" });
+    await runtimeLocator(page, ".search-dialog").waitFor({ state: "visible" });
     await page.waitForFunction(() => document.activeElement?.id === "atlas-search-input");
-    await page.locator("#atlas-search-input").fill("Atlas");
+    await runtimeLocator(page, "#atlas-search-input").fill("Atlas");
     details.overlay = "search";
   } else if (route.journey === "search-escape-focus") {
-    const trigger = page.locator(".search-trigger");
+    const trigger = runtimeLocator(page, ".search-trigger");
     await trigger.focus();
     await page.keyboard.press(process.platform === "darwin" ? "Meta+K" : "Control+K");
-    await page.locator(".search-dialog").waitFor({ state: "visible" });
+    await runtimeLocator(page, ".search-dialog").waitFor({ state: "visible" });
     await page.keyboard.press("Escape");
-    await page.locator(".search-dialog").waitFor({ state: "detached" });
+    await runtimeLocator(page, ".search-dialog").waitFor({ state: "detached" });
     await page.waitForFunction(() => document.activeElement?.classList.contains("search-trigger"));
     details.focusRestored = true;
   } else if (route.journey === "data-overlay") {
-    await activateLocator(page, page.locator(".mobile-data-trigger:visible, #data-trigger:visible"), route.touch);
-    await page.locator(".data-tray").waitFor({ state: "visible" });
+    await activateLocator(page, runtimeLocator(page, ".mobile-data-trigger:visible, #data-trigger:visible"), route.touch);
+    await runtimeLocator(page, ".data-tray").waitFor({ state: "visible" });
     details.overlay = "data";
   } else if (route.journey === "malformed-recovery") {
-    await page.locator(".global-journey-fallback").waitFor({ state: "visible" });
-    await page.locator(".brand-lockup").focus();
+    await runtimeLocator(page, ".global-journey-fallback").waitFor({ state: "visible" });
+    await runtimeLocator(page, ".brand-lockup").focus();
     await page.keyboard.press("Tab");
-    details.safeWorkspace = await page.locator("[data-workspace]").getAttribute("data-workspace");
+    details.safeWorkspace = await runtimeLocator(page, "[data-workspace]").getAttribute("data-workspace");
     if (details.safeWorkspace !== route.workspace) throw new Error(`Malformed URL did not recover to ${route.workspace}`);
   } else if (route.journey === "focus-reload") {
     await page.waitForFunction(() => Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus")));
     const focusBefore = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
     await page.reload({ waitUntil: "domcontentloaded" });
-    await page.locator(".explore-v75").waitFor({ state: "visible" });
+    await runtimeLocator(page, ".explore-v75").waitFor({ state: "visible" });
     const focusAfter = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
     if (!focusBefore || focusBefore !== focusAfter) throw new Error("Focus deep link did not survive reload");
     details.focus = focusAfter;
   } else if (route.journey === "back-forward") {
-    await activateLocator(page, page.locator(".home-v75-scenes > button").nth(1), false);
-    await page.locator(".home-v76[data-home-page='protagonists']").waitFor({ state: "visible" });
+    await activateLocator(page, runtimeLocator(page, ".home-v75-scenes > button").nth(1), false);
+    await runtimeLocator(page, ".home-v76[data-home-page='protagonists']").waitFor({ state: "visible" });
     await page.goBack({ waitUntil: "domcontentloaded" });
-    await page.locator(".home-v76[data-home-page='core-gravity']").waitFor({ state: "visible" });
+    await runtimeLocator(page, ".home-v76[data-home-page='core-gravity']").waitFor({ state: "visible" });
     await page.goForward({ waitUntil: "domcontentloaded" });
-    await page.locator(".home-v76[data-home-page='protagonists']").waitFor({ state: "visible" });
+    await runtimeLocator(page, ".home-v76[data-home-page='protagonists']").waitFor({ state: "visible" });
     details.history = ["protagonists", "core-gravity", "protagonists"];
   } else if (route.journey === "keyboard-workspace") {
-    const exploreTab = page.locator("#workspace-tab-explore");
+    const exploreTab = runtimeLocator(page, "#workspace-tab-explore");
     await exploreTab.focus();
     await page.keyboard.press("ArrowRight");
-    await page.locator(".observe-view, .mobile-observe").first().waitFor({ state: "visible" });
+    await runtimeLocator(page, ".observe-view, .mobile-observe").first().waitFor({ state: "visible" });
     await page.waitForFunction(() => document.activeElement?.id === "workspace-tab-observe");
     details.keyboardDestination = "observe";
   } else if (route.journey === "hub-relations") {
-    const surface = page.locator(".hub-relations-surface");
+    const surface = runtimeLocator(page, ".hub-relations-surface");
     await surface.waitFor({ state: "visible" });
-    const neighborCount = await surface.locator(".hub-relations-grid li > button:visible").count();
-    const honestEmpty = await surface.locator(".workspace-honest-empty:visible").count();
+    const neighborCount = await surface.locator(aliasRuntimeSelector(".hub-relations-grid li > button:visible")).count();
+    const honestEmpty = await surface.locator(aliasRuntimeSelector(".workspace-honest-empty:visible")).count();
     if (neighborCount === 0 && honestEmpty !== 1) throw new Error("Hub Relations exposed neither verified neighbors nor an honest empty state");
     details.neighborCount = neighborCount;
     details.honestEmpty = honestEmpty === 1;
   } else if (route.journey === "webkit-graph-focus") {
-    const graph = page.locator("[data-renderer='canvas2d-projected-3d']").first();
+    const graph = runtimeLocator(page, "[data-renderer='canvas2d-projected-3d']").first();
     await graph.waitFor({ state: "visible" });
     const captureGraphState = () => graph.evaluate((node) => {
       const rendered = (element) => {
@@ -1298,7 +1318,7 @@ export async function executeJourney(page, route) {
     throw new Error(`Unsupported QA journey: ${route.journey}`);
   }
 
-  await page.locator(route.finalReadySelector ?? route.readySelector).first().waitFor({ state: "visible" });
+  await runtimeLocator(page, route.finalReadySelector ?? route.readySelector).first().waitFor({ state: "visible" });
   await settleRenderedPage(page);
   return { pass: true, durationMs: Date.now() - startedAt, details };
 }
@@ -1307,10 +1327,10 @@ async function collectAccessibilityAndExposure(page, route) {
   const axeResult = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
-  const bodyText = await page.locator("body").innerText();
-  const bodyHtml = await page.locator("body").evaluate((node) => node.outerHTML);
-  const ariaSnapshot = await page.locator("body").ariaSnapshot();
-  const languageContract = await page.evaluate(() => {
+  const bodyText = await runtimeLocator(page, "body").innerText();
+  const bodyHtml = await runtimeLocator(page, "body").evaluate((node) => node.outerHTML);
+  const ariaSnapshot = await runtimeLocator(page, "body").ariaSnapshot();
+  const languageContract = await page.evaluate((runtimeSelectors) => {
     const normalized = (value) => value?.trim().replace(/\s+/g, " ") ?? "";
     const control = (selector, expected) => {
       const node = document.querySelector(selector);
@@ -1327,7 +1347,7 @@ async function collectAccessibilityAndExposure(page, route) {
           && accessibleLabel.toLocaleLowerCase("en").startsWith(expected.toLocaleLowerCase("en")),
       };
     };
-    const overlayLanguages = [...document.querySelectorAll(".search-dialog, .navigator-tray, .inspector-tray, .data-tray")]
+    const overlayLanguages = [...document.querySelectorAll(runtimeSelectors.overlays)]
       .filter((node) => {
         const style = getComputedStyle(node);
         const rect = node.getBoundingClientRect();
@@ -1336,8 +1356,8 @@ async function collectAccessibilityAndExposure(page, route) {
       .map((node) => ({ selector: `.${[...node.classList].join(".")}`, lang: node.getAttribute("lang") }));
     return {
       htmlLang: document.documentElement.lang,
-      commandBarLang: document.querySelector(".command-bar")?.getAttribute("lang") ?? null,
-      workspaceMainLang: document.querySelector(".workspace-main")?.getAttribute("lang") ?? null,
+      commandBarLang: document.querySelector(runtimeSelectors.commandBar)?.getAttribute("lang") ?? null,
+      workspaceMainLang: document.querySelector(runtimeSelectors.workspaceMain)?.getAttribute("lang") ?? null,
       overlayLanguages,
       chromeControls: [
         control("#workspace-tab-home", "Homi Vault Atlas"),
@@ -1346,9 +1366,14 @@ async function collectAccessibilityAndExposure(page, route) {
         control("#workspace-tab-flow", "Flow"),
         control("#workspace-tab-time", "Time"),
         control("#workspace-tab-agency", "Agency"),
-        control(".search-trigger", "Search"),
+        control(runtimeSelectors.searchTrigger, "Search"),
       ],
     };
+  }, {
+    overlays: aliasRuntimeSelector(".search-dialog, .navigator-tray, .inspector-tray, .data-tray"),
+    commandBar: aliasRuntimeSelector(".command-bar"),
+    workspaceMain: aliasRuntimeSelector(".workspace-main"),
+    searchTrigger: aliasRuntimeSelector(".search-trigger"),
   });
   const snapshot = {
     violations: axeResult.violations.map((violation) => ({
@@ -1529,8 +1554,8 @@ export async function runQa(environment = process.env) {
           const targetUrl = new URL(route.hash, baseUrl).href;
           const navigationStartedAt = Date.now();
           await page.goto(targetUrl, { waitUntil: "domcontentloaded", timeout: 30_000 });
-          await page.locator("[data-workspace]").waitFor({ state: "visible" });
-          await page.locator(route.readySelector).first().waitFor({ state: "visible" });
+          await runtimeLocator(page, "[data-workspace]").waitFor({ state: "visible" });
+          await runtimeLocator(page, route.readySelector).first().waitFor({ state: "visible" });
           await settleRenderedPage(page);
           const readinessMs = Date.now() - navigationStartedAt;
           let openingEvidence = null;
@@ -1539,7 +1564,7 @@ export async function runQa(environment = process.env) {
             await page.waitForTimeout(850);
             const settled = await page.evaluate(() => sessionStorage.getItem("homi-atlas-v7-6-entry-seen"));
             await page.reload({ waitUntil: "domcontentloaded" });
-            await page.locator(route.readySelector).first().waitFor({ state: "visible" });
+            await runtimeLocator(page, route.readySelector).first().waitFor({ state: "visible" });
             await settleRenderedPage(page);
             const revisit = await page.evaluate(() => sessionStorage.getItem("homi-atlas-v7-6-entry-seen"));
             openingEvidence = {

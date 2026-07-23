@@ -123,6 +123,15 @@ function aliasFor(index) {
   return `a${index.toString(36)}`;
 }
 
+export function aliasRuntimeSelector(selector) {
+  let nextSelector = selector;
+  for (const [index, className] of aliasCandidates.entries()) {
+    const escaped = className.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    nextSelector = nextSelector.replace(new RegExp(`\\.${escaped}(?![A-Za-z0-9_-])`, "g"), `.${aliasFor(index)}`);
+  }
+  return nextSelector;
+}
+
 export function aliasRuntimeClasses({ javascript, stylesheet }) {
   let nextJavascript = javascript;
   let nextStylesheet = stylesheet;
