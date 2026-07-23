@@ -140,6 +140,30 @@ describe("public Atlas v7.6 runtime contracts", () => {
     }
   });
 
+  test("keeps transient graph preview out of committed URL state and dedupes repeated pointer frames", () => {
+    const environment = { reducedMotion: false, mobileSibling: false };
+    const graph = readJson("graph");
+    const focusId = graph.nodes[0].id;
+    const previewId = graph.nodes.find((node: { id: string }) => node.id !== focusId)?.id;
+    expect(previewId).toBeTruthy();
+    const initial = stateModule.createAtlasState(
+      `#explore?scene=graph&focus=${encodeURIComponent(focusId)}`,
+      environment,
+    );
+    const previewed = stateModule.reduceAtlasState(initial, { type: "preview", focusId: previewId });
+    expect(previewed).not.toBe(initial);
+    expect(previewed.focusId).toBe(focusId);
+    expect(previewed.previewId).toBe(previewId);
+    expect(stateModule.stateToHash(previewed)).toBe(stateModule.stateToHash(initial));
+    expect(stateModule.reduceAtlasState(previewed, { type: "preview", focusId: previewId })).toBe(previewed);
+
+    const restored = stateModule.reduceAtlasState(previewed, { type: "preview", focusId: null });
+    expect(restored.focusId).toBe(focusId);
+    expect(restored.previewId).toBeNull();
+    expect(stateModule.stateToHash(restored)).toBe(stateModule.stateToHash(initial));
+    expect(stateModule.reduceAtlasState(restored, { type: "preview", focusId: null })).toBe(restored);
+  });
+
   test("canonicalizes v7.3 and v7.4 aliases without ghost scenes", () => {
     const environment = { reducedMotion: false, mobileSibling: false };
     expect(stateModule.createAtlasState("#home?scene=living-terrain", environment).sceneId)
@@ -256,7 +280,9 @@ describe("public Atlas v7.6 runtime contracts", () => {
     const markup = renderWorkspace("#home?scene=core-gravity", homeModule.HomeView);
     const inventory = readJson("inventory");
     const graph = readJson("graph");
-    expect(markup).toContain("HOMI</strong>");
+    expect(markup).toContain("home-v76-system-origin");
+    expect(markup).toContain("Homi system origin");
+    expect(markup).not.toContain("HOMI</strong>");
     expect(markup).toContain('aria-label="Homi 협업 구조 자세히 보기"');
     expect(markup).toContain('<img src="data:image/svg+xml');
     expect(markup).toContain("지식의 주인공과,");

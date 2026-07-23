@@ -1,4 +1,4 @@
-import { ArrowRight, Box, CalendarRange, CircleDot, LocateFixed, Route, Search, X } from "lucide-react";
+import { ArrowRight, CalendarRange, CircleDot, LocateFixed, Route, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { SpatialWorkspaceFrame } from "../components/SpatialWorkspaceFrame";
@@ -93,17 +93,9 @@ export function ExploreView() {
   const { state, dispatch } = useAtlasState();
   const scene = ["graph", "constellations", "list"].includes(state.sceneId) ? state.sceneId : "graph";
   const [pathDisclosureOpen, setPathDisclosureOpen] = useState(Boolean(state.pathFrom || state.pathTo));
-  const fallbackSelected = useMemo(() => [...atlasData.graph.nodes]
-    .filter((node) => node.kind !== "source_document")
-    .sort((left, right) => right.gravity - left.gravity || right.occurrences - left.occurrences || left.id.localeCompare(right.id, "en"))[0] ?? null, []);
-  const selected = graphNodeById.get(state.focusId ?? "") ?? fallbackSelected;
+  const selected = graphNodeById.get(state.focusId ?? "") ?? null;
   const previewed = state.previewId ? graphNodeById.get(state.previewId) ?? null : null;
   const activeNode = previewed ?? selected;
-  useEffect(() => {
-    if ((!state.focusId || !graphNodeById.has(state.focusId)) && fallbackSelected) {
-      dispatch({ type: "focus", focusId: fallbackSelected.id });
-    }
-  }, [dispatch, fallbackSelected, state.focusId]);
   useEffect(() => {
     if (state.pathFrom || state.pathTo) setPathDisclosureOpen(true);
   }, [state.pathFrom, state.pathTo]);
@@ -129,6 +121,20 @@ export function ExploreView() {
       .filter((pair) => pair.source === activeNode.label || pair.target === activeNode.label)
       .sort((left, right) => right.wikilink - left.wikilink || left.id.localeCompare(right.id, "en"))[0] ?? null
     : null;
+  const selectedProtagonist = atlasData.meaning.protagonists.find((item) => item.nodeId === selected?.id)
+    ?? atlasData.meaning.protagonists[0]
+    ?? null;
+  const selectedConstellationNode = selectedProtagonist
+    ? graphNodeById.get(selectedProtagonist.nodeId) ?? null
+    : null;
+  const previewedProtagonist = previewed
+    ? atlasData.meaning.protagonists.find((item) => item.nodeId === previewed.id) ?? null
+    : null;
+  const activeConstellationNode = previewedProtagonist ? previewed : selectedConstellationNode;
+  const activeConstellation = activeConstellationNode
+    ? atlasData.meaning.constellations.find((item) => item.focalNodeId === activeConstellationNode.id) ?? null
+    : null;
+  const activeConstellationMeaning = previewedProtagonist ?? selectedProtagonist;
 
   const selectNode = (focusId: string) => dispatch({ type: "focus", focusId });
   const title = scene === "constellations" ? "지식의 주인공과 실제 이웃을 읽는다" : scene === "list" ? "중력 순위로 지식을 훑는다" : "실제 방향 관계를 따라 지식을 탐색한다";
@@ -153,7 +159,7 @@ export function ExploreView() {
         ]}
       />
 
-      <div className="spatial-command-rail explore-command-rail explore-v75-controls" aria-label="지식 그래프 필터">
+      {scene !== "constellations" && <div className="spatial-command-rail explore-command-rail explore-v75-controls" aria-label="지식 그래프 필터">
         <label><span>지식 구역</span>
           <select value={state.districtId ?? ""} onChange={(event) => dispatch({ type: "graphDistrict", districtId: event.target.value || null })}>
             <option value="">전체 구역</option>
@@ -172,10 +178,10 @@ export function ExploreView() {
             dispatch({ type: "graphFreshness", freshness: "all" });
           }}><X size={15} aria-hidden="true" /> 필터 해제</button>
         )}
-      </div>
+      </div>}
 
       {scene === "graph" && (
-        <div className="spatial-stage-layout explore-v75-layout">
+        <div className={`spatial-stage-layout explore-v75-layout${selected ? " has-inspector" : ""}`}>
           <main className="spatial-stage spatial-stage--full-bleed explore-v75-graph-panel">
             <div className="scrollbar-clean explore-v75-mobile-clusters" aria-label="지식 구역 미니맵">
               {atlasData.graph.clusters.map((cluster) => (
@@ -184,7 +190,11 @@ export function ExploreView() {
                 </button>
               ))}
             </div>
-            <div className="spatial-stage-axes spatial-stage-axes--subdued explore-v75-axes"><span><CalendarRange size={14} />Y · 위쪽일수록 최근</span><span><Box size={14} />Z · 구역에서 원천 기록으로 이어지는 깊이</span><span><CircleDot size={14} />크기는 참조한 고유 문서 수</span><span><Route size={14} />화살표는 참조 방향</span></div>
+            <div className="spatial-stage-axes spatial-stage-axes--subdued explore-v75-axes">
+              <span><CalendarRange size={14} />위쪽일수록 최근</span>
+              <span><CircleDot size={14} />크기는 지식 중력</span>
+              <span><Route size={14} />화살표는 실제 참조 방향</span>
+            </div>
             <LivingGraphCanvas
               graph={atlasData.graph}
               scene={state.pathFrom && state.pathTo ? "trace" : state.freshness !== "all" ? "freshness" : "field"}
@@ -202,7 +212,7 @@ export function ExploreView() {
               onHover={(focusId) => dispatch({ type: "preview", focusId })}
             />
           </main>
-          {state.panel !== "inspector" && <aside className="spatial-evidence-rail explore-evidence-rail explore-v75-insight" aria-live="polite">
+          {selected && <aside className="spatial-evidence-rail explore-evidence-rail explore-v75-insight" aria-live="polite">
             {activeNode ? (
               <>
                 <span className="eyebrow">{previewed ? "미리 보는 지식" : "선택한 지식"}</span>
@@ -236,22 +246,54 @@ export function ExploreView() {
       )}
 
       {scene === "constellations" && (
-        <div className="explore-v75-clusters">
-          {atlasData.meaning.protagonists.map((protagonist) => {
-            const node = graphNodeById.get(protagonist.nodeId);
-            const constellation = atlasData.meaning.constellations.find((item) => item.focalNodeId === protagonist.nodeId);
-            if (!node) return null;
-            return (
-              <button key={protagonist.id} type="button" onClick={() => dispatch({ type: "journey", target: { workspace: "explore", sceneId: "graph", districtId: node.clusterId, focusId: node.id } })}>
-                <i />
-                <h2>{graphNodeLabel(node)}</h2>
-                <p>{protagonist.thesis}</p>
-                <strong>{protagonistRoleLabel(protagonist.role)}</strong>
-                <small>들어오는 실제 참조 {constellation?.incomingEdgeIds.length ?? 0}개 · 나가는 실제 참조 {constellation?.outgoingEdgeIds.length ?? 0}개</small>
-                <ArrowRight size={17} aria-hidden="true" />
-              </button>
-            );
-          })}
+        <div className="explore-v75-clusters explore-constellation-layout">
+          <nav className="explore-constellation-rail scrollbar-clean" aria-label="지식 주인공">
+            {atlasData.meaning.protagonists.map((protagonist) => {
+              const node = graphNodeById.get(protagonist.nodeId);
+              if (!node) return null;
+              return (
+                <button
+                  key={protagonist.id}
+                  type="button"
+                  className={node.id === selectedConstellationNode?.id ? "is-active" : ""}
+                  aria-pressed={node.id === selectedConstellationNode?.id}
+                  onPointerEnter={() => dispatch({ type: "preview", focusId: node.id })}
+                  onPointerLeave={() => dispatch({ type: "preview", focusId: null })}
+                  onFocus={() => dispatch({ type: "preview", focusId: node.id })}
+                  onBlur={() => dispatch({ type: "preview", focusId: null })}
+                  onClick={() => selectNode(node.id)}
+                >
+                  <strong>{graphNodeLabel(node)}</strong>
+                  <span>{protagonistRoleLabel(protagonist.role)}</span>
+                </button>
+              );
+            })}
+          </nav>
+          <main className="explore-constellation-stage">
+            <LivingGraphCanvas
+              graph={atlasData.graph}
+              scene="gravity"
+              focusId={selectedConstellationNode?.id ?? null}
+              previewId={state.previewId}
+              districtRelationMatrix={atlasData.relation.matrix}
+              mobile={state.mobileSibling}
+              reducedMotion={state.reducedMotion}
+              presentation="workspace"
+              onSelect={selectNode}
+              onHover={(focusId) => dispatch({ type: "preview", focusId })}
+            />
+            {activeConstellationNode && activeConstellationMeaning && (
+              <article className="explore-constellation-brief" aria-live="polite">
+                <span className="eyebrow">실제 방향 관계</span>
+                <h2>{graphNodeLabel(activeConstellationNode)}</h2>
+                <p>{activeConstellationMeaning.thesis}</p>
+                <div>
+                  <strong>{protagonistRoleLabel(activeConstellationMeaning.role)}</strong>
+                  <span>들어옴 {activeConstellation?.incomingEdgeIds.length ?? 0} · 나감 {activeConstellation?.outgoingEdgeIds.length ?? 0}</span>
+                </div>
+              </article>
+            )}
+          </main>
         </div>
       )}
 

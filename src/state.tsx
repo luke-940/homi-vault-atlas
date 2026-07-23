@@ -593,7 +593,9 @@ export function reduceAtlasState(state: AtlasState, action: Action): AtlasState 
         inspectorTab: "summary",
       };
     case "preview":
-      return { ...state, previewId: action.focusId };
+      return state.previewId === action.focusId
+        ? state
+        : { ...state, previewId: action.focusId };
     case "compare": {
       if (!comparableIds.has(action.focusId)) {
         return { ...state, fallbackReason: "비교는 공개 지식 엔터티에만 제공됩니다." };

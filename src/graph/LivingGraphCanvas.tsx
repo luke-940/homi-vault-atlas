@@ -9,7 +9,7 @@ import type {
   OperationalAlignment,
 } from "../types";
 import { graphNodeLabel, type FreshnessBucket, visibleGraphSelection } from "./model";
-import { semanticEdgeCommands } from "./semantic-edge-model";
+import { interactionContext, semanticEdgeCommands } from "./semantic-edge-model";
 import {
   cameraForSelection,
   clampCamera,
@@ -235,15 +235,6 @@ function mixHex(left: string, right: string, amount: number) {
   return `#${[channel(16), channel(8), channel(0)].map((value) => value.toString(16).padStart(2, "0")).join("")}`;
 }
 
-function depthForCluster(coordinates: AtlasGraphCoordinateV1[]) {
-  if (!coordinates.length) return { near: 120, far: 360 };
-  const values = coordinates.map((coordinate) => coordinate.z);
-  return {
-    near: Math.max(0, Math.min(...values) - 48),
-    far: Math.min(640, Math.max(...values) + 36),
-  };
-}
-
 function cameraForGraphScene(
   graph: AtlasGraphV1,
   presentation: Presentation,
@@ -333,20 +324,6 @@ function projectGraphStage(
     scale: point.scale * Math.sqrt(horizontalScale * treatment.verticalScale),
     visible: point.visible && x > -180 && x < viewport.width + 180 && y > -180 && y < viewport.height + 180,
   };
-}
-
-function drawProjectedRing(
-  context: CanvasRenderingContext2D,
-  ring: number[][],
-  z: number,
-  project: (coordinate: Pick<AtlasGraphCoordinateV1, "x" | "y" | "z">) => ProjectedPoint,
-) {
-  const points = ring.map(([x, y]) => project({ x, y, z })).filter((point) => point.visible);
-  if (points.length < 3) return [];
-  context.beginPath();
-  points.forEach((point, index) => index === 0 ? context.moveTo(point.x, point.y) : context.lineTo(point.x, point.y));
-  context.closePath();
-  return points;
 }
 
 interface LabelPlacement {
@@ -592,6 +569,7 @@ export function LivingGraphCanvas({
   onSelect,
   onHover,
   persistentLabelIds = [],
+  highlightNodeIds = [],
   operationalAlignment = null,
   operationalActorLabel = null,
   committedSelectionId,
@@ -612,6 +590,7 @@ export function LivingGraphCanvas({
   onSelect: (id: string) => void;
   onHover?: (id: string | null) => void;
   persistentLabelIds?: readonly string[];
+  highlightNodeIds?: readonly string[];
   operationalAlignment?: OperationalAlignment | null;
   operationalActorLabel?: string | null;
   committedSelectionId?: string | null;
@@ -623,10 +602,8 @@ export function LivingGraphCanvas({
   const traceAnimationRef = useRef(0);
   const inputFrameRef = useRef(0);
   const pendingCameraRef = useRef<Camera3D | null>(null);
-  const parallaxFrameRef = useRef(0);
-  const parallaxTargetRef = useRef({ x: 0, y: 0 });
-  const parallaxCurrentRef = useRef({ x: 0, y: 0 });
   const previousFocusRef = useRef(focusId);
+  const hoverIdRef = useRef<string | null>(null);
   const dragRef = useRef<{
     pointerId: number;
     startX: number;
@@ -644,6 +621,8 @@ export function LivingGraphCanvas({
   const [hidden, setHidden] = useState(document.hidden);
   const [hoverId, setHoverId] = useState<string | null>(null);
   const interactionId = hoverId ?? previewId ?? focusId;
+  const transientPreviewId = hoverId ?? previewId;
+  const layoutFocusId = focusId;
   const committedId = committedSelectionId === undefined ? focusId : committedSelectionId;
   const operationalOverlayActive = presentation === "home"
     && scene === "trace"
@@ -657,7 +636,7 @@ export function LivingGraphCanvas({
   const [traceProgress, setTraceProgress] = useState(1);
   const selection = useMemo(() => {
     const visible = visibleGraphSelection(graph, {
-      districtId, freshness, focusId: interactionId, mobile, from, to,
+      districtId, freshness, focusId: layoutFocusId, mobile, from, to,
     });
     if (!operationalOverlayActive || !operationalAlignment) return visible;
     const visibleIds = new Set(visible.nodes.map((node) => node.id));
@@ -666,7 +645,7 @@ export function LivingGraphCanvas({
     return alignedDomains.length
       ? { ...visible, nodes: [...visible.nodes, ...alignedDomains] }
       : visible;
-  }, [districtId, interactionId, freshness, from, graph, mobile, operationalAlignment, operationalOverlayActive, to]);
+  }, [districtId, freshness, from, graph, layoutFocusId, mobile, operationalAlignment, operationalOverlayActive, to]);
   const coordinateById = useMemo(() => new Map(graph.layout.coordinates.map((item) => [item.id, item])), [graph.layout.coordinates]);
   const projectionAnchor = operationalOverlayActive
     ? null
@@ -676,7 +655,10 @@ export function LivingGraphCanvas({
     const coordinate = coordinateById.get(node.id);
     return coordinate ? [[node.clusterId, coordinate] as const] : [];
   })), [coordinateById, graph.nodes]);
-  const focusedStageClusterId = graph.nodes.find((node) => node.id === interactionId)?.clusterId ?? null;
+  // Preview changes may alter light, factual edges, and evidence, but they must
+  // never rebase the authored spatial layout. Only a committed focus can move
+  // the stage or its label packing.
+  const focusedStageClusterId = graph.nodes.find((node) => node.id === layoutFocusId)?.clusterId ?? null;
   const stageCoordinateByCluster = useMemo(() => {
     const output = new Map(districtCoordinateByCluster);
     if (focusedStageClusterId && projectionAnchor) output.set(focusedStageClusterId, projectionAnchor as AtlasGraphCoordinateV1);
@@ -765,6 +747,22 @@ export function LivingGraphCanvas({
     () => operationalOverlayActive ? [] : knowledgeEdgeCommands,
     [knowledgeEdgeCommands, operationalOverlayActive],
   );
+  const previewOverlayNodes = useMemo(() => {
+    if (!transientPreviewId) return [];
+    const baseIds = new Set(selection.nodes.map((node) => node.id));
+    const endpointIds = edgeCommands.flatMap((command) => [command.sourceId, command.targetId]);
+    return [...new Set(endpointIds)]
+      .filter((id) => !baseIds.has(id))
+      .flatMap((id) => {
+        const node = nodeById.get(id);
+        return node ? [node] : [];
+      })
+      .slice(0, 12);
+  }, [edgeCommands, nodeById, selection.nodes, transientPreviewId]);
+  const renderNodes = useMemo(
+    () => [...selection.nodes, ...previewOverlayNodes],
+    [previewOverlayNodes, selection.nodes],
+  );
   const operationalCommands = useMemo<OperationalAlignmentRenderCommand[]>(() => {
     if (!operationalOverlayActive || !operationalAlignment) return [];
     return operationalAlignment.domainIds
@@ -780,10 +778,20 @@ export function LivingGraphCanvas({
         provenance: "atlas.meaning.v1",
       }));
   }, [coordinateById, nodeById, operationalAlignment, operationalOverlayActive]);
+  const committedEdgeCommands = useMemo(() => semanticEdgeCommands({
+    graph,
+    matrix: districtRelationMatrix,
+    scene,
+    focusId,
+    previewId: null,
+    from,
+    to,
+    presentation,
+  }), [districtRelationMatrix, focusId, from, graph, presentation, scene, to]);
   const resolvedOperationalActorLabel = operationalActorLabel?.trim() || "운영 주체";
   const edgeEndpointLabelIds = useMemo(() => {
     const ids = new Set<string>();
-    for (const command of [...edgeCommands].sort((left, right) =>
+    for (const command of [...committedEdgeCommands].sort((left, right) =>
       right.weight - left.weight
       || left.sourceId.localeCompare(right.sourceId, "en")
       || left.targetId.localeCompare(right.targetId, "en"))) {
@@ -792,10 +800,15 @@ export function LivingGraphCanvas({
     }
     for (const command of operationalCommands) ids.add(command.targetId);
     return [...ids];
-  }, [edgeCommands, operationalCommands]);
+  }, [committedEdgeCommands, operationalCommands]);
+  const activeInteractionContext = useMemo(
+    () => interactionContext(graph, transientPreviewId, focusId),
+    [focusId, graph, transientPreviewId],
+  );
   const activeNeighborhoodIds = useMemo(() => {
     const active = new Set([
       ...(interactionId ? [interactionId] : []),
+      ...highlightNodeIds,
       ...edgeCommands.flatMap((command) => [command.sourceId, command.targetId]),
       ...operationalCommands.map((command) => command.targetId),
     ]);
@@ -806,7 +819,7 @@ export function LivingGraphCanvas({
       });
     }
     return active;
-  }, [edgeCommands, graph.nodes, interactionId, operationalCommands, operationalOverlayActive]);
+  }, [edgeCommands, graph.nodes, highlightNodeIds, interactionId, operationalCommands, operationalOverlayActive]);
   const operationalDomainLabels = operationalCommands.flatMap((command) => {
     const node = nodeById.get(command.targetId);
     return node ? [graphNodeLabel(node)] : [];
@@ -828,28 +841,12 @@ export function LivingGraphCanvas({
     });
   }, []);
 
-  const settleParallax = useCallback((x: number, y: number) => {
-    parallaxTargetRef.current = reducedMotion || hidden || presentation !== "home" ? { x: 0, y: 0 } : { x, y };
-    if (parallaxFrameRef.current) return;
-    const frame = () => {
-      const target = parallaxTargetRef.current;
-      const current = parallaxCurrentRef.current;
-      const next = {
-        x: current.x + (target.x - current.x) * 0.08,
-        y: current.y + (target.y - current.y) * 0.08,
-      };
-      parallaxCurrentRef.current = next;
-      if (canvasRef.current) canvasRef.current.style.transform = `translate3d(${next.x.toFixed(2)}px,${next.y.toFixed(2)}px,0)`;
-      if (Math.abs(target.x - next.x) + Math.abs(target.y - next.y) > 0.08) {
-        parallaxFrameRef.current = requestAnimationFrame(frame);
-      } else {
-        parallaxCurrentRef.current = target;
-        if (canvasRef.current) canvasRef.current.style.transform = `translate3d(${target.x.toFixed(2)}px,${target.y.toFixed(2)}px,0)`;
-        parallaxFrameRef.current = 0;
-      }
-    };
-    parallaxFrameRef.current = requestAnimationFrame(frame);
-  }, [hidden, presentation, reducedMotion]);
+  const commitHover = useCallback((nextHoverId: string | null) => {
+    if (hoverIdRef.current === nextHoverId) return;
+    hoverIdRef.current = nextHoverId;
+    setHoverId(nextHoverId);
+    onHover?.(nextHoverId);
+  }, [onHover]);
 
   const animateCamera = useCallback((target: Camera3D, duration = 520) => {
     cancelAnimationFrame(animationRef.current);
@@ -919,7 +916,11 @@ export function LivingGraphCanvas({
 
   useEffect(() => {
     cancelAnimationFrame(traceAnimationRef.current);
-    const hasFactualTrace = Boolean(interactionId) || Boolean(from && to) || operationalCommands.length > 0;
+    if (transientPreviewId) {
+      setTraceProgress(1);
+      return;
+    }
+    const hasFactualTrace = Boolean(focusId) || Boolean(from && to) || operationalCommands.length > 0;
     if (!hasFactualTrace || reducedMotion || hidden) {
       setTraceProgress(1);
       return;
@@ -934,13 +935,12 @@ export function LivingGraphCanvas({
     };
     traceAnimationRef.current = requestAnimationFrame(update);
     return () => cancelAnimationFrame(traceAnimationRef.current);
-  }, [from, hidden, interactionId, operationalAlignment?.id, operationalCommands.length, reducedMotion, to]);
+  }, [focusId, from, hidden, operationalAlignment?.id, operationalCommands.length, reducedMotion, to, transientPreviewId]);
 
   useEffect(() => () => {
     cancelAnimationFrame(animationRef.current);
     cancelAnimationFrame(traceAnimationRef.current);
     cancelAnimationFrame(inputFrameRef.current);
-    cancelAnimationFrame(parallaxFrameRef.current);
   }, []);
 
   useEffect(() => {
@@ -982,7 +982,7 @@ export function LivingGraphCanvas({
     return () => document.removeEventListener("visibilitychange", sync);
   }, []);
 
-  const projectedById = useMemo(() => new Map(selection.nodes.map((node) => {
+  const projectedById = useMemo(() => new Map(renderNodes.map((node) => {
     const coordinate = coordinateById.get(node.id)!;
     const clusterCoordinate = stageCoordinateByCluster.get(node.clusterId) ?? null;
     let point = projectGraphStage(
@@ -1024,27 +1024,55 @@ export function LivingGraphCanvas({
       };
     }
     return [node.id, point] as const;
-  })), [aggregateStageById, camera, clusterDepthByCluster, coordinateById, graph.layout.bounds, mobile, presentation, projectionAnchor, scene, selection.nodes, size, stageCoordinateByCluster]);
+  })), [aggregateStageById, camera, clusterDepthByCluster, coordinateById, graph.layout.bounds, mobile, presentation, projectionAnchor, renderNodes, scene, size, stageCoordinateByCluster]);
 
   const compactLandscape = size.width <= 900 && window.innerHeight <= 520;
   const labels = useMemo(() => placeLabels(
     selection.nodes,
     projectedById,
     coordinateById,
-    interactionId,
+    layoutFocusId,
     compactLandscape
       ? Math.min(4, graph.layout.labelBudget)
       : mobile
-        ? Math.min(presentation === "home" ? interactionId ? 5 : 4 : 9, graph.layout.labelBudget)
+        ? Math.min(presentation === "home" ? layoutFocusId ? 5 : 4 : 9, graph.layout.labelBudget)
         : presentation === "home"
-          ? Math.min(interactionId ? 8 : scene === "gravity" ? 6 : 5, graph.layout.labelBudget)
+          ? Math.min(layoutFocusId ? 8 : scene === "gravity" ? 6 : 5, graph.layout.labelBudget)
           : graph.layout.labelBudget,
     size,
     presentation,
     mobile || compactLandscape,
     persistentLabelIds,
     edgeEndpointLabelIds,
-  ), [compactLandscape, coordinateById, edgeEndpointLabelIds, graph.layout.labelBudget, interactionId, mobile, persistentLabelIds, presentation, projectedById, scene, selection.nodes, size]);
+  ), [compactLandscape, coordinateById, edgeEndpointLabelIds, graph.layout.labelBudget, layoutFocusId, mobile, persistentLabelIds, presentation, projectedById, scene, selection.nodes, size]);
+  const hoverTooltip = useMemo(() => {
+    if (!transientPreviewId || transientPreviewId === committedId) return null;
+    const node = nodeById.get(transientPreviewId);
+    const point = projectedById.get(transientPreviewId);
+    if (!node || !point?.visible) return null;
+    const clusterLabel = clusterById.get(node.clusterId)?.label ?? "구역 미확인";
+    const x = Math.max(118, Math.min(size.width - 118, point.x));
+    const y = Math.max(62, Math.min(size.height - 72, point.y - 36));
+    return {
+      node,
+      x,
+      y,
+      clusterLabel,
+      incoming: activeInteractionContext.neighborhood.incoming.length,
+      outgoing: activeInteractionContext.neighborhood.outgoing.length,
+      hidden: activeInteractionContext.hiddenIncoming + activeInteractionContext.hiddenOutgoing,
+      incomingLabel: activeInteractionContext.neighborhood.incoming
+        .flatMap((id) => {
+          const neighbor = nodeById.get(id);
+          return neighbor ? [graphNodeLabel(neighbor)] : [];
+        })[0] ?? null,
+      outgoingLabel: activeInteractionContext.neighborhood.outgoing
+        .flatMap((id) => {
+          const neighbor = nodeById.get(id);
+          return neighbor ? [graphNodeLabel(neighbor)] : [];
+        })[0] ?? null,
+    };
+  }, [activeInteractionContext, clusterById, committedId, nodeById, projectedById, size.height, size.width, transientPreviewId]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -1059,7 +1087,7 @@ export function LivingGraphCanvas({
     const style = getComputedStyle(document.documentElement);
     const renderColor = (label: string) => presentation === "home"
       ? homeFieldColors[label] ?? "#a9a096"
-      : colorFor(label, style);
+      : homeFieldColors[label] ?? mixHex(colorFor(label, style), "#d7c5aa", 0.16);
     const project = (coordinate: Pick<AtlasGraphCoordinateV1, "x" | "y" | "z">, clusterId?: string) =>
       projectGraphStage(
         coordinate,
@@ -1084,7 +1112,7 @@ export function LivingGraphCanvas({
       })
       .sort((left, right) => left.point.depth - right.point.depth);
     const emphasisId = interactionId;
-    const focusContext = Boolean(interactionId) || operationalOverlayActive;
+    const focusContext = Boolean(interactionId) || operationalOverlayActive || highlightNodeIds.length > 0;
     const operationalTargetPoints = operationalCommands.flatMap((command) => {
       const point = projectedById.get(command.targetId);
       return point?.visible ? [{ command, point }] : [];
@@ -1124,8 +1152,8 @@ export function LivingGraphCanvas({
       })()
       : null;
 
-    // Home is a warm near-black editorial stage. Analytical workspaces retain
-    // the cooler graphite field so their tools stay legible.
+    // Home and analytical workspaces share one authored warm-graphite space.
+    // Workspace tools differ through information hierarchy, not a second skin.
     const backdrop = context.createLinearGradient(0, 0, size.width, size.height);
     if (presentation === "home") {
       backdrop.addColorStop(0, "#080704");
@@ -1133,33 +1161,31 @@ export function LivingGraphCanvas({
       backdrop.addColorStop(0.76, "#080706");
       backdrop.addColorStop(1, "#050504");
     } else {
-      backdrop.addColorStop(0, "#100d14");
-      backdrop.addColorStop(0.34, "#0b0911");
-      backdrop.addColorStop(0.72, "#080912");
-      backdrop.addColorStop(1, "#04050a");
+      backdrop.addColorStop(0, "#0b0907");
+      backdrop.addColorStop(0.36, "#0d0a07");
+      backdrop.addColorStop(0.74, "#090807");
+      backdrop.addColorStop(1, "#050504");
     }
     context.fillStyle = backdrop;
     context.fillRect(0, 0, size.width, size.height);
 
     const freshnessWash = context.createLinearGradient(0, 0, 0, size.height);
-    freshnessWash.addColorStop(0, presentation === "home" ? "rgba(235,213,176,.04)" : "rgba(181,188,244,.078)");
-    freshnessWash.addColorStop(0.42, presentation === "home" ? "rgba(176,136,81,.012)" : "rgba(112,92,158,.03)");
-    freshnessWash.addColorStop(0.76, presentation === "home" ? "rgba(84,63,36,.006)" : "rgba(58,39,75,.012)");
+    freshnessWash.addColorStop(0, presentation === "home" ? "rgba(235,213,176,.04)" : "rgba(235,213,176,.052)");
+    freshnessWash.addColorStop(0.42, presentation === "home" ? "rgba(176,136,81,.012)" : "rgba(176,136,81,.016)");
+    freshnessWash.addColorStop(0.76, "rgba(84,63,36,.006)");
     freshnessWash.addColorStop(1, "rgba(0,0,0,0)");
     context.fillStyle = freshnessWash;
     context.fillRect(0, 0, size.width, size.height);
 
-    if (presentation === "home") {
-      const texture = homeGrainTexture();
-      const pattern = texture ? context.createPattern(texture, "repeat") : null;
-      if (pattern) {
-        context.save();
-        context.globalCompositeOperation = "soft-light";
-        context.globalAlpha = 0.18;
-        context.fillStyle = pattern;
-        context.fillRect(0, 0, size.width, size.height);
-        context.restore();
-      }
+    const texture = homeGrainTexture();
+    const pattern = texture ? context.createPattern(texture, "repeat") : null;
+    if (pattern) {
+      context.save();
+      context.globalCompositeOperation = "soft-light";
+      context.globalAlpha = presentation === "home" ? 0.18 : 0.11;
+      context.fillStyle = pattern;
+      context.fillRect(0, 0, size.width, size.height);
+      context.restore();
     }
 
     const gravityPoints = selection.nodes
@@ -1201,9 +1227,9 @@ export function LivingGraphCanvas({
       context.scale(radiusX, radiusY);
       context.globalCompositeOperation = "screen";
       const substrate = context.createRadialGradient(-0.08, -0.04, 0.04, 0, 0, 1);
-      substrate.addColorStop(0, presentation === "home" ? "rgba(182,143,88,.19)" : "rgba(112,88,145,.2)");
-      substrate.addColorStop(0.38, presentation === "home" ? "rgba(102,83,58,.092)" : "rgba(73,61,108,.115)");
-      substrate.addColorStop(0.7, presentation === "home" ? "rgba(55,48,39,.038)" : "rgba(46,39,72,.052)");
+      substrate.addColorStop(0, presentation === "home" ? "rgba(182,143,88,.19)" : "rgba(182,143,88,.15)");
+      substrate.addColorStop(0.38, presentation === "home" ? "rgba(102,83,58,.092)" : "rgba(102,83,58,.07)");
+      substrate.addColorStop(0.7, presentation === "home" ? "rgba(55,48,39,.038)" : "rgba(55,48,39,.03)");
       substrate.addColorStop(1, "rgba(0,0,0,0)");
       context.fillStyle = substrate;
       context.beginPath();
@@ -1225,58 +1251,6 @@ export function LivingGraphCanvas({
     context.fillStyle = fieldVignette;
     context.fillRect(0, 0, size.width, size.height);
 
-    // The analytical workspace keeps a finite X/Z floor. Home stays atmospheric:
-    // a Cartesian cage made the opening read like legacy scientific software.
-    if (presentation !== "home") {
-      context.save();
-      context.lineWidth = 0.55;
-      context.strokeStyle = "rgba(126,173,188,.04)";
-      const floorY = graph.layout.undatedRail.y;
-      for (let x = 0; x <= graph.layout.bounds.width; x += 120) {
-        const near = project({ x, y: floorY, z: 0 });
-        const far = project({ x, y: floorY, z: graph.layout.bounds.depth });
-        context.beginPath(); context.moveTo(near.x, near.y); context.lineTo(far.x, far.y); context.stroke();
-      }
-      for (let z = 0; z <= graph.layout.bounds.depth; z += 80) {
-        const left = project({ x: 0, y: floorY, z });
-        const right = project({ x: graph.layout.bounds.width, y: floorY, z });
-        context.beginPath(); context.moveTo(left.x, left.y); context.lineTo(right.x, right.y); context.stroke();
-      }
-      context.restore();
-    }
-
-    const clusterRenderOrder = [...graph.clusters].sort((left, right) => {
-      const averageDepth = (clusterId: string) => {
-        const points = (clusterCoordinates.get(clusterId) ?? [])
-          .map((coordinate) => projectedById.get(coordinate.id))
-          .filter((point): point is ProjectedPoint => Boolean(point));
-        return points.length ? points.reduce((sum, point) => sum + point.depth, 0) / points.length : 0;
-      };
-      return averageDepth(left.id) - averageDepth(right.id) || left.id.localeCompare(right.id, "en");
-    });
-
-    if (presentation !== "home") {
-      // The analytical workspace retains the persisted X/Y contour as a map
-      // boundary. It is deliberately flat and is never presented as volume.
-      for (const cluster of clusterRenderOrder) {
-        if (districtId && cluster.id !== districtId) continue;
-        const color = renderColor(cluster.label);
-        const depth = depthForCluster(clusterCoordinates.get(cluster.id) ?? []);
-        context.save();
-        context.lineJoin = "round";
-        for (const polygon of cluster.contour.coordinates) {
-          for (const ring of polygon) {
-            context.fillStyle = rgba(color, scene === "trace" ? 0.006 : 0.011);
-            context.strokeStyle = rgba(color, scene === "trace" ? 0.018 : 0.038);
-            context.lineWidth = 0.65;
-            const points = drawProjectedRing(context, ring, depth.near, project);
-            if (points.length) { context.fill(); context.stroke(); }
-          }
-        }
-        context.restore();
-      }
-    }
-
     // Home carries district identity through position, hue and direct labels.
     // Luminance belongs to individual knowledge nodes: a larger verified
     // `uniqueInboundDocuments` value creates a larger, brighter local field.
@@ -1288,7 +1262,7 @@ export function LivingGraphCanvas({
         .filter((node) => node.kind !== "aggregate_boundary")
         .map((node) => node.gravity),
     );
-    if (presentation === "home") {
+    {
       // The aggregate record density belongs to its node, so each high-volume
       // boundary softly illuminates its own local field instead of painting a
       // detached district panel behind the graph.
@@ -1318,6 +1292,7 @@ export function LivingGraphCanvas({
           ? activeNeighborhoodIds.has(node.id) ? 1 : 0.2
           : 1;
         const coreAlpha = ((focused ? 0.088 : 0.048) + density * (focused ? 0.058 : 0.034))
+          * (presentation === "home" ? 1 : 0.72)
           * alignmentContextAlpha;
         field.addColorStop(0, rgba(fieldColor, coreAlpha));
         field.addColorStop(0.38, rgba(fieldColor, coreAlpha * 0.48));
@@ -1331,7 +1306,7 @@ export function LivingGraphCanvas({
       }
       context.restore();
 
-      const haloNodes = [...selection.nodes].sort((left, right) => left.gravity - right.gravity || left.id.localeCompare(right.id, "en"));
+      const haloNodes = [...renderNodes].sort((left, right) => left.gravity - right.gravity || left.id.localeCompare(right.id, "en"));
       context.save();
       context.globalCompositeOperation = "screen";
       for (const node of haloNodes) {
@@ -1363,7 +1338,8 @@ export function LivingGraphCanvas({
         const haloRadius = baseHaloRadius * (activeNode ? 1.28 : directlyRelated ? 1.1 : 1);
         const coreAlpha = (0.055
           + gravityLight * 0.19
-          + (selected || hovered ? 0.12 : directlyRelated ? 0.07 : 0)) * contextAlpha * freshnessAlpha;
+          + (selected || hovered ? 0.12 : directlyRelated ? 0.07 : 0))
+          * contextAlpha * freshnessAlpha * (presentation === "home" ? 1 : 0.76);
         const halo = context.createRadialGradient(point.x, point.y, 0, point.x, point.y, haloRadius);
         halo.addColorStop(0, rgba(haloColor, coreAlpha));
         halo.addColorStop(0.18, rgba(haloColor, coreAlpha * 0.68));
@@ -1380,26 +1356,6 @@ export function LivingGraphCanvas({
 
     // Membership and aggregate density are encoded through placement, halo and
     // local micro-marks only. They are intentionally never rendered as lines.
-
-    // The analytical workspace keeps an explicit engineering axis. Home uses
-    // the editorial chapter rail so the visual field stays unobstructed.
-    if (presentation !== "home") {
-      const axisX = size.width - 44;
-      const axisTop = 72;
-      const axisBottom = size.height - 92;
-      context.save();
-      context.strokeStyle = "rgba(222,229,224,.62)";
-      context.fillStyle = "rgba(238,236,224,.78)";
-      context.lineWidth = 1;
-      context.beginPath(); context.moveTo(axisX, axisBottom); context.lineTo(axisX, axisTop); context.stroke();
-      context.beginPath(); context.moveTo(axisX, axisTop); context.lineTo(axisX - 4, axisTop + 8); context.moveTo(axisX, axisTop); context.lineTo(axisX + 4, axisTop + 8); context.stroke();
-      context.font = "700 12px Pretendard Variable, sans-serif";
-      context.textAlign = "center";
-      context.fillText("NEWER", axisX, axisTop - 14);
-      context.fillStyle = "rgba(238,236,224,.5)";
-      context.fillText("날짜 미기록", axisX - 5, axisBottom + 18);
-      context.restore();
-    }
 
     // Operational alignment is a separate meaning layer. Its dashed actor →
     // domain commands never enter the knowledge-edge renderer and carry no
@@ -1610,7 +1566,9 @@ export function LivingGraphCanvas({
       const normalX = -dy / distance;
       const normalY = dx / distance;
       const bendDirection = stableUnit(`${edge.id}:curve`) > 0.5 ? 1 : -1;
-      const bend = presentation === "home" ? Math.min(164, Math.max(24, distance * 0.3)) * bendDirection : 0;
+      const bend = (presentation === "home"
+        ? Math.min(164, Math.max(24, distance * 0.3))
+        : Math.min(96, Math.max(14, distance * 0.12))) * bendDirection;
       const shapeSeed = stableUnit(`${edge.id}:shape`);
       const secondBend = bend * (shapeSeed < 0.44 ? -0.58 : 0.72);
       const controlA = {
@@ -1796,7 +1754,7 @@ export function LivingGraphCanvas({
       context.restore();
     }
 
-    const nodesByDepth = [...selection.nodes].sort((left, right) =>
+    const nodesByDepth = [...renderNodes].sort((left, right) =>
       (projectedById.get(left.id)?.depth ?? 0) - (projectedById.get(right.id)?.depth ?? 0));
     for (const node of nodesByDepth) {
       const point = projectedById.get(node.id);
@@ -1998,30 +1956,7 @@ export function LivingGraphCanvas({
       context.restore();
     }
 
-    // Keep the engineering triad in Explore, where camera orientation is an
-    // explicit tool. The editorial Home communicates the same axes in prose.
-    if (presentation !== "home") {
-      const origin = { x: size.width - 88, y: size.height - 54 };
-      const axisLength = 30;
-      const projectedAxis = (x: number, y: number, z: number) => {
-        const cosYaw = Math.cos(camera.yaw); const sinYaw = Math.sin(camera.yaw);
-        const yawX = x * cosYaw - z * sinYaw; const yawZ = x * sinYaw + z * cosYaw;
-        const cosPitch = Math.cos(camera.pitch); const sinPitch = Math.sin(camera.pitch);
-        return { x: origin.x + yawX, y: origin.y - (y * cosPitch - yawZ * sinPitch) };
-      };
-      context.save(); context.font = "700 12px Pretendard Variable, sans-serif";
-      for (const axis of [
-        { label: "X", color: "#c88be8", point: projectedAxis(axisLength, 0, 0) },
-        { label: "Y", color: "#a8d866", point: projectedAxis(0, axisLength, 0) },
-        { label: "Z", color: "#70a9ff", point: projectedAxis(0, 0, axisLength) },
-      ]) {
-        context.strokeStyle = axis.color; context.fillStyle = axis.color; context.lineWidth = 1.5;
-        context.beginPath(); context.moveTo(origin.x, origin.y); context.lineTo(axis.point.x, axis.point.y); context.stroke();
-        context.fillText(axis.label, axis.point.x + 4, axis.point.y + 3);
-      }
-      context.restore();
-    }
-  }, [activeNeighborhoodIds, camera, clusterById, clusterCoordinates, clusterDepthByCluster, committedId, coordinateById, districtId, documentMarks, edgeCommands, focusId, graph, hidden, interactionId, mobile, nodeById, operationalAlignment, operationalCommands, operationalOverlayActive, presentation, projectedById, projectionAnchor, resolvedOperationalActorLabel, scene, selection, size, stageCoordinateByCluster, traceProgress]);
+  }, [activeNeighborhoodIds, camera, clusterById, clusterCoordinates, clusterDepthByCluster, committedId, coordinateById, districtId, documentMarks, edgeCommands, focusId, graph, hidden, highlightNodeIds.length, interactionId, mobile, nodeById, operationalAlignment, operationalCommands, operationalOverlayActive, presentation, projectedById, projectionAnchor, renderNodes, resolvedOperationalActorLabel, scene, selection, size, stageCoordinateByCluster, traceProgress]);
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (mobile) return;
@@ -2029,7 +1964,6 @@ export function LivingGraphCanvas({
     cancelAnimationFrame(inputFrameRef.current);
     inputFrameRef.current = 0;
     pendingCameraRef.current = null;
-    settleParallax(0, 0);
     event.currentTarget.setPointerCapture(event.pointerId);
     dragRef.current = {
       pointerId: event.pointerId,
@@ -2054,10 +1988,6 @@ export function LivingGraphCanvas({
       const bounds = event.currentTarget.getBoundingClientRect();
       const x = event.clientX - bounds.left;
       const y = event.clientY - bounds.top;
-      settleParallax(
-        Math.max(-5, Math.min(5, (x / Math.max(1, bounds.width) - 0.5) * -10)),
-        Math.max(-4, Math.min(4, (y / Math.max(1, bounds.height) - 0.5) * -8)),
-      );
       const hit = [...selection.nodes]
         .map((node) => ({ node, point: projectedById.get(node.id), coordinate: coordinateById.get(node.id) }))
         .filter((item) => item.point?.visible && item.coordinate)
@@ -2067,8 +1997,7 @@ export function LivingGraphCanvas({
           return Math.hypot((item.point?.x ?? 0) - x, (item.point?.y ?? 0) - y) <= radius;
         });
       const nextHoverId = hit?.node.id ?? null;
-      setHoverId((current) => current === nextHoverId ? current : nextHoverId);
-      onHover?.(nextHoverId);
+      commitHover(nextHoverId);
       return;
     }
     const dx = event.clientX - drag.startX;
@@ -2143,6 +2072,7 @@ export function LivingGraphCanvas({
       className={`living-graph-canvas is-${presentation} ${className}`.trim()}
       data-scene={scene}
       data-node-count={selection.nodes.length}
+      data-preview-overlay-node-count={previewOverlayNodes.length}
       data-edge-count={edgeCommands.length}
       data-district-route-count={edgeCommands.filter((command) => command.semanticKind === "district_corridor").length}
       data-edge-command-kinds={[...new Set(edgeCommands.map((command) => command.semanticKind))].join(",")}
@@ -2155,6 +2085,7 @@ export function LivingGraphCanvas({
       data-camera-zoom={camera.zoom.toFixed(4)}
       data-hover-id={interactionId ?? ""}
       data-preview-id={(hoverId ?? previewId) ?? ""}
+      data-layout-focus-id={layoutFocusId ?? ""}
       data-committed-id={committedId ?? ""}
       data-interaction-mode={hoverId || previewId ? "preview" : committedId ? "committed" : "idle"}
       aria-label={canvasAccessibleLabel}
@@ -2163,16 +2094,14 @@ export function LivingGraphCanvas({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={() => {
-        settleParallax(0, 0);
         if (!dragRef.current) {
-          setHoverId(null);
-          onHover?.(null);
+          commitHover(null);
         }
       }}
       onPointerCancel={(event) => {
-        settleParallax(0, 0);
         if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
         dragRef.current = null;
+        commitHover(null);
       }}
       onLostPointerCapture={() => { dragRef.current = null; }}
       onWheel={handleWheel}
@@ -2202,28 +2131,36 @@ export function LivingGraphCanvas({
             aria-pressed={node.id === committedId}
             aria-label={`${graphNodeLabel(node)}. 이 항목을 참조한 고유 문서 ${node.gravity}개, 전체 참조 ${node.occurrences}회, ${node.freshness ?? "날짜 미기록"}`}
             onPointerDown={(event) => event.stopPropagation()}
-            onPointerEnter={() => {
-              setHoverId(node.id);
-              onHover?.(node.id);
-            }}
-            onPointerLeave={() => {
-              setHoverId(null);
-              onHover?.(null);
-            }}
-            onFocus={() => {
-              setHoverId(node.id);
-              onHover?.(node.id);
-            }}
-            onBlur={() => {
-              setHoverId(null);
-              onHover?.(null);
-            }}
+            onPointerEnter={() => commitHover(node.id)}
+            onPointerLeave={() => commitHover(null)}
+            onFocus={() => commitHover(node.id)}
+            onBlur={() => commitHover(null)}
             onClick={() => onSelect(node.id)}
           >
             {graphNodeLabel(node)}
           </button>
         ))}
       </div>
+      {hoverTooltip && (
+        <div
+          className="graph-hover-tooltip"
+          style={{ left: hoverTooltip.x, top: hoverTooltip.y }}
+          aria-hidden="true"
+        >
+          <strong>{graphNodeLabel(hoverTooltip.node)}</strong>
+          <span>
+            {hoverTooltip.clusterLabel} · 들어옴 {hoverTooltip.incoming} · 나감 {hoverTooltip.outgoing}
+            {hoverTooltip.hidden > 0 ? ` · 더보기 ${hoverTooltip.hidden}` : ""}
+          </span>
+          {(hoverTooltip.incomingLabel || hoverTooltip.outgoingLabel) && (
+            <span>
+              {hoverTooltip.incomingLabel ? `← ${hoverTooltip.incomingLabel}` : ""}
+              {hoverTooltip.incomingLabel && hoverTooltip.outgoingLabel ? " · " : ""}
+              {hoverTooltip.outgoingLabel ? `${hoverTooltip.node.label} → ${hoverTooltip.outgoingLabel}` : ""}
+            </span>
+          )}
+        </div>
+      )}
       {!mobile && presentation !== "home" && (
         <div className="graph-camera-controls" role="group" aria-label="3D 카메라 제어" onPointerDown={(event) => event.stopPropagation()}>
           <button type="button" aria-label="선택 지점에 맞추기" onClick={() => {
@@ -2236,20 +2173,13 @@ export function LivingGraphCanvas({
           <button type="button" aria-label="카메라 초기화" onClick={resetCamera}><RotateCcw size={15} /></button>
         </div>
       )}
-      {presentation !== "home" && <div className="graph-3d-badge" aria-hidden="true"><span />SPATIAL KNOWLEDGE FIELD</div>}
       <ol className="graph-accessible-list" aria-label="현재 그래프 노드 목록">
         {selection.nodes.map((node) => (
           <li key={node.id}>
             <button
               type="button"
-              onFocus={() => {
-                setHoverId(node.id);
-                onHover?.(node.id);
-              }}
-              onBlur={() => {
-                setHoverId(null);
-                onHover?.(null);
-              }}
+              onFocus={() => commitHover(node.id)}
+              onBlur={() => commitHover(null)}
               onClick={() => onSelect(node.id)}
               aria-current={node.id === committedId ? "true" : undefined}
             >

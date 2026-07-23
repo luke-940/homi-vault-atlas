@@ -401,6 +401,7 @@ export function HomeView() {
   const [intro, setIntro] = useState(false);
   const [previewStoryId, setPreviewStoryId] = useState<string | null>(null);
   const [committedStoryId, setCommittedStoryId] = useState<string | null>(null);
+  const [systemPreview, setSystemPreview] = useState(false);
   const activeStoryId = previewStoryId ?? committedStoryId;
   const activeProtagonist = activeStoryId
     ? atlasData.meaning.protagonists.find((item) => item.id === activeStoryId) ?? null
@@ -514,27 +515,34 @@ export function HomeView() {
             reducedMotion={state.reducedMotion}
             onSelect={select}
             onHover={preview}
+            highlightNodeIds={systemPreview ? persistentLabelIds : []}
           />
         </m.div>
 
         {sceneId === "core-gravity" && (
           <button
             type="button"
-            className="home-v76-system-anchor"
+            className="home-v76-system-anchor home-v76-system-origin"
             aria-label="Homi 협업 구조 자세히 보기"
+            aria-describedby="home-v76-system-origin-description"
+            onPointerEnter={() => setSystemPreview(true)}
+            onPointerLeave={() => setSystemPreview(false)}
+            onFocus={() => setSystemPreview(true)}
+            onBlur={() => setSystemPreview(false)}
             onClick={() => dispatch({ type: "journey", target: { workspace: "agency", sceneId: "system" } })}
           >
             <img src={homiMark} alt="" aria-hidden="true" />
-            <strong>HOMI</strong>
+            <span id="home-v76-system-origin-description" className="sr-only">방향을 정하고 지식의 순환과 번역을 잇는 Homi system origin</span>
           </button>
         )}
 
         {sceneId === "core-gravity" && (
-          <div className="home-v76-domain-legend" aria-label="핵심 지식 영역">
+          <div className={`home-v76-domain-legend${systemPreview ? " is-system-active" : ""}`} aria-label="핵심 지식 영역">
             {CORE_DOMAINS.map((domain) => (
               <button
                 key={domain.key}
                 type="button"
+                className={`is-${domain.key}`}
                 disabled={!domain.node}
                 onPointerEnter={() => preview(domain.node?.id ?? null)}
                 onPointerLeave={() => preview(null)}
@@ -609,11 +617,27 @@ export function HomeView() {
           </div>
         </m.article>
 
-        <div className={`home-v75-evidence${hasExplicitFocus ? " has-focus" : ""}${hasCommittedFocus ? " is-committed" : ""}`} aria-live="polite">
+        <div className={`home-v75-evidence${hasExplicitFocus || systemPreview ? " has-focus" : ""}${hasCommittedFocus && !systemPreview ? " is-committed" : ""}`} aria-live="polite">
           <span className="home-v75-evidence-profile" lang="en">
             {atlasData.graph.profile === "atlas-owner" ? "OWNER · LOCAL ONLY" : "PUBLIC SNAPSHOT"}
           </span>
-          {focusedNode ? (
+          {systemPreview ? (
+            <>
+              <div className="home-v75-evidence-primary">
+                <strong>Homi system</strong>
+                <span className="home-v75-evidence-context">사람과 Agent가 함께 쓰는 지식 운영의 출발점</span>
+              </div>
+              <div className="home-v75-evidence-secondary">
+                <span>MOC · 지식 구조화</span>
+                <span>Papers · 근거 공급</span>
+                <span>Signals · 변화 감지</span>
+                <em>지식 관계선이 아니라 검증된 협업 provenance입니다.</em>
+                <button type="button" className="home-v75-evidence-action" onClick={() => dispatch({ type: "journey", target: { workspace: "agency", sceneId: "system" } })}>
+                  협업 구조 보기 <ArrowRight size={13} aria-hidden="true" />
+                </button>
+              </div>
+            </>
+          ) : focusedNode ? (
             <>
               <div className="home-v75-evidence-primary">
                 {hasCommittedFocus && <span className="home-v75-lock-state">선택 고정</span>}

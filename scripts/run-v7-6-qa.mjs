@@ -1160,12 +1160,140 @@ export async function executeJourney(page, route) {
     details.neighborCount = neighborCount;
     details.honestEmpty = honestEmpty === 1;
   } else if (route.journey === "webkit-graph-focus") {
-    const target = page.locator(".explore-v75 .graph-label-layer > button:visible").first();
+    const graph = page.locator("[data-renderer='canvas2d-projected-3d']").first();
+    await graph.waitFor({ state: "visible" });
+    const captureGraphState = () => graph.evaluate((node) => {
+      const rendered = (element) => {
+        const style = getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0;
+      };
+      const rounded = (value) => Math.round(value * 1000) / 1000;
+      const nodeKeys = [...node.querySelectorAll("ol[aria-label='현재 그래프 노드 목록'] button")]
+        .map((button) => button.textContent?.trim().replace(/\s+/g, " ") ?? "")
+        .sort((left, right) => left.localeCompare(right, "ko"));
+      const labelRects = [...node.querySelectorAll("button[aria-pressed]")]
+        .filter(rendered)
+        .map((button) => {
+          const rect = button.getBoundingClientRect();
+          return {
+            key: button.getAttribute("aria-label") ?? button.textContent?.trim() ?? "",
+            rect: [rounded(rect.left), rounded(rect.top), rounded(rect.width), rounded(rect.height)],
+          };
+        })
+        .sort((left, right) => left.key.localeCompare(right.key, "ko"));
+      return {
+        nodeCount: Number(node.getAttribute("data-node-count") ?? 0),
+        nodeKeys,
+        labelRects,
+        layoutFocusId: node.getAttribute("data-layout-focus-id") ?? "",
+        committedId: node.getAttribute("data-committed-id") ?? "",
+        previewId: node.getAttribute("data-preview-id") ?? "",
+        previewOverlayNodeCount: Number(node.getAttribute("data-preview-overlay-node-count") ?? 0),
+        edgeCount: Number(node.getAttribute("data-edge-count") ?? 0),
+        camera: {
+          yaw: node.getAttribute("data-camera-yaw") ?? "",
+          pitch: node.getAttribute("data-camera-pitch") ?? "",
+          zoom: node.getAttribute("data-camera-zoom") ?? "",
+        },
+        url: location.href,
+      };
+    });
+    const invariantIdentity = (snapshot) => JSON.stringify({
+      nodeCount: snapshot.nodeCount,
+      nodeKeys: snapshot.nodeKeys,
+      labelRects: snapshot.labelRects,
+      layoutFocusId: snapshot.layoutFocusId,
+      committedId: snapshot.committedId,
+      camera: snapshot.camera,
+      url: snapshot.url,
+    });
+
+    const target = graph.locator("button[aria-pressed]:visible").first();
     await target.focus();
     if (!await target.evaluate((node) => node === document.activeElement)) throw new Error("WebKit graph label did not receive keyboard focus");
     await page.keyboard.press("Enter");
-    await page.waitForFunction(() => Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus")));
+    await page.waitForFunction(() => {
+      const focusId = new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus");
+      return Boolean(focusId)
+        && document.querySelector("[data-renderer='canvas2d-projected-3d']")?.getAttribute("data-committed-id") === focusId;
+    });
+    await page.evaluate(() => {
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    });
+    await page.waitForFunction(() => document.querySelector("[data-renderer='canvas2d-projected-3d']")?.getAttribute("data-preview-id") === "");
+    await page.waitForTimeout(560);
+    await settleRenderedPage(page);
+
+    const baseline = await captureGraphState();
+    if (baseline.nodeCount !== baseline.nodeKeys.length) {
+      throw new Error(`WebKit graph base node contract drifted: ${baseline.nodeCount} rendered versus ${baseline.nodeKeys.length} accessible`);
+    }
+    if (!baseline.committedId || baseline.previewId) throw new Error("WebKit graph did not settle to a committed, preview-free baseline");
+
+    const hoverTarget = graph.locator("button[aria-pressed='false']:visible").first();
+    if (await hoverTarget.count() === 0) throw new Error("WebKit graph hover regression requires a second visible label");
+    await hoverTarget.hover();
+    await page.waitForFunction(() => Boolean(
+      document.querySelector("[data-renderer='canvas2d-projected-3d']")?.getAttribute("data-preview-id"),
+    ));
+    await settleRenderedPage(page);
+    const hoverFrameA = await captureGraphState();
+    await settleRenderedPage(page);
+    const hoverFrameB = await captureGraphState();
+
+    const baselineIdentity = invariantIdentity(baseline);
+    if (invariantIdentity(hoverFrameA) !== baselineIdentity || invariantIdentity(hoverFrameB) !== baselineIdentity) {
+      throw new Error("Transient WebKit hover changed the base node set, layout focus, committed focus, camera, URL, or label geometry");
+    }
+    if (
+      !hoverFrameA.previewId
+      || hoverFrameA.previewId !== hoverFrameB.previewId
+      || hoverFrameA.previewOverlayNodeCount !== hoverFrameB.previewOverlayNodeCount
+      || hoverFrameA.edgeCount !== hoverFrameB.edgeCount
+    ) {
+      throw new Error("Transient WebKit preview did not remain stable across animation frames");
+    }
+
+    const graphBox = await graph.boundingBox();
+    const viewport = page.viewportSize();
+    if (!graphBox || !viewport) throw new Error("WebKit graph has no viewport geometry for pointer-leave verification");
+    const outsidePoint = await graph.evaluate((node) => {
+      const rect = node.getBoundingClientRect();
+      const clamp = (value, maximum) => Math.max(1, Math.min(maximum - 2, value));
+      const candidates = [
+        { x: rect.left - 5, y: rect.top + rect.height / 2 },
+        { x: rect.right + 5, y: rect.top + rect.height / 2 },
+        { x: rect.left + rect.width / 2, y: rect.top - 5 },
+        { x: rect.left + rect.width / 2, y: rect.bottom + 5 },
+      ].map((point) => ({ x: clamp(point.x, innerWidth), y: clamp(point.y, innerHeight) }));
+      return candidates.find((point) => (
+        point.x < rect.left || point.x > rect.right || point.y < rect.top || point.y > rect.bottom
+      )) ?? null;
+    });
+    if (!outsidePoint) throw new Error("WebKit graph pointer-leave target could not be resolved outside the canvas");
+    await page.mouse.move(outsidePoint.x, outsidePoint.y);
+    await page.waitForFunction(() => document.querySelector("[data-renderer='canvas2d-projected-3d']")?.getAttribute("data-preview-id") === "");
+    await settleRenderedPage(page);
+    const afterLeave = await captureGraphState();
+    if (afterLeave.previewId || invariantIdentity(afterLeave) !== baselineIdentity) {
+      throw new Error("WebKit graph pointer leave did not clear preview and restore the committed geometry");
+    }
+
     details.focus = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
+    details.hoverStability = {
+      nodeCount: baseline.nodeCount,
+      labelCount: baseline.labelRects.length,
+      committedId: baseline.committedId,
+      layoutFocusId: baseline.layoutFocusId,
+      previewId: hoverFrameA.previewId,
+      previewFrames: 2,
+      edgeCounts: {
+        baseline: baseline.edgeCount,
+        preview: hoverFrameA.edgeCount,
+        restored: afterLeave.edgeCount,
+      },
+    };
   } else {
     throw new Error(`Unsupported QA journey: ${route.journey}`);
   }
