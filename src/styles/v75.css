@@ -443,7 +443,7 @@
 @media (max-width: 1279px) {
   .home-v75-copy-block { width: min(40vw,500px); }
   .home-v75-copy-block h1 { font-size: clamp(46px,4.5vw,59px); }
-  .home-v75-scenes { right: 8px; width: 86px; }
+  .home-v75-scenes { right: 0; width: 70px; }
   .home-v75.is-knowledge-gravity .home-v75-copy-block { right: 78px; width: min(32vw,410px); }
   .home-v76-system-origin { left: 64%; }
   .explore-v75-clusters { grid-template-columns: repeat(3,minmax(0,1fr)); }

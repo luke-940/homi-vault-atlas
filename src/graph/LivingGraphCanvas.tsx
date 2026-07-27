@@ -2233,7 +2233,7 @@ export function LivingGraphCanvas({
           </li>
         ))}
       </ol>
-      <ol className="graph-accessible-list" aria-label="현재 렌더링된 실제 의미 선 목록">
+      <ol className="graph-accessible-list" aria-label="현재 렌더링된 실제 의미 선 목록" tabIndex={0}>
         {edgeCommands.map((command) => (
           <li key={`${command.semanticKind}:${command.sourceId}:${command.targetId}`}>
             {graphNodeLabel(nodeById.get(command.sourceId)!)} → {graphNodeLabel(nodeById.get(command.targetId)!)} · {
@@ -2247,7 +2247,7 @@ export function LivingGraphCanvas({
         ))}
       </ol>
       {operationalCommands.length > 0 && (
-        <ol className="graph-accessible-list" aria-label="현재 렌더링된 운영 정렬선 목록">
+        <ol className="graph-accessible-list" aria-label="현재 렌더링된 운영 정렬선 목록" tabIndex={0}>
           {operationalCommands.map((command) => (
             <li key={`${command.semanticKind}:${command.sourceActorId}:${command.targetId}`}>
               {resolvedOperationalActorLabel} → {graphNodeLabel(nodeById.get(command.targetId)!)} · {operationalAlignment?.label ?? "운영 정렬"} · 검증된 운영 의미

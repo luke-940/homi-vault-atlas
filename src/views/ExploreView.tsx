@@ -347,7 +347,7 @@ export function ExploreView() {
           </div>
         </div>
       </details>}
-      {scene !== "constellations" && <p className="explore-v75-boundary">{atlasData.graph.profile === "atlas-public" ? "공개 안전 스냅샷" : "Owner · Luke Mac 전용 · 실제 허용 제목"} · 지식 항목 {atlasData.graph.manifest.nodeCount}개 · 방향 참조 관계 {atlasData.graph.manifest.edgeCount}개 · 화면에서 위치 자동 계산 없음</p>}
+      {scene === "graph" && <p className="explore-v75-boundary">{atlasData.graph.profile === "atlas-public" ? "공개 안전 스냅샷" : "Owner · Luke Mac 전용 · 실제 허용 제목"} · 지식 항목 {atlasData.graph.manifest.nodeCount}개 · 방향 참조 관계 {atlasData.graph.manifest.edgeCount}개 · 화면에서 위치 자동 계산 없음</p>}
     </SpatialWorkspaceFrame>
   );
 }
