@@ -30,6 +30,17 @@ export interface SemanticSpaceEdge {
   defaultVisible: boolean;
 }
 
+export interface SemanticSpaceEvidenceMark {
+  id: string;
+  parentId: string;
+  clusterId: string;
+  position: [number, number, number];
+  color: string;
+  size: number;
+  opacity: number;
+  representedDocuments: number;
+}
+
 export interface AuthoredCamera {
   yaw: number;
   pitch: number;
@@ -45,6 +56,7 @@ export interface SemanticSpaceScene {
   presentation: SemanticSpacePresentation;
   nodes: SemanticSpaceNode[];
   edges: SemanticSpaceEdge[];
+  evidenceMarks: SemanticSpaceEvidenceMark[];
   camera: AuthoredCamera;
   labelIds: string[];
   focusId: string | null;

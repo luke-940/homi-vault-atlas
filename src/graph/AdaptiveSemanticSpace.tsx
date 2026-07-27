@@ -83,7 +83,7 @@ export function AdaptiveSemanticSpace({
     to,
     persistentLabelIds,
     reducedMotion,
-    labelBudget: presentation === "home" ? 18 : 18,
+    labelBudget: presentation === "home" ? 13 : 18,
   }), [
     districtId,
     districtRelationMatrix,
@@ -161,7 +161,9 @@ export function AdaptiveSemanticSpace({
               const overlaps = occupied.some((prior) =>
                 !(box.right + 5 < prior.left || box.left - 5 > prior.right
                   || box.bottom + 4 < prior.top || box.top - 4 > prior.bottom));
-              element.hidden = overlaps && !force;
+              const crossesEditorialRail = presentation === "home"
+                && anchor.x < Math.min(460, root.clientWidth * 0.36);
+              element.hidden = (overlaps || crossesEditorialRail) && !force;
               if (!element.hidden) occupied.push(box);
             }
           },

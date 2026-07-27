@@ -83,4 +83,34 @@ describe("Atlas v7.7 true semantic space contract", () => {
     expect(labels.some((label) => label.startsWith("Signals ·"))).toBe(true);
     expect(scene.labelIds.length).toBeLessThanOrEqual(18);
   });
+
+  test("keeps public concepts above outside-company labels in the default Home hierarchy", () => {
+    const scene = homeScene();
+    const labels = scene.nodes
+      .filter((node) => scene.labelIds.includes(node.id))
+      .map((node) => node.label);
+
+    expect(labels).toContain("이미지생성");
+    expect(labels).toContain("에이전트");
+    expect(labels).toContain("노동·조직");
+    expect(labels).not.toContain("OpenAI");
+    expect(labels).not.toContain("Google");
+    expect(labels).not.toContain("Anthropic");
+  });
+
+  test("renders each reconciled public record once as static evidence, not decorative particles", () => {
+    const scene = homeScene();
+    const aggregateClusters = new Set(graph.nodes
+      .filter((node) => node.kind === "aggregate_boundary" && node.representedDocuments > 0)
+      .map((node) => node.clusterId));
+    const representedDocuments = graph.nodes
+      .filter((node) =>
+        node.kind === "aggregate_boundary"
+        || (node.kind === "district" && !aggregateClusters.has(node.clusterId)))
+      .reduce((sum, node) => sum + node.representedDocuments, 0);
+
+    expect(scene.evidenceMarks).toHaveLength(representedDocuments);
+    expect(new Set(scene.evidenceMarks.map((mark) => mark.id)).size).toBe(scene.evidenceMarks.length);
+    expect(scene.evidenceMarks.every((mark) => mark.representedDocuments === 1)).toBe(true);
+  });
 });

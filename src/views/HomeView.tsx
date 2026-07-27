@@ -691,6 +691,8 @@ export function HomeView() {
         </nav>
 
         <footer className="home-v75-boundary" aria-label={`${atlasData.graph.profile === "atlas-owner" ? "Owner local" : "Public"} snapshot boundary`}>
+          <span>지식 항목 {atlasData.graph.manifest.nodeCount.toLocaleString("ko-KR")}</span>
+          <span>실제 방향 관계 {atlasData.graph.manifest.edgeCount.toLocaleString("ko-KR")}</span>
           <span>이름으로 표현 {atlasData.inventory.namedCount.toLocaleString("ko-KR")}</span>
           <span>지식 주인공 {atlasData.meaning.manifest.protagonistCount.toLocaleString("ko-KR")}</span>
           <span>검증된 변화 {atlasData.meaning.manifest.movementCount.toLocaleString("ko-KR")}</span>

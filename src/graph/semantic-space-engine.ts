@@ -8,12 +8,13 @@ import {
   ConeGeometry,
   DynamicDrawUsage,
   FogExp2,
+  GridHelper,
   HemisphereLight,
-  IcosahedronGeometry,
   InstancedMesh,
   LineBasicMaterial,
   LineSegments,
   Matrix4,
+  MathUtils,
   MeshStandardMaterial,
   Object3D,
   OctahedronGeometry,
@@ -26,8 +27,6 @@ import {
   ShaderMaterial,
   SphereGeometry,
   SRGBColorSpace,
-  TetrahedronGeometry,
-  TorusGeometry,
   Vector2,
   Vector3,
   WebGLRenderer,
@@ -39,6 +38,7 @@ import type {
   SemanticSpaceController,
   SemanticSpaceDebugCounters,
   SemanticSpaceEdge,
+  SemanticSpaceEvidenceMark,
   SemanticSpaceLabelAnchor,
   SemanticSpaceNode,
   SemanticSpaceScene,
@@ -58,17 +58,15 @@ type EdgeGeometryState = {
 };
 
 const MAX_DPR = 1.5;
-const EDGE_SEGMENTS = 7;
+const EDGE_SEGMENTS = 16;
 const UP = new Vector3(0, 1, 0);
 const HIDDEN_COLOR = new Color(0x000000);
-const EDGE_COLOR = new Color(0xa8bdd0);
-const EDGE_FOCUS_COLOR = new Color(0xe5bb73);
+const EDGE_COLOR = new Color(0x9ab5c6);
+const EDGE_FOCUS_COLOR = new Color(0xefb760);
 const PATH_COLOR = new Color(0xf2c983);
-const CORRIDOR_COLOR = new Color(0x7fa0b8);
+const CORRIDOR_COLOR = new Color(0x789aae);
 const tmpObject = new Object3D();
 const tmpColor = new Color();
-const tmpVector = new Vector3();
-const tmpVectorB = new Vector3();
 const tmpQuaternion = new Quaternion();
 const tmpMatrix = new Matrix4();
 
@@ -76,18 +74,15 @@ function geometryKind(node: SemanticSpaceNode) {
   if (node.kind === "moc_hub") return "moc";
   if (node.kind === "paper_gateway") return "paper";
   if (node.kind === "signal_domain" || node.kind === "signal_storyline") return "signal";
+  if (node.kind === "project" || node.kind === "project_stage") return "project";
   if (node.kind === "district") return "district";
   if (node.kind === "aggregate_boundary") return "aggregate";
   return "knowledge";
 }
 
 function geometryFor(kind: string) {
-  if (kind === "moc") return new IcosahedronGeometry(1, 1);
   if (kind === "paper") return new OctahedronGeometry(1, 0);
-  if (kind === "signal") return new TetrahedronGeometry(1, 0);
-  if (kind === "district") return new TorusGeometry(1, 0.055, 6, 32);
-  if (kind === "aggregate") return new OctahedronGeometry(1, 0);
-  return new SphereGeometry(1, 12, 8);
+  return new SphereGeometry(1, kind === "aggregate" ? 10 : 18, kind === "aggregate" ? 7 : 12);
 }
 
 function baseMaterial(kind: string) {
@@ -96,7 +91,7 @@ function baseMaterial(kind: string) {
     depthWrite: kind !== "district",
     uniforms: {
       uOpacity: {
-        value: kind === "district" ? 0.78 : kind === "aggregate" ? 0.56 : 0.96,
+        value: kind === "district" ? 0.8 : kind === "aggregate" ? 0.54 : 0.98,
       },
     },
     vertexShader: `
@@ -120,14 +115,16 @@ function baseMaterial(kind: string) {
       varying vec3 vViewDirection;
       void main() {
         vec3 normal = normalize(vViewNormal);
-        vec3 key = normalize(vec3(-0.34, 0.58, 0.74));
+        vec3 key = normalize(vec3(-0.38, 0.58, 0.72));
         float diffuse = max(dot(normal, key), 0.0);
         float hemisphere = normal.y * 0.5 + 0.5;
-        float rim = pow(1.0 - max(dot(normal, normalize(vViewDirection)), 0.0), 2.6);
-        vec3 matte = vSemanticColor * (0.42 + diffuse * 0.54 + hemisphere * 0.18);
-        vec3 edgeLight = mix(vSemanticColor, vec3(1.0, 0.88, 0.72), 0.28) * rim * 0.36;
-        gl_FragColor = vec4(matte + edgeLight, uOpacity);
-        #include <tonemapping_fragment>
+        float facing = max(dot(normal, normalize(vViewDirection)), 0.0);
+        float core = pow(facing, 2.4);
+        float rim = pow(1.0 - facing, 3.6);
+        vec3 matte = vSemanticColor * (0.82 + diffuse * 0.12 + hemisphere * 0.05);
+        vec3 warmCore = mix(vSemanticColor, vec3(1.0, 0.91, 0.77), 0.14) * core * 0.14;
+        vec3 edgeLight = mix(vSemanticColor, vec3(0.98, 0.86, 0.68), 0.08) * rim * 0.035;
+        gl_FragColor = vec4(matte + warmCore + edgeLight, uOpacity);
         #include <colorspace_fragment>
       }
     `,
@@ -156,25 +153,31 @@ function edgeCurve(source: Vector3, target: Vector3, edge: SemanticSpaceEdge) {
   const delta = target.clone().sub(source);
   const length = Math.max(1, delta.length());
   const routeBias = edgeRouteBias(edge.id);
-  const normal = new Vector3(
-    -delta.z,
-    Math.abs(delta.x) * 0.08 + length * (0.035 + Math.abs(routeBias) * 0.025),
-    delta.x,
-  ).normalize();
-  if (routeBias < 0) normal.multiplyScalar(-1);
+  const normal = new Vector3(-delta.z, 0, delta.x);
+  if (normal.lengthSq() < 0.0001) normal.set(1, 0, 0);
+  normal.normalize().multiplyScalar(routeBias < 0 ? -1 : 1);
   const bend = edge.semanticKind === "district_corridor"
-    ? Math.min(110, length * 0.22)
+    ? Math.min(124, length * 0.24)
     : edge.semanticKind === "directed_path"
-      ? Math.min(70, length * 0.14)
-      : Math.min(62, length * (0.075 + Math.abs(routeBias) * 0.055));
-  const midpoint = source.clone().add(target).multiplyScalar(0.5).addScaledVector(normal, bend);
+      ? Math.min(86, length * 0.16)
+      : Math.min(78, length * (0.09 + Math.abs(routeBias) * 0.06));
+  const lift = Math.min(92, 22 + length * (0.08 + Math.abs(routeBias) * 0.035));
+  const controlA = source.clone()
+    .lerp(target, 0.31)
+    .addScaledVector(normal, bend)
+    .add(new Vector3(0, lift, 0));
+  const controlB = source.clone()
+    .lerp(target, 0.69)
+    .addScaledVector(normal, bend * 0.72)
+    .add(new Vector3(0, lift * 0.78, 0));
   const points: Vector3[] = [];
   for (let index = 0; index <= EDGE_SEGMENTS; index += 1) {
     const t = index / EDGE_SEGMENTS;
     const inverse = 1 - t;
-    points.push(source.clone().multiplyScalar(inverse * inverse)
-      .add(midpoint.clone().multiplyScalar(2 * inverse * t))
-      .add(target.clone().multiplyScalar(t * t)));
+    points.push(source.clone().multiplyScalar(inverse * inverse * inverse)
+      .add(controlA.clone().multiplyScalar(3 * inverse * inverse * t))
+      .add(controlB.clone().multiplyScalar(3 * inverse * t * t))
+      .add(target.clone().multiplyScalar(t * t * t)));
   }
   return points;
 }
@@ -200,6 +203,9 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
   private haloPoints: Points | null = null;
   private haloAlpha: BufferAttribute | null = null;
   private haloColors: BufferAttribute | null = null;
+  private evidencePoints: Points | null = null;
+  private evidenceAlpha: BufferAttribute | null = null;
+  private orientationGrid: GridHelper;
   private labelIds: string[] = [];
   private currentScene: SemanticSpaceScene;
   private previewId: string | null = null;
@@ -255,20 +261,34 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
     this.renderer.setPixelRatio(Math.min(MAX_DPR, window.devicePixelRatio || 1));
     this.renderer.outputColorSpace = SRGBColorSpace;
     this.renderer.toneMapping = ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.28;
+    this.renderer.toneMappingExposure = 1.1;
     this.renderer.domElement.className = "semantic-space-webgl";
     this.renderer.domElement.setAttribute("aria-hidden", "true");
     container.append(this.renderer.domElement);
 
-    this.scene3d.fog = new FogExp2(0x080a0f, 0.00013);
-    this.scene3d.add(new AmbientLight(0xe7ded2, 1.28));
-    this.scene3d.add(new HemisphereLight(0xdfe9f4, 0x24180e, 1.28));
-    const keyLight = new PointLight(0xffd39a, 3.8, 2_800, 1.55);
-    keyLight.position.set(-460, 380, 560);
+    this.scene3d.fog = new FogExp2(0x08090d, 0.00016);
+    this.scene3d.add(new AmbientLight(0xd6cbbb, 1.34));
+    this.scene3d.add(new HemisphereLight(0xb8d0eb, 0x171008, 1.62));
+    const keyLight = new PointLight(0xffc67d, 3.6, 2_400, 1.65);
+    keyLight.position.set(-360, 420, 520);
     this.scene3d.add(keyLight);
-    const rimLight = new PointLight(0x789aca, 2.65, 2_200, 1.7);
-    rimLight.position.set(520, -180, -420);
+    const rimLight = new PointLight(0x789aca, 2.6, 2_000, 1.82);
+    rimLight.position.set(520, -120, 80);
     this.scene3d.add(rimLight);
+    const signalLight = new PointLight(0x4fcbb8, 1.7, 1_200, 1.9);
+    signalLight.position.set(320, -190, 360);
+    this.scene3d.add(signalLight);
+    this.orientationGrid = new GridHelper(1_360, 28, 0x3a2d1d, 0x1d2020);
+    this.orientationGrid.position.set(26, -268, 112);
+    const gridMaterials = Array.isArray(this.orientationGrid.material)
+      ? this.orientationGrid.material
+      : [this.orientationGrid.material];
+    for (const material of gridMaterials) {
+      material.transparent = true;
+      material.opacity = 0.13;
+      material.depthWrite = false;
+    }
+    this.scene3d.add(this.orientationGrid);
 
     this.camera.position.copy(this.authoredCameraPosition);
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -419,6 +439,13 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
       this.haloAlpha = null;
       this.haloColors = null;
     }
+    if (this.evidencePoints) {
+      this.scene3d.remove(this.evidencePoints);
+      this.evidencePoints.geometry.dispose();
+      (this.evidencePoints.material as ShaderMaterial).dispose();
+      this.evidencePoints = null;
+      this.evidenceAlpha = null;
+    }
   }
 
   private rebuild(scene: SemanticSpaceScene) {
@@ -443,24 +470,29 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
       mesh.instanceMatrix.setUsage(DynamicDrawUsage);
       mesh.frustumCulled = false;
       nodes.forEach((node, index) => {
-        const scale = kind === "signal"
-          ? new Vector3(node.radius * 0.95, node.radius * 1.35, node.radius * 0.9)
-          : kind === "paper"
-            ? new Vector3(node.radius * 0.86, node.radius * 1.18, node.radius * 0.72)
+        const scale = kind === "paper"
+            ? new Vector3(node.radius * 0.84, node.radius * 1.2, node.radius * 0.64)
+            : kind === "project"
+              ? new Vector3(node.radius * 1.18, node.radius * 0.72, node.radius * 0.58)
             : kind === "district"
-              ? new Vector3(node.radius, node.radius, node.radius)
+              ? new Vector3(node.radius, node.radius * 0.94, node.radius)
+              : kind === "aggregate"
+                ? new Vector3(node.radius * 0.68, node.radius * 0.68, node.radius * 0.68)
               : new Vector3(node.radius, node.radius, node.radius);
+        const rotationSeed = edgeRouteBias(node.id);
         tmpObject.position.set(...node.position);
         tmpObject.scale.copy(scale);
         tmpObject.rotation.set(
-          kind === "district" ? -0.38 + (index % 3) * 0.08 : (index % 3) * 0.12,
-          (index * 0.618) % Math.PI,
-          kind === "signal" ? -0.28 : (index % 2) * 0.08,
+          kind === "district" || kind === "signal" || kind === "moc" || kind === "knowledge"
+            ? 0
+            : rotationSeed * 0.28,
+          (index * 0.618 + rotationSeed * 0.4) % Math.PI,
+          kind === "paper" || kind === "project" ? rotationSeed * 0.16 : 0,
         );
         tmpObject.updateMatrix();
         mesh.setMatrixAt(index, tmpObject.matrix);
         const authoredColor = new Color(node.color).multiplyScalar(
-          kind === "aggregate" ? 0.52 : kind === "district" ? 0.76 : 0.82,
+          kind === "aggregate" ? 0.58 : kind === "district" ? 0.96 : 1.02,
         );
         mesh.setColorAt(index, authoredColor);
       });
@@ -473,6 +505,7 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
       this.nodeHitMap.set(mesh, ids);
     }
     this.buildHalos(scene.nodes);
+    this.buildEvidenceMarks(scene.evidenceMarks);
     this.buildEdges(scene.edges);
     this.updateInteractionMaterials();
     this.debugState.visibleNodes = scene.nodes.length;
@@ -485,12 +518,14 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
     const colors = new Float32Array(nodes.length * 3);
     const sizes = new Float32Array(nodes.length);
     const alpha = new Float32Array(nodes.length);
+    const ring = new Float32Array(nodes.length);
     nodes.forEach((node, index) => {
       positions.set(node.position, index * 3);
       const color = new Color(node.color);
       colors.set([color.r, color.g, color.b], index * 3);
-      sizes[index] = Math.max(32, Math.min(220, node.halo * 3.8));
-      alpha[index] = node.kind === "aggregate_boundary" ? 0.3 : 0.68;
+      sizes[index] = Math.max(36, Math.min(220, node.halo * 4.1));
+      alpha[index] = node.kind === "aggregate_boundary" ? 0.22 : 0.7;
+      ring[index] = node.kind === "district" ? 1 : node.kind === "moc_hub" ? 0.62 : 0;
     });
     geometry.setAttribute("position", new BufferAttribute(positions, 3));
     const colorAttribute = new BufferAttribute(colors, 3);
@@ -499,6 +534,75 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
     alphaAttribute.setUsage(DynamicDrawUsage);
     geometry.setAttribute("color", colorAttribute);
     geometry.setAttribute("aSize", new BufferAttribute(sizes, 1));
+    geometry.setAttribute("aAlpha", alphaAttribute);
+    geometry.setAttribute("aRing", new BufferAttribute(ring, 1));
+    const material = new ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      vertexColors: true,
+      blending: AdditiveBlending,
+      vertexShader: `
+        attribute float aSize;
+        attribute float aAlpha;
+        attribute float aRing;
+        varying vec3 vColor;
+        varying float vAlpha;
+        varying float vRing;
+        void main() {
+          vColor = color;
+          vAlpha = aAlpha;
+          vRing = aRing;
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          gl_PointSize = clamp(aSize * (540.0 / max(260.0, -mvPosition.z)), 16.0, 220.0);
+          gl_Position = projectionMatrix * mvPosition;
+        }
+      `,
+      fragmentShader: `
+        varying vec3 vColor;
+        varying float vAlpha;
+        varying float vRing;
+        void main() {
+          float distanceFromCenter = length(gl_PointCoord - vec2(0.5));
+          float normalizedRadius = distanceFromCenter * 2.0;
+          float aura = smoothstep(1.0, 0.02, normalizedRadius);
+          float core = smoothstep(0.24, 0.0, normalizedRadius);
+          float ringBand = 1.0 - smoothstep(0.024, 0.055, abs(normalizedRadius - 0.3));
+          float innerRing = 1.0 - smoothstep(0.02, 0.05, abs(normalizedRadius - 0.17));
+          float opacity = (
+            aura * 0.27
+            + core * 0.16
+            + ringBand * vRing * 0.42
+            + innerRing * vRing * 0.12
+          ) * vAlpha;
+          gl_FragColor = vec4(vColor, opacity);
+        }
+      `,
+    });
+    this.haloPoints = new Points(geometry, material);
+    this.haloPoints.frustumCulled = false;
+    this.haloAlpha = alphaAttribute;
+    this.haloColors = colorAttribute;
+    this.scene3d.add(this.haloPoints);
+  }
+
+  private buildEvidenceMarks(marks: SemanticSpaceEvidenceMark[]) {
+    const geometry = new BufferGeometry();
+    const positions = new Float32Array(marks.length * 3);
+    const colors = new Float32Array(marks.length * 3);
+    const sizes = new Float32Array(marks.length);
+    const alpha = new Float32Array(marks.length);
+    marks.forEach((mark, index) => {
+      positions.set(mark.position, index * 3);
+      const color = new Color(mark.color);
+      colors.set([color.r, color.g, color.b], index * 3);
+      sizes[index] = mark.size;
+      alpha[index] = mark.opacity;
+    });
+    geometry.setAttribute("position", new BufferAttribute(positions, 3));
+    geometry.setAttribute("color", new BufferAttribute(colors, 3));
+    geometry.setAttribute("aSize", new BufferAttribute(sizes, 1));
+    const alphaAttribute = new BufferAttribute(alpha, 1);
+    alphaAttribute.setUsage(DynamicDrawUsage);
     geometry.setAttribute("aAlpha", alphaAttribute);
     const material = new ShaderMaterial({
       transparent: true,
@@ -514,7 +618,7 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
           vColor = color;
           vAlpha = aAlpha;
           vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-          gl_PointSize = clamp(aSize * (540.0 / max(260.0, -mvPosition.z)), 16.0, 220.0);
+          gl_PointSize = clamp(aSize * (980.0 / max(260.0, -mvPosition.z)), 1.6, 8.0);
           gl_Position = projectionMatrix * mvPosition;
         }
       `,
@@ -522,18 +626,16 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
         varying vec3 vColor;
         varying float vAlpha;
         void main() {
-          float distanceFromCenter = length(gl_PointCoord - vec2(0.5));
-          float soft = smoothstep(0.5, 0.04, distanceFromCenter);
-          float core = smoothstep(0.18, 0.0, distanceFromCenter);
-          gl_FragColor = vec4(vColor, (soft * 0.58 + core * 0.22) * vAlpha);
+          float d = length(gl_PointCoord - vec2(0.5));
+          float core = smoothstep(0.5, 0.06, d);
+          gl_FragColor = vec4(vColor, core * vAlpha);
         }
       `,
     });
-    this.haloPoints = new Points(geometry, material);
-    this.haloPoints.frustumCulled = false;
-    this.haloAlpha = alphaAttribute;
-    this.haloColors = colorAttribute;
-    this.scene3d.add(this.haloPoints);
+    this.evidencePoints = new Points(geometry, material);
+    this.evidencePoints.frustumCulled = false;
+    this.evidenceAlpha = alphaAttribute;
+    this.scene3d.add(this.evidencePoints);
   }
 
   private buildEdges(edges: SemanticSpaceEdge[]) {
@@ -566,8 +668,8 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
       const beforeEnd = points[points.length - 2];
       const direction = end.clone().sub(beforeEnd).normalize();
       tmpQuaternion.setFromUnitVectors(UP, direction);
-      const scale = Math.max(1.8, Math.min(4.8, 1.4 + Math.sqrt(edge.weight) * 0.45));
-      tmpMatrix.compose(end, tmpQuaternion, new Vector3(scale, scale * 1.35, scale));
+      const scale = Math.max(1.35, Math.min(3.6, 1.05 + Math.sqrt(edge.weight) * 0.34));
+      tmpMatrix.compose(end, tmpQuaternion, new Vector3(scale, scale * 1.24, scale));
       arrows.setMatrixAt(edgeIndex, tmpMatrix);
       arrows.setColorAt(edgeIndex, HIDDEN_COLOR);
     });
@@ -580,7 +682,7 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
       color: 0xffffff,
       vertexColors: true,
       transparent: true,
-      opacity: 0.78,
+      opacity: 0.72,
       depthWrite: false,
       blending: AdditiveBlending,
     }));
@@ -643,10 +745,10 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
         const node = this.nodeById.get(id)!;
         const base = new Color(node.color);
         const baseStrength = node.kind === "aggregate_boundary"
-          ? 0.52
+          ? 0.64
           : node.kind === "district"
-            ? 0.76
-            : 0.82;
+            ? 0.92
+            : 1;
         if (activeId && id !== activeId && !neighborIds.has(id)) {
           base.multiplyScalar(0.1);
         } else if (id === activeId) {
@@ -668,19 +770,38 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
         const isActive = node.id === activeId;
         const isNeighbor = neighborIds.has(node.id);
         alpha[index] = activeId
-          ? isActive ? 1 : isNeighbor ? 0.64 : 0.04
-          : node.kind === "aggregate_boundary" ? 0.3 : 0.68;
+          ? isActive ? 0.94 : isNeighbor ? 0.58 : 0.035
+          : node.kind === "aggregate_boundary" ? 0.2 : 0.56;
         if (isActive) base.lerp(new Color(0xffd28b), 0.52);
         colors.set([base.r, base.g, base.b], index * 3);
       });
       this.haloAlpha.needsUpdate = true;
       this.haloColors.needsUpdate = true;
     }
+    if (this.evidenceAlpha) {
+      const alpha = this.evidenceAlpha.array as Float32Array;
+      this.currentScene.evidenceMarks.forEach((mark, index) => {
+        const parentActive = mark.parentId === activeId;
+        const sameCluster = activeId
+          ? this.nodeById.get(activeId)?.clusterId === mark.clusterId
+          : false;
+        alpha[index] = activeId
+          ? parentActive
+            ? Math.min(0.78, mark.opacity * 1.55)
+            : sameCluster
+              ? mark.opacity * 0.66
+              : mark.opacity * 0.08
+          : mark.opacity;
+      });
+      this.evidenceAlpha.needsUpdate = true;
+    }
     if (this.edgeState) {
       const colors = this.edgeState.lineColors.array as Float32Array;
       this.edgeState.edges.forEach((edge, edgeIndex) => {
         const visible = visibleEdgeIds.has(edge.id);
-        const color = !visible
+        const sourceColor = new Color(this.nodeById.get(edge.sourceId)?.color ?? "#9ab5c6");
+        const targetColor = new Color(this.nodeById.get(edge.targetId)?.color ?? "#9ab5c6");
+        const fixedColor = !visible
           ? HIDDEN_COLOR
           : edge.semanticKind === "directed_path"
             ? PATH_COLOR
@@ -688,22 +809,31 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
               ? EDGE_FOCUS_COLOR
               : edge.semanticKind === "district_corridor"
                 ? CORRIDOR_COLOR
-                : EDGE_COLOR;
-        const renderedColor = tmpColor.copy(color).multiplyScalar(
-          visible ? Math.min(1.42, 0.86 + Math.sqrt(Math.max(1, edge.weight)) * 0.075) : 1,
-        );
+                : null;
+        const intensity = visible
+          ? Math.min(1.34, 0.8 + Math.sqrt(Math.max(1, edge.weight)) * 0.07)
+          : 1;
         for (let segment = 0; segment < this.edgeState!.lineSegmentsPerEdge; segment += 1) {
           const offset = (edgeIndex * this.edgeState!.lineSegmentsPerEdge + segment) * 6;
+          const startT = segment / this.edgeState!.lineSegmentsPerEdge;
+          const endT = (segment + 1) / this.edgeState!.lineSegmentsPerEdge;
+          const startColor = fixedColor
+            ? tmpColor.copy(fixedColor)
+            : sourceColor.clone().lerp(targetColor, startT).lerp(EDGE_COLOR, 0.3);
+          const endColor = fixedColor
+            ? fixedColor
+            : sourceColor.clone().lerp(targetColor, endT).lerp(EDGE_COLOR, 0.3);
           colors.set([
-            renderedColor.r,
-            renderedColor.g,
-            renderedColor.b,
-            renderedColor.r,
-            renderedColor.g,
-            renderedColor.b,
+            startColor.r * intensity,
+            startColor.g * intensity,
+            startColor.b * intensity,
+            endColor.r * intensity,
+            endColor.g * intensity,
+            endColor.b * intensity,
           ], offset);
         }
-        this.edgeState!.arrows.setColorAt(edgeIndex, renderedColor);
+        const arrowColor = fixedColor ?? targetColor.lerp(EDGE_COLOR, 0.25);
+        this.edgeState!.arrows.setColorAt(edgeIndex, arrowColor.clone().multiplyScalar(intensity));
       });
       this.edgeState.lineColors.needsUpdate = true;
       if (this.edgeState.arrows.instanceColor) this.edgeState.arrows.instanceColor.needsUpdate = true;
@@ -722,6 +852,16 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
     const distance = id
       ? Math.max(this.authoredCamera.minDistance, Math.min(this.authoredCamera.maxDistance, authoredDistance * 0.82))
       : authoredDistance;
+    if (id && this.currentScene.presentation === "home") {
+      // The editorial rail occupies the left side of Home. Keep a committed
+      // constellation inside the authored graph stage instead of centering it
+      // under the headline.
+      const screenRight = new Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion).normalize();
+      const halfViewWidth = distance
+        * Math.tan(MathUtils.degToRad(this.camera.fov * 0.5))
+        * this.camera.aspect;
+      nextTarget.addScaledVector(screenRight, -halfViewWidth * 0.38);
+    }
     const nextPosition = nextTarget.clone().addScaledVector(
       id ? currentDirection : this.authoredCameraPosition.clone().sub(nextTarget).normalize(),
       distance,
@@ -889,6 +1029,11 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
     this.removeEvents();
     this.controls.dispose();
     this.clearObjects();
+    this.orientationGrid.geometry.dispose();
+    const gridMaterials = Array.isArray(this.orientationGrid.material)
+      ? this.orientationGrid.material
+      : [this.orientationGrid.material];
+    gridMaterials.forEach((material) => material.dispose());
     this.renderer.dispose();
     this.renderer.forceContextLoss();
     this.renderer.domElement.remove();

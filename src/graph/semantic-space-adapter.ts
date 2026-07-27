@@ -11,6 +11,7 @@ import {
 } from "./semantic-edge-model";
 import type {
   AuthoredCamera,
+  SemanticSpaceEvidenceMark,
   SemanticSpaceNode,
   SemanticSpacePresentation,
   SemanticSpaceScene,
@@ -24,26 +25,133 @@ const fieldColors: Record<string, string> = {
   Papers: "#bda0d2",
   Signals: "#ce829d",
   Console: "#aeb981",
+  // v7.7 public clusters use Korean labels, but their materials inherit the
+  // same semantic colors as v7.5's MOC / Papers / Signals stage.
   "중심 지식": "#d3ad75",
-  "연구 논거": "#83a8cc",
+  "연구 논거": "#bda0d2",
   전략: "#d79273",
   신호: "#ce829d",
-  "운영 기반": "#aeb981",
-  Rocket: "#ae82e3",
-  Groot: "#70ba91",
-  "Intelligence Layer": "#759dde",
-  "Independent Projects": "#9d83dc",
-  "연구 기록": "#57b9cf",
+  "운영 기반": "#91977f",
+  Rocket: "#91877f",
+  Groot: "#8d977f",
+  "Intelligence Layer": "#8d908a",
+  "Independent Projects": "#998f84",
+  "연구 기록": "#8c9288",
 };
+
+interface AuthoredClusterSlot {
+  anchor: [number, number, number];
+  spread: [number, number, number];
+  roll: number;
+  yaw: number;
+}
+
+const authoredClusterSlots: Record<string, AuthoredClusterSlot> = {
+  "연구 논거": {
+    anchor: [-292, -92, 82],
+    spread: [146, 124, 132],
+    roll: -0.24,
+    yaw: 0.2,
+  },
+  "중심 지식": {
+    anchor: [112, -72, -12],
+    spread: [156, 152, 148],
+    roll: 0.13,
+    yaw: -0.18,
+  },
+  신호: {
+    anchor: [270, 168, 104],
+    spread: [122, 116, 138],
+    roll: -0.18,
+    yaw: 0.28,
+  },
+  전략: {
+    anchor: [-138, -154, 174],
+    spread: [92, 78, 96],
+    roll: 0.28,
+    yaw: -0.22,
+  },
+  "운영 기반": {
+    anchor: [10, 112, 228],
+    spread: [78, 68, 82],
+    roll: -0.16,
+    yaw: 0.18,
+  },
+  "Independent Projects": {
+    anchor: [348, 118, 230],
+    spread: [86, 72, 92],
+    roll: 0.2,
+    yaw: -0.26,
+  },
+  "연구 기록": {
+    anchor: [-86, 236, 218],
+    spread: [76, 66, 82],
+    roll: -0.3,
+    yaw: 0.16,
+  },
+};
+
+// Owner and Public use the same authored semantic stage even though their
+// district labels differ. Keeping aliases here prevents the richer Owner graph
+// from falling into index-based fallback slots and losing the MOC/Papers/Signals
+// composition that defines the public Embassy view.
+authoredClusterSlots.Papers = authoredClusterSlots["연구 논거"];
+authoredClusterSlots.MOC = authoredClusterSlots["중심 지식"];
+authoredClusterSlots.Signals = authoredClusterSlots.신호;
+
+const fallbackClusterSlots: AuthoredClusterSlot[] = [
+  { anchor: [-340, -12, 190], spread: [82, 72, 84], roll: -0.2, yaw: 0.18 },
+  { anchor: [370, -18, 182], spread: [82, 72, 84], roll: 0.2, yaw: -0.18 },
+  { anchor: [-30, 270, 242], spread: [78, 66, 82], roll: 0.1, yaw: 0.2 },
+];
+
+function stableUnit(value: string) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 0xffffffff;
+}
 
 function colorForNode(node: AtlasGraphNodeV1, graph: AtlasGraphV1) {
   const cluster = graph.clusters.find((candidate) => candidate.id === node.clusterId);
   return fieldColors[cluster?.label ?? ""] ?? "#9aa4a0";
 }
 
-function labelPriority(node: AtlasGraphNodeV1, persistent: ReadonlySet<string>) {
+const homeSemanticLabelPriority = new Map<string, number>([
+  ["이미지생성", 890_000],
+  ["에이전트", 889_000],
+  ["AI 신뢰성", 888_000],
+  ["노동·조직", 887_000],
+  ["Agent Papers", 886_000],
+  ["AI and Society Papers", 885_000],
+]);
+
+const homeSupportingOrganizationLabels = new Set([
+  "OpenAI",
+  "Google",
+  "Anthropic",
+  "Claude",
+  "MCP",
+]);
+
+function labelPriority(
+  node: AtlasGraphNodeV1,
+  persistent: ReadonlySet<string>,
+  presentation: SemanticSpacePresentation,
+) {
   if (persistent.has(node.id)) return 1_000_000 + node.gravity;
-  if (node.kind === "district") return 900_000 + node.gravity;
+  if (presentation === "home") {
+    const semanticPriority = homeSemanticLabelPriority.get(node.label);
+    if (semanticPriority) return semanticPriority + node.gravity;
+    if (homeSupportingOrganizationLabels.has(node.label)) return node.gravity * 10;
+  }
+  if (node.kind === "district") {
+    return ["중심 지식", "연구 논거", "신호", "MOC", "Papers", "Signals"].includes(node.label)
+      ? 900_000 + node.gravity
+      : 170_000 + node.gravity;
+  }
   if (node.kind === "moc_hub" || node.kind === "paper_gateway" || node.kind === "signal_domain") {
     return 600_000 + node.gravity * 100 + node.occurrences;
   }
@@ -51,68 +159,204 @@ function labelPriority(node: AtlasGraphNodeV1, persistent: ReadonlySet<string>) 
 }
 
 function semanticLabel(node: AtlasGraphNodeV1) {
+  if (node.label === "Agent Papers") return "AI 에이전트 연구";
+  if (node.label === "AI and Society Papers") return "AI·사회 연구";
   if (node.kind !== "district") return graphNodeLabel(node);
   return ({
     "중심 지식": "MOC · 중심 지식",
     "연구 논거": "Papers · 연구 논거",
     신호: "Signals · 신호",
+    MOC: "MOC · 중심 지식",
+    Papers: "Papers · 연구 논거",
+    Signals: "Signals · 신호",
   } as Record<string, string>)[node.label] ?? graphNodeLabel(node);
 }
 
 function semanticNode(
   node: AtlasGraphNodeV1,
   graph: AtlasGraphV1,
+  position: [number, number, number],
   incomingCount: number,
   outgoingCount: number,
   persistent: ReadonlySet<string>,
+  presentation: SemanticSpacePresentation,
 ): SemanticSpaceNode | null {
-  const coordinate = graph.layout.coordinates.find((candidate) => candidate.id === node.id);
-  if (!coordinate) return null;
-  const { bounds } = graph.layout;
-  const x = coordinate.x - (bounds.x + bounds.width / 2);
-  const y = bounds.y + bounds.height / 2 - coordinate.y;
-  const z = coordinate.z - (bounds.z + bounds.depth / 2);
   const gravityRoot = Math.sqrt(Math.max(0, node.gravity));
   const authoredRadius = node.kind === "aggregate_boundary"
-    ? Math.max(2.6, Math.min(7.6, 2.6 + gravityRoot * 0.24))
+    ? Math.max(1.6, Math.min(3.6, 1.5 + gravityRoot * 0.12))
     : node.kind === "district"
-      ? Math.max(18, Math.min(28, 17 + gravityRoot * 0.48))
+      ? Math.max(6.8, Math.min(11.8, 6.5 + gravityRoot * 0.17))
       : node.kind === "paper_gateway"
-        ? Math.max(6, Math.min(24, 5.5 + gravityRoot * 1.12))
-        : Math.max(6.5, Math.min(28, 6 + gravityRoot * 1.2));
+        ? Math.max(3.5, Math.min(10.5, 3.3 + gravityRoot * 0.45))
+        : node.kind === "signal_domain" || node.kind === "signal_storyline"
+          ? Math.max(3.6, Math.min(10.5, 3.4 + gravityRoot * 0.46))
+          : Math.max(3.4, Math.min(11.2, 3.2 + gravityRoot * 0.48));
   return {
     id: node.id,
     label: semanticLabel(node),
     kind: node.kind,
     clusterId: node.clusterId,
-    position: [x, y, z],
+    position,
     radius: authoredRadius,
     color: colorForNode(node, graph),
     halo: node.kind === "aggregate_boundary"
-      ? Math.max(8, authoredRadius * 1.7)
-      : Math.max(22, authoredRadius * (node.kind === "district" ? 2.8 : 4.15)),
+      ? Math.max(7, authoredRadius * 1.65)
+      : Math.max(20, authoredRadius * (node.kind === "district" ? 4 : 4.8)),
     gravity: node.gravity,
     occurrences: node.occurrences,
     incomingCount,
     outgoingCount,
-    labelPriority: labelPriority(node, persistent),
+    labelPriority: labelPriority(node, persistent, presentation),
   };
 }
 
-function authoredCamera(graph: AtlasGraphV1, presentation: SemanticSpacePresentation): AuthoredCamera {
-  const { bounds } = graph.layout;
-  const extent = Math.max(bounds.width, bounds.height, bounds.depth);
+function clusterSlot(label: string, index: number) {
+  return authoredClusterSlots[label] ?? fallbackClusterSlots[index % fallbackClusterSlots.length];
+}
+
+function rotateAuthoredOffset(
+  offset: [number, number, number],
+  roll: number,
+  yaw: number,
+): [number, number, number] {
+  const [x, y, z] = offset;
+  const cosRoll = Math.cos(roll);
+  const sinRoll = Math.sin(roll);
+  const rolledX = x * cosRoll - y * sinRoll;
+  const rolledY = x * sinRoll + y * cosRoll;
+  const cosYaw = Math.cos(yaw);
+  const sinYaw = Math.sin(yaw);
+  return [
+    rolledX * cosYaw + z * sinYaw,
+    rolledY,
+    -rolledX * sinYaw + z * cosYaw,
+  ];
+}
+
+function authoredPositions(
+  graph: AtlasGraphV1,
+  nodes: readonly AtlasGraphNodeV1[],
+  presentation: SemanticSpacePresentation,
+) {
+  const coordinateById = new Map(graph.layout.coordinates.map((coordinate) => [coordinate.id, coordinate]));
+  const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
+  const clusterById = new Map(graph.clusters.map((cluster, index) => [
+    cluster.id,
+    { ...cluster, index },
+  ]));
+  const membersByCluster = new Map<string, AtlasGraphNodeV1[]>();
+  for (const node of graph.nodes) {
+    const members = membersByCluster.get(node.clusterId) ?? [];
+    members.push(node);
+    membersByCluster.set(node.clusterId, members);
+  }
+  const positionById = new Map<string, [number, number, number]>();
+  for (const node of nodes) {
+    const coordinate = coordinateById.get(node.id);
+    const cluster = clusterById.get(node.clusterId);
+    if (!coordinate || !cluster) continue;
+    const members = membersByCluster.get(node.clusterId) ?? [];
+    const district = members.find((candidate) => candidate.kind === "district")
+      ?? nodeById.get(cluster.districtId)
+      ?? members[0];
+    const anchorCoordinate = district ? coordinateById.get(district.id) : coordinate;
+    if (!anchorCoordinate) continue;
+    const offsets = members.flatMap((member) => {
+      const memberCoordinate = coordinateById.get(member.id);
+      if (!memberCoordinate) return [];
+      return [[
+        memberCoordinate.x - anchorCoordinate.x,
+        anchorCoordinate.y - memberCoordinate.y,
+        memberCoordinate.z - anchorCoordinate.z,
+      ] as const];
+    });
+    const maxX = Math.max(1, ...offsets.map((offset) => Math.abs(offset[0])));
+    const maxY = Math.max(1, ...offsets.map((offset) => Math.abs(offset[1])));
+    const maxZ = Math.max(1, ...offsets.map((offset) => Math.abs(offset[2])));
+    const slot = clusterSlot(cluster.label, cluster.index);
+    const presentationScale = presentation === "home" ? 1 : 1.12;
+    const normalized: [number, number, number] = [
+      ((coordinate.x - anchorCoordinate.x) / maxX) * slot.spread[0] * presentationScale,
+      ((anchorCoordinate.y - coordinate.y) / maxY) * slot.spread[1] * presentationScale,
+      ((coordinate.z - anchorCoordinate.z) / maxZ) * slot.spread[2] * presentationScale,
+    ];
+    const rotated = rotateAuthoredOffset(normalized, slot.roll, slot.yaw);
+    const workspaceOffset = presentation === "home" ? 0 : 26;
+    positionById.set(node.id, [
+      slot.anchor[0] * presentationScale + rotated[0],
+      slot.anchor[1] * presentationScale + rotated[1],
+      slot.anchor[2] + rotated[2] + workspaceOffset,
+    ]);
+  }
+  return positionById;
+}
+
+function evidenceMarks(
+  graph: AtlasGraphV1,
+  nodes: readonly AtlasGraphNodeV1[],
+  positionById: ReadonlyMap<string, [number, number, number]>,
+) {
+  const marks: SemanticSpaceEvidenceMark[] = [];
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+  const clustersWithAggregateEvidence = new Set(nodes
+    .filter((node) => node.kind === "aggregate_boundary" && node.representedDocuments > 0)
+    .map((node) => node.clusterId));
+  const evidenceSources = nodes.filter((node) =>
+    node.representedDocuments > 0
+    && (
+      node.kind === "aggregate_boundary"
+      || (node.kind === "district" && !clustersWithAggregateEvidence.has(node.clusterId))
+    ));
+  for (const node of evidenceSources) {
+    const parentPosition = positionById.get(node.id);
+    if (!parentPosition) continue;
+    const markCount = node.representedDocuments;
+    const spread = Math.min(160, 48 + Math.sqrt(node.representedDocuments) * 7.4);
+    const phase = stableUnit(`${node.id}:evidence-phase`) * Math.PI * 2;
+    const color = colorForNode(node, graph);
+    const baseColor = Number.parseInt(color.slice(1), 16);
+    const neutralColor = 0xd8cdbb;
+    const mixedColor = `#${[16, 8, 0]
+      .map((shift) => {
+        const channel = Math.round(
+          ((baseColor >> shift) & 255) * 0.58 + ((neutralColor >> shift) & 255) * 0.42,
+        );
+        return channel.toString(16).padStart(2, "0");
+      })
+      .join("")}`;
+    for (let index = 0; index < markCount; index += 1) {
+      const normalized = (index + 0.5) / markCount;
+      const radial = Math.sqrt(normalized);
+      const angle = phase + index * goldenAngle;
+      const depth = stableUnit(`${node.id}:${index}:depth`) - 0.5;
+      const lift = stableUnit(`${node.id}:${index}:lift`) - 0.5;
+      marks.push({
+        id: `evidence:${node.id}:${index}`,
+        parentId: node.id,
+        clusterId: node.clusterId,
+        position: [
+          parentPosition[0] + Math.cos(angle) * spread * radial,
+          parentPosition[1] + Math.sin(angle) * spread * radial * 0.58 + lift * spread * 0.24,
+          parentPosition[2] + depth * spread * 0.9 + Math.sin(angle * 0.7) * spread * 0.18,
+        ],
+        color: mixedColor,
+        size: 1.85 + stableUnit(`${node.id}:${index}:size`) * 2.05,
+        opacity: 0.5 + stableUnit(`${node.id}:${index}:opacity`) * 0.28,
+        representedDocuments: 1,
+      });
+    }
+  }
+  return marks;
+}
+
+function authoredCamera(presentation: SemanticSpacePresentation): AuthoredCamera {
   return {
-    yaw: presentation === "home" ? -0.42 : -0.3,
-    pitch: presentation === "home" ? 0.23 : 0.18,
-    distance: extent * (presentation === "home" ? 1.025 : 0.8),
-    target: [
-      presentation === "home" ? -bounds.width * 0.18 : -bounds.width * 0.025,
-      presentation === "home" ? -bounds.height * 0.025 : 0,
-      presentation === "home" ? -bounds.depth * 0.03 : 0,
-    ],
-    minDistance: extent * 0.54,
-    maxDistance: extent * 1.9,
+    yaw: presentation === "home" ? -0.1 : -0.14,
+    pitch: presentation === "home" ? 0.19 : 0.17,
+    distance: presentation === "home" ? 1_030 : 1_080,
+    target: presentation === "home" ? [-148, 18, 92] : [10, 18, 108],
+    minDistance: presentation === "home" ? 620 : 650,
+    maxDistance: 1_820,
   };
 }
 
@@ -127,7 +371,7 @@ function homeBackboneCommands(graph: AtlasGraphV1, visibleNodeIds: ReadonlySet<s
   const selectedIds = new Set<string>();
   const push = (edge: (typeof ranked)[number] | undefined) => {
     if (!edge || selectedIds.has(edge.id) || selected.length >= limit) return false;
-    if ((degree.get(edge.source) ?? 0) >= 4 || (degree.get(edge.target) ?? 0) >= 4) return false;
+    if ((degree.get(edge.source) ?? 0) >= 3 || (degree.get(edge.target) ?? 0) >= 3) return false;
     selected.push(edge);
     selectedIds.add(edge.id);
     degree.set(edge.source, (degree.get(edge.source) ?? 0) + 1);
@@ -188,15 +432,19 @@ export function buildSemanticSpaceScene(options: {
     incomingCounts.set(edge.target, (incomingCounts.get(edge.target) ?? 0) + 1);
     outgoingCounts.set(edge.source, (outgoingCounts.get(edge.source) ?? 0) + 1);
   }
+  const positionById = authoredPositions(options.graph, selection.nodes, options.presentation);
   const nodes = selection.nodes
     .map((node) => semanticNode(
       node,
       options.graph,
+      positionById.get(node.id) ?? [0, 0, 0],
       incomingCounts.get(node.id) ?? 0,
       outgoingCounts.get(node.id) ?? 0,
       persistent,
+      options.presentation,
     ))
     .filter((node): node is SemanticSpaceNode => Boolean(node));
+  const marks = evidenceMarks(options.graph, selection.nodes, positionById);
   const visibleNodeIds = new Set(nodes.map((node) => node.id));
   const semanticCommands = semanticEdgeCommands({
     graph: options.graph,
@@ -211,7 +459,7 @@ export function buildSemanticSpaceScene(options: {
   const baseCommands = options.presentation === "home"
     && options.kind === "field"
     && !options.focusId
-    ? homeBackboneCommands(options.graph, visibleNodeIds, 12)
+    ? homeBackboneCommands(options.graph, visibleNodeIds, 14)
     : semanticCommands;
   const baseById = new Map(baseCommands.map((edge) => [edge.id, edge]));
   const graphEdges = options.graph.edges
@@ -252,13 +500,16 @@ export function buildSemanticSpaceScene(options: {
       options.from ?? "",
       options.to ?? "",
       nodes.map((node) => node.id).join(","),
+      nodes.map((node) => node.position.join(",")).join(";"),
       edges.map((edge) => edge.id).join(","),
+      marks.map((mark) => `${mark.id}:${mark.position.join(",")}`).join(";"),
     ].join("|"),
     kind: options.kind,
     presentation: options.presentation,
     nodes,
     edges,
-    camera: authoredCamera(options.graph, options.presentation),
+    evidenceMarks: marks,
+    camera: authoredCamera(options.presentation),
     labelIds,
     focusId: options.focusId,
     previewId: options.previewId,
