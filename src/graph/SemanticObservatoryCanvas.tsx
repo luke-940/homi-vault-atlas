@@ -61,8 +61,8 @@ const coreSlots: Record<string, {
 }> = {
   MOC: { x: 0.7, y: 0.25, depth: 0.54, spreadX: 0.25, spreadY: 0.2 },
   "중심 지식": { x: 0.7, y: 0.25, depth: 0.54, spreadX: 0.25, spreadY: 0.2 },
-  Papers: { x: 0.43, y: 0.35, depth: 0.24, spreadX: 0.24, spreadY: 0.2 },
-  "연구 논거": { x: 0.43, y: 0.35, depth: 0.24, spreadX: 0.24, spreadY: 0.2 },
+  Papers: { x: 0.43, y: 0.35, depth: 0.42, spreadX: 0.27, spreadY: 0.22 },
+  "연구 논거": { x: 0.43, y: 0.35, depth: 0.42, spreadX: 0.27, spreadY: 0.22 },
   Signals: { x: 0.74, y: 0.63, depth: 0.84, spreadX: 0.24, spreadY: 0.22 },
   신호: { x: 0.74, y: 0.63, depth: 0.84, spreadX: 0.24, spreadY: 0.22 },
 };
@@ -203,16 +203,36 @@ function visibleNodesForMode({
   ]);
 
   if (mode === "home") {
-    const core = [...coreClusterIds].flatMap((clusterId) =>
-      rankNodes(graph.nodes.filter((node) =>
-        node.clusterId === clusterId
-        && !["district", "source_document"].includes(node.kind))).slice(0, mobile ? 8 : 14));
+    const limit = mobile ? 24 : 60;
+    const coreIds = [...coreClusterIds];
     const priority = [...priorityIds].flatMap((id) => {
       const node = nodesById.get(id);
       return node ? [node] : [];
     });
-    return [...new Map([...priority, ...core].map((node) => [node.id, node])).values()]
-      .slice(0, mobile ? 24 : 46);
+    const externalPriority = priority.filter((node) => !coreClusterIds.has(node.clusterId));
+    const perCluster = Math.max(1, Math.floor((limit - externalPriority.length) / Math.max(1, coreIds.length)));
+    const core = coreIds.flatMap((clusterId) => {
+      const clusterNodes = graph.nodes.filter((node) =>
+        node.clusterId === clusterId && node.kind !== "district");
+      const clusterPriority = priority.filter((node) => node.clusterId === clusterId);
+      const ranked = mobile
+        ? [
+            ...rankNodes(clusterNodes.filter((node) => node.kind !== "source_document")),
+            ...rankNodes(clusterNodes.filter((node) => node.kind === "source_document")),
+          ]
+        : rankNodes(clusterNodes);
+      return [...new Map([...clusterPriority, ...ranked].map((node) => [node.id, node])).values()]
+        .slice(0, perCluster);
+    });
+    const selected = [...new Map([...externalPriority, ...core].map((node) => [node.id, node])).values()];
+    if (selected.length < limit) {
+      const selectedIds = new Set(selected.map((node) => node.id));
+      selected.push(...rankNodes(graph.nodes.filter((node) =>
+        coreClusterIds.has(node.clusterId)
+        && node.kind !== "district"
+        && !selectedIds.has(node.id))).slice(0, limit - selected.length));
+    }
+    return selected.slice(0, limit);
   }
 
   const defaultIds = new Set(graph.layout.defaultNodeIds);
@@ -247,6 +267,33 @@ function clusterSlot(
     spreadX: 0.13 + (clusterIndex % 2) * 0.025,
     spreadY: 0.12 + (clusterIndex % 3) * 0.018,
   };
+}
+
+function observatoryStage(width: number, height: number, mobile: boolean) {
+  const stageWidth = mobile ? width * 0.96 : width;
+  const stageHeight = mobile ? height * 0.76 : Math.min(height, width * 0.82);
+  const stageTop = mobile ? height * 0.08 : Math.max(0, (height - stageHeight) * 0.24);
+  return { stageWidth, stageHeight, stageTop };
+}
+
+function responsiveSlotX({
+  x,
+  clusterLabel,
+  width,
+  mobile,
+  featured,
+}: {
+  x: number;
+  clusterLabel: string;
+  width: number;
+  mobile: boolean;
+  featured: boolean;
+}) {
+  if (mobile && x > 0.6) return x - (featured ? 0.145 : 0.085);
+  if (!mobile && width < 1180) {
+    return Math.min(0.92, x + (clusterLabel === "Papers" ? 0.1 : 0.035));
+  }
+  return x;
 }
 
 function projectNodes({
@@ -306,8 +353,7 @@ function projectNodes({
           maxZ: coordinate.z,
         });
   }
-  const stageWidth = mobile ? width * 0.96 : width;
-  const stageHeight = mobile ? height * 0.76 : height;
+  const { stageWidth, stageHeight, stageTop } = observatoryStage(width, height, mobile);
   const projected = nodes.flatMap((node): ProjectedNode[] => {
     const coordinate = coordinateById.get(node.id);
     const cluster = clusterById.get(node.clusterId);
@@ -322,23 +368,29 @@ function projectNodes({
     const normalizedX = normalize(coordinate.x, localBounds.minX, localBounds.maxX, "x");
     const normalizedY = normalize(coordinate.y, localBounds.minY, localBounds.maxY, "y");
     const normalizedZ = normalize(coordinate.z, localBounds.minZ, localBounds.maxZ, "z");
+    const spatialX = normalizedX * 0.64 + (stableUnit(`${node.id}:constellation:x`) - 0.5) * 0.36;
+    const spatialY = normalizedY * 0.86 + (stableUnit(`${node.id}:constellation:y`) - 0.5) * 0.14;
     const yawShift = Math.sin(camera.yaw) * (slot.depth - 0.5) * width * 0.18;
-    const pitchShift = Math.sin(camera.pitch) * (slot.depth - 0.5) * height * 0.16;
+    const pitchShift = Math.sin(camera.pitch) * (slot.depth - 0.5) * stageHeight * 0.16;
     const depth = Math.max(0.06, Math.min(0.96, slot.depth + normalizedZ * 0.18));
     const perspective = (0.64 + depth * 0.52) * camera.zoom;
-    const slotX = mobile && slot.x > 0.6
-      ? slot.x - (featuredSlots.has(node.id) ? 0.145 : 0.085)
-      : slot.x;
+    const slotX = responsiveSlotX({
+      x: slot.x,
+      clusterLabel: cluster.label,
+      width,
+      mobile,
+      featured: featuredSlots.has(node.id),
+    });
     const x = slotX * stageWidth
-      + normalizedX * slot.spreadX * stageWidth
+      + spatialX * slot.spreadX * stageWidth
       + yawShift
       + camera.panX;
-    const y = slot.y * stageHeight
-      + normalizedY * slot.spreadY * stageHeight
-      - (depth - 0.5) * height * 0.08
+    const y = stageTop
+      + slot.y * stageHeight
+      + spatialY * slot.spreadY * stageHeight
+      - (depth - 0.5) * stageHeight * 0.08
       + pitchShift
-      + camera.panY
-      + (mobile ? height * 0.08 : 0);
+      + camera.panY;
     const baseRadius = Math.max(3.2, Math.min(24, 3.6 + Math.sqrt(Math.max(0, node.gravity)) * 0.78));
     return [{
       node,
@@ -358,7 +410,13 @@ function edgeControls(source: ProjectedNode, target: ProjectedNode, edge: AtlasG
   const length = Math.max(1, Math.hypot(dx, dy));
   const nx = -dy / length;
   const ny = dx / length;
-  const lane = (stableUnit(edge.id) - 0.5) * Math.min(84, length * 0.18);
+  const crossCluster = source.node.clusterId !== target.node.clusterId;
+  const bend = crossCluster
+    ? Math.min(96, Math.max(22, length * 0.16))
+    : Math.min(58, Math.max(10, length * 0.1));
+  const lane = (stableUnit(`${edge.id}:lane`) < 0.5 ? -1 : 1)
+    * bend
+    * (0.54 + stableUnit(`${edge.id}:bend`) * 0.46);
   const depthLift = (target.depth - source.depth) * 38;
   return {
     a: {
@@ -417,6 +475,14 @@ function drawEdge(
   gradient.addColorStop(1, rgba(targetColor, alpha * 1.12));
   const controls = edgeControls(source, target, edge);
   context.save();
+  context.strokeStyle = rgba(targetColor, alpha * 0.12);
+  context.lineWidth = Math.max(2.2, Math.min(5.8, (2.2 + Math.log2(edge.occurrenceCount + 1) * 0.38) * emphasis));
+  context.shadowColor = rgba(targetColor, alpha * 0.38);
+  context.shadowBlur = 13 * emphasis;
+  context.beginPath();
+  context.moveTo(source.x, source.y);
+  context.bezierCurveTo(controls.a.x, controls.a.y, controls.b.x, controls.b.y, target.x, target.y);
+  context.stroke();
   context.strokeStyle = gradient;
   context.lineWidth = Math.max(0.72, Math.min(2.4, (0.64 + Math.log2(edge.occurrenceCount + 1) * 0.24) * emphasis));
   context.shadowColor = rgba(targetColor, alpha * 0.85);
@@ -457,7 +523,19 @@ function drawNode(
   context.globalCompositeOperation = "source-over";
   context.shadowColor = color;
   context.shadowBlur = anchor ? 14 * emphasis : 7 * emphasis;
-  context.fillStyle = rgba(color, anchor ? 0.2 : 0.1);
+  const core = context.createRadialGradient(
+    x - radius * 0.24,
+    y - radius * 0.3,
+    Math.max(0.7, radius * 0.05),
+    x,
+    y,
+    radius * 1.18 * emphasis,
+  );
+  core.addColorStop(0, rgba("#fff8e9", anchor ? 0.92 : 0.68));
+  core.addColorStop(0.18, rgba(color, anchor ? 0.74 : 0.5));
+  core.addColorStop(0.68, rgba(color, anchor ? 0.2 : 0.09));
+  core.addColorStop(1, rgba(color, 0.015));
+  context.fillStyle = core;
   context.strokeStyle = rgba(color, anchor ? 0.96 : 0.7);
   context.lineWidth = anchor ? 1.5 : 0.82;
   context.beginPath();
@@ -552,8 +630,8 @@ function drawBackground(
     const color = clusterColors[clusterLabelById.get(clusterId) ?? ""] ?? "#b69369";
     const reach = Math.max(90, Math.min(width * 0.24, 96 + Math.sqrt(weight) * 10));
     const field = context.createRadialGradient(x, y, 0, x, y, reach);
-    field.addColorStop(0, rgba(color, 0.075));
-    field.addColorStop(0.48, rgba(color, 0.024));
+    field.addColorStop(0, rgba(color, 0.1));
+    field.addColorStop(0.48, rgba(color, 0.038));
     field.addColorStop(1, "rgba(0,0,0,0)");
     context.fillStyle = field;
     context.fillRect(x - reach, y - reach, reach * 2, reach * 2);
@@ -715,11 +793,7 @@ export function SemanticObservatoryCanvas({
       return rankEdges(graph.edges.filter((edge) => pathIds.has(edge.id)));
     }
     if (mode === "home") {
-      const ids = new Set(backboneEdgeIds);
-      return graph.edges.filter((edge) =>
-        ids.has(edge.id)
-        && visibleNodeIds.has(edge.source)
-        && visibleNodeIds.has(edge.target));
+      return selectExploreEdges(graph, backboneEdgeIds, visibleNodeIds, mobile ? 8 : 16);
     }
     return selectExploreEdges(graph, backboneEdgeIds, visibleNodeIds, mobile ? 12 : 24);
   }, [backboneEdgeIds, graph, mobile, mode, pathIds, visibleNodeIds]);
@@ -752,18 +826,27 @@ export function SemanticObservatoryCanvas({
         const cluster = anchor ? graph.clusters.find((item) => item.id === anchor.clusterId) : null;
         const slot = cluster ? clusterSlot(cluster.id, cluster.label, 0, mode) : coreSlots[domain.domain];
         if (!anchor || !slot) return [];
+        const { stageWidth, stageHeight, stageTop } = observatoryStage(width, height, mobile);
+        const slotX = responsiveSlotX({
+          x: slot.x,
+          clusterLabel: cluster?.label ?? domain.domain,
+          width,
+          mobile,
+          featured: false,
+        });
         return [{
           ...domain,
           anchorLabel: graphNodeLabel(anchor),
-          left: (mobile && slot.x > 0.6 ? slot.x - 0.085 : slot.x) * width
+          left: slotX * stageWidth
             + (mobile
-              ? -slot.spreadX * width * (domain.domain === "Papers" ? 0.18 : 0.22)
+              ? -slot.spreadX * stageWidth * (domain.domain === "Papers" ? 0.18 : 0.22)
               : domain.domain === "Papers"
-                ? -slot.spreadX * width * 0.42
-                : slot.spreadX * width * 0.34),
-          top: slot.y * height
-            - slot.spreadY * height * 0.62
-            - (mobile && domain.domain === "MOC" ? height * 0.07 : 0),
+                ? -slot.spreadX * stageWidth * 0.42
+                : slot.spreadX * stageWidth * 0.34),
+          top: stageTop
+            + slot.y * stageHeight
+            - slot.spreadY * stageHeight * 0.62
+            - (mobile && domain.domain === "MOC" ? stageHeight * 0.07 : 0),
         }];
       })
     : [], [graph.clusters, height, meaning.domainBackbone, mobile, mode, nodeById, width]);

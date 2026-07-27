@@ -1,65 +1,83 @@
-# Homi Vault Atlas v7.5 Owner — Design QA
+# Homi Vault Atlas v7.7 — Backbone Density Design QA
 
-## Visual truth
+## Comparison target
 
-- Selected Option 1 reference: local-only concept evidence, retained outside the public repository.
-- Reference SHA-256: `ba32a3c07aa00c1a5ad05139e6a6862924ee490a5efe529a3e9d655166f4af3`
-- Rejected r47 baseline: `outputs/.../visual-audit/home-selected-option-1-r47-1440x920.png`
-- Final default candidate: `outputs/.../visual-audit/owner-semantic-focus/home-default-1440x920-depth-beacons-r3.png`
-- Final candidate SHA-256: `43e49098e898b4bf3a8b2aa8f749cdbf864bf5dbcbc3e934dd50df36f64035b3`
-- Comparison method: the reference and final implementation were opened at original detail in the same comparison pass at the same desktop state. Screenshots alone were not treated as approval.
+- Source visual truth: local-only Gate 1 evidence, `golden-direction/home-default-depth-1440x920.png`
+- Source pixels: 1569×1002, normalized proportionally into a 1440×920 frame.
+- Rendered implementation: local-only Gate 3 evidence, `backbone-density-audit/09-backbone-density-design-final-1440x920.actual.png`
+- Implementation pixels / CSS viewport: 1440×920 at browser DPR 2; evidence normalized to 1440×920 PNG pixels for comparison.
+- State: Owner Home · `domain-backbone` · default committed selection.
+- Full-view comparison: local-only evidence, `backbone-density-audit/10-golden-vs-design-final-1440x920.png`
+- Focused graph comparison: local-only evidence, `backbone-density-audit/06-golden-vs-balanced-focus.png`
+- Mobile evidence: local-only evidence, `backbone-density-audit/11-backbone-density-design-final-390x844.actual.png`
 
-## What was corrected
+## Findings
 
-1. The flat district-card treatment and opaque inspector obstruction were removed from Home.
-2. The graph now uses an asymmetric authored 3D stage, warm graphite depth, real represented-record density, and node-local illumination derived from `uniqueInboundDocuments`.
-3. Default Home lines are produced only by `RenderEdgeCommand` records with `atlas.graph.v1` provenance. The four strongest district pairs yield eight factual directional lanes; membership and association lines are zero.
-4. Strategy, Signals, MOC, and Papers were spatially separated so real directions radiate through depth rather than forming one horizontal ribbon.
-5. Hover and keyboard preview are transient. Click, Enter, and tap commit `focusId` to the URL. The evidence rail reports the real title, district, inbound, occurrence, meaningful date, and in/out counts without covering the graph.
-6. Explore, Observe, Flow, Agency, and Search inherit the Home material, focus, motion, and evidence system while retaining their own analytical grammar.
-7. Owner mode exposes all 628 allowed titles through search, list, and progressive disclosure. The 241 policy-excluded records remain a reason ledger and never expose prohibited content.
+- No actionable P0/P1/P2 findings remain in the revised Backbone state.
+- [P3] The golden concept retains a denser atmospheric micro-field than the implementation.
+  - Evidence: the source uses many illustrative micro-marks; the implementation exposes 60 factual graph nodes and 16 factual directed edges.
+  - Classification: acceptable truth-bound deviation. Decorative nodes and invented edges remain prohibited.
+  - Follow-up: future density may increase only when additional real, public-safe graph nodes and edges are available.
 
-## Truth-bound deviation from the concept
+## Required fidelity surfaces
 
-The concept image contains an illustrative dense mesh. The final Owner RC does not fabricate that mesh. It renders 628 real represented-record marks, 639 graph nodes available through disclosure, 3,642 real directed edges in the graph, and only the semantically permitted overview corridors. This produces less line density than the illustration, but preserves the selected composition, visual depth, warmth, focal hierarchy, and interaction without false relations.
+- Fonts and typography: Pretendard/Space Grotesk hierarchy, headline wrapping, domain labels, and small evidence copy remain consistent with the approved stage. Required visible text is at least 12 px.
+- Spacing and layout rhythm: the 1440×920 split composition is preserved. A tall compact desktop now caps the graph plotting height instead of stretching clusters through the full viewport. At 1440×920, visible domain and protagonist labels have zero intersections and zero headline overlap.
+- Colors and visual tokens: warm graphite field, MOC amber, Papers violet, Signals cyan, and Homi amber focus remain unchanged. The three domains now receive comparable visual mass.
+- Image and asset fidelity: the real Homi mark is preserved. No placeholder, CSS-drawn logo, decorative fake node, or invented edge was introduced.
+- Copy and content: the approved Korean headline, MOC/Papers/Signals role explanation, domain anchor copy, and provenance language remain unchanged.
 
-## Interaction evidence
+## Comparison history
 
-- Default Home evidence: `Semantic overview`, four-corridor maximum, 3,642 actual references.
-- MOC hover keeps the URL unchanged and reports inbound 511, occurrence 16,490, date 2026-07-10, district in 730 and out 237.
-- Click commits `focus=district:owner:09fd20032153dd2c79`.
-- Moving to empty graph space restores the semantic overview; Escape clears the committed focus.
-- Search preview for `SI-13 - Homi Agent Memory Substrate Map` does not mutate the URL; Enter commits navigation to the exact Owner node.
+### Pass 1 — blocked
 
-## Responsive and visual geometry
+- P1: the 46-node Home selection rendered only 39 visible nodes and seven edges, making Backbone look like a small representative sample rather than a knowledge system.
+- P1: selection order let MOC consume most of the available node budget, starving Papers and Signals.
+- P2: tall compact-desktop viewports stretched the plot vertically and created excessive empty space.
+- P2: the compact Papers label could intrude into the headline region.
 
-Checked serially at 1440×920, 1280×720, 1180×720, 1024×768, 768×1024, 390×844, 320×844, and 844×390.
+### Fixes
 
-- Page horizontal overflow: 0 at every viewport.
-- Visible required text below 12 px: 0 at every viewport.
-- Mobile uses its dedicated sibling: editorial copy, graph, scene rail, and 44 px bottom navigation.
-- Desktop inspector remains outside the plot; compact desktop uses overlay; mobile uses a bottom sheet.
-- Final PNG evidence has real PNG bytes.
+- Increased factual Home capacity to 60 desktop nodes and 24 mobile nodes.
+- Balanced the node budget across the three core domains before using any remainder.
+- Increased deterministic factual Backbone edges to 16 desktop and eight mobile with the existing degree-four guard.
+- Capped non-mobile plot height relative to viewport width and aligned label projection to the same stage metrics.
+- Shifted compact-desktop domain slots away from the editorial headline.
+
+### Pass 2 — passed
+
+- 1440×920: 60 nodes, 16 actual directed edges; domain distribution is MOC 21, Papers 19, Signals 19, Strategy 1.
+- 390×844: 24 nodes, eight actual directed edges, page horizontal overflow 0.
+- Visible domain/protagonist label intersections: 0.
+- Headline/domain-label intersections: 0.
+- Browser console warning/error messages: 0.
+- Click selection commits the exact Owner node to the URL. Escape restores the prior semantic state after dismissing the active guide state.
+
+### Pass 3 — visual polish passed
+
+- Replaced repeated column-like node placement with a bounded deterministic constellation scatter while preserving the build-time position signal.
+- Added depth-aware luminous node cores and factual edge underglow without adding decorative nodes or relationships.
+- Increased factual cross-cluster curve separation so directional paths read as spatial routes instead of a vertical wiring diagram.
+- Raised the Papers depth plane and spread so MOC, Papers, and Signals now carry comparable visual mass while remaining on distinct planes.
+- Rechecked 1440×920: label intersections 0, headline overlap 0, page overflow 0.
+- Rechecked 390×844: 24 nodes, eight edges, page overflow 0.
 
 ## Mechanical verification
 
-- `npm run lint`: PASS, 31 source contracts checked.
 - `npm run typecheck`: PASS.
-- `npm run test:public`: PASS, 101/101, worker 1.
-- `node scripts/run-v7-5-owner-contract-qa.mjs`: PASS, 29/29, worker 1.
-- Owner build: 639 nodes, 3,642 edges, 6 verified routes.
-- JavaScript: 544,841 bytes, SHA-256 `83d73793f792c61146fd41ebaed3e82ce8af881bd2ef0d4cb1f6153aa4e5059a`.
-- CSS: 61,365 bytes, SHA-256 `e3d20f011249a6a18c2df97705fcc8bc74b8e4321ef4f93c30b82f4c2a84c2e2`.
-- CSS is 75 bytes below the 60 KiB hard gate. The 56 KiB stretch target remains unmet and is recorded as residual risk.
-- Browser warning/error log check: 0 in the representative interaction pass.
-- No repeated 24×5 local performance sweep was run.
+- `npm run lint`: PASS, 32 source contracts checked.
+- `npm run test:public`: PASS, 114/114, worker 1.
+- `npm run test:owner`: PASS, 31/31, worker 1.
+- Owner build: 659 nodes, 3,644 edges, six verified routes.
+- Public build: 2,480,283 bytes total.
+- JavaScript: 575,483 bytes raw.
+- CSS: 61,079 bytes raw, below the 60 KiB hard gate.
+- No repeated local performance matrix or 24×5 run was executed.
 
-## Release boundary
+## Residual boundary
 
-- Builder visual QA: PASS.
-- Luke Gate 3 visual approval: PENDING.
-- GitHub branch, PR, Pages, tag, and Release mutation: 0.
-- Public Pages remains v7.3.0.
-- The local preview server remains intentionally active on loopback for Gate 3 and will be terminated after the handoff is closed.
+- This is a Gate 3 local rework candidate. GitHub branch, PR, Pages, tag, and Release mutation remain 0.
+- Publication audit requires a clean committed repository identity and is intentionally deferred until this local RC is committed.
+- The local preview remains open for Luke’s visual decision.
 
-final result: `builder_visual_qa_pass_luke_gate3_pending_r3`
+final result: passed
