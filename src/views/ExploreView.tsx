@@ -201,7 +201,7 @@ export function ExploreView() {
       </div>}
 
       {scene === "graph" && (
-        <div className={`spatial-stage-layout explore-v75-layout${selected ? " has-inspector" : ""}`}>
+        <div className={`spatial-stage-layout explore-v75-layout${state.mobileSibling ? " is-mobile-sibling" : ""}${selected ? " has-inspector" : ""}`}>
           <main className="spatial-stage spatial-stage--full-bleed explore-v75-graph-panel">
             <div className="scrollbar-clean explore-v75-mobile-clusters" aria-label="지식 구역 미니맵">
               {atlasData.graph.clusters.map((cluster) => (
