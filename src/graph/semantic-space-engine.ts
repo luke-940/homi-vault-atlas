@@ -1,7 +1,6 @@
 import {
   ACESFilmicToneMapping,
   AdditiveBlending,
-  AmbientLight,
   BufferAttribute,
   BufferGeometry,
   Color,
@@ -9,17 +8,15 @@ import {
   DynamicDrawUsage,
   FogExp2,
   GridHelper,
-  HemisphereLight,
   InstancedMesh,
   LineBasicMaterial,
   LineSegments,
   Matrix4,
   MathUtils,
-  MeshStandardMaterial,
+  MeshBasicMaterial,
   Object3D,
   OctahedronGeometry,
   PerspectiveCamera,
-  PointLight,
   Points,
   Quaternion,
   Raycaster,
@@ -267,17 +264,6 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
     container.append(this.renderer.domElement);
 
     this.scene3d.fog = new FogExp2(0x08090d, 0.00016);
-    this.scene3d.add(new AmbientLight(0xd6cbbb, 1.34));
-    this.scene3d.add(new HemisphereLight(0xb8d0eb, 0x171008, 1.62));
-    const keyLight = new PointLight(0xffc67d, 3.6, 2_400, 1.65);
-    keyLight.position.set(-360, 420, 520);
-    this.scene3d.add(keyLight);
-    const rimLight = new PointLight(0x789aca, 2.6, 2_000, 1.82);
-    rimLight.position.set(520, -120, 80);
-    this.scene3d.add(rimLight);
-    const signalLight = new PointLight(0x4fcbb8, 1.7, 1_200, 1.9);
-    signalLight.position.set(320, -190, 360);
-    this.scene3d.add(signalLight);
     this.orientationGrid = new GridHelper(1_360, 28, 0x3a2d1d, 0x1d2020);
     this.orientationGrid.position.set(26, -268, 112);
     const gridMaterials = Array.isArray(this.orientationGrid.material)
@@ -428,7 +414,7 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
       this.edgeState.lines.geometry.dispose();
       (this.edgeState.lines.material as LineBasicMaterial).dispose();
       this.edgeState.arrows.geometry.dispose();
-      (this.edgeState.arrows.material as MeshStandardMaterial).dispose();
+      (this.edgeState.arrows.material as MeshBasicMaterial).dispose();
       this.edgeState = null;
     }
     if (this.haloPoints) {
@@ -643,11 +629,9 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
     const lineColors = new Float32Array(linePositions.length);
     const arrowGeometry = new ConeGeometry(1, 4, 7);
     arrowGeometry.translate(0, 2, 0);
-    const arrowMaterial = new MeshStandardMaterial({
+    const arrowMaterial = new MeshBasicMaterial({
       color: 0xffffff,
       vertexColors: true,
-      roughness: 0.76,
-      metalness: 0.02,
       transparent: true,
       opacity: 0.9,
     });

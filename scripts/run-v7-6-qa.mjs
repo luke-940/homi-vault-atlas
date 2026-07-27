@@ -274,13 +274,13 @@ function qaCase({ key, id = key, reducedMotion = false, firstEntry = false, touc
 export const CORE_ROUTE_CASES = Object.freeze([
   qaCase({
     key: "home-default", workspace: "home", hash: "#home?scene=domain-backbone",
-    readySelector: ".home-v76[data-home-page='domain-backbone']",
+    readySelector: ".home-v75-graph-shell .semantic-space-host[data-renderer='three']",
     finalReadySelector: ".home-v76[data-home-page='domain-backbone']", geometryGroups: GEOMETRY_GROUPS.home,
     viewport: { width: 1440, height: 920 }, firstEntry: true, journey: "home-scene", targetScene: "domain-backbone",
   }),
   qaCase({
     key: "home-selected", workspace: "home", hash: "#home?scene=domain-backbone",
-    readySelector: ".home-v76[data-home-page='domain-backbone']",
+    readySelector: ".home-v75-graph-shell .semantic-space-host[data-renderer='three']",
     finalReadySelector: ".home-v76[data-home-page='protagonists']", geometryGroups: GEOMETRY_GROUPS.home,
     viewport: { width: 1180, height: 720 }, journey: "home-scene", targetScene: "protagonists",
   }),
@@ -320,7 +320,7 @@ export const CORE_ROUTE_CASES = Object.freeze([
 const CI_ONLY_ROUTE_CASES = Object.freeze([
   qaCase({
     key: "home-movement", workspace: "home", hash: "#home?scene=domain-backbone",
-    readySelector: ".home-v76[data-home-page='domain-backbone']",
+    readySelector: ".home-v75-graph-shell .semantic-space-host[data-renderer='three']",
     finalReadySelector: ".home-v76[data-home-page='vault-in-motion']", geometryGroups: GEOMETRY_GROUPS.home,
     viewport: { width: 1024, height: 768 }, reducedMotion: true, journey: "home-scene", targetScene: "vault-in-motion",
   }),
@@ -997,7 +997,7 @@ async function measureGeometry(page, groupSelectors, route) {
       mobileNavigation: aliasRuntimeSelector(".mobile-navigation"),
       mobileSibling: aliasRuntimeSelector(".mobile-sibling, .explore-v75-layout.is-mobile-sibling"),
       graphAccessibleList: aliasRuntimeSelector(".graph-accessible-list"),
-      geometrySurface: aliasRuntimeSelector(".semantic-space-host, .living-graph-canvas"),
+      geometrySurface: aliasRuntimeSelector(".home-v75-page, .home-v75-graph-shell, .semantic-space-host, .living-graph-canvas, .explore-v75, .explore-v75-graph-panel, .hub-ego-stage, .flow-spatial-stage"),
       mobileInteractive: aliasRuntimeSelector(".atlas-app button:not([disabled]), .atlas-app a[href], .atlas-app input:not([disabled]), .atlas-app select:not([disabled]), .atlas-app textarea:not([disabled]), .atlas-app [role='button']:not([aria-disabled='true'])"),
     },
   });
@@ -1098,8 +1098,8 @@ export async function executeJourney(page, route) {
   } else if (route.journey === "explore-constellations") {
     const target = runtimeLocator(page, ".explore-constellation-rail > button:visible").first();
     await activateLocator(page, target, route.touch);
-    await runtimeLocator(page, ".explore-v75-graph-panel .semantic-space-host").waitFor({ state: "visible" });
-    await page.waitForFunction(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("scene") === "graph"
+    await runtimeLocator(page, ".explore-constellation-stage .semantic-space-host").waitFor({ state: "visible" });
+    await page.waitForFunction(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("scene") === "constellations"
       && Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus")));
     details.focus = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
   } else if (route.journey === "explore-list") {
