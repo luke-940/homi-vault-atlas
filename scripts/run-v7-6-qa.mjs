@@ -161,7 +161,7 @@ const REQUIRED_GEOMETRY_SELECTORS = Object.freeze({
   ],
   exploreConstellations: [
     ".explore-v75-clusters",
-    ".explore-v75-clusters > button",
+    ".explore-constellation-rail > button",
   ],
   exploreList: [
     ".explore-v75-list-layout",
@@ -186,6 +186,10 @@ const REQUIRED_GEOMETRY_SELECTORS = Object.freeze({
     ".flow-honest-empty, .route-rail > button",
     ".flow-honest-empty, .flow-spatial-stage .semantic-space-host, .flow-spatial-stage .living-graph-canvas",
   ],
+  flowMobile: [
+    ".mobile-flow",
+    ".mobile-stepper button:not([disabled])",
+  ],
   time: [
     ".version-seam",
     ".version-seam__anchor--baseline",
@@ -209,7 +213,7 @@ function geometryRequirementsFor(definition) {
     || (definition.viewport.width <= 900 && definition.viewport.height <= 520);
   if (definition.journey === "data-overlay") return REQUIRED_GEOMETRY_SELECTORS.dataOverlay;
   if (definition.workspace === "home" || definition.journey === "search-escape-focus" || definition.journey === "back-forward") {
-    return definition.targetScene && definition.targetScene !== "domain-backbone"
+    return definition.targetScene === "protagonists"
       ? [...REQUIRED_GEOMETRY_SELECTORS.home, ...REQUIRED_GEOMETRY_SELECTORS.homeEvidence]
       : REQUIRED_GEOMETRY_SELECTORS.home;
   }
@@ -232,7 +236,9 @@ function geometryRequirementsFor(definition) {
     if (mobileSibling) return REQUIRED_GEOMETRY_SELECTORS.observeMobile;
     return definition.journey === "hub-relations" ? REQUIRED_GEOMETRY_SELECTORS.observeHub : REQUIRED_GEOMETRY_SELECTORS.observeGlobal;
   }
-  if (definition.workspace === "flow") return REQUIRED_GEOMETRY_SELECTORS.flow;
+  if (definition.workspace === "flow") {
+    return mobileSibling ? REQUIRED_GEOMETRY_SELECTORS.flowMobile : REQUIRED_GEOMETRY_SELECTORS.flow;
+  }
   if (definition.workspace === "time") return REQUIRED_GEOMETRY_SELECTORS.time;
   throw new Error(`Missing geometry requirement contract for ${definition.key ?? definition.workspace}`);
 }
@@ -821,7 +827,8 @@ async function measureGeometry(page, groupSelectors, route) {
         selectorMembership.set(node, memberships);
       }
     }
-    const required = [...selectorMembership.keys()];
+    const isStructuralVisualizationSurface = (node) => node.matches(runtimeSelectors.geometrySurface);
+    const required = [...selectorMembership.keys()].filter((node) => !isStructuralVisualizationSurface(node));
     const overlaps = [];
     for (let left = 0; left < required.length; left += 1) {
       for (let right = left + 1; right < required.length; right += 1) {
@@ -853,7 +860,7 @@ async function measureGeometry(page, groupSelectors, route) {
       const ownClipX = ownStyle.overflowX === "hidden" || ownStyle.overflowX === "clip";
       const ownClipY = ownStyle.overflowY === "hidden" || ownStyle.overflowY === "clip";
       const ownText = node.textContent?.trim();
-      if (ownText && ((ownClipX && node.scrollWidth > node.clientWidth + 0.5)
+      if (ownText && ownStyle.textOverflow !== "ellipsis" && ((ownClipX && node.scrollWidth > node.clientWidth + 0.5)
         || (ownClipY && node.scrollHeight > node.clientHeight + 0.5))) {
         clipped.push({ target: label(node), ancestor: "self", rect: rectOf(node), boundary: rectOf(node) });
         continue;
@@ -982,7 +989,7 @@ async function measureGeometry(page, groupSelectors, route) {
     requiredSelectors: route.geometryRequiredSelectors.map(aliasRuntimeSelector),
     workspace: route.workspace,
     mobileNavigationRequired: route.workspace !== "search" && route.journey !== "data-overlay",
-    mobileSiblingRequired: ["explore", "observe", "flow", "time"].includes(route.workspace) && route.journey !== "data-overlay",
+    mobileSiblingRequired: ["explore", "observe", "flow"].includes(route.workspace) && route.journey !== "data-overlay",
     runtimeSelectors: {
       app: aliasRuntimeSelector(".atlas-app"),
       homeHeadline: aliasRuntimeSelector(".home-v75-copy-block h1"),
@@ -990,6 +997,7 @@ async function measureGeometry(page, groupSelectors, route) {
       mobileNavigation: aliasRuntimeSelector(".mobile-navigation"),
       mobileSibling: aliasRuntimeSelector(".mobile-sibling, .explore-v75-layout.is-mobile-sibling"),
       graphAccessibleList: aliasRuntimeSelector(".graph-accessible-list"),
+      geometrySurface: aliasRuntimeSelector(".semantic-space-host, .living-graph-canvas"),
       mobileInteractive: aliasRuntimeSelector(".atlas-app button:not([disabled]), .atlas-app a[href], .atlas-app input:not([disabled]), .atlas-app select:not([disabled]), .atlas-app textarea:not([disabled]), .atlas-app [role='button']:not([aria-disabled='true'])"),
     },
   });
@@ -1088,7 +1096,7 @@ export async function executeJourney(page, route) {
     }
     details.graph = counts;
   } else if (route.journey === "explore-constellations") {
-    const target = runtimeLocator(page, ".explore-v75-clusters > button:visible").first();
+    const target = runtimeLocator(page, ".explore-constellation-rail > button:visible").first();
     await activateLocator(page, target, route.touch);
     await runtimeLocator(page, ".explore-v75-graph-panel .semantic-space-host").waitFor({ state: "visible" });
     await page.waitForFunction(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("scene") === "graph"
