@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import * as m from "motion/react-m";
 import homiMark from "../assets/brand/homi-mark-amber.svg";
 import { atlasData, graphNodeById } from "../data-runtime";
-import { LivingGraphCanvas } from "../graph/LivingGraphCanvas";
+import { AdaptiveSemanticSpace } from "../graph/AdaptiveSemanticSpace";
 import {
   graphNodeLabel,
 } from "../graph/model";
@@ -504,7 +504,7 @@ export function HomeView() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
         >
-          <LivingGraphCanvas
+          <AdaptiveSemanticSpace
             graph={atlasData.graph}
             scene={graphScene(sceneId)}
             focusId={graphFocus}

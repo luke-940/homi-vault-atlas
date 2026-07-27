@@ -1,12 +1,13 @@
-import { build } from "esbuild";
 import { transform as transformCss } from "lightningcss";
 import { createHash } from "node:crypto";
+import { gzipSync } from "node:zlib";
 import { cp, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { subsetPretendardAssets } from "./lib/pretendard-subset.mjs";
 import { validatePublicPackShapes } from "./lib/public-shape-validation.mjs";
 import { aliasRuntimeClasses } from "./lib/runtime-class-aliases.mjs";
+import { buildSemanticSpaceEntrypoints } from "./lib/semantic-space-build.mjs";
 
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const generatedRoot = path.join(projectDir, ".generated");
@@ -41,20 +42,12 @@ await validatePublicPackShapes({ projectDir, packs, boundary: "owner-local-build
 
 await rm(stagingDir, { recursive: true, force: true });
 await mkdir(stagingDir, { recursive: true });
-const buildResult = await build({
-  entryPoints: [path.join(projectDir, "src", "main.tsx")],
-  bundle: true,
-  format: "iife",
-  target: ["es2022"],
-  outfile: path.join(stagingDir, "app.js"),
-  minify: true,
-  sourcemap: false,
-  metafile: true,
-  jsx: "automatic",
-  legalComments: "none",
-  loader: { ".svg": "dataurl" },
-  define: { "process.env.NODE_ENV": '"production"' },
-});
+const {
+  applicationBuild: buildResult,
+  semanticBuild,
+  semanticBody,
+  semanticEntrypoint,
+} = await buildSemanticSpaceEntrypoints({ projectDir, stagingDir });
 const rawJsBody = await readFile(path.join(stagingDir, "app.js"), "utf8");
 const rawCssBody = Buffer.from(transformCss({
   filename: "app.css",
@@ -102,7 +95,7 @@ await writeFile(path.join(stagingDir, "index.html"), html, "utf8");
 const renderedDataTexts = await Promise.all(packNames.map((name) => readFile(path.join(dataDir, `${name}.json`), "utf8")));
 const fontSubset = await subsetPretendardAssets({
   rootDir: stagingDir,
-  renderedTexts: [html, jsBody.toString("utf8"), ...renderedDataTexts],
+  renderedTexts: [html, jsBody.toString("utf8"), semanticBody.toString("utf8"), ...renderedDataTexts],
 });
 const receipt = {
   schema: "atlas.owner_local_build.v1",
@@ -111,7 +104,11 @@ const receipt = {
   inputRoot: dataDir,
   outputRoot: outputDir,
   entrypoints: {
-    javascript: { path: jsName, bytes: jsBody.length, sha256: sha256(jsBody) },
+    javascript: { path: jsName, bytes: jsBody.length, gzipBytes: gzipSync(jsBody, { level: 9 }).length, sha256: sha256(jsBody) },
+    semanticSpace: {
+      ...semanticEntrypoint,
+      gzipBytes: gzipSync(semanticBody, { level: 9 }).length,
+    },
     stylesheet: { path: cssName, bytes: cssBody.length, sha256: sha256(cssBody) },
   },
   dataPacks: packNames,
@@ -121,7 +118,10 @@ const receipt = {
   verifiedFlowRoutes: packs.flow.routes.length,
   fontSubset,
   runtimeClassAliases: runtimeClasses.applied.length,
-  esbuildInputs: Object.keys(buildResult.metafile.inputs).length,
+  esbuildInputs: new Set([
+    ...Object.keys(buildResult.metafile.inputs),
+    ...Object.keys(semanticBuild.metafile.inputs),
+  ]).size,
 };
 await writeFile(path.join(stagingDir, "owner-build-receipt.json"), `${JSON.stringify(receipt, null, 2)}\n`, "utf8");
 await rm(outputDir, { recursive: true, force: true });

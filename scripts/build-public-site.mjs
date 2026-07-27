@@ -1,12 +1,13 @@
-import { build } from "esbuild";
 import { transform as transformCss } from "lightningcss";
 import { createHash } from "node:crypto";
+import { gzipSync } from "node:zlib";
 import { access, cp, mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { subsetPretendardAssets } from "./lib/pretendard-subset.mjs";
 import { validatePublicPackShapes } from "./lib/public-shape-validation.mjs";
 import { aliasRuntimeClasses } from "./lib/runtime-class-aliases.mjs";
+import { buildSemanticSpaceEntrypoints } from "./lib/semantic-space-build.mjs";
 
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outputDir = path.resolve(process.env.ATLAS_PUBLIC_OUTPUT_DIR ?? path.join(projectDir, "dist-public"));
@@ -109,20 +110,12 @@ await rm(stagingDir, { recursive: true, force: true });
 await rm(previousDir, { recursive: true, force: true });
 await mkdir(stagingDir, { recursive: true });
 
-const buildResult = await build({
-  entryPoints: [path.join(projectDir, "src", "main.tsx")],
-  bundle: true,
-  format: "iife",
-  target: ["es2022"],
-  outfile: path.join(stagingDir, "app.js"),
-  minify: true,
-  sourcemap: false,
-  metafile: true,
-  jsx: "automatic",
-  legalComments: "none",
-  loader: { ".svg": "dataurl" },
-  define: { "process.env.NODE_ENV": '"production"' },
-});
+const {
+  applicationBuild: buildResult,
+  semanticBuild,
+  semanticBody,
+  semanticEntrypoint,
+} = await buildSemanticSpaceEntrypoints({ projectDir, stagingDir });
 
 const rawJsBody = await readFile(path.join(stagingDir, "app.js"), "utf8");
 const rawCssBody = Buffer.from(transformCss({
@@ -157,7 +150,7 @@ try {
 await cp(path.join(legalRoot, "NOTICE"), path.join(stagingDir, "NOTICE"));
 
 const runtimePackages = new Set(
-  Object.keys(buildResult.metafile.inputs)
+  [...Object.keys(buildResult.metafile.inputs), ...Object.keys(semanticBuild.metafile.inputs)]
     .map(packageNameFromInput)
     .filter(Boolean),
 );
@@ -204,14 +197,18 @@ const renderedDataTexts = await Promise.all(
 );
 const fontSubset = await subsetPretendardAssets({
   rootDir: stagingDir,
-  renderedTexts: [html, jsBody.toString("utf8"), ...renderedDataTexts],
+  renderedTexts: [html, jsBody.toString("utf8"), semanticBody.toString("utf8"), ...renderedDataTexts],
 });
 
 const assetManifest = {
   schema: "atlas.public_assets.v1",
   publicSnapshotDigest: publication.publicSnapshotDigest,
   entrypoints: {
-    javascript: { path: jsName, bytes: jsBody.length, sha256: sha256(jsBody) },
+    javascript: { path: jsName, bytes: jsBody.length, gzipBytes: gzipSync(jsBody, { level: 9 }).length, sha256: sha256(jsBody) },
+    semanticSpace: {
+      ...semanticEntrypoint,
+      gzipBytes: gzipSync(semanticBody, { level: 9 }).length,
+    },
     stylesheet: { path: cssName, bytes: cssBody.length, sha256: sha256(cssBody) },
   },
   fontSubset,
@@ -227,6 +224,7 @@ const outputReceipt = {
   files: manifest.length,
   bytes: manifest.reduce((sum, item) => sum + item.bytes, 0),
   javascript: assetManifest.entrypoints.javascript,
+  semanticSpace: assetManifest.entrypoints.semanticSpace,
   stylesheet: assetManifest.entrypoints.stylesheet,
   fontSubset,
   runtimePackages: [...runtimePackages].sort(),

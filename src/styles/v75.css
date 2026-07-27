@@ -1,4 +1,3 @@
-/* v7.5 — Meaningful Space Living Graph */
 [lang="ko"] { word-break: keep-all; overflow-wrap: break-word; }
 .brand-lockup > strong { font-family: var(--font-brand); white-space: nowrap; }
 .brand-mark-crop { width: 30px; height: 30px; display: grid; place-items: center; flex: none; }
@@ -15,7 +14,6 @@
 .workspace-scene-switch button { min-height: 34px; padding: 0 9px; border-radius: 5px; color: var(--im); font-size: 12px; font-weight: 650; white-space: nowrap; }
 .workspace-scene-switch button.is-active { background: rgba(233,162,61,.1); color: var(--ha); }
 
-/* Agency remains a provenance layer, deliberately separate from knowledge nodes. */
 .agency-view { height: 100%; min-height: 0; display: grid; grid-template-columns: minmax(260px,3fr) minmax(580px,9fr); grid-template-rows: auto minmax(0,1fr) auto; gap: 18px 24px; padding: 24px 30px 18px; overflow: hidden; background: radial-gradient(ellipse at 76% 22%,rgba(111,145,244,.08),transparent 38%),var(--canvas); }
 .agency-intro {
   grid-row: 1/span 2; min-width: 0; padding-top: 12px;
@@ -72,7 +70,6 @@
 .agency-snapshot-boundary { grid-column: 2; display: flex; justify-content: space-between; gap: 14px; color: var(--im); }
 .search-section-label { position: sticky; top: 0; z-index: 2; margin: 0; padding: 9px 14px 7px; border-bottom: var(--bd); background: rgba(15,14,21,.97); color: var(--im); font-weight: 740; text-transform: uppercase; }
 
-/* Observe hub relation and honest empty surfaces retained on the graph contract. */
 .hub-relations-surface {
   min-height: 0; display: grid; grid-template-rows: auto minmax(0,1fr); gap: 10px; padding: 14px; overflow: auto;
   & > header { display: flex; justify-content: space-between; gap: 16px; }
@@ -117,7 +114,6 @@
 .home-v75 { height: 100%; min-height: 0; overflow: hidden; background: #080704; color: #f1eadf; }
 .home-v75-page { position: relative; height: 100%; min-height: 640px; overflow: hidden; background: #080704; }
 .home-v75-graph-shell { position: absolute; z-index: 1; inset: 0; min-width: 0; transform-origin: 64% 48%; }
-.home-v75-graph-shell > .living-graph-canvas { position: absolute; inset: 0; min-height: 100%; background: #080704; }
 .home-v75-editorial { position: absolute; z-index: 6; inset: 0; pointer-events: none; }
 .home-v75-copy-block {
   position: absolute; top: clamp(122px,15.3vh,160px); left: clamp(34px,3.35vw,56px); width: min(36vw,530px);
@@ -169,9 +165,6 @@
 .home-v75-boundary span + span::before { content: "·"; margin-right: 13px; }
 .home-v75-boundary small { margin-left: 4px; color: rgba(230,223,211,.24); font: inherit; }
 
-/* v7.6 keeps the v7.5 cosmic stage and adds meaning without turning Homi
-   into a synthetic graph node. The anchor is a provenance mark; all graph
-   metrics and rendered edges still come from atlas.graph.v1. */
 .home-v76-system-anchor.home-v76-system-origin {
   position: absolute; z-index: 10; top: auto; bottom: 64px; left: clamp(34px,3.35vw,56px); width: auto; height: 44px; display: flex; align-items: center; gap: 12px; translate: 0 0; color: rgba(239,232,220,.56); text-align: left;
   & img { position: relative; width: 27px; height: 27px; opacity: .88; filter: drop-shadow(0 0 15px rgba(237,152,64,.32)); transition: opacity .16s ease,filter .16s ease,transform .16s ease; }
@@ -234,14 +227,25 @@
   & strong { overflow: hidden; font-size: 12px; font-weight: 760; letter-spacing: -.01em; text-overflow: ellipsis; white-space: nowrap; }
   & span { overflow: hidden; color: rgba(235,225,207,.6); font: 600 11px/1.25 var(--fm); text-overflow: ellipsis; white-space: nowrap; }
 }
-.living-graph-canvas.is-home .graph-label-layer button { color: rgba(236,229,218,.68); text-shadow: 0 1px 4px #050403,0 0 14px #050403; font-weight: 580; }
-.living-graph-canvas.is-home .graph-label-layer button.kind-district { color: rgba(236,229,218,.52); font-weight: 650; }
-.living-graph-canvas.is-home .graph-label-layer button.is-selected { color: #efaa4b; }
 .graph-camera-controls { position: absolute; z-index: 6; right: 14px; bottom: 18px; display: flex; gap: 3px; padding: 3px; border: 1px solid rgba(235,225,209,.1); border-radius: 10px; background: rgba(8,7,5,.38); backdrop-filter: blur(12px); pointer-events: auto; }
 .graph-camera-controls button { width: 34px; height: 34px; display: grid; place-items: center; color: rgba(242,237,222,.52); }
 .graph-camera-controls button:hover { color: #ffc36b; }
 .graph-accessible-list { position: absolute; width: 1px; max-width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; contain: strict; }
 .graph-accessible-list * { width: 1px; max-width: 1px; overflow: hidden; }
+
+.semantic-space-host { position:relative;width:100%;height:100%;min-height:390px;overflow:hidden;isolation:isolate;background:#080704 }
+.home-v75-graph-shell>.semantic-space-host{position:absolute;inset:0;min-height:100%}
+.semantic-space-engine,.semantic-space-fallback,.semantic-space-labels{position:absolute;inset:0}
+.semantic-space-engine{z-index:2;cursor:grab;touch-action:none}.semantic-space-engine:active{cursor:grabbing}
+.semantic-space-webgl{width:100%;height:100%;display:block}
+.semantic-space-fallback{z-index:1;transition:opacity .26s ease}.semantic-space-fallback>.living-graph-canvas{width:100%;height:100%;min-height:100%}
+.semantic-space-host.is-ready .semantic-space-fallback{opacity:0;visibility:hidden;pointer-events:none}
+.semantic-space-labels{z-index:4;overflow:hidden;pointer-events:none}.semantic-space-labels button{left:0;top:0;translate:0}
+.semantic-space-camera-tools{right:18px;bottom:18px}
+.semantic-space-loading{position:absolute;z-index:7;right:18px;bottom:18px;color:rgba(239,230,215,.48);font:600 11px var(--fm)}
+.semantic-space-accessible-map{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.explore-v75-graph-panel > .semantic-space-host { position: absolute; inset: 108px 0 0; width: auto; height: auto; min-height: 0; }
+.explore-constellation-stage > .semantic-space-host { width: 100%; height: 100%; min-height: 470px; }
 
 .explore-v75 { position: relative; height: 100%; display: block; overflow: hidden; background: #080704; }
 .explore-v75 .workspace-header {
@@ -583,6 +587,9 @@
   .home-v76.is-v76-operational-compass .home-v75-actions { display: none; }
   .graph-label-layer button { min-width: 44px; min-height: 44px; translate: -50% -50%; padding: 4px 6px; font-size: 12px; }
   .living-graph-canvas { touch-action: pan-y; }
+  .semantic-space-host { min-height: 430px; touch-action: pan-y; }
+  .semantic-space-host .semantic-space-fallback { position: relative; height: 100%; }
+  .semantic-space-host .semantic-space-fallback > .living-graph-canvas { min-height: 430px; }
   .time-v76 { height: auto; min-height: 100%; overflow: visible; }
   .time-v76-layout { display: block; padding: 14px 12px 26px; overflow: visible; }
   .version-seam__brief { padding: 10px 2px 18px; }
@@ -612,6 +619,7 @@
   .explore-v75-mobile-clusters button[aria-pressed="true"] { border-color: var(--ha); background: var(--hw); color: var(--ha); }
   .explore-v75-axes { top: 54px; gap: 7px; }
   .explore-v75-graph-panel .living-graph-canvas { position: relative; inset: auto; width: 100%; height: 430px; min-height: 430px; }
+  .explore-v75-graph-panel > .semantic-space-host { position: relative; inset: auto; width: 100%; height: 430px; min-height: 430px; }
   .explore-v75-insight { position: static; width: auto; min-height: 280px; margin-top: 0; padding: 14px; background: rgba(8,7,5,.78); }
   .explore-v75-directions { grid-template-columns: 1fr; }
   .explore-v75-directions button { min-height: 44px; }
@@ -620,6 +628,7 @@
   .explore-constellation-rail button { min-height: 64px; }
   .explore-constellation-stage { display: grid; grid-template-rows: minmax(430px,1fr) auto; overflow: visible; }
   .explore-constellation-stage .living-graph-canvas { min-height: 500px; }
+  .explore-constellation-stage > .semantic-space-host { min-height: 500px; }
   .explore-constellation-brief { position: static; width: auto; padding: 14px 12px 20px; background: rgba(8,7,5,.88); }
   .explore-v75-list-layout { display: block; padding: 10px 12px; overflow: visible; }
   .explore-v75-list-layout,

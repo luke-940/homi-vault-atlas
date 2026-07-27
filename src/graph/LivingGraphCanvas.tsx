@@ -555,12 +555,42 @@ function placeLabels(
       output.push({ node, x, y, depth: point.depth });
       break;
     }
-    if (node.id === focusId && !output.some((placement) => placement.node.id === node.id)) {
-      const x = Math.max(safeLeft + width / 2, Math.min(safeRight - width / 2, point.x));
-      const y = Math.max(safeTop + height / 2, Math.min(safeBottom - height / 2, point.y - radius - 17));
-      const box = { left: x - width / 2, right: x + width / 2, top: y - height / 2, bottom: y + height / 2 };
-      occupied.push(box);
-      output.push({ node, x, y, depth: point.depth });
+    if ((node.id === focusId || persistentIds.has(node.id))
+      && !output.some((placement) => placement.node.id === node.id)) {
+      const fallbackOffsets = [
+        [0, -radius - 17],
+        [radius + width / 2 + 8, 0],
+        [-radius - width / 2 - 8, 0],
+        [0, radius + 17],
+      ];
+      const candidates = fallbackOffsets.map(([offsetX, offsetY]) => {
+        const x = Math.max(
+          safeLeft + width / 2,
+          Math.min(safeRight - width / 2, point.x + offsetX),
+        );
+        const y = Math.max(
+          safeTop + height / 2,
+          Math.min(safeBottom - height / 2, point.y + offsetY),
+        );
+        return {
+          x,
+          y,
+          box: {
+            left: x - width / 2,
+            right: x + width / 2,
+            top: y - height / 2,
+            bottom: y + height / 2,
+          },
+        };
+      });
+      const fallback = candidates.find(({ box }) => !occupied.some((prior) => !(
+        box.right + 5 < prior.left
+        || box.left - 5 > prior.right
+        || box.bottom + 4 < prior.top
+        || box.top - 4 > prior.bottom
+      ))) ?? candidates[0];
+      occupied.push(fallback.box);
+      output.push({ node, x: fallback.x, y: fallback.y, depth: point.depth });
     }
   }
   return output.sort((left, right) => left.depth - right.depth);

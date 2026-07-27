@@ -2,10 +2,12 @@ import type { AtlasGraphEdgeV1, AtlasGraphV1, MatrixCell } from "../types";
 import { pathEdgeIds, selectedNeighborhood, shortestDirectedPath } from "./model";
 
 export interface RenderEdgeCommand {
+  id: string;
   semanticKind: "district_corridor" | "exact_reference" | "directed_path";
   sourceId: string;
   targetId: string;
   weight: number;
+  constituentEdgeIds: string[];
   provenance: "atlas.graph.v1";
 }
 
@@ -24,6 +26,7 @@ interface DirectionalLane {
   sourceId: string;
   targetId: string;
   weight: number;
+  edgeIds: string[];
 }
 
 interface CorridorPair {
@@ -56,6 +59,7 @@ function corridorPairs(graph: AtlasGraphV1) {
       sourceId,
       targetId,
       weight: (prior?.weight ?? 0) + edge.occurrenceCount,
+      edgeIds: [...(prior?.edgeIds ?? []), edge.id].sort((left, right) => left.localeCompare(right, "en")),
     });
   }
 
@@ -80,10 +84,12 @@ function corridorPairs(graph: AtlasGraphV1) {
 
 function corridorCommands(pairs: readonly CorridorPair[]) {
   return pairs.flatMap((pair) => pair.lanes.slice(0, 2).map((lane): RenderEdgeCommand => ({
+    id: `corridor:${lane.sourceId}->${lane.targetId}`,
     semanticKind: "district_corridor",
     sourceId: lane.sourceId,
     targetId: lane.targetId,
     weight: lane.weight,
+    constituentEdgeIds: lane.edgeIds,
     provenance: "atlas.graph.v1",
   })));
 }
@@ -111,10 +117,12 @@ export function focusedReferenceCommands(graph: AtlasGraphV1, focusId: string, l
   const commands = [...incoming.slice(0, limit), ...outgoing.slice(0, limit)]
     .filter((edge, index, list) => list.findIndex((candidate) => candidate.id === edge.id) === index)
     .map((edge): RenderEdgeCommand => ({
+      id: edge.id,
       semanticKind: "exact_reference",
       sourceId: edge.source,
       targetId: edge.target,
       weight: edge.occurrenceCount,
+      constituentEdgeIds: [edge.id],
       provenance: "atlas.graph.v1",
     }));
   return {
@@ -155,10 +163,12 @@ export function defaultWorkspaceReferenceCommands(graph: AtlasGraphV1, limit = 2
   for (const edge of ranked) push(edge);
   return selected
     .map((edge): RenderEdgeCommand => ({
+      id: edge.id,
       semanticKind: "exact_reference",
       sourceId: edge.source,
       targetId: edge.target,
       weight: edge.occurrenceCount,
+      constituentEdgeIds: [edge.id],
       provenance: "atlas.graph.v1",
     }));
 }
@@ -171,10 +181,12 @@ export function directedPathCommands(graph: AtlasGraphV1, from: string | null, t
     commands: rankEdges(graph.edges.filter((edge) => ids.has(edge.id)))
       .sort((left, right) => path.indexOf(left.source) - path.indexOf(right.source))
       .map((edge): RenderEdgeCommand => ({
+        id: `path:${edge.id}`,
         semanticKind: "directed_path",
         sourceId: edge.source,
         targetId: edge.target,
         weight: edge.occurrenceCount,
+        constituentEdgeIds: [edge.id],
         provenance: "atlas.graph.v1",
       })),
   };

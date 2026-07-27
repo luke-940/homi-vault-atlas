@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { SpatialWorkspaceFrame } from "../components/SpatialWorkspaceFrame";
 import { atlasData, graphNodeById } from "../data-runtime";
-import { LivingGraphCanvas } from "../graph/LivingGraphCanvas";
+import { AdaptiveSemanticSpace } from "../graph/AdaptiveSemanticSpace";
 import { graphNodeLabel, shortestDirectedPath, type FreshnessBucket } from "../graph/model";
 import { useAtlasState } from "../state";
 import type { AtlasGraphNodeV1 } from "../types";
@@ -215,7 +215,7 @@ export function ExploreView() {
               <span><CircleDot size={14} />크기는 지식 중력</span>
               <span><Route size={14} />화살표는 실제 참조 방향</span>
             </div>
-            <LivingGraphCanvas
+            <AdaptiveSemanticSpace
               graph={atlasData.graph}
               scene={state.pathFrom && state.pathTo ? "trace" : state.freshness !== "all" ? "freshness" : "field"}
               focusId={selected?.id ?? null}
@@ -290,7 +290,7 @@ export function ExploreView() {
             })}
           </nav>
           <main className="explore-constellation-stage">
-            <LivingGraphCanvas
+            <AdaptiveSemanticSpace
               graph={atlasData.graph}
               scene="trace"
               focusId={selectedConstellationNode?.id ?? null}
