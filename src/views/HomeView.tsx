@@ -7,6 +7,7 @@ import * as m from "motion/react-m";
 import homiMark from "../assets/brand/homi-mark-amber.svg";
 import { atlasData, graphNodeById } from "../data-runtime";
 import { LivingGraphCanvas } from "../graph/LivingGraphCanvas";
+import { SemanticObservatoryCanvas } from "../graph/SemanticObservatoryCanvas";
 import {
   graphNodeLabel,
 } from "../graph/model";
@@ -18,7 +19,7 @@ import type {
   OperationalAlignment,
 } from "../types";
 
-type HomeSceneId = "core-gravity" | "protagonists" | "vault-in-motion" | "operational-compass";
+type HomeSceneId = "domain-backbone" | "protagonists" | "vault-in-motion" | "operational-compass";
 
 const HOME_SCENES: Array<{
   id: HomeSceneId;
@@ -31,13 +32,13 @@ const HOME_SCENES: Array<{
   legacyVisual: string;
 }> = [
   {
-    id: "core-gravity",
+    id: "domain-backbone",
     index: "01",
-    shortLabel: "Core",
-    label: "Core Domain Gravity",
+    shortLabel: "Backbone",
+    label: "Domain Backbone",
     eyebrow: "HOMI KNOWLEDGE SYSTEM",
-    title: "지식의 주인공과,\n그들이 움직이는 방향을 본다.",
-    body: "Homi를 중심으로 MOC는 지식을 구조화하고, Papers는 근거를 공급하며, Signals는 변화를 감지합니다.",
+    title: "지식의 핵심 영역과,\n그 사이를 움직이는\n실제 관계를 본다.",
+    body: "MOC는 판단을 묶고, Papers는 근거를 공급하며, Signals는 변화를 감지합니다. 화면의 선은 실제 방향 참조만 사용합니다.",
     legacyVisual: "knowledge-field",
   },
   {
@@ -73,7 +74,8 @@ const HOME_SCENES: Array<{
 ];
 
 const sceneAliases = new Map<string, HomeSceneId>([
-  ["knowledge-field", "core-gravity"],
+  ["core-gravity", "domain-backbone"],
+  ["knowledge-field", "domain-backbone"],
   ["knowledge-gravity", "protagonists"],
   ["freshness-field", "vault-in-motion"],
   ["link-trace", "operational-compass"],
@@ -81,12 +83,12 @@ const sceneAliases = new Map<string, HomeSceneId>([
 
 function normalizedScene(sceneId: string): HomeSceneId {
   if (HOME_SCENES.some((scene) => scene.id === sceneId)) return sceneId as HomeSceneId;
-  return sceneAliases.get(sceneId) ?? "core-gravity";
+  return sceneAliases.get(sceneId) ?? "domain-backbone";
 }
 
 function graphScene(scene: HomeSceneId) {
   return ({
-    "core-gravity": "field",
+    "domain-backbone": "field",
     protagonists: "gravity",
     "vault-in-motion": "freshness",
     "operational-compass": "trace",
@@ -382,7 +384,8 @@ export function HomeView() {
   const committedGraphFocus = state.focusId && graphNodeById.has(state.focusId) ? state.focusId : null;
   const sceneFallbackFocus = sceneId === "protagonists" ? defaultMeaningProtagonist?.nodeId ?? null : null;
   const graphFocus = committedGraphFocus ?? sceneFallbackFocus;
-  const previewId = state.previewId && graphNodeById.has(state.previewId) ? state.previewId : null;
+  const [localPreviewId, setLocalPreviewId] = useState<string | null>(null);
+  const previewId = localPreviewId && graphNodeById.has(localPreviewId) ? localPreviewId : null;
   const activeId = previewId ?? graphFocus;
   const focusedNode = activeId ? graphNodeById.get(activeId) ?? null : null;
   const selectedProtagonist = activeId
@@ -444,6 +447,7 @@ export function HomeView() {
   useEffect(() => {
     setPreviewStoryId(null);
     setCommittedStoryId(null);
+    setLocalPreviewId(null);
   }, [sceneId]);
 
   const openScene = (nextScene: HomeSceneId) => {
@@ -451,11 +455,11 @@ export function HomeView() {
   };
   const preview = (focusId: string | null) => {
     setPreviewStoryId(null);
-    dispatch({ type: "preview", focusId });
+    setLocalPreviewId(focusId);
   };
   const previewStory = (focusId: string | null, storyId: string | null) => {
     setPreviewStoryId(storyId);
-    dispatch({ type: "preview", focusId });
+    setLocalPreviewId(focusId);
   };
   const select = (focusId: string) => {
     setCommittedStoryId(null);
@@ -498,28 +502,42 @@ export function HomeView() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
         >
-          <LivingGraphCanvas
-            graph={atlasData.graph}
-            scene={graphScene(sceneId)}
-            focusId={graphFocus}
-            committedSelectionId={committedGraphFocus}
-            previewId={previewId}
-            from={null}
-            to={null}
-            persistentLabelIds={persistentLabelIds}
-            districtRelationMatrix={atlasData.relation.matrix}
-            operationalAlignment={displayedAlignment}
-            operationalActorLabel={displayedAlignmentActor}
-            presentation="home"
-            mobile={state.mobileSibling}
-            reducedMotion={state.reducedMotion}
-            onSelect={select}
-            onHover={preview}
-            highlightNodeIds={systemPreview ? persistentLabelIds : []}
-          />
+          {sceneId === "domain-backbone" ? (
+            <SemanticObservatoryCanvas
+              graph={atlasData.graph}
+              meaning={atlasData.meaning}
+              mode="home"
+              focusId={committedGraphFocus}
+              previewId={previewId}
+              mobile={state.mobileSibling}
+              reducedMotion={state.reducedMotion}
+              onSelect={select}
+              onPreview={preview}
+            />
+          ) : (
+            <LivingGraphCanvas
+              graph={atlasData.graph}
+              scene={graphScene(sceneId)}
+              focusId={graphFocus}
+              committedSelectionId={committedGraphFocus}
+              previewId={previewId}
+              from={null}
+              to={null}
+              persistentLabelIds={persistentLabelIds}
+              districtRelationMatrix={atlasData.relation.matrix}
+              operationalAlignment={displayedAlignment}
+              operationalActorLabel={displayedAlignmentActor}
+              presentation="home"
+              mobile={state.mobileSibling}
+              reducedMotion={state.reducedMotion}
+              onSelect={select}
+              onHover={preview}
+              highlightNodeIds={systemPreview ? persistentLabelIds : []}
+            />
+          )}
         </m.div>
 
-        {sceneId === "core-gravity" && (
+        {sceneId === "domain-backbone" && (
           <button
             type="button"
             className="home-v76-system-anchor home-v76-system-origin"
@@ -532,29 +550,12 @@ export function HomeView() {
             onClick={() => dispatch({ type: "journey", target: { workspace: "agency", sceneId: "system" } })}
           >
             <img src={homiMark} alt="" aria-hidden="true" />
-            <span id="home-v76-system-origin-description" className="sr-only">방향을 정하고 지식의 순환과 번역을 잇는 Homi system origin</span>
+            <span className="home-v77-provenance-copy" aria-hidden="true">
+              <strong>Homi provenance</strong>
+              <small>제품 출처 · 지식 노드 아님</small>
+            </span>
+            <span id="home-v76-system-origin-description" className="sr-only">제품 provenance · 지식 노드 아님. 방향을 정하고 지식의 순환과 번역을 잇는 Homi system origin.</span>
           </button>
-        )}
-
-        {sceneId === "core-gravity" && (
-          <div className={`home-v76-domain-legend${systemPreview ? " is-system-active" : ""}`} aria-label="핵심 지식 영역">
-            {CORE_DOMAINS.map((domain) => (
-              <button
-                key={domain.key}
-                type="button"
-                className={`is-${domain.key}`}
-                disabled={!domain.node}
-                onPointerEnter={() => preview(domain.node?.id ?? null)}
-                onPointerLeave={() => preview(null)}
-                onFocus={() => preview(domain.node?.id ?? null)}
-                onBlur={() => preview(null)}
-                onClick={() => domain.node && select(domain.node.id)}
-              >
-                <strong>{domain.label}</strong>
-                <span>{domain.role}</span>
-              </button>
-            ))}
-          </div>
         )}
 
         <m.article

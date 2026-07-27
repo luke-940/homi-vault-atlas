@@ -1,8 +1,8 @@
 {
   "schema": "atlas.agency.v1",
-  "generatedAt": "2026-07-23T09:26:27.311Z",
+  "generatedAt": "2026-07-27T03:30:01.131Z",
   "snapshot": {
-    "asOfDate": "2026-07-23",
+    "asOfDate": "2026-07-27",
     "status": "current_at_release_capture",
     "live": false,
     "caveat": "검증된 버전 스냅샷이며 실시간 작업 상태가 아닙니다."
@@ -287,5 +287,5 @@
     "evidenceStatus": "verified_operating_model"
   },
   "evidenceBoundary": "검증된 버전 스냅샷의 역할·소유·증거 반환만 표현하며 command·approval·실시간 상태를 암시하지 않는다.",
-  "projectionDigest": "5f83a023377b70fd87e06c3e9474b63a46d642997e760e44ae3ac2dbc132390c"
+  "projectionDigest": "c8fd5fab8b25aaa8fd413a0c5080e2ede714d0e54e699df5c9ce05dd51be5235"
 }

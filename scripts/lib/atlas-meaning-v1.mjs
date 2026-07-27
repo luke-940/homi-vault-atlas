@@ -61,7 +61,7 @@ function cleanDossier(dossier, graphNode) {
 
 function defaultProtagonistNodes(graph, profile) {
   const preferredLabels = profile === "atlas-public"
-    ? ["AI 신뢰성", "에이전트", "OpenAI", "Google", "Anthropic", "Agent Papers"]
+    ? ["AI 신뢰성", "Agent Papers", "노동·조직", "AI and Society Papers", "에이전트", "OpenAI"]
     : [];
   const preferred = preferredLabels
     .map((label) => graph.nodes.find((node) => node.label === label))
@@ -539,7 +539,8 @@ export function buildAtlasMeaningV1({
 }
 
 export function meaningInsightAdapter(meaning, relation = null, entity = null) {
-  const core = meaning.scenes.find((scene) => scene.id === "core-gravity");
+  const core = meaning.scenes.find((scene) =>
+    scene.id === "domain-backbone" || scene.id === "core-gravity");
   const movement = meaning.movements[0] ?? null;
   const strongestPair = [...(relation?.matrix ?? [])]
     .sort((left, right) => right.wikilink - left.wikilink || compareText(left.id, right.id))[0] ?? null;
@@ -552,7 +553,7 @@ export function meaningInsightAdapter(meaning, relation = null, entity = null) {
   return {
     schema: "atlas.insight.v1",
     generatedAt: meaning.generatedAt,
-    evidenceBoundary: "atlas.meaning.v1의 검증된 주인공·실제 관계·버전 변화·운영 정렬에서 생성한 호환 adapter입니다.",
+    evidenceBoundary: `${meaning.schema}의 검증된 주인공·실제 관계·버전 변화·운영 정렬에서 생성한 atlas.insight.v1 호환 adapter입니다.`,
     items: [
       {
         id: "insight:v76:core-gravity",
@@ -561,7 +562,7 @@ export function meaningInsightAdapter(meaning, relation = null, entity = null) {
         headline: core?.thesis ?? "MOC·Papers·Signals의 역할을 구분합니다.",
         metric: { value: 3, label: "core domains", unit: "개" },
         evidenceRefs: relationEvidence,
-        targetScene: { workspace: "home", scene: "core-gravity" },
+        targetScene: { workspace: "home", scene: meaning.schema === "atlas.meaning.v2" ? "domain-backbone" : "core-gravity" },
         confidence: "high",
         caveat: "세 영역은 역할 설명이며 중요도 점수가 아닙니다.",
         publicSafe: meaning.profile === "atlas-public",

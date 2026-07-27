@@ -106,7 +106,7 @@ describe("Atlas v7.6 resource-safe browser QA contract", () => {
     const journeys = new Set(CI_ROUTE_CASES.map((route) => route.journey));
 
     expect(homeScenes).toEqual(new Set([
-      "core-gravity",
+      "domain-backbone",
       "protagonists",
       "vault-in-motion",
       "operational-compass",
@@ -164,7 +164,7 @@ describe("Atlas v7.6 resource-safe browser QA contract", () => {
       expect(route.geometryRequiredSelectors?.length ?? 0, route.id).toBeGreaterThan(0);
     }
     expect(CORE_ROUTE_CASES[0].geometryRequiredSelectors).toContain(".home-v75-copy-block h1");
-    expect(CORE_ROUTE_CASES[0].geometryRequiredSelectors).toContain(".living-graph-canvas.is-home");
+    expect(CORE_ROUTE_CASES[0].geometryRequiredSelectors).toContain(".semantic-observatory.is-home");
     expect(CORE_ROUTE_CASES[0].geometryRequiredSelectors).toContain(".home-v75-boundary");
     expect(CORE_ROUTE_CASES.find((route) => route.id === "observe")?.geometryRequiredSelectors)
       .toContain(".mobile-relation-preview");

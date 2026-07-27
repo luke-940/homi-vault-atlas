@@ -438,12 +438,12 @@ describe("Atlas v7.5 graph and dual-profile boundary", () => {
     expect(projection.sourceIndex.length).toBe(projection.inventory.namedCount);
     expect(paper).toMatchObject({
       schema: "atlas.paper_dimension_receipt.v1",
-      sourceDocuments: 138,
-      gatewayDocuments: 10,
+      ...projection.paperDimension,
       derivedFromFreshCapture: true,
       hardcodedHistoricalCounts: false,
       pass: true,
     });
+    expect(paper.sourceDocuments).toBe(paper.associatedSourceDocuments + paper.unassociatedSourceDocuments);
     const edgeByPair = new Map(graph.edges.map((edge: { source: string; target: string; occurrenceCount: number }) => [`${edge.source}\0${edge.target}`, edge.occurrenceCount]));
     for (const route of flow.routes) {
       expect(route.weight).toBe(edgeByPair.get(`${route.members[0]}\0${route.members[1]}`));

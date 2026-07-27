@@ -5,7 +5,8 @@ import { fileURLToPath } from "node:url";
 import { createPublicPackArtifacts } from "./lib/public-data-wire.mjs";
 import { computePublicSnapshotDigest } from "./lib/public-snapshot-digest.mjs";
 import { buildAtlasGraphV1, verifyAtlasGraphV1 } from "./lib/atlas-graph-v1.mjs";
-import { buildAtlasMeaningV1, meaningInsightAdapter } from "./lib/atlas-meaning-v1.mjs";
+import { meaningInsightAdapter } from "./lib/atlas-meaning-v1.mjs";
+import { buildAtlasMeaningV2 } from "./lib/atlas-meaning-v2.mjs";
 import { agencyProjectionDigest } from "./lib/agency-contract.mjs";
 import {
   aggregateLinkMetrics,
@@ -939,9 +940,11 @@ const movementJudgmentPath = process.env.ATLAS_V7_6_MOVEMENT_JUDGMENT_PATH;
 const meaningMovementJudgments = movementJudgmentPath
   ? JSON.parse(await readFile(path.resolve(movementJudgmentPath), "utf8"))
   : null;
-const meaningDossiers = Array.isArray(meaningDossierPack?.protagonists)
-  ? meaningDossierPack.protagonists
-  : [];
+const meaningDossiers = Array.isArray(meaningDossierPack?.selected)
+  ? meaningDossierPack.selected
+  : Array.isArray(meaningDossierPack?.protagonists)
+    ? meaningDossierPack.protagonists
+    : [];
 const {
   projectionDigest: _legacyAgencyProjectionDigest,
   ...legacyAgencyWithoutDigest
@@ -1005,21 +1008,21 @@ const snapshotIdentity = (release, graph, fallback = null) => ({
   graphNodeCount: Number(fallback?.graphNodeCount ?? graph.manifest.nodeCount),
   graphEdgeCount: Number(fallback?.graphEdgeCount ?? graph.manifest.edgeCount),
 });
-const publicMeaningPack = buildAtlasMeaningV1({
+const publicMeaningPack = buildAtlasMeaningV2({
   graph: publicGraphPack,
   agency: agencyV76,
   generatedAt,
-  baseline: snapshotIdentity("v7.5.0", baselinePublicGraph),
+  baseline: snapshotIdentity("v7.6.0", baselinePublicGraph),
   baselineGraph: baselinePublicGraph,
-  current: snapshotIdentity("v7.6.0-rc", publicGraphPack),
+  current: snapshotIdentity("v7.7.0-rc", publicGraphPack),
   dossiers: meaningDossiers,
 });
-const ownerMeaningPack = buildAtlasMeaningV1({
+const ownerMeaningPack = buildAtlasMeaningV2({
   graph: ownerGraphPack,
   agency: agencyV76,
   generatedAt,
-  baseline: snapshotIdentity("v7.5.0", ownerGraphPack, meaningGraphDelta?.baseline),
-  current: snapshotIdentity("v7.6.0-rc", ownerGraphPack, meaningGraphDelta?.current),
+  baseline: snapshotIdentity("v7.6.0", ownerGraphPack, meaningGraphDelta?.baseline),
+  current: snapshotIdentity("v7.7.0-rc", ownerGraphPack, meaningGraphDelta?.current),
   dossiers: meaningDossiers,
   graphDelta: meaningGraphDelta,
   movementJudgments: meaningMovementJudgments,
@@ -1031,7 +1034,7 @@ const publicPacks = {
   agency: agencyV76,
   bootstrap: {
     ...legacyPacks.bootstrap,
-    version: "7.6.0-public-rc",
+    version: "7.7.0-public-rc",
     generatedAt,
     proofBoundary: {
       ...legacyPacks.bootstrap.proofBoundary,
@@ -1240,7 +1243,7 @@ const ownerRuntimePacks = {
   ...publicPacks,
   bootstrap: {
     ...publicPacks.bootstrap,
-    version: "7.6.0-owner-rc",
+    version: "7.7.0-owner-rc",
     proofBoundary: {
       ...publicPacks.bootstrap.proofBoundary,
       inventory: "Owner 전용 전체 구조와 공개 제외 사유를 포함하는 로컬 투영",

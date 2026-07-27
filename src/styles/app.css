@@ -1,22 +1,20 @@
 .atlas-app {
-  --bd: 1px solid var(--line);
+  --bd: 1px solid #292731;
   --ba: 1px solid var(--homi-amber);
   --bs: 1px solid var(--ls);
   --mi: minmax(0, 1fr);
   --im: var(--ink-muted);
-  --if: var(--ink-faint);
-  --is: var(--ink-soft);
-  --ha: var(--homi-amber-strong);
-  --hw: var(--homi-amber-wash);
-  --dk: var(--district-knowledge);
+  --if: #77717e;
+  --is: var(--ink-muted);
+  --ha: #ffc069;
+  --hw: #2b1d12;
   --fm: var(--font-mono);
   --g2: repeat(2, var(--mi));
   --g3: repeat(3, var(--mi));
   --md: var(--mint-deep);
-  --cr: var(--control-radius);
-  --fo: var(--focus);
-  --ls: var(--line-strong);
-  --mb: var(--map-bg);
+  --cr: 6px;
+  --fo: #ffc069;
+  --ls: #4a4653;
   height: 100dvh;
   display: grid;
   font-size: 12px;
@@ -233,8 +231,8 @@
 }
 
 .key-focus { background: var(--fo); box-shadow: 0 0 0 2px rgba(79,213,185,.2); }
-.key-proof { background: var(--proof); }
-.key-readable { background: var(--amber); }
+.key-proof { background: #ae82e3; }
+.key-readable { background: #e9a23d; }
 
 .view-switch {
   min-height: 38px;
@@ -533,7 +531,7 @@
 }
 
 .data-tray .boundary-note p { margin: 0; }
-.boundary-note.is-warning { color: var(--warning); }
+.boundary-note.is-warning { color: #ff8b6d; }
 
 .observation-surface {
   min-height: 0;

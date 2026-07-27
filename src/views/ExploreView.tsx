@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { SpatialWorkspaceFrame } from "../components/SpatialWorkspaceFrame";
 import { atlasData, graphNodeById } from "../data-runtime";
-import { LivingGraphCanvas } from "../graph/LivingGraphCanvas";
+import { SemanticObservatoryCanvas } from "../graph/SemanticObservatoryCanvas";
 import { graphNodeLabel, shortestDirectedPath, type FreshnessBucket } from "../graph/model";
 import { useAtlasState } from "../state";
 import type { AtlasGraphNodeV1 } from "../types";
@@ -93,12 +93,14 @@ export function ExploreView() {
   const { state, dispatch } = useAtlasState();
   const scene = ["graph", "constellations", "list"].includes(state.sceneId) ? state.sceneId : "graph";
   const [pathDisclosureOpen, setPathDisclosureOpen] = useState(Boolean(state.pathFrom || state.pathTo));
+  const [localPreviewId, setLocalPreviewId] = useState<string | null>(null);
   const selected = graphNodeById.get(state.focusId ?? "") ?? null;
-  const previewed = state.previewId ? graphNodeById.get(state.previewId) ?? null : null;
+  const previewed = localPreviewId ? graphNodeById.get(localPreviewId) ?? null : null;
   const activeNode = previewed ?? selected;
   useEffect(() => {
     if (state.pathFrom || state.pathTo) setPathDisclosureOpen(true);
   }, [state.pathFrom, state.pathTo]);
+  useEffect(() => setLocalPreviewId(null), [scene]);
   const rankedNodes = useMemo(() => atlasData.graph.nodes
     .filter((node) => !state.districtId || node.clusterId === state.districtId)
     .sort((left, right) => right.gravity - left.gravity || right.occurrences - left.occurrences || left.id.localeCompare(right.id, "en")), [state.districtId]);
@@ -135,8 +137,13 @@ export function ExploreView() {
     ? atlasData.meaning.constellations.find((item) => item.focalNodeId === activeConstellationNode.id) ?? null
     : null;
   const activeConstellationMeaning = previewedProtagonist ?? selectedProtagonist;
+  const signalsCluster = atlasData.graph.clusters.find((cluster) =>
+    ["신호", "Signals"].includes(cluster.label)) ?? null;
+  const signalsProtagonist = atlasData.meaning.protagonists.find((protagonist) =>
+    graphNodeById.get(protagonist.nodeId)?.clusterId === signalsCluster?.id) ?? null;
 
   const selectNode = (focusId: string) => dispatch({ type: "focus", focusId });
+  const previewNode = (focusId: string | null) => setLocalPreviewId(focusId);
   const title = scene === "constellations" ? "지식의 주인공과 실제 이웃을 읽는다" : scene === "list" ? "중력 순위로 지식을 훑는다" : "실제 방향 관계를 따라 지식을 탐색한다";
   const answer = scene === "graph"
     ? `${atlasData.graph.layout.defaultNodeIds.length}개 대표 지식 항목과 ${atlasData.graph.layout.defaultEdgeIds.length}개 기본 방향 관계를 복잡한 선 얽힘 없이 보여줍니다.`
@@ -172,6 +179,19 @@ export function ExploreView() {
           </select>
         </label>
         <button type="button" onClick={() => dispatch({ type: "search", open: true })}><Search size={15} aria-hidden="true" /> 지식 검색</button>
+        {signalsCluster && (
+          <button
+            type="button"
+            className={`signals-quick-lens${state.districtId === signalsCluster.id ? " is-active" : ""}`}
+            aria-pressed={state.districtId === signalsCluster.id}
+            onClick={() => {
+              dispatch({ type: "graphDistrict", districtId: state.districtId === signalsCluster.id ? null : signalsCluster.id });
+              if (signalsProtagonist) selectNode(signalsProtagonist.nodeId);
+            }}
+          >
+            <LocateFixed size={15} aria-hidden="true" /> Signals lens
+          </button>
+        )}
         {(state.districtId || state.freshness !== "all") && (
           <button type="button" className="is-clear" onClick={() => {
             dispatch({ type: "graphDistrict", districtId: null });
@@ -195,21 +215,20 @@ export function ExploreView() {
               <span><CircleDot size={14} />크기는 지식 중력</span>
               <span><Route size={14} />화살표는 실제 참조 방향</span>
             </div>
-            <LivingGraphCanvas
+            <SemanticObservatoryCanvas
               graph={atlasData.graph}
-              scene={state.pathFrom && state.pathTo ? "trace" : state.freshness !== "all" ? "freshness" : "field"}
+              meaning={atlasData.meaning}
+              mode="explore"
               focusId={selected?.id ?? null}
-              previewId={state.previewId}
+              previewId={localPreviewId}
               districtId={state.districtId}
               freshness={state.freshness}
               from={state.pathFrom}
               to={state.pathTo}
-              districtRelationMatrix={atlasData.relation.matrix}
               mobile={state.mobileSibling}
               reducedMotion={state.reducedMotion}
-              presentation="workspace"
               onSelect={selectNode}
-              onHover={(focusId) => dispatch({ type: "preview", focusId })}
+              onPreview={previewNode}
             />
           </main>
           {selected && <aside className="spatial-evidence-rail explore-evidence-rail explore-v75-insight" aria-live="polite">
@@ -257,10 +276,10 @@ export function ExploreView() {
                   type="button"
                   className={node.id === selectedConstellationNode?.id ? "is-active" : ""}
                   aria-pressed={node.id === selectedConstellationNode?.id}
-                  onPointerEnter={() => dispatch({ type: "preview", focusId: node.id })}
-                  onPointerLeave={() => dispatch({ type: "preview", focusId: null })}
-                  onFocus={() => dispatch({ type: "preview", focusId: node.id })}
-                  onBlur={() => dispatch({ type: "preview", focusId: null })}
+                  onPointerEnter={() => previewNode(node.id)}
+                  onPointerLeave={() => previewNode(null)}
+                  onFocus={() => previewNode(node.id)}
+                  onBlur={() => previewNode(null)}
                   onClick={() => selectNode(node.id)}
                 >
                   <strong>{graphNodeLabel(node)}</strong>
@@ -270,17 +289,16 @@ export function ExploreView() {
             })}
           </nav>
           <main className="explore-constellation-stage">
-            <LivingGraphCanvas
+            <SemanticObservatoryCanvas
               graph={atlasData.graph}
-              scene="gravity"
+              meaning={atlasData.meaning}
+              mode="explore"
               focusId={selectedConstellationNode?.id ?? null}
-              previewId={state.previewId}
-              districtRelationMatrix={atlasData.relation.matrix}
+              previewId={localPreviewId}
               mobile={state.mobileSibling}
               reducedMotion={state.reducedMotion}
-              presentation="workspace"
               onSelect={selectNode}
-              onHover={(focusId) => dispatch({ type: "preview", focusId })}
+              onPreview={previewNode}
             />
             {activeConstellationNode && activeConstellationMeaning && (
               <article className="explore-constellation-brief" aria-live="polite">
@@ -300,7 +318,7 @@ export function ExploreView() {
       {scene === "list" && (
         <div className="explore-v75-list-layout">
           <header><div><span className="eyebrow">접근 가능한 지식 순위</span><h2>지식 중력 순위</h2></div><p>그래프 화면과 동일한 지식 항목·수치·선택 상태를 키보드로 탐색합니다.</p></header>
-          <VirtualRankedList nodes={rankedNodes} selectedId={selected?.id ?? null} onSelect={selectNode} onPreview={(focusId) => dispatch({ type: "preview", focusId })} />
+          <VirtualRankedList nodes={rankedNodes} selectedId={selected?.id ?? null} onSelect={selectNode} onPreview={previewNode} />
         </div>
       )}
 

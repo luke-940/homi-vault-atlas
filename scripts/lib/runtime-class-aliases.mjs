@@ -1,7 +1,6 @@
 const aliasCandidates = Object.freeze([
   "home-v75-copy-block",
   "living-graph-canvas",
-  "home-v76-domain-legend",
   "graph-label-layer",
   "home-v75-scenes",
   "spatial-editorial-index__item",

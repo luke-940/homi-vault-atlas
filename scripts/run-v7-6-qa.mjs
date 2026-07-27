@@ -44,7 +44,7 @@ const GEOMETRY_GROUPS = Object.freeze({
   home: [
     ".home-v75-page",
     ".home-v75-graph-shell",
-    ".living-graph-canvas.is-home",
+    ".semantic-observatory.is-home",
     ".home-v75-copy-block .home-v75-eyebrow",
     ".home-v75-copy-block h1",
     ".home-v75-copy-block > p",
@@ -76,7 +76,7 @@ const GEOMETRY_GROUPS = Object.freeze({
     ".explore-v75",
     ".explore-command-rail > *",
     ".explore-v75-graph-panel",
-    ".explore-v75-graph-panel .living-graph-canvas",
+    ".explore-v75-graph-panel .semantic-observatory",
     ".explore-v75-mobile-clusters > button",
     ".explore-evidence-rail > *",
     ".explore-v75-clusters > button",
@@ -98,7 +98,7 @@ const GEOMETRY_GROUPS = Object.freeze({
   flow: [
     ".flow-honest-empty",
     ".route-rail > button",
-    ".flow-spatial-stage .living-graph-canvas",
+    ".flow-spatial-stage .semantic-observatory",
     ".flow-evidence-rail > *",
     ".mobile-stepper > li",
   ],
@@ -129,7 +129,7 @@ const GEOMETRY_GROUPS = Object.freeze({
 const REQUIRED_GEOMETRY_SELECTORS = Object.freeze({
   home: [
     ".home-v75-copy-block h1",
-    ".living-graph-canvas.is-home",
+    ".semantic-observatory.is-home",
     ".home-v75-evidence",
     ".home-v75-scenes > button",
     ".home-v75-boundary",
@@ -156,7 +156,7 @@ const REQUIRED_GEOMETRY_SELECTORS = Object.freeze({
   ],
   exploreGraph: [
     ".explore-v75-graph-panel",
-    ".explore-v75-graph-panel .living-graph-canvas",
+    ".explore-v75-graph-panel .semantic-observatory",
   ],
   exploreConstellations: [
     ".explore-v75-clusters",
@@ -183,7 +183,7 @@ const REQUIRED_GEOMETRY_SELECTORS = Object.freeze({
   ],
   flow: [
     ".flow-honest-empty, .route-rail > button",
-    ".flow-honest-empty, .flow-spatial-stage .living-graph-canvas",
+    ".flow-honest-empty, .flow-spatial-stage .semantic-observatory",
   ],
   time: [
     ".version-seam",
@@ -264,14 +264,14 @@ function qaCase({ key, id = key, reducedMotion = false, firstEntry = false, touc
 
 export const CORE_ROUTE_CASES = Object.freeze([
   qaCase({
-    key: "home-default", workspace: "home", hash: "#home?scene=core-gravity",
-    readySelector: ".home-v76[data-home-page='core-gravity']",
-    finalReadySelector: ".home-v76[data-home-page='core-gravity']", geometryGroups: GEOMETRY_GROUPS.home,
-    viewport: { width: 1440, height: 920 }, firstEntry: true, journey: "home-scene", targetScene: "core-gravity",
+    key: "home-default", workspace: "home", hash: "#home?scene=domain-backbone",
+    readySelector: ".home-v76[data-home-page='domain-backbone']",
+    finalReadySelector: ".home-v76[data-home-page='domain-backbone']", geometryGroups: GEOMETRY_GROUPS.home,
+    viewport: { width: 1440, height: 920 }, firstEntry: true, journey: "home-scene", targetScene: "domain-backbone",
   }),
   qaCase({
-    key: "home-selected", workspace: "home", hash: "#home?scene=core-gravity",
-    readySelector: ".home-v76[data-home-page='core-gravity']",
+    key: "home-selected", workspace: "home", hash: "#home?scene=domain-backbone",
+    readySelector: ".home-v76[data-home-page='domain-backbone']",
     finalReadySelector: ".home-v76[data-home-page='protagonists']", geometryGroups: GEOMETRY_GROUPS.home,
     viewport: { width: 1180, height: 720 }, journey: "home-scene", targetScene: "protagonists",
   }),
@@ -288,7 +288,7 @@ export const CORE_ROUTE_CASES = Object.freeze([
   }),
   qaCase({
     key: "explore", workspace: "explore", hash: "#explore?scene=graph",
-    readySelector: ".explore-v75 .living-graph-canvas", finalReadySelector: ".explore-v75 .living-graph-canvas",
+    readySelector: ".explore-v75 .semantic-observatory", finalReadySelector: ".explore-v75 .semantic-observatory",
     geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 320, height: 844 }, touch: true, journey: "explore-graph", targetScene: "graph",
   }),
   qaCase({
@@ -310,14 +310,14 @@ export const CORE_ROUTE_CASES = Object.freeze([
 
 const CI_ONLY_ROUTE_CASES = Object.freeze([
   qaCase({
-    key: "home-movement", workspace: "home", hash: "#home?scene=core-gravity",
-    readySelector: ".home-v76[data-home-page='core-gravity']",
+    key: "home-movement", workspace: "home", hash: "#home?scene=domain-backbone",
+    readySelector: ".home-v76[data-home-page='domain-backbone']",
     finalReadySelector: ".home-v76[data-home-page='vault-in-motion']", geometryGroups: GEOMETRY_GROUPS.home,
     viewport: { width: 1024, height: 768 }, reducedMotion: true, journey: "home-scene", targetScene: "vault-in-motion",
   }),
   qaCase({
-    key: "home-compass", workspace: "home", hash: "#home?scene=core-gravity",
-    readySelector: ".home-v76[data-home-page='core-gravity']",
+    key: "home-compass", workspace: "home", hash: "#home?scene=domain-backbone",
+    readySelector: ".home-v76[data-home-page='domain-backbone']",
     finalReadySelector: ".home-v76[data-home-page='operational-compass']", geometryGroups: GEOMETRY_GROUPS.home,
     viewport: { width: 390, height: 844 }, touch: true, journey: "home-scene", targetScene: "operational-compass",
   }),
@@ -334,7 +334,7 @@ const CI_ONLY_ROUTE_CASES = Object.freeze([
   }),
   qaCase({
     key: "explore-constellations", workspace: "explore", hash: "#explore?scene=constellations",
-    readySelector: ".explore-v75-clusters", finalReadySelector: ".explore-v75-graph-panel .living-graph-canvas",
+    readySelector: ".explore-v75-clusters", finalReadySelector: ".explore-v75-graph-panel .semantic-observatory",
     geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 1280, height: 720 }, journey: "explore-constellations", targetScene: "constellations",
   }),
   qaCase({
@@ -348,12 +348,12 @@ const CI_ONLY_ROUTE_CASES = Object.freeze([
     geometryGroups: GEOMETRY_GROUPS.observe, viewport: { width: 1180, height: 720 }, journey: "hub-relations",
   }),
   qaCase({
-    key: "search-overlay", workspace: "search", hash: "#home?scene=core-gravity",
+    key: "search-overlay", workspace: "search", hash: "#home?scene=domain-backbone",
     readySelector: ".home-v76", finalReadySelector: ".search-dialog", geometryGroups: GEOMETRY_GROUPS.search,
     viewport: { width: 1440, height: 920 }, journey: "search-overlay",
   }),
   qaCase({
-    key: "search-escape-focus", workspace: "home", hash: "#home?scene=core-gravity",
+    key: "search-escape-focus", workspace: "home", hash: "#home?scene=domain-backbone",
     readySelector: ".home-v76", finalReadySelector: ".home-v76", geometryGroups: GEOMETRY_GROUPS.home,
     viewport: { width: 390, height: 844 }, touch: true, journey: "search-escape-focus",
   }),
@@ -373,8 +373,8 @@ const CI_ONLY_ROUTE_CASES = Object.freeze([
     geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 390, height: 844 }, touch: true, journey: "focus-reload", targetScene: "graph",
   }),
   qaCase({
-    key: "history-back-forward", workspace: "home", hash: "#home?scene=core-gravity",
-    readySelector: ".home-v76[data-home-page='core-gravity']", finalReadySelector: ".home-v76[data-home-page='protagonists']",
+    key: "history-back-forward", workspace: "home", hash: "#home?scene=domain-backbone",
+    readySelector: ".home-v76[data-home-page='domain-backbone']", finalReadySelector: ".home-v76[data-home-page='protagonists']",
     geometryGroups: GEOMETRY_GROUPS.home, viewport: { width: 1440, height: 920 }, journey: "back-forward",
   }),
   qaCase({
@@ -384,7 +384,7 @@ const CI_ONLY_ROUTE_CASES = Object.freeze([
   }),
   qaCase({
     key: "webkit-graph-focus", workspace: "explore", hash: "#explore?scene=graph",
-    readySelector: ".explore-v75 .living-graph-canvas", finalReadySelector: ".explore-v75 .living-graph-canvas", geometryGroups: GEOMETRY_GROUPS.explore,
+    readySelector: ".explore-v75 .semantic-observatory", finalReadySelector: ".explore-v75 .semantic-observatory", geometryGroups: GEOMETRY_GROUPS.explore,
     viewport: { width: 1024, height: 768 }, browserName: "webkit", longTaskRequired: false, journey: "webkit-graph-focus", targetScene: "graph",
   }),
   qaCase({
@@ -976,7 +976,7 @@ async function measureGeometry(page, groupSelectors, route) {
     runtimeSelectors: {
       app: aliasRuntimeSelector(".atlas-app"),
       homeHeadline: aliasRuntimeSelector(".home-v75-copy-block h1"),
-      homeTerrain: aliasRuntimeSelector(".living-graph-canvas.is-home"),
+      homeTerrain: aliasRuntimeSelector(".semantic-observatory.is-home"),
       mobileNavigation: aliasRuntimeSelector(".mobile-navigation"),
       mobileSibling: aliasRuntimeSelector(".mobile-sibling"),
       mobileInteractive: aliasRuntimeSelector(".atlas-app button:not([disabled]), .atlas-app a[href], .atlas-app input:not([disabled]), .atlas-app select:not([disabled]), .atlas-app textarea:not([disabled]), .atlas-app [role='button']:not([aria-disabled='true'])"),
@@ -1019,7 +1019,7 @@ export async function executeJourney(page, route) {
   const startedAt = Date.now();
   const details = { journey: route.journey };
   const homeSceneIndex = {
-    "core-gravity": 0,
+    "domain-backbone": 0,
     protagonists: 1,
     "vault-in-motion": 2,
     "operational-compass": 3,
@@ -1065,7 +1065,7 @@ export async function executeJourney(page, route) {
     }
     details.actorIds = visited;
   } else if (route.journey === "explore-graph") {
-    const graph = runtimeLocator(page, ".explore-v75 .living-graph-canvas");
+    const graph = runtimeLocator(page, ".explore-v75 .semantic-observatory");
     await graph.waitFor({ state: "visible" });
     const counts = await graph.evaluate((node) => ({
       nodes: Number(node.getAttribute("data-node-count") ?? 0),
@@ -1079,7 +1079,7 @@ export async function executeJourney(page, route) {
   } else if (route.journey === "explore-constellations") {
     const target = runtimeLocator(page, ".explore-v75-clusters > button:visible").first();
     await activateLocator(page, target, route.touch);
-    await runtimeLocator(page, ".explore-v75-graph-panel .living-graph-canvas").waitFor({ state: "visible" });
+    await runtimeLocator(page, ".explore-v75-graph-panel .semantic-observatory").waitFor({ state: "visible" });
     await page.waitForFunction(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("scene") === "graph"
       && Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus")));
     details.focus = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
@@ -1096,7 +1096,7 @@ export async function executeJourney(page, route) {
   } else if (route.journey === "flow-verified-or-empty") {
     const emptyCount = await runtimeLocator(page, ".flow-honest-empty:visible").count();
     const routeCount = await runtimeLocator(page, ".route-rail > button:visible").count();
-    const graphCount = await runtimeLocator(page, ".flow-spatial-stage .living-graph-canvas:visible").count();
+    const graphCount = await runtimeLocator(page, ".flow-spatial-stage .semantic-observatory:visible").count();
     if (emptyCount === 1) {
       if (routeCount !== 0 || graphCount !== 0) throw new Error("Flow empty state retained clickable or drawn zero-member routes");
       details.mode = "honest-empty";
@@ -1160,10 +1160,10 @@ export async function executeJourney(page, route) {
     await activateLocator(page, runtimeLocator(page, ".home-v75-scenes > button").nth(1), false);
     await runtimeLocator(page, ".home-v76[data-home-page='protagonists']").waitFor({ state: "visible" });
     await page.goBack({ waitUntil: "domcontentloaded" });
-    await runtimeLocator(page, ".home-v76[data-home-page='core-gravity']").waitFor({ state: "visible" });
+    await runtimeLocator(page, ".home-v76[data-home-page='domain-backbone']").waitFor({ state: "visible" });
     await page.goForward({ waitUntil: "domcontentloaded" });
     await runtimeLocator(page, ".home-v76[data-home-page='protagonists']").waitFor({ state: "visible" });
-    details.history = ["protagonists", "core-gravity", "protagonists"];
+    details.history = ["protagonists", "domain-backbone", "protagonists"];
   } else if (route.journey === "keyboard-workspace") {
     const exploreTab = runtimeLocator(page, "#workspace-tab-explore");
     await exploreTab.focus();

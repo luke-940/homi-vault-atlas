@@ -118,6 +118,7 @@
 .home-v75-page { position: relative; height: 100%; min-height: 640px; overflow: hidden; background: #080704; }
 .home-v75-graph-shell { position: absolute; z-index: 1; inset: 0; min-width: 0; transform-origin: 64% 48%; }
 .home-v75-graph-shell > .living-graph-canvas { position: absolute; inset: 0; min-height: 100%; background: #080704; }
+.home-v75-graph-shell > .semantic-observatory { position: absolute; inset: 0; min-height: 100%; }
 .home-v75-editorial { position: absolute; z-index: 6; inset: 0; pointer-events: none; }
 .home-v75-copy-block {
   position: absolute; top: clamp(122px,15.3vh,160px); left: clamp(34px,3.35vw,56px); width: min(36vw,530px);
@@ -173,27 +174,14 @@
    into a synthetic graph node. The anchor is a provenance mark; all graph
    metrics and rendered edges still come from atlas.graph.v1. */
 .home-v76-system-anchor.home-v76-system-origin {
-  position: absolute; z-index: 5; top: 47%; left: 63%; width: 54px; height: 54px; display: grid; place-items: center; translate: -50% -50%;
-  &::before { content: ""; position: absolute; width: 284px; height: 132px; background: radial-gradient(ellipse,rgba(237,152,64,.14),rgba(237,152,64,.045) 31%,rgba(237,152,64,.012) 57%,transparent 76%); filter: blur(14px); opacity: .62; transition: opacity .16s ease; pointer-events: none; }
-  & img { position: relative; width: 24px; height: 24px; opacity: .2; filter: drop-shadow(0 0 17px rgba(237,152,64,.3)); transition: opacity .16s ease,filter .16s ease,transform .16s ease; }
-  &:is(:hover,:focus-visible)::before { opacity: .9; }
-  &:is(:hover,:focus-visible) img { opacity: .86; filter: drop-shadow(0 0 22px rgba(237,152,64,.48)); transform: scale(1.08); }
+  position: absolute; z-index: 10; top: auto; bottom: 64px; left: clamp(34px,3.35vw,56px); width: auto; height: 44px; display: flex; align-items: center; gap: 12px; translate: 0 0; color: rgba(239,232,220,.56); text-align: left;
+  & img { position: relative; width: 27px; height: 27px; opacity: .88; filter: drop-shadow(0 0 15px rgba(237,152,64,.32)); transition: opacity .16s ease,filter .16s ease,transform .16s ease; }
+  &:is(:hover,:focus-visible) img { opacity: 1; filter: drop-shadow(0 0 22px rgba(237,152,64,.48)); transform: scale(1.04); }
   &:focus-visible { outline: 1px solid rgba(255,192,105,.72); outline-offset: 8px; border-radius: 4px; }
 }
-
-.home-v76-domain-legend {
-  position: absolute; z-index: 7; top: 77px; left: 50%; display: flex; gap: 22px; translate: -12% 0; pointer-events: auto;
-  & button { min-width: 112px; min-height: 42px; display: grid; align-content: center; gap: 2px; padding: 0 0 7px; border-bottom: 1px solid rgba(239,228,211,.15); color: rgba(245,234,217,.58); text-align: left; }
-  & button:is(:hover,:focus-visible) { outline: 0; border-color: rgba(235,160,64,.72); color: #f6c27c; }
-  & strong { font: 720 12px var(--fm); letter-spacing: .12em; }
-  & span { font-size: 12px; }
-}
-.home-v76-domain-legend .is-moc { --domain-accent: var(--district-knowledge); }
-.home-v76-domain-legend .is-papers { --domain-accent: var(--district-research); }
-.home-v76-domain-legend .is-signals { --domain-accent: var(--district-signal); }
-.home-v76-domain-legend button { border-bottom-color: color-mix(in srgb,var(--domain-accent) 28%,transparent); }
-.home-v76-domain-legend button:is(:hover,:focus-visible) { color: var(--domain-accent); }
-.home-v76-domain-legend.is-system-active button { border-color: rgba(235,160,64,.46); color: rgba(246,194,124,.88); }
+.home-v77-provenance-copy { display: grid; gap: 1px; }
+.home-v77-provenance-copy strong { color: rgba(246,238,224,.72); font-weight: 650; }
+.home-v76.is-v76-domain-backbone .home-v75-evidence:not(.has-focus) { display: none; }
 
 .home-v76-rail {
   display: flex; flex-wrap: wrap; gap: 5px 14px; margin-top: 24px; pointer-events: auto;
@@ -230,6 +218,24 @@
 .living-graph-canvas canvas,
 .graph-label-layer { position: absolute; inset: 0; width: 100%; height: 100%; }
 .graph-label-layer { z-index: 2; pointer-events: none; }
+
+.semantic-observatory {
+  position: relative; min-width: 0; min-height: 390px; overflow: hidden; isolation: isolate; background: #070705; cursor: grab; touch-action: none; outline: none;
+}
+.semantic-observatory:active { cursor: grabbing; }
+.semantic-observatory canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.semantic-observatory__base { z-index: 1; }
+.semantic-observatory__interaction { z-index: 2; pointer-events: none; }
+.semantic-observatory__labels { position: absolute; z-index: 3; inset: 0; pointer-events: none; }
+.semantic-observatory__label {
+  min-height: 30px !important; display: grid; align-content: center; gap: 1px;
+  & strong { font: 680 12px/1.1 var(--fm); }
+  & small { color: currentColor; font: 640 12px/1.1 var(--fm); opacity: .68; }
+  &.is-active { color: #ffd69b; text-shadow: 0 0 16px rgba(234,160,70,.52),0 1px 4px #020201; }
+}
+.semantic-observatory__label:is(.is-연구-논거,.is-Papers) { color: #c8b2ef; }
+.semantic-observatory__label:is(.is-신호,.is-Signals) { color: #87e4d7; }
+.semantic-observatory__label:is(.is-중심-지식,.is-MOC) { color: #f2c479; }
 .graph-label-layer button { position: absolute; width: auto; max-width: 148px; min-height: 25px; translate: -50% -50%; padding: 3px 4px; overflow: hidden; border-radius: 0; color: rgba(246,240,223,.84); text-shadow: 0 1px 3px #02050a,0 0 12px #02050a; box-shadow: none; font-size: 12px; font-weight: 650; letter-spacing: -.01em; text-overflow: ellipsis; white-space: nowrap; pointer-events: auto; }
 .graph-label-layer button.kind-district { max-width: 184px; color: rgba(246,240,223,.72); font-size: 13px; font-weight: 720; letter-spacing: -.02em; }
 .graph-label-layer button:hover,
@@ -285,9 +291,9 @@
 }
 .spatial-stage-axes--subdued { position: absolute; top: 118px; left: 14px; border: 0; background: linear-gradient(90deg,rgba(8,7,5,.76),transparent); }
 .explore-v75-graph-panel { position: relative; display: block; }
-.explore-v75-graph-panel .living-graph-canvas,
-.flow-spatial-stage .living-graph-canvas { width: 100%; height: 100%; min-height: 430px; }
-.explore-v75-graph-panel .living-graph-canvas { position: absolute; inset: 108px 0 0; width: auto; height: auto; min-height: 0; }
+.explore-v75-graph-panel .semantic-observatory,
+.flow-spatial-stage .semantic-observatory { width: 100%; height: 100%; min-height: 430px; }
+.explore-v75-graph-panel .semantic-observatory { position: absolute; inset: 108px 0 0; width: auto; height: auto; min-height: 0; }
 .spatial-evidence-rail {
   min-width: 0; padding: 22px 18px; overflow-y: auto; border-left: 1px solid rgba(230,220,203,.09); color: #f2ebdc; background: linear-gradient(90deg,rgba(255,255,255,.014),rgba(8,7,5,.32));
   & h2 { margin: 8px 0 4px; font-size: clamp(20px,1.7vw,26px); line-height: 1.1; }
@@ -323,7 +329,7 @@
 .explore-constellation-rail button span { color: rgba(239,231,217,.38); font: 600 12px var(--fm); }
 .explore-constellation-rail button:is(:hover,:focus-visible,.is-active) { outline: 0; border-color: var(--ha); color: #ffd08a; }
 .explore-constellation-stage { position: relative; min-height: 0; overflow: hidden; }
-.explore-constellation-stage .living-graph-canvas { width: 100%; height: 100%; min-height: 470px; }
+.explore-constellation-stage .semantic-observatory { width: 100%; height: 100%; min-height: 470px; }
 .explore-constellation-brief {
   position: absolute; z-index: 5; bottom: 22px; left: 22px; width: min(410px,42vw); padding: 14px 0 0; border-top: 1px solid rgba(238,177,91,.48); background: linear-gradient(90deg,rgba(8,7,5,.86),rgba(8,7,5,.22) 78%,transparent); pointer-events: none;
   & h2 { margin: 5px 0; font-size: clamp(24px,2.2vw,34px); }
@@ -374,7 +380,7 @@
 }
 .scrollbar-clean { scrollbar-width: none; }
 .scrollbar-clean::-webkit-scrollbar { display: none; }
-.flow-spatial-layout { grid-template-columns: minmax(0,1fr) 300px; }
+.flow-spatial-layout { position: relative; inset: auto; min-height: 0; grid-template-columns: minmax(0,1fr) 300px; overflow: hidden; }
 .flow-version-proof { color: rgba(239,233,221,.5); }
 
 .pair-lens-panel { background: linear-gradient(90deg,rgba(8,7,13,.16),rgba(8,7,13,.42)); }
@@ -453,8 +459,6 @@
   .home-v75-scenes { right: 8px; width: 86px; }
   .home-v75.is-knowledge-gravity .home-v75-copy-block { right: 78px; width: min(32vw,410px); }
   .home-v76-system-origin { left: 64%; }
-  .home-v76-domain-legend { left: 47%; gap: 14px; translate: -5% 0; }
-  .home-v76-domain-legend button { min-width: 96px; }
   .explore-v75-clusters { grid-template-columns: repeat(3,minmax(0,1fr)); }
   .explore-v75-path-result { grid-column: 1/-1; }
   .flow-spatial-layout { grid-template-columns: minmax(0,1fr) 280px; }
@@ -474,8 +478,6 @@
   .home-v75-boundary span + span::before { margin-right: 8px; }
   .home-v75-boundary small { display: none; }
   .home-v76-system-origin { left: 66%; transform: scale(.9); }
-  .home-v76-domain-legend { top: 70px; left: 48%; gap: 10px; }
-  .home-v76-domain-legend button { min-width: 84px; }
   .home-v76-protagonist-rail button { flex-basis: calc(50% - 14px); }
   .home-v76.is-v76-protagonists .home-v75-graph-shell { right: 43%; }
   .atlas-app[data-workspace="explore"] .workspace-main,
@@ -578,13 +580,10 @@
   .home-v75-evidence-secondary em { display: none; }
   .home-v75-evidence strong { flex: 1 1 auto; font-size: 12px; }
   .home-v75-relation-names { flex: 1 1 42%; }
-  .home-v76-system-origin { top: 258px; left: 20px; width: 44px; height: 44px; translate: 0; }
+  .home-v76-system-origin { top: auto; bottom: 72px; left: 16px; width: auto; height: 44px; translate: 0; }
   .home-v76-system-origin::before { display: none; }
   .home-v76-system-origin img { width: 22px; height: 22px; }
-  .home-v76-domain-legend { top: 258px; right: 12px; left: 64px; justify-content: center; gap: 8px; translate: 0 0; }
-  .home-v76-domain-legend button { min-width: 0; flex: 1 1 0; min-height: 44px; padding: 3px 1px; text-align: center; }
-  .home-v76-domain-legend strong { font-size: 12px; }
-  .home-v76-domain-legend span { font-size: 12px; }
+  .home-v77-provenance-copy { display: none; }
   .home-v76-rail { flex-wrap: nowrap; gap: 8px; margin-top: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
   .home-v76-rail::-webkit-scrollbar { display: none; }
   .home-v76-rail button { min-height: 56px; flex: 0 0 auto; scroll-snap-align: start; }
@@ -629,7 +628,7 @@
   .explore-v75-mobile-clusters button small { color: var(--im); }
   .explore-v75-mobile-clusters button[aria-pressed="true"] { border-color: var(--ha); background: var(--hw); color: var(--ha); }
   .explore-v75-axes { top: 54px; gap: 7px; }
-  .explore-v75-graph-panel .living-graph-canvas { position: relative; inset: auto; width: 100%; height: 430px; min-height: 430px; }
+  .explore-v75-graph-panel .semantic-observatory { position: relative; inset: auto; width: 100%; height: 430px; min-height: 430px; }
   .explore-v75-insight { position: static; width: auto; min-height: 280px; margin-top: 0; padding: 14px; background: rgba(8,7,5,.78); }
   .explore-v75-directions { grid-template-columns: 1fr; }
   .explore-v75-directions button { min-height: 44px; }
@@ -637,7 +636,7 @@
   .explore-constellation-rail { gap: 14px; padding: 0 12px; }
   .explore-constellation-rail button { min-height: 64px; }
   .explore-constellation-stage { display: grid; grid-template-rows: minmax(430px,1fr) auto; overflow: visible; }
-  .explore-constellation-stage .living-graph-canvas { min-height: 500px; }
+  .explore-constellation-stage .semantic-observatory { min-height: 500px; }
   .explore-constellation-brief { position: static; width: auto; padding: 14px 12px 20px; background: rgba(8,7,5,.88); }
   .explore-v75-list-layout { display: block; padding: 10px 12px; overflow: visible; }
   .explore-v75-list-layout,
@@ -666,8 +665,7 @@
 
 @media (min-width: 821px) and (max-width: 900px) and (max-height: 520px) {
   .home-v75-page { height: calc(100dvh - 116px); min-height: 0; }
-  .home-v76-domain-legend,
-  .home-v76-system-origin { display: none; }
+  .home-v76-system-anchor.home-v76-system-origin { display: none !important; }
   .home-v75-editorial { right: 58%; height: 100%; }
   .home-v75-copy-block { top: 18px; right: 18px; left: 18px; }
   .home-v75-copy-block h1 { font-size: clamp(30px,4vw,38px); }

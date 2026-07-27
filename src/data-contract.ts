@@ -527,11 +527,31 @@ const meaningSnapshotValidator = objectOf({
 }, { exact: true });
 
 const meaningValidator = objectOf({
-  schema: required(literal("atlas.meaning.v1")),
+  schema: required(literal("atlas.meaning.v2")),
   profile: required(oneOf(ATLAS_PROFILES)),
   generatedAt: required(nonEmptyString),
   baseline: required(meaningSnapshotValidator),
   current: required(meaningSnapshotValidator),
+  domainBackbone: required(arrayOf(objectOf({
+    id: required(nonEmptyString),
+    domain: required(oneOf(["MOC", "Papers", "Signals"])),
+    districtId: required(nullable(nonEmptyString)),
+    anchorNodeId: required(nullable(nonEmptyString)),
+    edgeIds: required(stringArray),
+    statement: required(nonEmptyString),
+    evidenceGap: required(nullable(nonEmptyString)),
+  }, { exact: true }), { length: 3 })),
+  connectionStories: required(arrayOf(objectOf({
+    id: required(nonEmptyString),
+    focalNodeId: required(nonEmptyString),
+    label: required(nonEmptyString),
+    thesis: required(nonEmptyString),
+    edgeIds: required(stringArray),
+    incomingEdgeIds: required(stringArray),
+    outgoingEdgeIds: required(stringArray),
+    domainIds: required(stringArray),
+    caveat: required(nonEmptyString),
+  }, { exact: true }))),
   protagonists: required(arrayOf(objectOf({
     id: required(nonEmptyString),
     nodeId: required(nonEmptyString),
@@ -549,6 +569,7 @@ const meaningValidator = objectOf({
     }, { exact: true })),
     evidenceRefs: required(stringArray),
     selectionMode: required(literal("atlas_builder_judgment")),
+    storyIds: required(stringArray),
   }, { exact: true }))),
   constellations: required(arrayOf(objectOf({
     id: required(nonEmptyString),
@@ -589,7 +610,7 @@ const meaningValidator = objectOf({
     statement: required(nonEmptyString),
   }, { exact: true }))),
   scenes: required(arrayOf(objectOf({
-    id: required(oneOf(["core-gravity", "protagonists", "vault-in-motion", "operational-compass"])),
+    id: required(oneOf(["domain-backbone", "protagonists", "vault-in-motion", "operational-compass"])),
     label: required(nonEmptyString),
     thesis: required(nonEmptyString),
     focusIds: required(stringArray),
@@ -598,6 +619,13 @@ const meaningValidator = objectOf({
     protagonistCount: required(nonNegativeInteger),
     constellationCount: required(nonNegativeInteger),
     movementCount: required(nonNegativeInteger),
+    storyCount: required(nonNegativeInteger),
+    actualUsedEdgeCount: required(nonNegativeInteger),
+    domainCoverage: required(objectOf({
+      MOC: required(oneOf(["covered", "evidence_gap"])),
+      Papers: required(oneOf(["covered", "evidence_gap"])),
+      Signals: required(oneOf(["covered", "evidence_gap"])),
+    }, { exact: true })),
     projectionDigest: required(stringValue({ length: 64 })),
   }, { exact: true })),
 }, { exact: true });
