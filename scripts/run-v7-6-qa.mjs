@@ -343,7 +343,7 @@ const CI_ONLY_ROUTE_CASES = Object.freeze([
   }),
   qaCase({
     key: "explore-constellations", workspace: "explore", hash: "#explore?scene=constellations",
-    readySelector: ".explore-v75-clusters", finalReadySelector: ".explore-v75-graph-panel .semantic-space-host",
+    readySelector: ".explore-v75-clusters", finalReadySelector: ".explore-constellation-stage .semantic-space-host",
     geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 1280, height: 720 }, journey: "explore-constellations", targetScene: "constellations",
   }),
   qaCase({

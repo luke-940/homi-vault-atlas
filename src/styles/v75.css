@@ -190,7 +190,7 @@
 .home-v76-compass-rail button:last-child:nth-child(odd) { flex-basis: 100%; }
 .home-v76-honest-empty { margin-top: 22px; padding-left: 12px; border-left: 1px solid rgba(233,154,49,.6); color: rgba(238,229,214,.55); font-size: 13px; line-height: 1.5; }
 .home-v76 .home-v75-copy-block > p { max-width: 420px; }
-.home-v76.is-v76-protagonists .home-v75-copy-block { top: 17%; right: clamp(104px,9vw,132px); width: min(31vw,430px); }
+.home-v76.is-v76-protagonists .home-v75-copy-block { top: 17%; right: clamp(104px,9vw,132px); left: auto; width: min(31vw,430px); }
 .home-v76.is-v76-protagonists .home-v75-copy-block h1 { font-size: clamp(43px,3.45vw,56px); }
 .home-v76.is-v76-protagonists .home-v75-copy-block > p { margin-top: 22px; line-height: 1.58; }
 .home-v76.is-v76-protagonists .home-v76-rail { margin-top: 17px; }
@@ -199,7 +199,7 @@
 .home-v76.is-v76-operational-compass .home-v75-copy-block h1 { font-size: clamp(43px,3.45vw,54px); }
 .home-v76.is-v76-operational-compass .home-v75-copy-block > p { max-width: 440px; margin-top: 22px; line-height: 1.58; }
 .home-v76.is-v76-operational-compass .home-v76-rail { margin-top: 17px; }
-.home-v76.is-v76-operational-compass .home-v76-compass-rail button { min-height: 44px; }
+.home-v76.is-v76-operational-compass .home-v76-compass-rail button { min-height: 45px; }
 .home-v76.is-v76-operational-compass .home-v75-actions { margin-top: 18px; }
 
 @media (min-width: 1180px) {
@@ -401,7 +401,7 @@
   & > strong { color: #f2eadc; }
   & > p { grid-column: 1/-1; margin: 5px 0; color: rgba(236,227,211,.56); line-height: 1.5; }
   & > div { grid-column: 1/-1; display: flex; flex-wrap: wrap; gap: 7px; }
-  & button { min-height: 44px; padding: 0 10px; border-bottom: 1px solid; font-weight: 700; }
+  & button { min-height: 44px; padding: 0 12px; border-bottom: 1px solid; font-weight: 700; }
 }
 
 .time-v76 { height: 100%; display: grid; grid-template-rows: auto minmax(0,1fr); overflow: hidden; }
