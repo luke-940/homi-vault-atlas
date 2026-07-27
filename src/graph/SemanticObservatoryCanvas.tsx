@@ -59,25 +59,31 @@ const coreSlots: Record<string, {
   spreadX: number;
   spreadY: number;
 }> = {
-  MOC: { x: 0.7, y: 0.25, depth: 0.54, spreadX: 0.25, spreadY: 0.2 },
-  "중심 지식": { x: 0.7, y: 0.25, depth: 0.54, spreadX: 0.25, spreadY: 0.2 },
-  Papers: { x: 0.43, y: 0.35, depth: 0.42, spreadX: 0.27, spreadY: 0.22 },
-  "연구 논거": { x: 0.43, y: 0.35, depth: 0.42, spreadX: 0.27, spreadY: 0.22 },
-  Signals: { x: 0.74, y: 0.63, depth: 0.84, spreadX: 0.24, spreadY: 0.22 },
-  신호: { x: 0.74, y: 0.63, depth: 0.84, spreadX: 0.24, spreadY: 0.22 },
+  MOC: { x: 0.7, y: 0.3, depth: 0.66, spreadX: 0.34, spreadY: 0.29 },
+  "중심 지식": { x: 0.7, y: 0.3, depth: 0.66, spreadX: 0.34, spreadY: 0.29 },
+  Papers: { x: 0.49, y: 0.43, depth: 0.34, spreadX: 0.32, spreadY: 0.3 },
+  "연구 논거": { x: 0.49, y: 0.43, depth: 0.34, spreadX: 0.32, spreadY: 0.3 },
+  Signals: { x: 0.73, y: 0.64, depth: 0.86, spreadX: 0.31, spreadY: 0.28 },
+  신호: { x: 0.73, y: 0.64, depth: 0.86, spreadX: 0.31, spreadY: 0.28 },
 };
 
 const clusterColors: Record<string, string> = {
-  MOC: "#e5aa51",
-  "중심 지식": "#e5aa51",
-  Papers: "#a98ae5",
-  "연구 논거": "#a98ae5",
-  Signals: "#54d4c3",
-  신호: "#54d4c3",
-  전략: "#df8b6b",
-  "운영 기반": "#b8cb7d",
-  "연구 기록": "#6faacb",
-  "Independent Projects": "#c27fd7",
+  MOC: "#d3ad75",
+  "중심 지식": "#d3ad75",
+  Papers: "#bda0d2",
+  "연구 논거": "#bda0d2",
+  Signals: "#8fb9b1",
+  신호: "#8fb9b1",
+  전략: "#d79273",
+  "운영 기반": "#aeb981",
+  "연구 기록": "#83a8cc",
+  "Independent Projects": "#a995b9",
+};
+
+const domainDescriptions: Record<string, string> = {
+  MOC: "핵심 개념 지형",
+  Papers: "연구 근거 지형",
+  Signals: "변화 신호 지형",
 };
 
 const defaultCamera: CameraState = {
@@ -115,6 +121,49 @@ function rgba(hex: string, alpha: number) {
 
 function nodeColor(node: AtlasGraphNodeV1, clusterLabelById: Map<string, string>) {
   return clusterColors[clusterLabelById.get(node.clusterId) ?? ""] ?? "#d49269";
+}
+
+function roundedRect(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+) {
+  context.beginPath();
+  context.roundRect(x, y, width, height, radius);
+}
+
+function drawNodePath(
+  context: CanvasRenderingContext2D,
+  node: AtlasGraphNodeV1,
+  x: number,
+  y: number,
+  radius: number,
+) {
+  if (node.kind === "paper_gateway") {
+    context.beginPath();
+    context.moveTo(x, y - radius);
+    context.lineTo(x + radius, y);
+    context.lineTo(x, y + radius);
+    context.lineTo(x - radius, y);
+    context.closePath();
+    return;
+  }
+  if (node.kind === "project" || node.kind === "project_stage") {
+    roundedRect(
+      context,
+      x - radius * 1.12,
+      y - radius * 0.7,
+      radius * 2.24,
+      radius * 1.4,
+      Math.max(3, radius * 0.36),
+    );
+    return;
+  }
+  context.beginPath();
+  context.arc(x, y, radius, 0, Math.PI * 2);
 }
 
 function rankNodes(nodes: readonly AtlasGraphNodeV1[]) {
@@ -370,10 +419,34 @@ function projectNodes({
     const normalizedZ = normalize(coordinate.z, localBounds.minZ, localBounds.maxZ, "z");
     const spatialX = normalizedX * 0.64 + (stableUnit(`${node.id}:constellation:x`) - 0.5) * 0.36;
     const spatialY = normalizedY * 0.86 + (stableUnit(`${node.id}:constellation:y`) - 0.5) * 0.14;
-    const yawShift = Math.sin(camera.yaw) * (slot.depth - 0.5) * width * 0.18;
-    const pitchShift = Math.sin(camera.pitch) * (slot.depth - 0.5) * stageHeight * 0.16;
-    const depth = Math.max(0.06, Math.min(0.96, slot.depth + normalizedZ * 0.18));
-    const perspective = (0.64 + depth * 0.52) * camera.zoom;
+    const localX = spatialX * slot.spreadX * stageWidth;
+    const localY = spatialY * slot.spreadY * stageHeight;
+    const sourceDepth = Math.max(
+      0.04,
+      Math.min(0.98, slot.depth + normalizedZ * 0.3 + spatialX * 0.045),
+    );
+    const localDepth = (sourceDepth - slot.depth) * stageHeight * 0.82;
+    const yawCos = Math.cos(camera.yaw);
+    const yawSin = Math.sin(camera.yaw);
+    const pitchCos = Math.cos(camera.pitch);
+    const pitchSin = Math.sin(camera.pitch);
+    const rotatedX = localX * yawCos + localDepth * yawSin;
+    const rotatedDepth = -localX * yawSin + localDepth * yawCos;
+    const clusterDepth = slot.depth - 0.5;
+    const pitchDepth = rotatedDepth + clusterDepth * stageHeight * 0.34;
+    const rotatedY = localY * pitchCos - pitchDepth * pitchSin;
+    const depth = Math.max(
+      0.04,
+      Math.min(
+        0.99,
+        sourceDepth
+          + (rotatedDepth / Math.max(1, stageHeight)) * 0.34
+          + (localY / Math.max(1, stageHeight)) * pitchSin * 0.28,
+      ),
+    );
+    const perspective = (0.56 + depth * 0.62) * camera.zoom;
+    const yawShift = yawSin * clusterDepth * stageWidth * 0.24;
+    const pitchShift = pitchSin * clusterDepth * stageHeight * 0.24;
     const slotX = responsiveSlotX({
       x: slot.x,
       clusterLabel: cluster.label,
@@ -382,16 +455,16 @@ function projectNodes({
       featured: featuredSlots.has(node.id),
     });
     const x = slotX * stageWidth
-      + spatialX * slot.spreadX * stageWidth
+      + rotatedX * perspective
       + yawShift
       + camera.panX;
     const y = stageTop
       + slot.y * stageHeight
-      + spatialY * slot.spreadY * stageHeight
-      - (depth - 0.5) * stageHeight * 0.08
+      + rotatedY * perspective
+      - (depth - 0.5) * stageHeight * 0.11
       + pitchShift
       + camera.panY;
-    const baseRadius = Math.max(3.2, Math.min(24, 3.6 + Math.sqrt(Math.max(0, node.gravity)) * 0.78));
+    const baseRadius = Math.max(2.3, Math.min(12.5, 2.5 + Math.sqrt(Math.max(0, node.gravity)) * 0.48));
     return [{
       node,
       x,
@@ -472,21 +545,13 @@ function drawEdge(
   const targetColor = nodeColor(target.node, clusterLabelById);
   const gradient = context.createLinearGradient(source.x, source.y, target.x, target.y);
   gradient.addColorStop(0, rgba(sourceColor, alpha));
-  gradient.addColorStop(1, rgba(targetColor, alpha * 1.12));
+  gradient.addColorStop(1, rgba(targetColor, Math.min(1, alpha * 1.08)));
   const controls = edgeControls(source, target, edge);
   context.save();
-  context.strokeStyle = rgba(targetColor, alpha * 0.12);
-  context.lineWidth = Math.max(2.2, Math.min(5.8, (2.2 + Math.log2(edge.occurrenceCount + 1) * 0.38) * emphasis));
-  context.shadowColor = rgba(targetColor, alpha * 0.38);
-  context.shadowBlur = 13 * emphasis;
-  context.beginPath();
-  context.moveTo(source.x, source.y);
-  context.bezierCurveTo(controls.a.x, controls.a.y, controls.b.x, controls.b.y, target.x, target.y);
-  context.stroke();
   context.strokeStyle = gradient;
-  context.lineWidth = Math.max(0.72, Math.min(2.4, (0.64 + Math.log2(edge.occurrenceCount + 1) * 0.24) * emphasis));
-  context.shadowColor = rgba(targetColor, alpha * 0.85);
-  context.shadowBlur = 8 * emphasis;
+  context.lineWidth = Math.max(0.62, Math.min(1.65, (0.54 + Math.log2(edge.occurrenceCount + 1) * 0.16) * emphasis));
+  context.shadowColor = rgba(targetColor, alpha * 0.34);
+  context.shadowBlur = alpha > 0.7 ? 5 * emphasis : 0;
   context.beginPath();
   context.moveTo(source.x, source.y);
   context.bezierCurveTo(controls.a.x, controls.a.y, controls.b.x, controls.b.y, target.x, target.y);
@@ -508,66 +573,56 @@ function drawNode(
   const { node, x, y, radius, depth } = projected;
   const color = nodeColor(node, clusterLabelById);
   const anchor = ["moc_hub", "paper_gateway", "signal_domain"].includes(node.kind);
+  const displayRadius = radius * emphasis;
   context.save();
   context.globalAlpha = alpha;
-  context.globalCompositeOperation = "screen";
-  const glowRadius = radius * (anchor ? 4.8 : 3.4) * emphasis;
-  const glow = context.createRadialGradient(x, y, radius * 0.16, x, y, glowRadius);
-  glow.addColorStop(0, rgba(color, anchor ? 0.42 : 0.24));
-  glow.addColorStop(0.34, rgba(color, anchor ? 0.13 : 0.07));
-  glow.addColorStop(1, "rgba(0,0,0,0)");
-  context.fillStyle = glow;
-  context.beginPath();
-  context.arc(x, y, glowRadius, 0, Math.PI * 2);
+
+  // Keep the spatial stage luminous without turning nodes into glossy planets.
+  // A local field belongs to verified node gravity; the node itself remains a
+  // flat authored mark, matching the v7.5 visual language.
+  if (anchor || emphasis > 1.04) {
+    context.globalCompositeOperation = "screen";
+    const glowRadius = displayRadius * (anchor ? 2.6 : 2.2);
+    const glow = context.createRadialGradient(x, y, displayRadius * 0.2, x, y, glowRadius);
+    glow.addColorStop(0, rgba(color, anchor ? 0.16 : 0.12));
+    glow.addColorStop(0.52, rgba(color, anchor ? 0.045 : 0.03));
+    glow.addColorStop(1, "rgba(0,0,0,0)");
+    context.fillStyle = glow;
+    context.beginPath();
+    context.arc(x, y, glowRadius, 0, Math.PI * 2);
+    context.fill();
+    context.globalCompositeOperation = "source-over";
+  }
+
+  const relief = Math.max(1, Math.min(2.8, displayRadius * 0.18));
+  context.fillStyle = "rgba(2,3,3,.72)";
+  context.strokeStyle = rgba(color, 0.15);
+  context.lineWidth = 0.65;
+  drawNodePath(context, node, x + relief, y + relief * 0.72, displayRadius);
   context.fill();
-  context.globalCompositeOperation = "source-over";
-  context.shadowColor = color;
-  context.shadowBlur = anchor ? 14 * emphasis : 7 * emphasis;
-  const core = context.createRadialGradient(
-    x - radius * 0.24,
-    y - radius * 0.3,
-    Math.max(0.7, radius * 0.05),
-    x,
-    y,
-    radius * 1.18 * emphasis,
-  );
-  core.addColorStop(0, rgba("#fff8e9", anchor ? 0.92 : 0.68));
-  core.addColorStop(0.18, rgba(color, anchor ? 0.74 : 0.5));
-  core.addColorStop(0.68, rgba(color, anchor ? 0.2 : 0.09));
-  core.addColorStop(1, rgba(color, 0.015));
-  context.fillStyle = core;
-  context.strokeStyle = rgba(color, anchor ? 0.96 : 0.7);
-  context.lineWidth = anchor ? 1.5 : 0.82;
-  context.beginPath();
-  context.arc(x, y, radius * emphasis, 0, Math.PI * 2);
+  context.stroke();
+
+  context.fillStyle = rgba(color, anchor ? 0.78 : 0.5 + depth * 0.24);
+  context.strokeStyle = rgba(color, anchor ? 0.92 : 0.68);
+  context.lineWidth = anchor ? 1.15 : 0.72;
+  context.shadowColor = rgba(color, anchor ? 0.36 : 0.18);
+  context.shadowBlur = anchor ? 5 : 2;
+  drawNodePath(context, node, x, y, displayRadius);
   context.fill();
   context.stroke();
   context.shadowBlur = 0;
-  context.fillStyle = rgba("#fff3dd", anchor ? 0.88 : 0.54 + depth * 0.22);
+
+  context.fillStyle = rgba("#fff4df", anchor ? 0.72 : 0.42);
   context.beginPath();
-  context.arc(x, y, Math.max(1.2, radius * (anchor ? 0.22 : 0.14)) * emphasis, 0, Math.PI * 2);
+  context.arc(x, y, Math.max(1, displayRadius * (anchor ? 0.2 : 0.14)), 0, Math.PI * 2);
   context.fill();
+
   if (anchor) {
     context.strokeStyle = rgba(color, 0.42);
-    context.lineWidth = 0.75;
+    context.lineWidth = 0.72;
     context.beginPath();
-    context.arc(x, y, radius * emphasis + 5, -Math.PI * 0.72, Math.PI * 0.68);
+    context.arc(x, y, displayRadius + 3.6, -Math.PI * 0.72, Math.PI * 0.52);
     context.stroke();
-  }
-  const grainCount = Math.min(anchor ? 14 : 6, 2 + Math.floor(Math.sqrt(Math.max(1, node.gravity)) / 2));
-  context.globalCompositeOperation = "screen";
-  context.shadowColor = color;
-  context.shadowBlur = anchor ? 7 : 4;
-  for (let index = 0; index < grainCount; index += 1) {
-    const angle = stableUnit(`${node.id}:grain:${index}:angle`) * Math.PI * 2;
-    const distance = radius * (1.7 + stableUnit(`${node.id}:grain:${index}:distance`) * (anchor ? 4.4 : 2.8));
-    const grainX = x + Math.cos(angle) * distance;
-    const grainY = y + Math.sin(angle) * distance * (0.48 + depth * 0.25);
-    const grainRadius = 0.45 + stableUnit(`${node.id}:grain:${index}:radius`) * (anchor ? 1.25 : 0.7);
-    context.fillStyle = rgba(color, anchor ? 0.36 : 0.2);
-    context.beginPath();
-    context.arc(grainX, grainY, grainRadius, 0, Math.PI * 2);
-    context.fill();
   }
   context.restore();
 }
@@ -593,28 +648,6 @@ function drawBackground(
   atmospheric.addColorStop(1, "rgba(0,0,0,0)");
   context.fillStyle = atmospheric;
   context.fillRect(0, 0, width, height);
-
-  context.save();
-  context.translate(width * 0.53, height * 0.82);
-  context.strokeStyle = "rgba(214,159,85,.08)";
-  context.lineWidth = 0.7;
-  const horizon = height * 0.64;
-  for (let row = 0; row < 9; row += 1) {
-    const y = -row * row * 8.4;
-    context.globalAlpha = Math.max(0.08, 0.5 - row * 0.045);
-    context.beginPath();
-    context.moveTo(-width, y);
-    context.lineTo(width, y);
-    context.stroke();
-  }
-  for (let column = -10; column <= 10; column += 1) {
-    context.globalAlpha = 0.26;
-    context.beginPath();
-    context.moveTo(column * width * 0.05, 0);
-    context.lineTo(column * width * 0.15, -horizon);
-    context.stroke();
-  }
-  context.restore();
 
   const grouped = new Map<string, ProjectedNode[]>();
   for (const item of projected) {
@@ -718,6 +751,12 @@ export function SemanticObservatoryCanvas({
   const hoverIdRef = useRef<string | null>(null);
   const pendingPointerRef = useRef<{ x: number; y: number } | null>(null);
   const pointerFrameRef = useRef(0);
+  const pendingCameraRef = useRef<CameraState | null>(null);
+  const cameraFrameRef = useRef(0);
+  const cameraCommits = useRef(0);
+  const cameraRef = useRef<CameraState>(defaultCamera);
+  const liveCameraRef = useRef<CameraState>(defaultCamera);
+  const interactionActiveRef = useRef(false);
   const dragRef = useRef<{
     pointerId: number;
     x: number;
@@ -727,6 +766,10 @@ export function SemanticObservatoryCanvas({
   } | null>(null);
   const [camera, setCamera] = useState(defaultCamera);
   const [hoverId, setHoverId] = useState<string | null>(null);
+  useEffect(() => {
+    cameraRef.current = camera;
+    liveCameraRef.current = camera;
+  }, [camera]);
   const activeId = hoverId ?? previewId ?? focusId;
   const clusterLabelById = useMemo(
     () => new Map(graph.clusters.map((cluster) => [cluster.id, cluster.label])),
@@ -744,29 +787,19 @@ export function SemanticObservatoryCanvas({
     to,
   }), [districtId, focusId, freshness, from, graph, meaning, mobile, mode, to]);
   const featuredSlots = useMemo(() => {
-    if (mode !== "home") return new Map();
-    const anchorIds = new Set(meaning.domainBackbone.flatMap((domain) =>
-      domain.anchorNodeId ? [domain.anchorNodeId] : []));
-    const roleSlots = {
-      cross_domain_bridge: { x: 0.61, y: 0.47, depth: 0.66, spreadX: 0.025, spreadY: 0.025 },
-      frontier_signal: { x: 0.36, y: 0.64, depth: 0.84, spreadX: 0.025, spreadY: 0.025 },
-      gravity_anchor: { x: 0.5, y: 0.7, depth: 0.93, spreadX: 0.025, spreadY: 0.025 },
-    } as const;
-    const slots = new Map<string, {
+    const focal = mode === "home"
+      ? graph.nodes.find((node) => node.label === "이미지생성")
+      : null;
+    return new Map<string, {
       x: number;
       y: number;
       depth: number;
       spreadX: number;
       spreadY: number;
-    }>();
-    for (const protagonist of meaning.protagonists) {
-      if (anchorIds.has(protagonist.nodeId)) continue;
-      const slot = roleSlots[protagonist.role];
-      const offset = (stableUnit(protagonist.nodeId) - 0.5) * 0.035;
-      slots.set(protagonist.nodeId, { ...slot, x: slot.x + offset, y: slot.y - offset * 0.45 });
-    }
-    return slots;
-  }, [meaning.domainBackbone, meaning.protagonists, mode]);
+    }>(focal
+      ? [[focal.id, { x: 0.63, y: 0.5, depth: 0.72, spreadX: 0.02, spreadY: 0.02 }]]
+      : []);
+  }, [graph.nodes, mode]);
   const projected = useMemo(() => projectNodes({
     graph,
     nodes: visibleNodes,
@@ -811,14 +844,11 @@ export function SemanticObservatoryCanvas({
     ...interactionEdges.flatMap((edge) => [edge.source, edge.target]),
   ]), [activeId, interactionEdges]);
   const persistentIds = useMemo(() => {
-    const domainAnchorIds = new Set(meaning.domainBackbone.flatMap((domain) =>
-      domain.anchorNodeId ? [domain.anchorNodeId] : []));
     return new Set([
-      ...meaning.protagonists.flatMap((protagonist) =>
-        domainAnchorIds.has(protagonist.nodeId) ? [] : [protagonist.nodeId]),
+      ...meaning.protagonists.map((protagonist) => protagonist.nodeId),
       ...(focusId ? [focusId] : []),
     ]);
-  }, [focusId, meaning.domainBackbone, meaning.protagonists]);
+  }, [focusId, meaning.protagonists]);
   const domainLabels = useMemo(() => mode === "home"
     ? meaning.domainBackbone.flatMap((domain) => {
         if (!domain.anchorNodeId) return [];
@@ -836,7 +866,7 @@ export function SemanticObservatoryCanvas({
         });
         return [{
           ...domain,
-          anchorLabel: graphNodeLabel(anchor),
+          description: domainDescriptions[domain.domain] ?? domain.statement,
           left: slotX * stageWidth
             + (mobile
               ? -slot.spreadX * stageWidth * (domain.domain === "Papers" ? 0.18 : 0.22)
@@ -880,38 +910,48 @@ export function SemanticObservatoryCanvas({
 
   const setCanvasSize = useCallback((canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
     const dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
-    canvas.width = Math.max(1, Math.round(width * dpr));
-    canvas.height = Math.max(1, Math.round(height * dpr));
+    const pixelWidth = Math.max(1, Math.round(width * dpr));
+    const pixelHeight = Math.max(1, Math.round(height * dpr));
+    if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+      canvas.width = pixelWidth;
+      canvas.height = pixelHeight;
+    }
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
     return dpr;
   }, [height, width]);
 
-  useEffect(() => {
+  const drawBaseFrame = useCallback((frameProjected: readonly ProjectedNode[]) => {
     const canvas = baseCanvasRef.current;
     const context = canvas?.getContext("2d");
     if (!canvas || !context || width < 2 || height < 2 || document.hidden) return;
+    const frameProjectedById = new Map(frameProjected.map((item) => [item.node.id, item]));
     setCanvasSize(canvas, context);
     context.clearRect(0, 0, width, height);
-    drawBackground(context, width, height, projected, clusterLabelById);
+    drawBackground(context, width, height, frameProjected, clusterLabelById);
     for (const edge of baseEdges) {
       drawEdge(
         context,
         edge,
-        projectedById,
+        frameProjectedById,
         clusterLabelById,
-        mode === "home" ? 0.42 : mode === "flow" ? 0.72 : 0.48,
+        mode === "home" ? 0.22 : mode === "flow" ? 0.72 : 0.42,
         mode === "flow" ? 1.24 : 1,
       );
     }
-    for (const item of projected) drawNode(context, item, clusterLabelById, { alpha: 0.34 + item.depth * 0.66 });
+    for (const item of frameProjected) drawNode(context, item, clusterLabelById, { alpha: 0.38 + item.depth * 0.58 });
     baseRedraws.current += 1;
     containerRef.current?.setAttribute("data-base-redraw-count", String(baseRedraws.current));
-  }, [baseEdges, clusterLabelById, height, mode, projected, projectedById, setCanvasSize, width]);
+  }, [baseEdges, clusterLabelById, height, mode, setCanvasSize, width]);
+
+  useEffect(() => {
+    drawBaseFrame(projected);
+  }, [drawBaseFrame, projected]);
 
   useEffect(() => {
     const canvas = interactionCanvasRef.current;
     const context = canvas?.getContext("2d");
     if (!canvas || !context || width < 2 || height < 2 || document.hidden) return;
+    if (!activeId && !interactionActiveRef.current) return;
     setCanvasSize(canvas, context);
     context.clearRect(0, 0, width, height);
     if (activeId) {
@@ -928,6 +968,7 @@ export function SemanticObservatoryCanvas({
         });
       }
     }
+    interactionActiveRef.current = Boolean(activeId);
     interactionRedraws.current += 1;
     containerRef.current?.setAttribute("data-interaction-redraw-count", String(interactionRedraws.current));
   }, [activeId, activeNodeIds, clusterLabelById, height, interactionEdges, mode, projected, projectedById, setCanvasSize, width]);
@@ -967,7 +1008,34 @@ export function SemanticObservatoryCanvas({
     });
   }, [commitHover, hitTest]);
 
-  useEffect(() => () => cancelAnimationFrame(pointerFrameRef.current), []);
+  const queueCamera = useCallback((next: CameraState) => {
+    pendingCameraRef.current = next;
+    if (cameraFrameRef.current) return;
+    cameraFrameRef.current = requestAnimationFrame(() => {
+      cameraFrameRef.current = 0;
+      const pending = pendingCameraRef.current;
+      pendingCameraRef.current = null;
+      if (!pending) return;
+      liveCameraRef.current = pending;
+      drawBaseFrame(projectNodes({
+        graph,
+        nodes: visibleNodes,
+        width: Math.max(1, width),
+        height: Math.max(1, height),
+        camera: pending,
+        mode,
+        mobile,
+        featuredSlots,
+      }));
+      cameraCommits.current += 1;
+      containerRef.current?.setAttribute("data-camera-frame-count", String(cameraCommits.current));
+    });
+  }, [containerRef, drawBaseFrame, featuredSlots, graph, height, mobile, mode, visibleNodes, width]);
+
+  useEffect(() => () => {
+    cancelAnimationFrame(pointerFrameRef.current);
+    cancelAnimationFrame(cameraFrameRef.current);
+  }, []);
 
   const pointerPosition = (event: ReactPointerEvent<HTMLDivElement>) => {
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -977,11 +1045,13 @@ export function SemanticObservatoryCanvas({
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (mobile) return;
     const point = pointerPosition(event);
+    commitHover(null);
+    liveCameraRef.current = cameraRef.current;
     dragRef.current = {
       pointerId: event.pointerId,
       x: point.x,
       y: point.y,
-      camera,
+      camera: cameraRef.current,
       moved: false,
     };
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -998,8 +1068,9 @@ export function SemanticObservatoryCanvas({
     const dy = point.y - drag.y;
     if (Math.hypot(dx, dy) > 4) drag.moved = true;
     if (drag.moved) {
+      event.currentTarget.setAttribute("data-dragging", "true");
       commitHover(null);
-      setCamera(clampCamera({
+      queueCamera(clampCamera({
         ...drag.camera,
         yaw: drag.camera.yaw + dx * 0.0015,
         pitch: drag.camera.pitch + dy * 0.0011,
@@ -1014,10 +1085,13 @@ export function SemanticObservatoryCanvas({
     if (!drag.moved) {
       const hit = hitTest(point.x, point.y);
       if (hit) onSelect(hit.node.id);
+    } else {
+      setCamera(liveCameraRef.current);
     }
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
+    event.currentTarget.setAttribute("data-dragging", "false");
     dragRef.current = null;
   };
 
@@ -1039,7 +1113,7 @@ export function SemanticObservatoryCanvas({
     <div
       ref={containerRef}
       className={`semantic-observatory is-${mode} ${className}`.trim()}
-      data-renderer="canvas2d-semantic-observatory-2_5d"
+      data-renderer="canvas2d-semantic-observatory-projected-3d"
       data-base-layer="SpatialBaseLayer"
       data-interaction-layer="SpatialInteractionLayer"
       data-html-layer="SpatialHtmlLayer"
@@ -1054,7 +1128,7 @@ export function SemanticObservatoryCanvas({
       data-homi-knowledge-edge-count="0"
       data-domain-coverage={JSON.stringify(meaning.manifest.domainCoverage)}
       tabIndex={0}
-      aria-label={`2.5D 방향 지식 관측소. 노드 ${projected.length}개, 실제 방향 관계 ${baseEdges.length}개. MOC·Papers·Signals는 서로 다른 깊이 평면에 있습니다.`}
+      aria-label={`투영형 3D 방향 지식 관측소. 노드 ${projected.length}개, 실제 방향 관계 ${baseEdges.length}개. MOC·Papers·Signals는 서로 다른 깊이 공간에 있습니다.`}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -1065,6 +1139,8 @@ export function SemanticObservatoryCanvas({
         if (event.currentTarget.hasPointerCapture(event.pointerId)) {
           event.currentTarget.releasePointerCapture(event.pointerId);
         }
+        event.currentTarget.setAttribute("data-dragging", "false");
+        drawBaseFrame(projected);
         dragRef.current = null;
         commitHover(null);
       }}
@@ -1111,11 +1187,11 @@ export function SemanticObservatoryCanvas({
               textShadow: "0 0 18px #070705,0 2px 5px #070705",
             }}
           >
-            <strong style={{ font: "760 18px/1 var(--fm)", letterSpacing: ".02em", textTransform: "uppercase" }}>
+            <strong style={{ font: "740 16px/1 var(--fm)", letterSpacing: ".045em", textTransform: "uppercase" }}>
               {domain.domain}
             </strong>
             <small style={{ color: "rgba(239,229,213,.72)", font: "620 12px var(--fm)" }}>
-              {domain.anchorLabel}
+              {domain.description}
             </small>
           </span>
         ))}
@@ -1163,7 +1239,7 @@ export function SemanticObservatoryCanvas({
         </div>
       )}
       {!mobile && mode !== "home" && (
-        <div className="graph-camera-controls" role="group" aria-label="2.5D 카메라 제어">
+        <div className="graph-camera-controls" role="group" aria-label="투영형 3D 카메라 제어">
           <button type="button" aria-label="선택에 맞추기" onClick={() => {
             const point = focusId ? projectedById.get(focusId) : null;
             setCamera((current) => point
@@ -1180,7 +1256,7 @@ export function SemanticObservatoryCanvas({
           <button type="button" aria-label="카메라 초기화" onClick={() => setCamera(defaultCamera)}><RotateCcw size={15} /></button>
         </div>
       )}
-      <ol className="graph-accessible-list" aria-label="2.5D 관측소의 현재 지식 노드">
+      <ol className="graph-accessible-list" aria-label="투영형 3D 관측소의 현재 지식 노드">
         {projected.map((item) => (
           <li key={item.node.id}>
             <button
@@ -1196,7 +1272,7 @@ export function SemanticObservatoryCanvas({
           </li>
         ))}
       </ol>
-      <ol className="graph-accessible-list" aria-label="2.5D 관측소의 실제 방향 관계">
+      <ol className="graph-accessible-list" aria-label="투영형 3D 관측소의 실제 방향 관계">
         {baseEdges.map((edge) => (
           <li key={edge.id}>
             {graphNodeLabel(nodeById.get(edge.source)!)} → {graphNodeLabel(nodeById.get(edge.target)!)} · 실제 참조 {edge.occurrenceCount}회

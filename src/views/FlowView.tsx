@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { SpatialWorkspaceFrame } from "../components/SpatialWorkspaceFrame";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { atlasData, graphNodeById } from "../data-runtime";
-import { SemanticObservatoryCanvas } from "../graph/SemanticObservatoryCanvas";
+import { LivingGraphCanvas } from "../graph/LivingGraphCanvas";
 import { graphNodeLabel, humanReadableKnowledgeLabel, shortestDirectedPath } from "../graph/model";
 import { useAtlasState } from "../state";
 import type { Route } from "../types";
@@ -115,18 +115,20 @@ export function FlowView() {
 
           {!state.mobileSibling && <div className="desktop-visual-surface spatial-stage-layout flow-spatial-layout">
             <main className="spatial-stage spatial-stage--full-bleed flow-spatial-stage">
-              <SemanticObservatoryCanvas
+              <LivingGraphCanvas
                 graph={atlasData.graph}
-                meaning={atlasData.meaning}
-                mode="flow"
+                scene="trace"
                 focusId={state.focusId || from}
                 previewId={localPreviewId}
                 from={from}
                 to={to}
                 mobile={state.mobileSibling}
                 reducedMotion={state.reducedMotion}
+                presentation="workspace"
+                persistentLabelIds={routeIds}
+                highlightNodeIds={routeIds}
                 onSelect={(focusId) => dispatch({ type: "focus", focusId })}
-                onPreview={setLocalPreviewId}
+                onHover={setLocalPreviewId}
               />
             </main>
             <aside className="spatial-evidence-rail spatial-evidence-rail--typographic flow-evidence-rail flow-spatial-evidence" aria-live="polite">

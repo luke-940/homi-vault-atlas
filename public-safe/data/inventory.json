@@ -1,24 +1,24 @@
 {
   "schema": "atlas.inventory.v1",
   "profile": "atlas-public",
-  "generatedAt": "2026-07-27T03:30:01.131Z",
+  "generatedAt": "2026-07-27T05:09:31.489Z",
   "asOfDate": "2026-07-27",
-  "physicalMarkdownCount": 892,
-  "namedCount": 18,
+  "physicalMarkdownCount": 893,
+  "namedCount": 19,
   "aggregateCount": 630,
   "excludedCount": 244,
   "unclassifiedCount": 0,
   "reconciliation": {
-    "classifiedTotal": 892,
+    "classifiedTotal": 893,
     "pass": true
   },
   "coverage": [
     {
       "id": "coverage:bmfohnipgjoniceo",
       "label": "Independent Projects",
-      "physical": 245,
+      "physical": 246,
       "named": 0,
-      "aggregate": 245,
+      "aggregate": 246,
       "excluded": 0
     },
     {
@@ -65,8 +65,8 @@
       "id": "coverage:iifenbocdbbaijbj",
       "label": "중심 지식",
       "physical": 161,
-      "named": 8,
-      "aggregate": 153,
+      "named": 9,
+      "aggregate": 152,
       "excluded": 0
     }
   ],

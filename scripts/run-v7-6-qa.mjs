@@ -44,7 +44,7 @@ const GEOMETRY_GROUPS = Object.freeze({
   home: [
     ".home-v75-page",
     ".home-v75-graph-shell",
-    ".semantic-observatory.is-home",
+    ".living-graph-canvas.is-home",
     ".home-v75-copy-block .home-v75-eyebrow",
     ".home-v75-copy-block h1",
     ".home-v75-copy-block > p",
@@ -76,7 +76,7 @@ const GEOMETRY_GROUPS = Object.freeze({
     ".explore-v75",
     ".explore-command-rail > *",
     ".explore-v75-graph-panel",
-    ".explore-v75-graph-panel .semantic-observatory",
+    ".explore-v75-graph-panel .living-graph-canvas",
     ".explore-v75-mobile-clusters > button",
     ".explore-evidence-rail > *",
     ".explore-v75-clusters > button",
@@ -98,7 +98,7 @@ const GEOMETRY_GROUPS = Object.freeze({
   flow: [
     ".flow-honest-empty",
     ".route-rail > button",
-    ".flow-spatial-stage .semantic-observatory",
+    ".flow-spatial-stage .living-graph-canvas",
     ".flow-evidence-rail > *",
     ".mobile-stepper > li",
   ],
@@ -129,7 +129,7 @@ const GEOMETRY_GROUPS = Object.freeze({
 const REQUIRED_GEOMETRY_SELECTORS = Object.freeze({
   home: [
     ".home-v75-copy-block h1",
-    ".semantic-observatory.is-home",
+    ".living-graph-canvas.is-home",
     ".home-v75-evidence",
     ".home-v75-scenes > button",
     ".home-v75-boundary",
@@ -156,7 +156,7 @@ const REQUIRED_GEOMETRY_SELECTORS = Object.freeze({
   ],
   exploreGraph: [
     ".explore-v75-graph-panel",
-    ".explore-v75-graph-panel .semantic-observatory",
+    ".explore-v75-graph-panel .living-graph-canvas",
   ],
   exploreConstellations: [
     ".explore-v75-clusters",
@@ -183,7 +183,7 @@ const REQUIRED_GEOMETRY_SELECTORS = Object.freeze({
   ],
   flow: [
     ".flow-honest-empty, .route-rail > button",
-    ".flow-honest-empty, .flow-spatial-stage .semantic-observatory",
+    ".flow-honest-empty, .flow-spatial-stage .living-graph-canvas",
   ],
   time: [
     ".version-seam",
@@ -288,7 +288,7 @@ export const CORE_ROUTE_CASES = Object.freeze([
   }),
   qaCase({
     key: "explore", workspace: "explore", hash: "#explore?scene=graph",
-    readySelector: ".explore-v75 .semantic-observatory", finalReadySelector: ".explore-v75 .semantic-observatory",
+    readySelector: ".explore-v75 .living-graph-canvas", finalReadySelector: ".explore-v75 .living-graph-canvas",
     geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 320, height: 844 }, touch: true, journey: "explore-graph", targetScene: "graph",
   }),
   qaCase({
@@ -334,7 +334,7 @@ const CI_ONLY_ROUTE_CASES = Object.freeze([
   }),
   qaCase({
     key: "explore-constellations", workspace: "explore", hash: "#explore?scene=constellations",
-    readySelector: ".explore-v75-clusters", finalReadySelector: ".explore-v75-graph-panel .semantic-observatory",
+    readySelector: ".explore-v75-clusters", finalReadySelector: ".explore-v75-graph-panel .living-graph-canvas",
     geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 1280, height: 720 }, journey: "explore-constellations", targetScene: "constellations",
   }),
   qaCase({
@@ -384,7 +384,7 @@ const CI_ONLY_ROUTE_CASES = Object.freeze([
   }),
   qaCase({
     key: "webkit-graph-focus", workspace: "explore", hash: "#explore?scene=graph",
-    readySelector: ".explore-v75 .semantic-observatory", finalReadySelector: ".explore-v75 .semantic-observatory", geometryGroups: GEOMETRY_GROUPS.explore,
+    readySelector: ".explore-v75 .living-graph-canvas", finalReadySelector: ".explore-v75 .living-graph-canvas", geometryGroups: GEOMETRY_GROUPS.explore,
     viewport: { width: 1024, height: 768 }, browserName: "webkit", longTaskRequired: false, journey: "webkit-graph-focus", targetScene: "graph",
   }),
   qaCase({
@@ -976,7 +976,7 @@ async function measureGeometry(page, groupSelectors, route) {
     runtimeSelectors: {
       app: aliasRuntimeSelector(".atlas-app"),
       homeHeadline: aliasRuntimeSelector(".home-v75-copy-block h1"),
-      homeTerrain: aliasRuntimeSelector(".semantic-observatory.is-home"),
+      homeTerrain: aliasRuntimeSelector(".living-graph-canvas.is-home"),
       mobileNavigation: aliasRuntimeSelector(".mobile-navigation"),
       mobileSibling: aliasRuntimeSelector(".mobile-sibling"),
       mobileInteractive: aliasRuntimeSelector(".atlas-app button:not([disabled]), .atlas-app a[href], .atlas-app input:not([disabled]), .atlas-app select:not([disabled]), .atlas-app textarea:not([disabled]), .atlas-app [role='button']:not([aria-disabled='true'])"),
@@ -1065,7 +1065,7 @@ export async function executeJourney(page, route) {
     }
     details.actorIds = visited;
   } else if (route.journey === "explore-graph") {
-    const graph = runtimeLocator(page, ".explore-v75 .semantic-observatory");
+    const graph = runtimeLocator(page, ".explore-v75 .living-graph-canvas");
     await graph.waitFor({ state: "visible" });
     const counts = await graph.evaluate((node) => ({
       nodes: Number(node.getAttribute("data-node-count") ?? 0),
@@ -1079,7 +1079,7 @@ export async function executeJourney(page, route) {
   } else if (route.journey === "explore-constellations") {
     const target = runtimeLocator(page, ".explore-v75-clusters > button:visible").first();
     await activateLocator(page, target, route.touch);
-    await runtimeLocator(page, ".explore-v75-graph-panel .semantic-observatory").waitFor({ state: "visible" });
+    await runtimeLocator(page, ".explore-v75-graph-panel .living-graph-canvas").waitFor({ state: "visible" });
     await page.waitForFunction(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("scene") === "graph"
       && Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus")));
     details.focus = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
@@ -1096,7 +1096,7 @@ export async function executeJourney(page, route) {
   } else if (route.journey === "flow-verified-or-empty") {
     const emptyCount = await runtimeLocator(page, ".flow-honest-empty:visible").count();
     const routeCount = await runtimeLocator(page, ".route-rail > button:visible").count();
-    const graphCount = await runtimeLocator(page, ".flow-spatial-stage .semantic-observatory:visible").count();
+    const graphCount = await runtimeLocator(page, ".flow-spatial-stage .living-graph-canvas:visible").count();
     if (emptyCount === 1) {
       if (routeCount !== 0 || graphCount !== 0) throw new Error("Flow empty state retained clickable or drawn zero-member routes");
       details.mode = "honest-empty";

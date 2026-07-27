@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { SpatialWorkspaceFrame } from "../components/SpatialWorkspaceFrame";
 import { atlasData, graphNodeById } from "../data-runtime";
-import { SemanticObservatoryCanvas } from "../graph/SemanticObservatoryCanvas";
+import { LivingGraphCanvas } from "../graph/LivingGraphCanvas";
 import { graphNodeLabel, shortestDirectedPath, type FreshnessBucket } from "../graph/model";
 import { useAtlasState } from "../state";
 import type { AtlasGraphNodeV1 } from "../types";
@@ -215,20 +215,21 @@ export function ExploreView() {
               <span><CircleDot size={14} />크기는 지식 중력</span>
               <span><Route size={14} />화살표는 실제 참조 방향</span>
             </div>
-            <SemanticObservatoryCanvas
+            <LivingGraphCanvas
               graph={atlasData.graph}
-              meaning={atlasData.meaning}
-              mode="explore"
+              scene={state.pathFrom && state.pathTo ? "trace" : state.freshness !== "all" ? "freshness" : "field"}
               focusId={selected?.id ?? null}
               previewId={localPreviewId}
               districtId={state.districtId}
               freshness={state.freshness}
               from={state.pathFrom}
               to={state.pathTo}
+              districtRelationMatrix={atlasData.relation.matrix}
               mobile={state.mobileSibling}
               reducedMotion={state.reducedMotion}
+              presentation="workspace"
               onSelect={selectNode}
-              onPreview={previewNode}
+              onHover={previewNode}
             />
           </main>
           {selected && <aside className="spatial-evidence-rail explore-evidence-rail explore-v75-insight" aria-live="polite">
@@ -289,16 +290,18 @@ export function ExploreView() {
             })}
           </nav>
           <main className="explore-constellation-stage">
-            <SemanticObservatoryCanvas
+            <LivingGraphCanvas
               graph={atlasData.graph}
-              meaning={atlasData.meaning}
-              mode="explore"
+              scene="trace"
               focusId={selectedConstellationNode?.id ?? null}
               previewId={localPreviewId}
               mobile={state.mobileSibling}
               reducedMotion={state.reducedMotion}
+              presentation="workspace"
+              persistentLabelIds={atlasData.meaning.protagonists.map((item) => item.nodeId)}
+              highlightNodeIds={atlasData.meaning.protagonists.map((item) => item.nodeId)}
               onSelect={selectNode}
-              onPreview={previewNode}
+              onHover={previewNode}
             />
             {activeConstellationNode && activeConstellationMeaning && (
               <article className="explore-constellation-brief" aria-live="polite">

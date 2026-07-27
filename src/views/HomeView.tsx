@@ -7,7 +7,6 @@ import * as m from "motion/react-m";
 import homiMark from "../assets/brand/homi-mark-amber.svg";
 import { atlasData, graphNodeById } from "../data-runtime";
 import { LivingGraphCanvas } from "../graph/LivingGraphCanvas";
-import { SemanticObservatoryCanvas } from "../graph/SemanticObservatoryCanvas";
 import {
   graphNodeLabel,
 } from "../graph/model";
@@ -242,11 +241,14 @@ const CORE_DOMAINS = [
 ] as const;
 
 function defaultProtagonist() {
-  const openAiNode = atlasData.graph.nodes.find((node) => node.label === "OpenAI");
-  const openAiMeaning = openAiNode
-    ? atlasData.meaning.protagonists.find((item) => item.nodeId === openAiNode.id)
-    : null;
-  return openAiMeaning ?? atlasData.meaning.protagonists[0] ?? null;
+  for (const label of ["이미지생성", "에이전트"]) {
+    const node = atlasData.graph.nodes.find((candidate) => candidate.label === label);
+    const meaning = node
+      ? atlasData.meaning.protagonists.find((item) => item.nodeId === node.id)
+      : null;
+    if (meaning) return meaning;
+  }
+  return atlasData.meaning.protagonists[0] ?? null;
 }
 
 function ProtagonistRail({
@@ -491,7 +493,7 @@ export function HomeView() {
 
   return (
     <div
-      className={`home-v75 home-v76 is-${scene.legacyVisual} is-v76-${sceneId}`}
+      className={`home-v75 home-v76 is-${scene.legacyVisual} is-v76-${sceneId}${hasExplicitFocus ? " has-home-focus" : ""}`}
       lang="ko"
       data-home-page={sceneId}
     >
@@ -502,39 +504,25 @@ export function HomeView() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
         >
-          {sceneId === "domain-backbone" ? (
-            <SemanticObservatoryCanvas
-              graph={atlasData.graph}
-              meaning={atlasData.meaning}
-              mode="home"
-              focusId={committedGraphFocus}
-              previewId={previewId}
-              mobile={state.mobileSibling}
-              reducedMotion={state.reducedMotion}
-              onSelect={select}
-              onPreview={preview}
-            />
-          ) : (
-            <LivingGraphCanvas
-              graph={atlasData.graph}
-              scene={graphScene(sceneId)}
-              focusId={graphFocus}
-              committedSelectionId={committedGraphFocus}
-              previewId={previewId}
-              from={null}
-              to={null}
-              persistentLabelIds={persistentLabelIds}
-              districtRelationMatrix={atlasData.relation.matrix}
-              operationalAlignment={displayedAlignment}
-              operationalActorLabel={displayedAlignmentActor}
-              presentation="home"
-              mobile={state.mobileSibling}
-              reducedMotion={state.reducedMotion}
-              onSelect={select}
-              onHover={preview}
-              highlightNodeIds={systemPreview ? persistentLabelIds : []}
-            />
-          )}
+          <LivingGraphCanvas
+            graph={atlasData.graph}
+            scene={graphScene(sceneId)}
+            focusId={graphFocus}
+            committedSelectionId={committedGraphFocus}
+            previewId={previewId}
+            from={null}
+            to={null}
+            persistentLabelIds={persistentLabelIds}
+            districtRelationMatrix={atlasData.relation.matrix}
+            operationalAlignment={displayedAlignment}
+            operationalActorLabel={displayedAlignmentActor}
+            presentation="home"
+            mobile={state.mobileSibling}
+            reducedMotion={state.reducedMotion}
+            onSelect={select}
+            onHover={preview}
+            highlightNodeIds={systemPreview ? persistentLabelIds : []}
+          />
         </m.div>
 
         {sceneId === "domain-backbone" && (

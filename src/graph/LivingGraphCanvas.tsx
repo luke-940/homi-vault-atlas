@@ -242,7 +242,17 @@ function cameraForGraphScene(
   scene: GraphScene,
 ) {
   const base = defaultCamera(graph, presentation, mobile);
-  if (presentation !== "home" || mobile) return base;
+  if (presentation !== "home" || mobile) {
+    if (mobile) return base;
+    return clampCamera({
+      ...base,
+      yaw: scene === "trace" ? -0.34 : -0.32,
+      pitch: scene === "freshness" ? 0.16 : 0.2,
+      zoom: scene === "trace" ? 1.12 : 1.16,
+      panX: -18,
+      panY: scene === "trace" ? 18 : 32,
+    });
+  }
   if (scene === "gravity") return clampCamera({ ...base, yaw: -0.28, pitch: 0.18, zoom: 1.16, panX: -30, panY: 0 });
   if (scene === "freshness") return clampCamera({ ...base, yaw: -0.16, pitch: 0.1, zoom: 1.16, panX: 100, panY: 10 });
   if (scene === "trace") return clampCamera({ ...base, yaw: -0.34, pitch: 0.18, zoom: 1.1, panX: 100, panY: -20 });
@@ -491,7 +501,10 @@ function placeLabels(
   const persistentIds = new Set(persistentLabelIds);
   const priorityIndex = new Map(priorityLabelIds.map((id, index) => [id, index]));
   const labelCandidates = presentation === "home"
-    ? nodes.filter((node) => node.id === focusId || priorityIndex.has(node.id) || persistentIds.has(node.id))
+    ? nodes.filter((node) =>
+      node.id === focusId
+      || persistentIds.has(node.id)
+      || (Boolean(focusId) && priorityIndex.has(node.id)))
     : nodes;
   const safeLeft = Math.max(18, (viewport.clipLeft ?? 0) + 12);
   const safeRight = Math.min(viewport.width - 18, viewport.width - (viewport.clipRight ?? 0) - 12);
@@ -1043,7 +1056,7 @@ export function LivingGraphCanvas({
     presentation,
     mobile || compactLandscape,
     persistentLabelIds,
-    edgeEndpointLabelIds,
+    presentation === "home" && !layoutFocusId ? [] : edgeEndpointLabelIds,
   ), [compactLandscape, coordinateById, edgeEndpointLabelIds, graph.layout.labelBudget, layoutFocusId, mobile, persistentLabelIds, presentation, projectedById, scene, selection.nodes, size]);
   const hoverTooltip = useMemo(() => {
     if (!transientPreviewId || transientPreviewId === committedId) return null;
@@ -1052,7 +1065,8 @@ export function LivingGraphCanvas({
     if (!node || !point?.visible) return null;
     const clusterLabel = clusterById.get(node.clusterId)?.label ?? "구역 미확인";
     const x = Math.max(118, Math.min(size.width - 118, point.x));
-    const y = Math.max(62, Math.min(size.height - 72, point.y - 36));
+    const minimumY = presentation === "workspace" ? 98 : 62;
+    const y = Math.max(minimumY, Math.min(size.height - 72, point.y - 36));
     return {
       node,
       x,
@@ -1072,7 +1086,7 @@ export function LivingGraphCanvas({
           return neighbor ? [graphNodeLabel(neighbor)] : [];
         })[0] ?? null,
     };
-  }, [activeInteractionContext, clusterById, committedId, nodeById, projectedById, size.height, size.width, transientPreviewId]);
+  }, [activeInteractionContext, clusterById, committedId, nodeById, presentation, projectedById, size.height, size.width, transientPreviewId]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

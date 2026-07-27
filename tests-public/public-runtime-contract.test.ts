@@ -294,10 +294,9 @@ describe("public Atlas v7.7 runtime contracts", () => {
     expect(markup).toContain(
       `이름으로 표현 ${inventory.namedCount.toLocaleString("ko-KR")}`,
     );
-    expect(markup).toContain('data-renderer="canvas2d-semantic-observatory-2_5d"');
-    expect(markup).toContain("data-domain-coverage=");
-    expect(markup).toContain('data-homi-knowledge-edge-count="0"');
-    expect(markup).toContain("2.5D 관측소의 실제 방향 관계");
+    expect(markup).toContain('data-renderer="canvas2d-projected-3d"');
+    expect(markup).toContain("3차원 방향 지식 그래프");
+    expect(markup).toContain("현재 렌더링된 실제 의미 선 목록");
     expect(markup).toContain("검증된 버전 스냅샷");
     expect(markup).not.toContain("표현 기록");
     expect(inventory.reconciliation.pass).toBe(true);

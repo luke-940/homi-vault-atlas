@@ -15,6 +15,11 @@ const publicJudgments = Object.freeze({
     thesis: "에이전트는 답변 기능이 아니라 도구·권한·메모리·실행·검증을 가진 작업 표면으로 다뤄집니다.",
     caveat: "연결 수는 운영 성숙도나 자율성 점수가 아닙니다.",
   },
+  "이미지생성": {
+    role: "cross_domain_bridge",
+    thesis: "이미지생성은 모델·편집·디자인 도구·연구 근거를 실제 제작 흐름으로 연결하는 범용 시각 합성 지형입니다.",
+    caveat: "연결 밀도는 제품·모델의 우열이나 현재 가용성을 뜻하지 않습니다.",
+  },
   OpenAI: {
     role: "frontier_signal",
     thesis: "OpenAI는 범용 작업·코딩·연결·기업 실행 가설을 먼저 비교하게 만드는 강한 전방 압력입니다.",
@@ -61,7 +66,7 @@ function cleanDossier(dossier, graphNode) {
 
 function defaultProtagonistNodes(graph, profile) {
   const preferredLabels = profile === "atlas-public"
-    ? ["AI 신뢰성", "Agent Papers", "노동·조직", "AI and Society Papers", "에이전트", "OpenAI"]
+    ? ["에이전트", "이미지생성", "AI 신뢰성", "Agent Papers", "노동·조직", "AI and Society Papers"]
     : [];
   const preferred = preferredLabels
     .map((label) => graph.nodes.find((node) => node.label === label))

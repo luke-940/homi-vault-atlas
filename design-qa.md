@@ -1,83 +1,121 @@
-# Homi Vault Atlas v7.7 — Backbone Density Design QA
+# Homi Vault Atlas v7.7 — Visual and Interaction Regression Recovery
 
-## Comparison target
+## Status
 
-- Source visual truth: local-only Gate 1 evidence, `golden-direction/home-default-depth-1440x920.png`
-- Source pixels: 1569×1002, normalized proportionally into a 1440×920 frame.
-- Rendered implementation: local-only Gate 3 evidence, `backbone-density-audit/09-backbone-density-design-final-1440x920.actual.png`
-- Implementation pixels / CSS viewport: 1440×920 at browser DPR 2; evidence normalized to 1440×920 PNG pixels for comparison.
-- State: Owner Home · `domain-backbone` · default committed selection.
-- Full-view comparison: local-only evidence, `backbone-density-audit/10-golden-vs-design-final-1440x920.png`
-- Focused graph comparison: local-only evidence, `backbone-density-audit/06-golden-vs-balanced-focus.png`
-- Mobile evidence: local-only evidence, `backbone-density-audit/11-backbone-density-design-final-390x844.actual.png`
+- The earlier `Pass 3 — passed` judgement is withdrawn.
+- It fixed the wording and protagonist choice, but left a visual and interaction regression:
+  glossy ringed nodes, a diagram-like grid, flatter composition, and a camera sample that was incorrectly called healthy.
+- This document records the bounded recovery. It is not a release PASS and does not replace Luke's visual decision.
 
-## Findings
+## Visual source of truth
 
-- No actionable P0/P1/P2 findings remain in the revised Backbone state.
-- [P3] The golden concept retains a denser atmospheric micro-field than the implementation.
-  - Evidence: the source uses many illustrative micro-marks; the implementation exposes 60 factual graph nodes and 16 factual directed edges.
-  - Classification: acceptable truth-bound deviation. Decorative nodes and invented edges remain prohibited.
-  - Follow-up: future density may increase only when additional real, public-safe graph nodes and edges are available.
+- Praised v7.5 Home:
+  `/Users/gangjaeseong/Documents/Codex/2026-07-15/homi-atlas-builder-1/outputs/rel-atlas-v7-5-20260721-01/visual-audit/final-fresh-capture/home-1440x920.png`
+- Regressed v7.7 candidate:
+  `feedback-round-3/01-regressed-current.png`
+  - SHA-256 `01ef7b9fbbbe444b51d0143a8a6a8591d293a4badc5a2cda63946d59e0b8224e`
+- Restored Home candidate:
+  `feedback-round-3/14-final-v75-home-stage-restored.jpg`
+  - SHA-256 `30b0bb43e9a452276ad93c1a031e4347792a30411f0b1d40d9933e4d66f321f0`
+- Restored and connected Explore candidate:
+  `feedback-round-3/15-final-v75-explore-stage-connected.jpg`
+  - SHA-256 `255304885b78ec976920836d77aa8a1492adb8dc778cf86be710b18f18f2623a`
+- Same-frame Home comparison:
+  `feedback-round-3/12-v75-v77-restored-side-by-side.png`
+  - SHA-256 `8239a3a4e833af11615b21db88efc8c9816da34ab039445c9efb55731fbca6a9`
 
-## Required fidelity surfaces
+The final two capture files use the `.jpg` extension because the in-app browser
+returned JPEG/JFIF bytes. A screenshot filename is not treated as evidence unless
+its actual file signature matches the extension.
 
-- Fonts and typography: Pretendard/Space Grotesk hierarchy, headline wrapping, domain labels, and small evidence copy remain consistent with the approved stage. Required visible text is at least 12 px.
-- Spacing and layout rhythm: the 1440×920 split composition is preserved. A tall compact desktop now caps the graph plotting height instead of stretching clusters through the full viewport. At 1440×920, visible domain and protagonist labels have zero intersections and zero headline overlap.
-- Colors and visual tokens: warm graphite field, MOC amber, Papers violet, Signals cyan, and Homi amber focus remain unchanged. The three domains now receive comparable visual mass.
-- Image and asset fidelity: the real Homi mark is preserved. No placeholder, CSS-drawn logo, decorative fake node, or invented edge was introduced.
-- Copy and content: the approved Korean headline, MOC/Papers/Signals role explanation, domain anchor copy, and provenance language remain unchanged.
+## What was wrong
 
-## Comparison history
+1. The first correction only repaired the first paragraph of Luke's feedback:
+   generic domain wording replaced misleading example subtitles and `OpenAI`
+   stopped being the hard-coded default protagonist.
+2. The new active renderer still replaced the praised v7.5 spatial language with
+   glossy rings, repeated circles, a Cartesian-looking perspective grid, and
+   flatter clustering.
+3. The reported `316 ms / 2 camera frames` drag was not a performance success.
+   It implied roughly six visible updates per second and should have failed review.
+4. Explore defaulted to zero semantic lines after the renderer swap, so it
+   visually exposed nodes without their actual relationship field.
 
-### Pass 1 — blocked
+## Recovery
 
-- P1: the 46-node Home selection rendered only 39 visible nodes and seven edges, making Backbone look like a small representative sample rather than a knowledge system.
-- P1: selection order let MOC consume most of the available node budget, starving Papers and Signals.
-- P2: tall compact-desktop viewports stretched the plot vertically and created excessive empty space.
-- P2: the compact Papers label could intrude into the headline region.
+- Home, Explore, Explore Constellations, and Flow now use the existing
+  v7.5 `LivingGraphCanvas` spatial renderer again.
+- v7.7 meaning, title, Signals, protagonist, filtering, URL, and evidence logic
+  stay in place; only the regressed visual/runtime renderer was removed from
+  active product surfaces.
+- Home again uses the warm graphite field, node-local light, restrained material,
+  authored perspective depth, real Homi provenance mark, and v7.5 camera behavior.
+- Persistent Home labels are limited to MOC, Papers, and Signals by default;
+  `Strategy 구역` no longer appears as a fourth core-domain label.
+- The focused evidence strip no longer collides with the Homi provenance beacon.
+- Explore now renders exactly 24 real `atlas.graph.v1` reference commands by
+  default. Selection is deterministic, gives every represented cluster an
+  incident-edge opportunity, then fills by actual occurrence strength.
+- Focus, preview, and directed path still replace the overview with exact factual
+  relationships. No decorative, membership, association, or Homi knowledge edge
+  was introduced.
+- Unused Semantic Observatory CSS is no longer shipped.
 
-### Fixes
+## Targeted interaction evidence
 
-- Increased factual Home capacity to 60 desktop nodes and 24 mobile nodes.
-- Balanced the node budget across the three core domains before using any remainder.
-- Increased deterministic factual Backbone edges to 16 desktop and eight mobile with the existing degree-four guard.
-- Capped non-mobile plot height relative to viewport width and aligned label projection to the same stage metrics.
-- Shifted compact-desktop domain slots away from the editorial headline.
-
-### Pass 2 — passed
-
-- 1440×920: 60 nodes, 16 actual directed edges; domain distribution is MOC 21, Papers 19, Signals 19, Strategy 1.
-- 390×844: 24 nodes, eight actual directed edges, page horizontal overflow 0.
-- Visible domain/protagonist label intersections: 0.
-- Headline/domain-label intersections: 0.
-- Browser console warning/error messages: 0.
-- Click selection commits the exact Owner node to the URL. Escape restores the prior semantic state after dismissing the active guide state.
-
-### Pass 3 — visual polish passed
-
-- Replaced repeated column-like node placement with a bounded deterministic constellation scatter while preserving the build-time position signal.
-- Added depth-aware luminous node cores and factual edge underglow without adding decorative nodes or relationships.
-- Increased factual cross-cluster curve separation so directional paths read as spatial routes instead of a vertical wiring diagram.
-- Raised the Papers depth plane and spread so MOC, Papers, and Signals now carry comparable visual mass while remaining on distinct planes.
-- Rechecked 1440×920: label intersections 0, headline overlap 0, page overflow 0.
-- Rechecked 390×844: 24 nodes, eight edges, page overflow 0.
+- Home, 49-point camera drag: `46 ms` wall time.
+- Explore, 49-point camera drag: `85 ms` wall time.
+- Both kept the committed URL unchanged during drag.
+- Home preview still returns to the committed state on pointer leave and does not
+  move the camera or persistent labels.
+- These are bounded interaction samples, not a 300-pointer performance claim and
+  not a substitute for the later full visual matrix.
 
 ## Mechanical verification
 
 - `npm run typecheck`: PASS.
 - `npm run lint`: PASS, 32 source contracts checked.
-- `npm run test:public`: PASS, 114/114, worker 1.
-- `npm run test:owner`: PASS, 31/31, worker 1.
-- Owner build: 659 nodes, 3,644 edges, six verified routes.
-- Public build: 2,480,283 bytes total.
-- JavaScript: 575,483 bytes raw.
-- CSS: 61,079 bytes raw, below the 60 KiB hard gate.
-- No repeated local performance matrix or 24×5 run was executed.
+- Targeted owner/runtime/QA tests: PASS, 68/68, worker 1.
+- Owner graph: 660 nodes / 3,644 actual directed edges / 6 verified routes.
+- Owner JavaScript: 553,634 bytes raw.
+- Owner CSS: 59,983 bytes raw.
+- The regressed intermediate bundle was 575,714 bytes JS and 61,256 bytes CSS.
+- Recovery removed 22,080 bytes of active JS and 1,273 bytes of CSS.
+- CSS is now below the 60 KiB hard gate of 61,440 bytes.
+- No repeated local matrix, 24×5 run, GitHub workflow, or deployment was executed.
 
-## Residual boundary
+## Remaining boundary
 
-- This is a Gate 3 local rework candidate. GitHub branch, PR, Pages, tag, and Release mutation remain 0.
-- Publication audit requires a clean committed repository identity and is intentionally deferred until this local RC is committed.
-- The local preview remains open for Luke’s visual decision.
+- Full viewport/state visual QA has not been rerun.
+- Explore relationship storytelling still needs Luke's visual judgement; the
+  recovery proves factual connection presence and restores the spatial stage,
+  but does not self-approve taste.
+- Publication audit and production readiness are not claimed.
+- GitHub branch, PR, Pages, tag, and Release mutation remain 0.
 
-final result: passed
+final result: targeted regression recovery passed; Gate 3 pending Luke
+
+## Feedback round 4 — bounded visual polish
+
+- Home hierarchy was tightened without changing the approved spatial composition:
+  headline rendering is crisper, explanatory copy is more readable, and the
+  evidence rail now sits on a restrained graphite fade instead of disappearing
+  into the graph.
+- Workspace camera framing now gives Explore more usable vertical space and
+  reduces the empty lower half without changing any graph coordinate.
+- Hover evidence uses a denser editorial tooltip and is clamped below the command
+  rail, preventing the previous filter/tooltip collision.
+- No node, edge, label, selection, or URL semantics changed.
+- 49-point drag samples: Home 69 ms, Explore 85 ms.
+- Console warning/error: 0 on the captured Home and Explore states.
+- Targeted owner/runtime/QA tests: PASS, 68/68, worker 1.
+- Owner JavaScript: 553,784 bytes raw.
+- Owner CSS: 60,135 bytes raw, below the 61,440-byte hard gate.
+- Evidence:
+  - `feedback-round-4/01-home-polished.jpg`
+  - `feedback-round-4/02-explore-polished.jpg`
+  - `feedback-round-4/03-home-hover-polished.jpg`
+  - `feedback-round-4/04-explore-hover-polished.jpg`
+
+Round 4 is a desktop Home/Explore polish check. It does not claim the full
+viewport matrix or release approval.

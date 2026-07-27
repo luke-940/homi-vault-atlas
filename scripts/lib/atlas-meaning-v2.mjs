@@ -10,14 +10,14 @@ const DOMAIN_DEFINITIONS = Object.freeze([
     id: "meaning:domain:moc",
     domain: "MOC",
     districtLabels: ["MOC", "중심 지식"],
-    preferredAnchorLabels: ["AI 신뢰성"],
+    preferredAnchorLabels: ["에이전트", "이미지생성", "AI 신뢰성"],
     statement: "MOC는 판단과 운영 원칙을 재사용 가능한 중심 지식으로 묶습니다.",
   },
   {
     id: "meaning:domain:papers",
     domain: "Papers",
     districtLabels: ["Papers", "연구 논거"],
-    preferredAnchorLabels: ["Agent Papers", "AI and Society Papers"],
+    preferredAnchorLabels: ["Foundation Model Papers", "Image Papers", "Agent Papers", "AI and Society Papers"],
     statement: "Papers는 주장과 의사결정에 재검토 가능한 연구 근거를 공급합니다.",
   },
   {

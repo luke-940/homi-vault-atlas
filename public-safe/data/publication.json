@@ -1,8 +1,8 @@
 {
   "schema": "atlas.publication.v1",
   "profile": "public",
-  "generatedAt": "2026-07-27T03:30:01.131Z",
-  "publicSnapshotDigest": "9b2e621ec8813d820722ac2240ec4735c25c322a611dfe73c288ea520154db9c",
+  "generatedAt": "2026-07-27T05:09:31.489Z",
+  "publicSnapshotDigest": "dd1c7552b1bd89af90988474156cb34ed5972ce32de5e211c37a116333ce5163",
   "allowedSurfaces": [
     "district_role_aggregate",
     "reference_boundary",
@@ -33,12 +33,12 @@
     "archive"
   ],
   "redactionCounts": {
-    "sourceEntities": 892,
+    "sourceEntities": 893,
     "publicEntities": 6,
-    "namedSourceDocuments": 18,
+    "namedSourceDocuments": 19,
     "aggregateSourceDocuments": 630,
-    "aggregatedSourceDocuments": 648,
-    "representedSourceDocuments": 648,
+    "aggregatedSourceDocuments": 649,
+    "representedSourceDocuments": 649,
     "excludedEntities": 244,
     "excludedSourceDocuments": 244,
     "archiveExcluded": 54,

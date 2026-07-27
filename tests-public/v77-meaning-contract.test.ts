@@ -175,13 +175,13 @@ describe("Atlas v7.7 connection intelligence contract", () => {
     }
   });
 
-  test("keeps Homi outside the knowledge graph and OpenAI as a factual constellation", () => {
+  test("keeps Homi outside the knowledge graph and a generic image-generation concept as a factual constellation", () => {
     const graph = readPack("graph");
     const meaning = readPack("meaning");
     const core = meaning.scenes.find((scene: { id: string }) => scene.id === "domain-backbone");
-    const openAi = graph.nodes.find((node: { label: string }) => node.label === "OpenAI");
+    const imageGeneration = graph.nodes.find((node: { label: string }) => node.label === "이미지생성");
     const constellation = meaning.constellations.find(
-      (item: { focalNodeId: string }) => item.focalNodeId === openAi?.id,
+      (item: { focalNodeId: string }) => item.focalNodeId === imageGeneration?.id,
     );
 
     expect(core?.thesis).toContain("MOC");
@@ -190,7 +190,7 @@ describe("Atlas v7.7 connection intelligence contract", () => {
     expect(core?.focusIds.length).toBe(3);
     expect(core?.focusIds.every((id: string) => graph.nodes.some((node: { id: string }) => node.id === id))).toBe(true);
     expect(graph.nodes.some((node: { label: string }) => node.label === "Homi")).toBe(false);
-    expect(openAi).toBeDefined();
+    expect(imageGeneration).toBeDefined();
     expect(constellation?.incomingEdgeIds.length).toBeGreaterThan(0);
     expect(constellation?.outgoingEdgeIds.length).toBeGreaterThan(0);
   });

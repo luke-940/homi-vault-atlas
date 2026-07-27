@@ -124,6 +124,45 @@ export function focusedReferenceCommands(graph: AtlasGraphV1, focusId: string, l
   };
 }
 
+export function defaultWorkspaceReferenceCommands(graph: AtlasGraphV1, limit = 24) {
+  const visibleNodeIds = new Set(graph.layout.defaultNodeIds);
+  const defaultEdgeIds = new Set(graph.layout.defaultEdgeIds);
+  const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
+  const ranked = rankEdges(graph.edges.filter((edge) =>
+    defaultEdgeIds.has(edge.id)
+    && visibleNodeIds.has(edge.source)
+    && visibleNodeIds.has(edge.target)));
+  const selected: AtlasGraphEdgeV1[] = [];
+  const selectedIds = new Set<string>();
+  const push = (edge: AtlasGraphEdgeV1 | undefined) => {
+    if (!edge || selectedIds.has(edge.id) || selected.length >= Math.max(0, limit)) return;
+    selectedIds.add(edge.id);
+    selected.push(edge);
+  };
+  for (const clusterId of [...new Set(graph.nodes
+    .filter((node) => visibleNodeIds.has(node.id))
+    .map((node) => node.clusterId))]
+    .sort((left, right) => left.localeCompare(right, "en"))) {
+    push(ranked.find((edge) => {
+      const sourceCluster = nodeById.get(edge.source)?.clusterId;
+      const targetCluster = nodeById.get(edge.target)?.clusterId;
+      return sourceCluster !== targetCluster
+        && (sourceCluster === clusterId || targetCluster === clusterId);
+    }) ?? ranked.find((edge) =>
+      nodeById.get(edge.source)?.clusterId === clusterId
+      || nodeById.get(edge.target)?.clusterId === clusterId));
+  }
+  for (const edge of ranked) push(edge);
+  return selected
+    .map((edge): RenderEdgeCommand => ({
+      semanticKind: "exact_reference",
+      sourceId: edge.source,
+      targetId: edge.target,
+      weight: edge.occurrenceCount,
+      provenance: "atlas.graph.v1",
+    }));
+}
+
 export function directedPathCommands(graph: AtlasGraphV1, from: string | null, to: string | null) {
   const path = shortestDirectedPath(graph, from, to);
   const ids = pathEdgeIds(graph, path);
@@ -190,5 +229,5 @@ export function semanticEdgeCommands(options: {
   if (activeNode) return focusedReferenceCommands(options.graph, activeNode.id).commands;
   if (options.scene === "freshness" || options.scene === "trace") return [];
   if (options.presentation === "home") return defaultDistrictCorridorCommands(options.graph, options.matrix, 4);
-  return [];
+  return defaultWorkspaceReferenceCommands(options.graph, 24);
 }
