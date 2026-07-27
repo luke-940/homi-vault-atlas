@@ -190,7 +190,7 @@
 .home-v76-compass-rail button:last-child:nth-child(odd) { flex-basis: 100%; }
 .home-v76-honest-empty { margin-top: 22px; padding-left: 12px; border-left: 1px solid rgba(233,154,49,.6); color: rgba(238,229,214,.55); font-size: 13px; line-height: 1.5; }
 .home-v76 .home-v75-copy-block > p { max-width: 420px; }
-.home-v76.is-v76-protagonists .home-v75-copy-block { top: 17%; right: clamp(104px,9vw,132px); left: auto; width: min(31vw,430px); }
+.home-v76.is-v76-protagonists .home-v75-copy-block { top: 17%; right: clamp(132px,11vw,160px); left: auto; width: min(31vw,430px); }
 .home-v76.is-v76-protagonists .home-v75-copy-block h1 { font-size: clamp(43px,3.45vw,56px); }
 .home-v76.is-v76-protagonists .home-v75-copy-block > p { margin-top: 22px; line-height: 1.58; }
 .home-v76.is-v76-protagonists .home-v76-rail { margin-top: 17px; }

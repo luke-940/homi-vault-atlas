@@ -325,7 +325,7 @@ export function ExploreView() {
         </div>
       )}
 
-      <details
+      {scene === "graph" && <details
         className="spatial-disclosure explore-path-disclosure explore-v75-path"
         open={pathDisclosureOpen}
         onToggle={(event) => setPathDisclosureOpen(event.currentTarget.open)}
@@ -346,8 +346,8 @@ export function ExploreView() {
               : <span>출발과 도착을 선택하면 전체 지식 그래프에서 경로를 계산합니다.</span>}
           </div>
         </div>
-      </details>
-      <p className="explore-v75-boundary">{atlasData.graph.profile === "atlas-public" ? "공개 안전 스냅샷" : "Owner · Luke Mac 전용 · 실제 허용 제목"} · 지식 항목 {atlasData.graph.manifest.nodeCount}개 · 방향 참조 관계 {atlasData.graph.manifest.edgeCount}개 · 화면에서 위치 자동 계산 없음</p>
+      </details>}
+      {scene !== "constellations" && <p className="explore-v75-boundary">{atlasData.graph.profile === "atlas-public" ? "공개 안전 스냅샷" : "Owner · Luke Mac 전용 · 실제 허용 제목"} · 지식 항목 {atlasData.graph.manifest.nodeCount}개 · 방향 참조 관계 {atlasData.graph.manifest.edgeCount}개 · 화면에서 위치 자동 계산 없음</p>}
     </SpatialWorkspaceFrame>
   );
 }

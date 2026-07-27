@@ -1103,7 +1103,7 @@ export async function executeJourney(page, route) {
       && Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus")));
     details.focus = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
   } else if (route.journey === "explore-list") {
-    const target = runtimeLocator(page, ".graph-ranked-list > button:visible").first();
+    const target = runtimeLocator(page, ".graph-ranked-list button:visible").first();
     await activateLocator(page, target, route.touch);
     await page.waitForFunction(() => Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus")));
     details.focus = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
