@@ -500,23 +500,22 @@ export function SearchPalette() {
           aria-label="검색 결과"
         >
           {resultStrata.map((stratum) => {
-            const headingId = `atlas-search-section-${stratum.section}`;
             return (
               <section
                 className={`search-result-stratum search-result-stratum-${stratum.section}`}
                 role="group"
-                aria-labelledby={headingId}
+                aria-label={searchSectionLabels[stratum.section]}
                 key={stratum.section}
               >
-                <header className="search-result-stratum-header">
-                  <p className="search-section-label" id={headingId}>
+                <header className="search-result-stratum-header" aria-hidden="true">
+                  <p className="search-section-label">
                     {searchSectionLabels[stratum.section]}
                   </p>
                   <span className="search-result-stratum-count" aria-hidden="true">
                     {stratum.entries.length}
                   </span>
                 </header>
-                <div className="search-result-list">
+                <div className="search-result-list" role="presentation">
                   {stratum.entries.map(({ result, index }) => {
                     const Icon = result.kind === "actor"
                       ? Network
@@ -561,7 +560,7 @@ export function SearchPalette() {
               </section>
             );
           })}
-          {!results.length && <p className="empty-state" role="status">일치하는 문서나 구역이 없습니다.</p>}
+          {!results.length && <div className="empty-state" role="option" aria-disabled="true">일치하는 문서나 구역이 없습니다.</div>}
         </div>
       </div>
     </div>

@@ -66,7 +66,7 @@ function renderWorkspace(hash: string, View: React.ComponentType) {
   );
 }
 
-describe("public Atlas v7.6 runtime contracts", () => {
+describe("public Atlas v7.7 runtime contracts", () => {
   test("resolves every public district into the Living Graph", () => {
     const graph = readJson("graph");
     for (const cluster of graph.clusters) {
@@ -114,10 +114,10 @@ describe("public Atlas v7.6 runtime contracts", () => {
     expect(trayModule.trayDialogKeyIntent("Tab", true, false)).toBe("trap-focus");
   });
 
-  test("uses four canonical v7.6 Home scenes and graph district journeys", () => {
+  test("uses four canonical v7.7 Home scenes and graph district journeys", () => {
     const environment = { reducedMotion: false, mobileSibling: false };
     const initial = stateModule.createAtlasState("#home", environment);
-    const expected = ["core-gravity", "protagonists", "vault-in-motion", "operational-compass"];
+    const expected = ["domain-backbone", "protagonists", "vault-in-motion", "operational-compass"];
     expect(navigatorModule.navigatorHomeScenes().map((scene) => scene.id)).toEqual(expected);
     for (const scene of expected) {
       const next = stateModule.reduceAtlasState(initial, {
@@ -167,7 +167,7 @@ describe("public Atlas v7.6 runtime contracts", () => {
   test("canonicalizes v7.3 and v7.4 aliases without ghost scenes", () => {
     const environment = { reducedMotion: false, mobileSibling: false };
     expect(stateModule.createAtlasState("#home?scene=living-terrain", environment).sceneId)
-      .toBe("core-gravity");
+      .toBe("domain-backbone");
     expect(stateModule.createAtlasState("#home?scene=coverage-boundary", environment).sceneId)
       .toBe("operational-compass");
     expect(stateModule.createAtlasState("#explore?scene=city-focus", environment).sceneId)
@@ -277,25 +277,26 @@ describe("public Atlas v7.6 runtime contracts", () => {
   });
 
   test("renders Homi system anchor, core domains, and factual graph semantics on Home", () => {
-    const markup = renderWorkspace("#home?scene=core-gravity", homeModule.HomeView);
+    const markup = renderWorkspace("#home?scene=domain-backbone", homeModule.HomeView);
     const inventory = readJson("inventory");
-    const graph = readJson("graph");
     expect(markup).toContain("home-v76-system-origin");
     expect(markup).toContain("Homi system origin");
     expect(markup).not.toContain("HOMI</strong>");
     expect(markup).toContain('aria-label="Homi 협업 구조 자세히 보기"');
     expect(markup).toContain('<img src="data:image/svg+xml');
-    expect(markup).toContain("지식의 주인공과,");
-    expect(markup).toContain("그들이 움직이는 방향을 본다.");
-    expect(markup).toContain("<strong>MOC</strong>");
-    expect(markup).toContain("<strong>PAPERS</strong>");
-    expect(markup).toContain("<strong>SIGNALS</strong>");
+    expect(markup).toContain("제품 출처 · 지식 노드 아님");
+    expect(markup).toContain("지식의 핵심 영역과,");
+    expect(markup).toContain("그 사이를 움직이는");
+    expect(markup).toContain("실제 관계를 본다.");
+    expect(markup).toContain("MOC는 판단을 묶고");
+    expect(markup).toContain("Papers는 근거를 공급하며");
+    expect(markup).toContain("Signals는 변화를 감지");
     expect(markup).toContain(
       `이름으로 표현 ${inventory.namedCount.toLocaleString("ko-KR")}`,
     );
-    expect(markup).toContain(`data-node-count="${graph.manifest.nodeCount}"`);
-    expect(markup).toContain("district_corridor");
-    expect(markup).toContain("날짜 미기록");
+    expect(markup).toContain('data-renderer="canvas2d-projected-3d"');
+    expect(markup).toContain("3차원 방향 지식 그래프");
+    expect(markup).toContain("현재 렌더링된 실제 의미 선 목록");
     expect(markup).toContain("검증된 버전 스냅샷");
     expect(markup).not.toContain("표현 기록");
     expect(inventory.reconciliation.pass).toBe(true);

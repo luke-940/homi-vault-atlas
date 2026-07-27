@@ -120,7 +120,7 @@
   ],
   "coverage": {
     "resolvedLinkPairs": 6,
-    "resolvedLinkWeight": 8248,
+    "resolvedLinkWeight": 8249,
     "unresolvedLinks": {},
     "unresolvedLinkTotal": 0,
     "ambiguousLinks": 0,
@@ -128,9 +128,9 @@
     "layers": {
       "wikilink": {
         "unit": "resolved_link_occurrence",
-        "total": 8248,
+        "total": 8249,
         "interDistrict": 2409,
-        "intraDistrict": 5839,
+        "intraDistrict": 5840,
         "displayed": 2409,
         "reconciled": true,
         "boundary": "fresh capture에서 유일하게 해결된 represented hub 사이의 wikilink occurrence 집계"

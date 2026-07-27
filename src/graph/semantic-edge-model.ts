@@ -2,10 +2,12 @@ import type { AtlasGraphEdgeV1, AtlasGraphV1, MatrixCell } from "../types";
 import { pathEdgeIds, selectedNeighborhood, shortestDirectedPath } from "./model";
 
 export interface RenderEdgeCommand {
+  id: string;
   semanticKind: "district_corridor" | "exact_reference" | "directed_path";
   sourceId: string;
   targetId: string;
   weight: number;
+  constituentEdgeIds: string[];
   provenance: "atlas.graph.v1";
 }
 
@@ -24,6 +26,7 @@ interface DirectionalLane {
   sourceId: string;
   targetId: string;
   weight: number;
+  edgeIds: string[];
 }
 
 interface CorridorPair {
@@ -56,6 +59,7 @@ function corridorPairs(graph: AtlasGraphV1) {
       sourceId,
       targetId,
       weight: (prior?.weight ?? 0) + edge.occurrenceCount,
+      edgeIds: [...(prior?.edgeIds ?? []), edge.id].sort((left, right) => left.localeCompare(right, "en")),
     });
   }
 
@@ -80,10 +84,12 @@ function corridorPairs(graph: AtlasGraphV1) {
 
 function corridorCommands(pairs: readonly CorridorPair[]) {
   return pairs.flatMap((pair) => pair.lanes.slice(0, 2).map((lane): RenderEdgeCommand => ({
+    id: `corridor:${lane.sourceId}->${lane.targetId}`,
     semanticKind: "district_corridor",
     sourceId: lane.sourceId,
     targetId: lane.targetId,
     weight: lane.weight,
+    constituentEdgeIds: lane.edgeIds,
     provenance: "atlas.graph.v1",
   })));
 }
@@ -111,10 +117,12 @@ export function focusedReferenceCommands(graph: AtlasGraphV1, focusId: string, l
   const commands = [...incoming.slice(0, limit), ...outgoing.slice(0, limit)]
     .filter((edge, index, list) => list.findIndex((candidate) => candidate.id === edge.id) === index)
     .map((edge): RenderEdgeCommand => ({
+      id: edge.id,
       semanticKind: "exact_reference",
       sourceId: edge.source,
       targetId: edge.target,
       weight: edge.occurrenceCount,
+      constituentEdgeIds: [edge.id],
       provenance: "atlas.graph.v1",
     }));
   return {
@@ -122,6 +130,47 @@ export function focusedReferenceCommands(graph: AtlasGraphV1, focusId: string, l
     hiddenIncoming: Math.max(0, incoming.length - limit),
     hiddenOutgoing: Math.max(0, outgoing.length - limit),
   };
+}
+
+export function defaultWorkspaceReferenceCommands(graph: AtlasGraphV1, limit = 24) {
+  const visibleNodeIds = new Set(graph.layout.defaultNodeIds);
+  const defaultEdgeIds = new Set(graph.layout.defaultEdgeIds);
+  const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
+  const ranked = rankEdges(graph.edges.filter((edge) =>
+    defaultEdgeIds.has(edge.id)
+    && visibleNodeIds.has(edge.source)
+    && visibleNodeIds.has(edge.target)));
+  const selected: AtlasGraphEdgeV1[] = [];
+  const selectedIds = new Set<string>();
+  const push = (edge: AtlasGraphEdgeV1 | undefined) => {
+    if (!edge || selectedIds.has(edge.id) || selected.length >= Math.max(0, limit)) return;
+    selectedIds.add(edge.id);
+    selected.push(edge);
+  };
+  for (const clusterId of [...new Set(graph.nodes
+    .filter((node) => visibleNodeIds.has(node.id))
+    .map((node) => node.clusterId))]
+    .sort((left, right) => left.localeCompare(right, "en"))) {
+    push(ranked.find((edge) => {
+      const sourceCluster = nodeById.get(edge.source)?.clusterId;
+      const targetCluster = nodeById.get(edge.target)?.clusterId;
+      return sourceCluster !== targetCluster
+        && (sourceCluster === clusterId || targetCluster === clusterId);
+    }) ?? ranked.find((edge) =>
+      nodeById.get(edge.source)?.clusterId === clusterId
+      || nodeById.get(edge.target)?.clusterId === clusterId));
+  }
+  for (const edge of ranked) push(edge);
+  return selected
+    .map((edge): RenderEdgeCommand => ({
+      id: edge.id,
+      semanticKind: "exact_reference",
+      sourceId: edge.source,
+      targetId: edge.target,
+      weight: edge.occurrenceCount,
+      constituentEdgeIds: [edge.id],
+      provenance: "atlas.graph.v1",
+    }));
 }
 
 export function directedPathCommands(graph: AtlasGraphV1, from: string | null, to: string | null) {
@@ -132,10 +181,12 @@ export function directedPathCommands(graph: AtlasGraphV1, from: string | null, t
     commands: rankEdges(graph.edges.filter((edge) => ids.has(edge.id)))
       .sort((left, right) => path.indexOf(left.source) - path.indexOf(right.source))
       .map((edge): RenderEdgeCommand => ({
+        id: `path:${edge.id}`,
         semanticKind: "directed_path",
         sourceId: edge.source,
         targetId: edge.target,
         weight: edge.occurrenceCount,
+        constituentEdgeIds: [edge.id],
         provenance: "atlas.graph.v1",
       })),
   };
@@ -190,5 +241,5 @@ export function semanticEdgeCommands(options: {
   if (activeNode) return focusedReferenceCommands(options.graph, activeNode.id).commands;
   if (options.scene === "freshness" || options.scene === "trace") return [];
   if (options.presentation === "home") return defaultDistrictCorridorCommands(options.graph, options.matrix, 4);
-  return [];
+  return defaultWorkspaceReferenceCommands(options.graph, 24);
 }

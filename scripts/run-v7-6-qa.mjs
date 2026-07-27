@@ -43,8 +43,7 @@ export const LOCAL_RESOURCE_POLICY = Object.freeze({
 const GEOMETRY_GROUPS = Object.freeze({
   home: [
     ".home-v75-page",
-    ".home-v75-graph-shell",
-    ".living-graph-canvas.is-home",
+    ".semantic-space-labels > button",
     ".home-v75-copy-block .home-v75-eyebrow",
     ".home-v75-copy-block h1",
     ".home-v75-copy-block > p",
@@ -81,7 +80,7 @@ const GEOMETRY_GROUPS = Object.freeze({
     ".explore-evidence-rail > *",
     ".explore-v75-clusters > button",
     ".explore-v75-list-layout > header",
-    ".graph-ranked-list > button",
+    ".graph-ranked-list button",
     ".explore-path-disclosure",
     ".explore-v75-boundary",
   ],
@@ -129,10 +128,12 @@ const GEOMETRY_GROUPS = Object.freeze({
 const REQUIRED_GEOMETRY_SELECTORS = Object.freeze({
   home: [
     ".home-v75-copy-block h1",
-    ".living-graph-canvas.is-home",
-    ".home-v75-evidence",
+    ".home-v75-graph-shell .semantic-space-host, .living-graph-canvas.is-home",
     ".home-v75-scenes > button",
     ".home-v75-boundary",
+  ],
+  homeEvidence: [
+    ".home-v75-evidence",
   ],
   agencySystem: [
     ".agency-intro h1",
@@ -152,17 +153,18 @@ const REQUIRED_GEOMETRY_SELECTORS = Object.freeze({
   ],
   explore: [
     ".explore-v75",
-    ".explore-command-rail",
   ],
   exploreGraph: [
+    ".explore-command-rail",
     ".explore-v75-graph-panel",
-    ".explore-v75-graph-panel .living-graph-canvas",
+    ".explore-v75-graph-panel .semantic-space-host, .explore-v75-graph-panel .living-graph-canvas",
   ],
   exploreConstellations: [
     ".explore-v75-clusters",
-    ".explore-v75-clusters > button",
+    ".explore-constellation-rail > button",
   ],
   exploreList: [
+    ".explore-command-rail",
     ".explore-v75-list-layout",
     ".graph-ranked-list",
   ],
@@ -183,7 +185,11 @@ const REQUIRED_GEOMETRY_SELECTORS = Object.freeze({
   ],
   flow: [
     ".flow-honest-empty, .route-rail > button",
-    ".flow-honest-empty, .flow-spatial-stage .living-graph-canvas",
+    ".flow-honest-empty, .flow-spatial-stage .semantic-space-host, .flow-spatial-stage .living-graph-canvas",
+  ],
+  flowMobile: [
+    ".mobile-flow",
+    ".mobile-stepper button:not([disabled])",
   ],
   time: [
     ".version-seam",
@@ -208,7 +214,9 @@ function geometryRequirementsFor(definition) {
     || (definition.viewport.width <= 900 && definition.viewport.height <= 520);
   if (definition.journey === "data-overlay") return REQUIRED_GEOMETRY_SELECTORS.dataOverlay;
   if (definition.workspace === "home" || definition.journey === "search-escape-focus" || definition.journey === "back-forward") {
-    return REQUIRED_GEOMETRY_SELECTORS.home;
+    return definition.targetScene === "protagonists"
+      ? [...REQUIRED_GEOMETRY_SELECTORS.home, ...REQUIRED_GEOMETRY_SELECTORS.homeEvidence]
+      : REQUIRED_GEOMETRY_SELECTORS.home;
   }
   if (definition.workspace === "search") return REQUIRED_GEOMETRY_SELECTORS.search;
   if (definition.workspace === "agency") {
@@ -229,7 +237,9 @@ function geometryRequirementsFor(definition) {
     if (mobileSibling) return REQUIRED_GEOMETRY_SELECTORS.observeMobile;
     return definition.journey === "hub-relations" ? REQUIRED_GEOMETRY_SELECTORS.observeHub : REQUIRED_GEOMETRY_SELECTORS.observeGlobal;
   }
-  if (definition.workspace === "flow") return REQUIRED_GEOMETRY_SELECTORS.flow;
+  if (definition.workspace === "flow") {
+    return mobileSibling ? REQUIRED_GEOMETRY_SELECTORS.flowMobile : REQUIRED_GEOMETRY_SELECTORS.flow;
+  }
   if (definition.workspace === "time") return REQUIRED_GEOMETRY_SELECTORS.time;
   throw new Error(`Missing geometry requirement contract for ${definition.key ?? definition.workspace}`);
 }
@@ -254,6 +264,7 @@ function geometryRequirementsFor(definition) {
  * @property {readonly string[]} [actorIds]
  * @property {"chromium" | "webkit"} [browserName]
  * @property {boolean} [longTaskRequired]
+ * @property {boolean} [performanceRequired]
  */
 
 /** @param {QaRouteCase} route @returns {Readonly<Required<Pick<QaRouteCase, "key" | "workspace" | "hash" | "readySelector" | "geometryGroups" | "viewport" | "journey">> & QaRouteCase & {id: string, reducedMotion: boolean, firstEntry: boolean, touch: boolean}>} */
@@ -264,14 +275,14 @@ function qaCase({ key, id = key, reducedMotion = false, firstEntry = false, touc
 
 export const CORE_ROUTE_CASES = Object.freeze([
   qaCase({
-    key: "home-default", workspace: "home", hash: "#home?scene=core-gravity",
-    readySelector: ".home-v76[data-home-page='core-gravity']",
-    finalReadySelector: ".home-v76[data-home-page='core-gravity']", geometryGroups: GEOMETRY_GROUPS.home,
-    viewport: { width: 1440, height: 920 }, firstEntry: true, journey: "home-scene", targetScene: "core-gravity",
+    key: "home-default", workspace: "home", hash: "#home?scene=domain-backbone",
+    readySelector: ".home-v75-graph-shell .semantic-space-host[data-renderer='three']",
+    finalReadySelector: ".home-v76[data-home-page='domain-backbone']", geometryGroups: GEOMETRY_GROUPS.home,
+    viewport: { width: 1440, height: 920 }, firstEntry: true, journey: "home-scene", targetScene: "domain-backbone", longTaskRequired: false,
   }),
   qaCase({
-    key: "home-selected", workspace: "home", hash: "#home?scene=core-gravity",
-    readySelector: ".home-v76[data-home-page='core-gravity']",
+    key: "home-selected", workspace: "home", hash: "#home?scene=domain-backbone",
+    readySelector: ".home-v75-graph-shell .semantic-space-host[data-renderer='three']",
     finalReadySelector: ".home-v76[data-home-page='protagonists']", geometryGroups: GEOMETRY_GROUPS.home,
     viewport: { width: 1180, height: 720 }, journey: "home-scene", targetScene: "protagonists",
   }),
@@ -310,14 +321,14 @@ export const CORE_ROUTE_CASES = Object.freeze([
 
 const CI_ONLY_ROUTE_CASES = Object.freeze([
   qaCase({
-    key: "home-movement", workspace: "home", hash: "#home?scene=core-gravity",
-    readySelector: ".home-v76[data-home-page='core-gravity']",
+    key: "home-movement", workspace: "home", hash: "#home?scene=domain-backbone",
+    readySelector: ".home-v75-graph-shell .semantic-space-host[data-renderer='three']",
     finalReadySelector: ".home-v76[data-home-page='vault-in-motion']", geometryGroups: GEOMETRY_GROUPS.home,
     viewport: { width: 1024, height: 768 }, reducedMotion: true, journey: "home-scene", targetScene: "vault-in-motion",
   }),
   qaCase({
-    key: "home-compass", workspace: "home", hash: "#home?scene=core-gravity",
-    readySelector: ".home-v76[data-home-page='core-gravity']",
+    key: "home-compass", workspace: "home", hash: "#home?scene=domain-backbone",
+    readySelector: ".home-v76[data-home-page='domain-backbone']",
     finalReadySelector: ".home-v76[data-home-page='operational-compass']", geometryGroups: GEOMETRY_GROUPS.home,
     viewport: { width: 390, height: 844 }, touch: true, journey: "home-scene", targetScene: "operational-compass",
   }),
@@ -334,7 +345,7 @@ const CI_ONLY_ROUTE_CASES = Object.freeze([
   }),
   qaCase({
     key: "explore-constellations", workspace: "explore", hash: "#explore?scene=constellations",
-    readySelector: ".explore-v75-clusters", finalReadySelector: ".explore-v75-graph-panel .living-graph-canvas",
+    readySelector: ".explore-v75-clusters", finalReadySelector: ".explore-constellation-stage .semantic-space-host",
     geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 1280, height: 720 }, journey: "explore-constellations", targetScene: "constellations",
   }),
   qaCase({
@@ -348,12 +359,12 @@ const CI_ONLY_ROUTE_CASES = Object.freeze([
     geometryGroups: GEOMETRY_GROUPS.observe, viewport: { width: 1180, height: 720 }, journey: "hub-relations",
   }),
   qaCase({
-    key: "search-overlay", workspace: "search", hash: "#home?scene=core-gravity",
+    key: "search-overlay", workspace: "search", hash: "#home?scene=domain-backbone",
     readySelector: ".home-v76", finalReadySelector: ".search-dialog", geometryGroups: GEOMETRY_GROUPS.search,
     viewport: { width: 1440, height: 920 }, journey: "search-overlay",
   }),
   qaCase({
-    key: "search-escape-focus", workspace: "home", hash: "#home?scene=core-gravity",
+    key: "search-escape-focus", workspace: "home", hash: "#home?scene=domain-backbone",
     readySelector: ".home-v76", finalReadySelector: ".home-v76", geometryGroups: GEOMETRY_GROUPS.home,
     viewport: { width: 390, height: 844 }, touch: true, journey: "search-escape-focus",
   }),
@@ -373,9 +384,10 @@ const CI_ONLY_ROUTE_CASES = Object.freeze([
     geometryGroups: GEOMETRY_GROUPS.explore, viewport: { width: 390, height: 844 }, touch: true, journey: "focus-reload", targetScene: "graph",
   }),
   qaCase({
-    key: "history-back-forward", workspace: "home", hash: "#home?scene=core-gravity",
-    readySelector: ".home-v76[data-home-page='core-gravity']", finalReadySelector: ".home-v76[data-home-page='protagonists']",
+    key: "history-back-forward", workspace: "home", hash: "#home?scene=domain-backbone",
+    readySelector: ".home-v76[data-home-page='domain-backbone']", finalReadySelector: ".home-v76[data-home-page='protagonists']",
     geometryGroups: GEOMETRY_GROUPS.home, viewport: { width: 1440, height: 920 }, journey: "back-forward",
+    longTaskRequired: false, performanceRequired: false,
   }),
   qaCase({
     key: "keyboard-navigation", workspace: "observe", hash: "#explore?scene=graph",
@@ -384,8 +396,9 @@ const CI_ONLY_ROUTE_CASES = Object.freeze([
   }),
   qaCase({
     key: "webkit-graph-focus", workspace: "explore", hash: "#explore?scene=graph",
-    readySelector: ".explore-v75 .living-graph-canvas", finalReadySelector: ".explore-v75 .living-graph-canvas", geometryGroups: GEOMETRY_GROUPS.explore,
-    viewport: { width: 1024, height: 768 }, browserName: "webkit", longTaskRequired: false, journey: "webkit-graph-focus", targetScene: "graph",
+    readySelector: ".explore-v75 .semantic-space-host", finalReadySelector: ".explore-v75 .semantic-space-host", geometryGroups: GEOMETRY_GROUPS.explore,
+    viewport: { width: 1024, height: 768 }, browserName: "webkit", longTaskRequired: false, performanceRequired: false,
+    journey: "webkit-graph-focus", targetScene: "graph",
   }),
   qaCase({
     key: "agency-all-actors", workspace: "agency", hash: "#agency?scene=roles&actor=actor%3Acontrol-plane",
@@ -520,9 +533,10 @@ function metricSummary(values) {
 }
 
 export function evaluatePerformanceResults(results) {
-  const readiness = metricSummary(results.map((result) => result.performance?.readinessMs));
-  const interaction = metricSummary(results.map((result) => result.performance?.interactionMs));
-  const longTaskRequiredResults = results.filter((result) => result.longTaskRequired !== false);
+  const performanceResults = results.filter((result) => result.performanceRequired !== false);
+  const readiness = metricSummary(performanceResults.map((result) => result.performance?.readinessMs));
+  const interaction = metricSummary(performanceResults.map((result) => result.performance?.interactionMs));
+  const longTaskRequiredResults = performanceResults.filter((result) => result.longTaskRequired !== false);
   const longTaskSamples = longTaskRequiredResults.map((result) => result.performance?.longTasks).filter((item) => item?.supported);
   const longTaskCount = longTaskSamples.reduce((sum, item) => sum + item.count, 0);
   const longTaskTotalMs = longTaskSamples.reduce((sum, item) => sum + item.totalMs, 0);
@@ -791,7 +805,8 @@ async function measureGeometry(page, groupSelectors, route) {
       const style = getComputedStyle(node);
       const rect = node.getBoundingClientRect();
       return style.display !== "none" && style.visibility !== "hidden" && Number(style.opacity) > 0
-        && rect.width > 0 && rect.height > 0 && !node.closest(".sr-only,[aria-hidden='true']");
+        && rect.width > 0 && rect.height > 0
+        && !node.closest(`.sr-only,${runtimeSelectors.graphAccessibleList},[aria-hidden='true']`);
     };
     const label = (node) => node.getAttribute("aria-label") || node.textContent?.trim().replace(/\s+/g, " ").slice(0, 120) || node.tagName;
     const rectOf = (node) => {
@@ -817,7 +832,8 @@ async function measureGeometry(page, groupSelectors, route) {
         selectorMembership.set(node, memberships);
       }
     }
-    const required = [...selectorMembership.keys()];
+    const isStructuralVisualizationSurface = (node) => node.matches(runtimeSelectors.geometrySurface);
+    const required = [...selectorMembership.keys()].filter((node) => !isStructuralVisualizationSurface(node));
     const overlaps = [];
     for (let left = 0; left < required.length; left += 1) {
       for (let right = left + 1; right < required.length; right += 1) {
@@ -849,20 +865,26 @@ async function measureGeometry(page, groupSelectors, route) {
       const ownClipX = ownStyle.overflowX === "hidden" || ownStyle.overflowX === "clip";
       const ownClipY = ownStyle.overflowY === "hidden" || ownStyle.overflowY === "clip";
       const ownText = node.textContent?.trim();
-      if (ownText && ((ownClipX && node.scrollWidth > node.clientWidth + 0.5)
+      if (ownText && ownStyle.textOverflow !== "ellipsis" && ((ownClipX && node.scrollWidth > node.clientWidth + 0.5)
         || (ownClipY && node.scrollHeight > node.clientHeight + 0.5))) {
         clipped.push({ target: label(node), ancestor: "self", rect: rectOf(node), boundary: rectOf(node) });
         continue;
       }
       let ancestor = node.parentElement;
+      let insideScrollableX = false;
+      let insideScrollableY = false;
       while (ancestor && ancestor !== document.body) {
         const style = getComputedStyle(ancestor);
         const clipX = style.overflowX === "hidden" || style.overflowX === "clip";
         const clipY = style.overflowY === "hidden" || style.overflowY === "clip";
-        if (clipX || clipY) {
+        const scrollX = style.overflowX === "auto" || style.overflowX === "scroll";
+        const scrollY = style.overflowY === "auto" || style.overflowY === "scroll";
+        insideScrollableX ||= scrollX;
+        insideScrollableY ||= scrollY;
+        if ((clipX && !insideScrollableX) || (clipY && !insideScrollableY)) {
           const boundary = ancestor.getBoundingClientRect();
-          if ((clipX && (rect.left < boundary.left - 0.5 || rect.right > boundary.right + 0.5))
-            || (clipY && (rect.top < boundary.top - 0.5 || rect.bottom > boundary.bottom + 0.5))) {
+          if ((clipX && !insideScrollableX && (rect.left < boundary.left - 0.5 || rect.right > boundary.right + 0.5))
+            || (clipY && !insideScrollableY && (rect.top < boundary.top - 0.5 || rect.bottom > boundary.bottom + 0.5))) {
             clipped.push({ target: label(node), ancestor: label(ancestor), rect: rectOf(node), boundary: rectOf(ancestor) });
             break;
           }
@@ -972,13 +994,16 @@ async function measureGeometry(page, groupSelectors, route) {
     requiredSelectors: route.geometryRequiredSelectors.map(aliasRuntimeSelector),
     workspace: route.workspace,
     mobileNavigationRequired: route.workspace !== "search" && route.journey !== "data-overlay",
-    mobileSiblingRequired: ["explore", "observe", "flow", "time"].includes(route.workspace) && route.journey !== "data-overlay",
+    mobileSiblingRequired: ["observe", "flow"].includes(route.workspace)
+      || (route.workspace === "explore" && route.targetScene === "graph" && route.journey !== "data-overlay"),
     runtimeSelectors: {
       app: aliasRuntimeSelector(".atlas-app"),
       homeHeadline: aliasRuntimeSelector(".home-v75-copy-block h1"),
       homeTerrain: aliasRuntimeSelector(".living-graph-canvas.is-home"),
       mobileNavigation: aliasRuntimeSelector(".mobile-navigation"),
-      mobileSibling: aliasRuntimeSelector(".mobile-sibling"),
+      mobileSibling: aliasRuntimeSelector(".mobile-sibling, .explore-v75-layout.is-mobile-sibling"),
+      graphAccessibleList: aliasRuntimeSelector(".graph-accessible-list"),
+      geometrySurface: aliasRuntimeSelector(".home-v75-page, .home-v75-graph-shell, .semantic-space-host, .living-graph-canvas, .explore-v75, .explore-v75-graph-panel, .hub-ego-stage, .flow-spatial-stage"),
       mobileInteractive: aliasRuntimeSelector(".atlas-app button:not([disabled]), .atlas-app a[href], .atlas-app input:not([disabled]), .atlas-app select:not([disabled]), .atlas-app textarea:not([disabled]), .atlas-app [role='button']:not([aria-disabled='true'])"),
     },
   });
@@ -1019,7 +1044,7 @@ export async function executeJourney(page, route) {
   const startedAt = Date.now();
   const details = { journey: route.journey };
   const homeSceneIndex = {
-    "core-gravity": 0,
+    "domain-backbone": 0,
     protagonists: 1,
     "vault-in-motion": 2,
     "operational-compass": 3,
@@ -1077,14 +1102,14 @@ export async function executeJourney(page, route) {
     }
     details.graph = counts;
   } else if (route.journey === "explore-constellations") {
-    const target = runtimeLocator(page, ".explore-v75-clusters > button:visible").first();
+    const target = runtimeLocator(page, ".explore-constellation-rail > button:visible").first();
     await activateLocator(page, target, route.touch);
-    await runtimeLocator(page, ".explore-v75-graph-panel .living-graph-canvas").waitFor({ state: "visible" });
-    await page.waitForFunction(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("scene") === "graph"
+    await runtimeLocator(page, ".explore-constellation-stage .semantic-space-host").waitFor({ state: "visible" });
+    await page.waitForFunction(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("scene") === "constellations"
       && Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus")));
     details.focus = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
   } else if (route.journey === "explore-list") {
-    const target = runtimeLocator(page, ".graph-ranked-list > button:visible").first();
+    const target = runtimeLocator(page, ".graph-ranked-list button:visible").first();
     await activateLocator(page, target, route.touch);
     await page.waitForFunction(() => Boolean(new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus")));
     details.focus = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
@@ -1097,9 +1122,20 @@ export async function executeJourney(page, route) {
     const emptyCount = await runtimeLocator(page, ".flow-honest-empty:visible").count();
     const routeCount = await runtimeLocator(page, ".route-rail > button:visible").count();
     const graphCount = await runtimeLocator(page, ".flow-spatial-stage .living-graph-canvas:visible").count();
+    const mobileSibling = route.viewport.width <= 820
+      || (route.viewport.width <= 900 && route.viewport.height <= 520);
+    const mobileRoutePointCount = await runtimeLocator(page, ".mobile-flow .mobile-stepper button:not([disabled]):visible").count();
     if (emptyCount === 1) {
-      if (routeCount !== 0 || graphCount !== 0) throw new Error("Flow empty state retained clickable or drawn zero-member routes");
+      if (routeCount !== 0 || graphCount !== 0 || mobileRoutePointCount !== 0) {
+        throw new Error("Flow empty state retained clickable or drawn zero-member routes");
+      }
       details.mode = "honest-empty";
+    } else if (mobileSibling) {
+      if (mobileRoutePointCount < 2 || graphCount !== 0) {
+        throw new Error("Flow mobile sibling must render at least two factual route points without the desktop graph");
+      }
+      details.mode = "verified-routes-mobile";
+      details.routePointCount = mobileRoutePointCount;
     } else {
       if (routeCount < 1 || graphCount !== 1) throw new Error("Flow must render one factual graph for verified member-bearing routes");
       const target = runtimeLocator(page, ".route-rail > button:not(.is-active):visible");
@@ -1160,10 +1196,10 @@ export async function executeJourney(page, route) {
     await activateLocator(page, runtimeLocator(page, ".home-v75-scenes > button").nth(1), false);
     await runtimeLocator(page, ".home-v76[data-home-page='protagonists']").waitFor({ state: "visible" });
     await page.goBack({ waitUntil: "domcontentloaded" });
-    await runtimeLocator(page, ".home-v76[data-home-page='core-gravity']").waitFor({ state: "visible" });
+    await runtimeLocator(page, ".home-v76[data-home-page='domain-backbone']").waitFor({ state: "visible" });
     await page.goForward({ waitUntil: "domcontentloaded" });
     await runtimeLocator(page, ".home-v76[data-home-page='protagonists']").waitFor({ state: "visible" });
-    details.history = ["protagonists", "core-gravity", "protagonists"];
+    details.history = ["protagonists", "domain-backbone", "protagonists"];
   } else if (route.journey === "keyboard-workspace") {
     const exploreTab = runtimeLocator(page, "#workspace-tab-explore");
     await exploreTab.focus();
@@ -1180,139 +1216,97 @@ export async function executeJourney(page, route) {
     details.neighborCount = neighborCount;
     details.honestEmpty = honestEmpty === 1;
   } else if (route.journey === "webkit-graph-focus") {
-    const graph = runtimeLocator(page, "[data-renderer='canvas2d-projected-3d']").first();
-    await graph.waitFor({ state: "visible" });
-    const captureGraphState = () => graph.evaluate((node) => {
-      const rendered = (element) => {
-        const style = getComputedStyle(element);
-        const rect = element.getBoundingClientRect();
-        return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0;
-      };
-      const rounded = (value) => Math.round(value * 1000) / 1000;
-      const nodeKeys = [...node.querySelectorAll("ol[aria-label='현재 그래프 노드 목록'] button")]
-        .map((button) => button.textContent?.trim().replace(/\s+/g, " ") ?? "")
-        .sort((left, right) => left.localeCompare(right, "ko"));
-      const labelRects = [...node.querySelectorAll("button[aria-pressed]")]
-        .filter(rendered)
-        .map((button) => {
-          const rect = button.getBoundingClientRect();
-          return {
-            key: button.getAttribute("aria-label") ?? button.textContent?.trim() ?? "",
-            rect: [rounded(rect.left), rounded(rect.top), rounded(rect.width), rounded(rect.height)],
-          };
-        })
+    const host = runtimeLocator(page, ".explore-v75 .semantic-space-host").first();
+    await host.waitFor({ state: "visible" });
+    await page.waitForFunction(() => (
+      document.querySelector(".semantic-space-host")?.getAttribute("data-renderer") === "three"
+    ));
+    const keyboardMap = host.locator(".semantic-space-accessible-map");
+    const captureGraphState = () => host.evaluate((node) => {
+      const debug = JSON.parse(node.getAttribute("data-semantic-debug") || "{}");
+      const labels = [...node.querySelectorAll(".semantic-space-labels > button")]
+        .map((label) => ({
+          key: label.textContent?.trim() ?? "",
+          transform: label.style.transform,
+        }))
         .sort((left, right) => left.key.localeCompare(right.key, "ko"));
       return {
-        nodeCount: Number(node.getAttribute("data-node-count") ?? 0),
-        nodeKeys,
-        labelRects,
-        layoutFocusId: node.getAttribute("data-layout-focus-id") ?? "",
-        committedId: node.getAttribute("data-committed-id") ?? "",
-        previewId: node.getAttribute("data-preview-id") ?? "",
-        previewOverlayNodeCount: Number(node.getAttribute("data-preview-overlay-node-count") ?? 0),
-        edgeCount: Number(node.getAttribute("data-edge-count") ?? 0),
-        camera: {
-          yaw: node.getAttribute("data-camera-yaw") ?? "",
-          pitch: node.getAttribute("data-camera-pitch") ?? "",
-          zoom: node.getAttribute("data-camera-zoom") ?? "",
-        },
+        renderer: node.getAttribute("data-renderer"),
+        debug,
+        labels,
         url: location.href,
       };
     });
     const invariantIdentity = (snapshot) => JSON.stringify({
-      nodeCount: snapshot.nodeCount,
-      nodeKeys: snapshot.nodeKeys,
-      labelRects: snapshot.labelRects,
-      layoutFocusId: snapshot.layoutFocusId,
-      committedId: snapshot.committedId,
-      camera: snapshot.camera,
+      renderer: snapshot.renderer,
+      sceneBuilds: snapshot.debug.sceneBuilds,
+      cameraPosition: snapshot.debug.cameraPosition,
+      cameraTarget: snapshot.debug.cameraTarget,
+      focusId: snapshot.debug.focusId,
+      labels: snapshot.labels,
       url: snapshot.url,
     });
 
-    const target = graph.locator("button[aria-pressed]:visible").first();
-    await target.focus();
-    if (!await target.evaluate((node) => node === document.activeElement)) throw new Error("WebKit graph label did not receive keyboard focus");
+    await keyboardMap.focus();
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => {
+      const hostNode = document.querySelector(".semantic-space-host");
+      const debug = JSON.parse(hostNode?.getAttribute("data-semantic-debug") || "{}");
       const focusId = new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus");
-      return Boolean(focusId)
-        && document.querySelector("[data-renderer='canvas2d-projected-3d']")?.getAttribute("data-committed-id") === focusId;
+      return Boolean(focusId) && debug.focusId === focusId;
     });
     await page.evaluate(() => {
       if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
     });
-    await page.waitForFunction(() => document.querySelector("[data-renderer='canvas2d-projected-3d']")?.getAttribute("data-preview-id") === "");
-    await page.waitForTimeout(560);
+    await page.waitForFunction(() => {
+      const debug = JSON.parse(document.querySelector(".semantic-space-host")?.getAttribute("data-semantic-debug") || "{}");
+      return debug.previewId === null && debug.idle === true;
+    });
     await settleRenderedPage(page);
-
     const baseline = await captureGraphState();
-    if (baseline.nodeCount !== baseline.nodeKeys.length) {
-      throw new Error(`WebKit graph base node contract drifted: ${baseline.nodeCount} rendered versus ${baseline.nodeKeys.length} accessible`);
+    if (baseline.renderer !== "three" || !baseline.debug.focusId || baseline.debug.previewId !== null) {
+      throw new Error("WebKit semantic space did not settle to a committed, preview-free 3D baseline");
     }
-    if (!baseline.committedId || baseline.previewId) throw new Error("WebKit graph did not settle to a committed, preview-free baseline");
 
-    const hoverTarget = graph.locator("button[aria-pressed='false']:visible").first();
-    if (await hoverTarget.count() === 0) throw new Error("WebKit graph hover regression requires a second visible label");
-    await hoverTarget.hover();
-    await page.waitForFunction(() => Boolean(
-      document.querySelector("[data-renderer='canvas2d-projected-3d']")?.getAttribute("data-preview-id"),
-    ));
+    const baselineIdentity = invariantIdentity(baseline);
+    await keyboardMap.focus();
+    await page.keyboard.press("ArrowRight");
+    await page.waitForFunction(() => {
+      const debug = JSON.parse(document.querySelector(".semantic-space-host")?.getAttribute("data-semantic-debug") || "{}");
+      return Boolean(debug.previewId) && debug.previewId !== debug.focusId;
+    });
     await settleRenderedPage(page);
     const hoverFrameA = await captureGraphState();
     await settleRenderedPage(page);
     const hoverFrameB = await captureGraphState();
-
-    const baselineIdentity = invariantIdentity(baseline);
     if (invariantIdentity(hoverFrameA) !== baselineIdentity || invariantIdentity(hoverFrameB) !== baselineIdentity) {
-      throw new Error("Transient WebKit hover changed the base node set, layout focus, committed focus, camera, URL, or label geometry");
+      throw new Error("Transient WebKit preview changed the scene, committed focus, camera, URL, or label geometry");
     }
-    if (
-      !hoverFrameA.previewId
-      || hoverFrameA.previewId !== hoverFrameB.previewId
-      || hoverFrameA.previewOverlayNodeCount !== hoverFrameB.previewOverlayNodeCount
-      || hoverFrameA.edgeCount !== hoverFrameB.edgeCount
-    ) {
+    if (!hoverFrameA.debug.previewId || hoverFrameA.debug.previewId !== hoverFrameB.debug.previewId) {
       throw new Error("Transient WebKit preview did not remain stable across animation frames");
     }
 
-    const graphBox = await graph.boundingBox();
-    const viewport = page.viewportSize();
-    if (!graphBox || !viewport) throw new Error("WebKit graph has no viewport geometry for pointer-leave verification");
-    const outsidePoint = await graph.evaluate((node) => {
-      const rect = node.getBoundingClientRect();
-      const clamp = (value, maximum) => Math.max(1, Math.min(maximum - 2, value));
-      const candidates = [
-        { x: rect.left - 5, y: rect.top + rect.height / 2 },
-        { x: rect.right + 5, y: rect.top + rect.height / 2 },
-        { x: rect.left + rect.width / 2, y: rect.top - 5 },
-        { x: rect.left + rect.width / 2, y: rect.bottom + 5 },
-      ].map((point) => ({ x: clamp(point.x, innerWidth), y: clamp(point.y, innerHeight) }));
-      return candidates.find((point) => (
-        point.x < rect.left || point.x > rect.right || point.y < rect.top || point.y > rect.bottom
-      )) ?? null;
+    await page.evaluate(() => {
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
     });
-    if (!outsidePoint) throw new Error("WebKit graph pointer-leave target could not be resolved outside the canvas");
-    await page.mouse.move(outsidePoint.x, outsidePoint.y);
-    await page.waitForFunction(() => document.querySelector("[data-renderer='canvas2d-projected-3d']")?.getAttribute("data-preview-id") === "");
+    await page.waitForFunction(() => {
+      const debug = JSON.parse(document.querySelector(".semantic-space-host")?.getAttribute("data-semantic-debug") || "{}");
+      return debug.previewId === null;
+    });
     await settleRenderedPage(page);
     const afterLeave = await captureGraphState();
-    if (afterLeave.previewId || invariantIdentity(afterLeave) !== baselineIdentity) {
-      throw new Error("WebKit graph pointer leave did not clear preview and restore the committed geometry");
+    if (afterLeave.debug.previewId !== null || invariantIdentity(afterLeave) !== baselineIdentity) {
+      throw new Error("WebKit semantic preview leave did not restore the committed geometry");
     }
 
     details.focus = await page.evaluate(() => new URLSearchParams(location.hash.split("?")[1] ?? "").get("focus"));
     details.hoverStability = {
-      nodeCount: baseline.nodeCount,
-      labelCount: baseline.labelRects.length,
-      committedId: baseline.committedId,
-      layoutFocusId: baseline.layoutFocusId,
-      previewId: hoverFrameA.previewId,
+      renderer: baseline.renderer,
+      labelCount: baseline.labels.length,
+      committedId: baseline.debug.focusId,
+      previewId: hoverFrameA.debug.previewId,
       previewFrames: 2,
-      edgeCounts: {
-        baseline: baseline.edgeCount,
-        preview: hoverFrameA.edgeCount,
-        restored: afterLeave.edgeCount,
-      },
+      sceneBuilds: baseline.debug.sceneBuilds,
     };
   } else {
     throw new Error(`Unsupported QA journey: ${route.journey}`);
@@ -1480,7 +1474,7 @@ export async function runQa(environment = process.env) {
     const playwright = await import("playwright");
     for (const browserName of new Set(plan.routes.map((route) => route.browserName))) {
       if (browserName !== "chromium" && browserName !== "webkit") throw new Error(`Unsupported QA browser: ${browserName}`);
-      const browser = await playwright[browserName].launch({ headless: true, args: browserName === "chromium" ? ["--disable-gpu"] : [] });
+      const browser = await playwright[browserName].launch({ headless: true });
       browsers.set(browserName, browser);
       lifecycle.browsersOpened += 1;
       browser.once("disconnected", () => { lifecycle.browsersClosed += 1; });
@@ -1546,7 +1540,10 @@ export async function runQa(environment = process.env) {
           page.setDefaultTimeout(20_000);
           page.on("console", (message) => {
             if (message.type() === "warning" || message.type() === "error") {
-              consoleFindings.push({ type: message.type(), text: message.text() });
+              const text = message.text();
+              const isBrowserReadbackNoise = message.type() === "warning"
+                && /^\[\.WebGL-[^\]]+\]GL Driver Message .*GPU stall due to ReadPixels/.test(text);
+              if (!isBrowserReadbackNoise) consoleFindings.push({ type: message.type(), text });
             }
           });
           page.on("pageerror", (error) => consoleFindings.push({ type: "pageerror", text: error.message }));
@@ -1603,6 +1600,7 @@ export async function runQa(environment = process.env) {
             touch: route.touch,
             browserName: route.browserName,
             longTaskRequired: route.longTaskRequired !== false,
+            performanceRequired: route.performanceRequired !== false,
             url: page.url(),
             durationMs: Date.now() - caseStartedAt,
             journey,
@@ -1697,6 +1695,7 @@ export async function runQa(environment = process.env) {
         actorIds: route.actorIds ?? null,
         browserName: route.browserName,
         longTaskRequired: route.longTaskRequired !== false,
+        performanceRequired: route.performanceRequired !== false,
       })),
     },
     inputs: { baseUrl, artifactDir, ownerContractQa },

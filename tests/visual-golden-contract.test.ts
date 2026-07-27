@@ -113,7 +113,7 @@ describe("Atlas v7.6 CI-only visual golden contract", () => {
       "844x390",
     ]));
     expect(goldenCases.filter((entry) => entry.workspace === "home").map((entry) => entry.targetScene)).toEqual([
-      "core-gravity",
+      "domain-backbone",
       "protagonists",
       "vault-in-motion",
       "operational-compass",

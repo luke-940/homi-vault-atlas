@@ -380,14 +380,21 @@ for (const root of [dataDir, path.join(distDir, "data"), path.join(projectDir, "
 }
 const assetManifest = JSON.parse(await readFile(path.join(distDir, "asset-manifest.json"), "utf8"));
 const appJavaScript = assetManifest.entrypoints?.javascript;
+const semanticSpaceJavaScript = assetManifest.entrypoints?.semanticSpace;
 const appStylesheet = assetManifest.entrypoints?.stylesheet;
 const javascriptPattern = /^app\.[a-f0-9]{16}\.js$/;
+const semanticSpacePattern = /^semantic-space\.[a-f0-9]{16}\.js$/;
 const stylesheetPattern = /^app\.[a-f0-9]{16}\.css$/;
 if (!javascriptPattern.test(appJavaScript?.path ?? "")) findings.push({ id: "application-javascript-not-content-hashed", path: appJavaScript?.path ?? "missing" });
+if (!semanticSpacePattern.test(semanticSpaceJavaScript?.path ?? "")) findings.push({ id: "semantic-space-javascript-not-content-hashed", path: semanticSpaceJavaScript?.path ?? "missing" });
 if (!stylesheetPattern.test(appStylesheet?.path ?? "")) findings.push({ id: "application-css-not-content-hashed", path: appStylesheet?.path ?? "missing" });
 const appJavaScriptBody = appJavaScript?.path ? await readFile(path.join(distDir, appJavaScript.path)) : Buffer.alloc(0);
+const semanticSpaceJavaScriptBody = semanticSpaceJavaScript?.path
+  ? await readFile(path.join(distDir, semanticSpaceJavaScript.path))
+  : Buffer.alloc(0);
 const appStylesheetBody = appStylesheet?.path ? await readFile(path.join(distDir, appStylesheet.path)) : Buffer.alloc(0);
 const appJavaScriptSha256 = sha256(appJavaScriptBody);
+const semanticSpaceJavaScriptSha256 = sha256(semanticSpaceJavaScriptBody);
 const appStylesheetSha256 = sha256(appStylesheetBody);
 if (appJavaScript?.bytes !== appJavaScriptBody.length || appJavaScript?.sha256 !== appJavaScriptSha256) {
   findings.push({ id: "application-javascript-manifest-binding-mismatch", path: appJavaScript?.path ?? "missing" });
@@ -395,11 +402,18 @@ if (appJavaScript?.bytes !== appJavaScriptBody.length || appJavaScript?.sha256 !
 if (appStylesheet?.bytes !== appStylesheetBody.length || appStylesheet?.sha256 !== appStylesheetSha256) {
   findings.push({ id: "application-css-manifest-binding-mismatch", path: appStylesheet?.path ?? "missing" });
 }
+if (semanticSpaceJavaScript?.bytes !== semanticSpaceJavaScriptBody.length
+  || semanticSpaceJavaScript?.sha256 !== semanticSpaceJavaScriptSha256) {
+  findings.push({ id: "semantic-space-javascript-manifest-binding-mismatch", path: semanticSpaceJavaScript?.path ?? "missing" });
+}
 if (appJavaScript?.path !== `app.${appJavaScriptSha256.slice(0, 16)}.js`) {
   findings.push({ id: "application-javascript-filename-hash-mismatch", path: appJavaScript?.path ?? "missing" });
 }
 if (appStylesheet?.path !== `app.${appStylesheetSha256.slice(0, 16)}.css`) {
   findings.push({ id: "application-css-filename-hash-mismatch", path: appStylesheet?.path ?? "missing" });
+}
+if (semanticSpaceJavaScript?.path !== `semantic-space.${semanticSpaceJavaScriptSha256.slice(0, 16)}.js`) {
+  findings.push({ id: "semantic-space-javascript-filename-hash-mismatch", path: semanticSpaceJavaScript?.path ?? "missing" });
 }
 if (assetManifest.publicSnapshotDigest !== publication.publicSnapshotDigest) {
   findings.push({ id: "asset-manifest-snapshot-digest-mismatch", path: "dist-public/asset-manifest.json" });
@@ -408,14 +422,17 @@ if ((assetManifest.unhashedJavaScriptOrCss ?? []).length !== 0) {
   findings.push({ id: "asset-manifest-unhashed-javascript-or-css", path: "dist-public/asset-manifest.json" });
 }
 const appJavaScriptGzipBytes = gzipSync(appJavaScriptBody, { level: 9 }).length;
+const semanticSpaceJavaScriptGzipBytes = gzipSync(semanticSpaceJavaScriptBody, { level: 9 }).length;
 if (appJavaScriptBody.length > V7_4_PUBLIC_BUDGETS.applicationJavaScriptRawBytes) findings.push({ id: "application-javascript-raw-budget", path: appJavaScript?.path ?? "missing", actual: appJavaScriptBody.length });
 if (appJavaScriptGzipBytes > V7_4_PUBLIC_BUDGETS.applicationJavaScriptGzipBytes) findings.push({ id: "application-javascript-gzip-budget", path: appJavaScript?.path ?? "missing", actual: appJavaScriptGzipBytes });
+if (semanticSpaceJavaScriptGzipBytes > V7_4_PUBLIC_BUDGETS.semanticSpaceJavaScriptGzipBytes) findings.push({ id: "semantic-space-javascript-gzip-budget", path: semanticSpaceJavaScript?.path ?? "missing", actual: semanticSpaceJavaScriptGzipBytes });
+if (appJavaScriptGzipBytes + semanticSpaceJavaScriptGzipBytes > V7_4_PUBLIC_BUDGETS.combinedExecutableJavaScriptGzipBytes) findings.push({ id: "combined-executable-javascript-gzip-budget", path: "dist-public", actual: appJavaScriptGzipBytes + semanticSpaceJavaScriptGzipBytes });
 if (appStylesheetBody.length > V7_4_PUBLIC_BUDGETS.applicationCssRawBytes) findings.push({ id: "application-css-raw-budget", path: appStylesheet?.path ?? "missing", actual: appStylesheetBody.length });
 const rootAssets = (await readdir(distDir)).filter((name) => /\.(?:js|css)$/.test(name));
 for (const name of rootAssets) {
-  if (!javascriptPattern.test(name) && !stylesheetPattern.test(name)) findings.push({ id: "unhashed-root-javascript-or-css", path: `dist-public/${name}` });
+  if (!javascriptPattern.test(name) && !semanticSpacePattern.test(name) && !stylesheetPattern.test(name)) findings.push({ id: "unhashed-root-javascript-or-css", path: `dist-public/${name}` });
 }
-const declaredRootAssets = [appJavaScript?.path, appStylesheet?.path].filter(Boolean).sort(compareText);
+const declaredRootAssets = [appJavaScript?.path, semanticSpaceJavaScript?.path, appStylesheet?.path].filter(Boolean).sort(compareText);
 if (JSON.stringify([...rootAssets].sort(compareText)) !== JSON.stringify(declaredRootAssets)) {
   findings.push({ id: "undeclared-root-javascript-or-css", path: "dist-public" });
 }
@@ -443,6 +460,9 @@ if (JSON.stringify(referencedFontFiles) !== JSON.stringify(emittedFontFiles)) {
 const indexHtml = await readFile(path.join(distDir, "index.html"), "utf8");
 if (!indexHtml.includes(`src="./${appJavaScript?.path}"`)) {
   findings.push({ id: "index-javascript-entrypoint-mismatch", path: "dist-public/index.html" });
+}
+if (!appJavaScriptBody.includes(Buffer.from(`./${semanticSpaceJavaScript?.path}`))) {
+  findings.push({ id: "semantic-space-lazy-entrypoint-not-bound-to-shell", path: appJavaScript?.path ?? "missing" });
 }
 if (!indexHtml.includes(`href="./${appStylesheet?.path}"`)) {
   findings.push({ id: "index-css-entrypoint-mismatch", path: "dist-public/index.html" });
@@ -512,6 +532,7 @@ if (publicBuildReceipt.schema !== "atlas.public_build.v1"
   || publicBuildReceipt.files !== buildInputEntries.length
   || publicBuildReceipt.bytes !== buildInputBytes
   || JSON.stringify(publicBuildReceipt.javascript) !== JSON.stringify(appJavaScript)
+  || JSON.stringify(publicBuildReceipt.semanticSpace) !== JSON.stringify(semanticSpaceJavaScript)
   || JSON.stringify(publicBuildReceipt.stylesheet) !== JSON.stringify(appStylesheet)
   || JSON.stringify(publicBuildReceipt.fontSubset) !== JSON.stringify(fontSubset)) {
   findings.push({ id: "public-build-receipt-binding-mismatch", path: "dist-public/build-receipt.json" });
@@ -572,6 +593,7 @@ const receipt = {
   shapeValidation,
   assetBinding: {
     javascript: { ...appJavaScript, gzipBytes: appJavaScriptGzipBytes },
+    semanticSpace: { ...semanticSpaceJavaScript, gzipBytes: semanticSpaceJavaScriptGzipBytes },
     stylesheet: appStylesheet,
     fontSubset,
     emittedFontFiles,

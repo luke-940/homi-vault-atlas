@@ -201,6 +201,7 @@ export interface MeaningProtagonist {
   };
   evidenceRefs: string[];
   selectionMode: "atlas_builder_judgment";
+  storyIds?: string[];
 }
 
 export interface MeaningConstellation {
@@ -238,7 +239,7 @@ export interface OperationalAlignment {
 }
 
 export interface EditorialScene {
-  id: "core-gravity" | "protagonists" | "vault-in-motion" | "operational-compass";
+  id: "domain-backbone" | "core-gravity" | "protagonists" | "vault-in-motion" | "operational-compass";
   label: string;
   thesis: string;
   focusIds: string[];
@@ -259,6 +260,52 @@ export interface AtlasMeaningV1 {
     protagonistCount: number;
     constellationCount: number;
     movementCount: number;
+    projectionDigest: string;
+  };
+}
+
+export interface MeaningDomainBackbone {
+  id: string;
+  domain: "MOC" | "Papers" | "Signals";
+  districtId: string | null;
+  anchorNodeId: string | null;
+  edgeIds: string[];
+  statement: string;
+  evidenceGap: string | null;
+}
+
+export interface MeaningConnectionStory {
+  id: string;
+  focalNodeId: string;
+  label: string;
+  thesis: string;
+  edgeIds: string[];
+  incomingEdgeIds: string[];
+  outgoingEdgeIds: string[];
+  domainIds: string[];
+  caveat: string;
+}
+
+export interface AtlasMeaningV2 {
+  schema: "atlas.meaning.v2";
+  profile: AtlasProfile;
+  generatedAt: string;
+  baseline: MeaningSnapshotIdentity;
+  current: MeaningSnapshotIdentity;
+  domainBackbone: MeaningDomainBackbone[];
+  connectionStories: MeaningConnectionStory[];
+  protagonists: Array<MeaningProtagonist & { storyIds: string[] }>;
+  constellations: MeaningConstellation[];
+  movements: MeaningMovement[];
+  operationalCompass: OperationalAlignment[];
+  scenes: EditorialScene[];
+  manifest: {
+    protagonistCount: number;
+    constellationCount: number;
+    movementCount: number;
+    storyCount: number;
+    actualUsedEdgeCount: number;
+    domainCoverage: Record<"MOC" | "Papers" | "Signals", "covered" | "evidence_gap">;
     projectionDigest: string;
   };
 }
@@ -561,7 +608,7 @@ export interface AtlasData {
   bootstrap: SnapshotPack;
   inventory: AtlasInventoryV1;
   graph: AtlasGraphV1;
-  meaning: AtlasMeaningV1;
+  meaning: AtlasMeaningV2;
   relation: {
     districtOrder: string[];
     matrix: MatrixCell[];

@@ -1,5 +1,5 @@
 import { ArrowRight, CircleCheck, Route as RouteIcon, ShieldCheck } from "lucide-react";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SpatialWorkspaceFrame } from "../components/SpatialWorkspaceFrame";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { atlasData, graphNodeById } from "../data-runtime";
@@ -58,16 +58,18 @@ export function FlowView() {
   const routes = verifiedRoutes();
   const route = routes.find((item) => item.id === state.routeId) ?? routes[0];
   const activeRouteRef = useRef<HTMLButtonElement>(null);
+  const [localPreviewId, setLocalPreviewId] = useState<string | null>(null);
   const routeIds = useMemo(() => route ? routeNodeIds(route) : [], [route]);
   const from = routeIds[0] ?? null;
   const to = routeIds.at(-1) ?? null;
   const path = useMemo(() => shortestDirectedPath(atlasData.graph, from, to), [from, to]);
-  const selectedNode = state.previewId
-    ? graphNodeById.get(state.previewId) ?? null
+  const selectedNode = localPreviewId
+    ? graphNodeById.get(localPreviewId) ?? null
     : graphNodeById.get(state.focusId ?? "") ?? (from ? graphNodeById.get(from) ?? null : null);
 
   useEffect(() => {
     revealSelectedRoute(activeRouteRef.current);
+    setLocalPreviewId(null);
   }, [state.routeId]);
 
   return (
@@ -117,14 +119,16 @@ export function FlowView() {
                 graph={atlasData.graph}
                 scene="trace"
                 focusId={state.focusId || from}
-                previewId={state.previewId}
+                previewId={localPreviewId}
                 from={from}
                 to={to}
                 mobile={state.mobileSibling}
                 reducedMotion={state.reducedMotion}
                 presentation="workspace"
+                persistentLabelIds={routeIds}
+                highlightNodeIds={routeIds}
                 onSelect={(focusId) => dispatch({ type: "focus", focusId })}
-                onHover={(focusId) => dispatch({ type: "preview", focusId })}
+                onHover={setLocalPreviewId}
               />
             </main>
             <aside className="spatial-evidence-rail spatial-evidence-rail--typographic flow-evidence-rail flow-spatial-evidence" aria-live="polite">

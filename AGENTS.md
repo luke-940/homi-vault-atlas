@@ -1,10 +1,10 @@
-# Homi Vault Atlas v7.6 working contract
+# Homi Vault Atlas v7.7 working contract
 
-Before any task, read `docs/VISUALIZATION-NORTH-STAR.md`, `docs/ATLAS-DIPLOMAT-NORTH-STAR.md`, and the current Gate Understanding Packet under the local release evidence root.
+Before any task, read `docs/VISUALIZATION-NORTH-STAR.md`, `docs/ATLAS-DIPLOMAT-NORTH-STAR.md`, `docs/SEMANTIC-SPACE-RENDERER.md`, and the current Gate Understanding Packet under the local release evidence root.
 
 The product is a commercial-grade knowledge visualization, not an MVP, demo, prototype, or temporary experiment. Atlas Builder is responsible for understanding the Vault as a whole and translating its structure, protagonists, real directional relations, verified change, and agent stewardship into a human-readable product.
 
-Preserve the approved v7.5 spatial stage: warm graphite cosmic depth, perspective Canvas2D, node-owned evidence light, direct typography, factual routes, and unobstructed graph composition. v7.6 adds semantic constellations and operational meaning; it does not replace the stage with a dashboard, card wall, generic space wallpaper, runtime force field, or decorative 3D.
+Preserve the approved v7.5 spatial stage: warm graphite cosmic depth, node-owned evidence light, direct typography, factual routes, and unobstructed graph composition. Desktop Home and Explore use a bounded real Three.js scene; mobile and unsupported devices retain the deterministic Canvas2D sibling. Real 3D does not permit a dashboard, card wall, generic space wallpaper, runtime force field, glossy planet, or decorative relation.
 
 ## Evidence and judgment
 
@@ -17,7 +17,7 @@ Preserve the approved v7.5 spatial stage: warm graphite cosmic depth, perspectiv
 
 ## Product and interaction
 
-- Home scenes are `core-gravity`, `protagonists`, `vault-in-motion`, and `operational-compass`.
+- Home scenes are `domain-backbone`, `protagonists`, `vault-in-motion`, and `operational-compass`.
 - `previewId` is transient. Only click, Enter, or tap commits `focusId` to the URL.
 - Owner and Public use one compiler. Owner keeps admitted titles unchanged; Public admits only approved public names and safe projections.
 - Desktop, mobile portrait, and mobile landscape are sibling compositions. Essential meaning never depends on hover or motion.

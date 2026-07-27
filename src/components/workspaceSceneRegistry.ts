@@ -18,13 +18,13 @@ export const workspaceSceneRegistry: Readonly<Record<Workspace, WorkspaceSceneDe
   home: {
     label: "Home",
     title: "Semantic Constellations",
-    defaultScene: "core-gravity",
+    defaultScene: "domain-backbone",
     scenes: [
       {
-        id: "core-gravity",
-        label: "Core Domain Gravity",
+        id: "domain-backbone",
+        label: "Domain Backbone",
         title: "핵심 지식 영역",
-        aliases: ["knowledge-field", "living-terrain", "system-overview", "terrain-convergence"],
+        aliases: ["core-gravity", "knowledge-field", "living-terrain", "system-overview", "terrain-convergence"],
       },
       {
         id: "protagonists",

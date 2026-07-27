@@ -1,13 +1,13 @@
 {
   "schema": "atlas.insight.v1",
-  "generatedAt": "2026-07-23T09:26:27.311Z",
-  "evidenceBoundary": "atlas.meaning.v1의 검증된 주인공·실제 관계·버전 변화·운영 정렬에서 생성한 호환 adapter입니다.",
+  "generatedAt": "2026-07-27T05:09:31.489Z",
+  "evidenceBoundary": "atlas.meaning.v2의 검증된 주인공·실제 관계·버전 변화·운영 정렬에서 생성한 atlas.insight.v1 호환 adapter입니다.",
   "items": [
     {
       "id": "insight:v76:core-gravity",
       "kind": "knowledge_concentration",
       "question": "Vault의 중심 지식 영역은 무엇을 담당하는가",
-      "headline": "Homi를 중심으로 MOC는 구조화하고, Papers는 근거를 공급하며, Signals는 변화를 감지합니다.",
+      "headline": "MOC는 판단을 묶고, Papers는 근거를 공급하며, Signals는 변화를 감지합니다. 화면의 선은 실제 방향 참조만 사용합니다.",
       "metric": {
         "value": 3,
         "label": "core domains",
@@ -23,7 +23,7 @@
       ],
       "targetScene": {
         "workspace": "home",
-        "scene": "core-gravity"
+        "scene": "domain-backbone"
       },
       "confidence": "high",
       "caveat": "세 영역은 역할 설명이며 중요도 점수가 아닙니다.",

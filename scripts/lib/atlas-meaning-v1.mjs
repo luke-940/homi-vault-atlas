@@ -15,6 +15,11 @@ const publicJudgments = Object.freeze({
     thesis: "에이전트는 답변 기능이 아니라 도구·권한·메모리·실행·검증을 가진 작업 표면으로 다뤄집니다.",
     caveat: "연결 수는 운영 성숙도나 자율성 점수가 아닙니다.",
   },
+  "이미지생성": {
+    role: "cross_domain_bridge",
+    thesis: "이미지생성은 모델·편집·디자인 도구·연구 근거를 실제 제작 흐름으로 연결하는 범용 시각 합성 지형입니다.",
+    caveat: "연결 밀도는 제품·모델의 우열이나 현재 가용성을 뜻하지 않습니다.",
+  },
   OpenAI: {
     role: "frontier_signal",
     thesis: "OpenAI는 범용 작업·코딩·연결·기업 실행 가설을 먼저 비교하게 만드는 강한 전방 압력입니다.",
@@ -61,7 +66,7 @@ function cleanDossier(dossier, graphNode) {
 
 function defaultProtagonistNodes(graph, profile) {
   const preferredLabels = profile === "atlas-public"
-    ? ["AI 신뢰성", "에이전트", "OpenAI", "Google", "Anthropic", "Agent Papers"]
+    ? ["에이전트", "이미지생성", "AI 신뢰성", "Agent Papers", "노동·조직", "AI and Society Papers"]
     : [];
   const preferred = preferredLabels
     .map((label) => graph.nodes.find((node) => node.label === label))
@@ -539,7 +544,8 @@ export function buildAtlasMeaningV1({
 }
 
 export function meaningInsightAdapter(meaning, relation = null, entity = null) {
-  const core = meaning.scenes.find((scene) => scene.id === "core-gravity");
+  const core = meaning.scenes.find((scene) =>
+    scene.id === "domain-backbone" || scene.id === "core-gravity");
   const movement = meaning.movements[0] ?? null;
   const strongestPair = [...(relation?.matrix ?? [])]
     .sort((left, right) => right.wikilink - left.wikilink || compareText(left.id, right.id))[0] ?? null;
@@ -552,7 +558,7 @@ export function meaningInsightAdapter(meaning, relation = null, entity = null) {
   return {
     schema: "atlas.insight.v1",
     generatedAt: meaning.generatedAt,
-    evidenceBoundary: "atlas.meaning.v1의 검증된 주인공·실제 관계·버전 변화·운영 정렬에서 생성한 호환 adapter입니다.",
+    evidenceBoundary: `${meaning.schema}의 검증된 주인공·실제 관계·버전 변화·운영 정렬에서 생성한 atlas.insight.v1 호환 adapter입니다.`,
     items: [
       {
         id: "insight:v76:core-gravity",
@@ -561,7 +567,7 @@ export function meaningInsightAdapter(meaning, relation = null, entity = null) {
         headline: core?.thesis ?? "MOC·Papers·Signals의 역할을 구분합니다.",
         metric: { value: 3, label: "core domains", unit: "개" },
         evidenceRefs: relationEvidence,
-        targetScene: { workspace: "home", scene: "core-gravity" },
+        targetScene: { workspace: "home", scene: meaning.schema === "atlas.meaning.v2" ? "domain-backbone" : "core-gravity" },
         confidence: "high",
         caveat: "세 영역은 역할 설명이며 중요도 점수가 아닙니다.",
         publicSafe: meaning.profile === "atlas-public",

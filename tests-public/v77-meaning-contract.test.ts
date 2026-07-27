@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
-import { buildAtlasMeaningV1 } from "../scripts/lib/atlas-meaning-v1.mjs";
+import { buildAtlasMeaningV2 } from "../scripts/lib/atlas-meaning-v2.mjs";
 
 const readPack = (name: string) => JSON.parse(
   readFileSync(path.resolve("public-safe", "data", `${name}.json`), "utf8"),
@@ -124,7 +124,7 @@ function ownerMovementFixture() {
   };
 }
 
-describe("Atlas v7.6 semantic meaning contract", () => {
+describe("Atlas v7.7 connection intelligence contract", () => {
   test("binds every protagonist and constellation to actual directed graph evidence", () => {
     const graph = readPack("graph");
     const meaning = readPack("meaning");
@@ -132,12 +132,13 @@ describe("Atlas v7.6 semantic meaning contract", () => {
     const edgeById = new Map(graph.edges.map((edge: { id: string }) => [edge.id, edge]));
 
     expect(meaning).toMatchObject({
-      schema: "atlas.meaning.v1",
+      schema: "atlas.meaning.v2",
       profile: "atlas-public",
       manifest: {
         protagonistCount: meaning.protagonists.length,
         constellationCount: meaning.constellations.length,
         movementCount: meaning.movements.length,
+        storyCount: meaning.connectionStories.length,
       },
     });
     expect(meaning.protagonists.length).toBeGreaterThanOrEqual(3);
@@ -161,22 +162,35 @@ describe("Atlas v7.6 semantic meaning contract", () => {
         expect(edge?.source).toBe(constellation.focalNodeId);
       }
     }
+    for (const row of meaning.domainBackbone) {
+      expect(["MOC", "Papers", "Signals"]).toContain(row.domain);
+      expect(nodeById.has(row.anchorNodeId)).toBe(true);
+      expect(row.edgeIds.length).toBeGreaterThan(0);
+      for (const edgeId of row.edgeIds) expect(edgeById.has(edgeId)).toBe(true);
+    }
+    for (const story of meaning.connectionStories) {
+      expect(nodeById.has(story.focalNodeId)).toBe(true);
+      expect(story.edgeIds.length).toBeGreaterThan(0);
+      for (const edgeId of story.edgeIds) expect(edgeById.has(edgeId)).toBe(true);
+    }
   });
 
-  test("keeps Homi as a non-metric system anchor and OpenAI as a factual constellation", () => {
+  test("keeps Homi outside the knowledge graph and a generic image-generation concept as a factual constellation", () => {
     const graph = readPack("graph");
     const meaning = readPack("meaning");
-    const core = meaning.scenes.find((scene: { id: string }) => scene.id === "core-gravity");
-    const openAi = graph.nodes.find((node: { label: string }) => node.label === "OpenAI");
+    const core = meaning.scenes.find((scene: { id: string }) => scene.id === "domain-backbone");
+    const imageGeneration = graph.nodes.find((node: { label: string }) => node.label === "이미지생성");
     const constellation = meaning.constellations.find(
-      (item: { focalNodeId: string }) => item.focalNodeId === openAi?.id,
+      (item: { focalNodeId: string }) => item.focalNodeId === imageGeneration?.id,
     );
 
-    expect(core?.thesis).toContain("Homi");
+    expect(core?.thesis).toContain("MOC");
+    expect(core?.thesis).toContain("Papers");
+    expect(core?.thesis).toContain("Signals");
     expect(core?.focusIds.length).toBe(3);
     expect(core?.focusIds.every((id: string) => graph.nodes.some((node: { id: string }) => node.id === id))).toBe(true);
     expect(graph.nodes.some((node: { label: string }) => node.label === "Homi")).toBe(false);
-    expect(openAi).toBeDefined();
+    expect(imageGeneration).toBeDefined();
     expect(constellation?.incomingEdgeIds.length).toBeGreaterThan(0);
     expect(constellation?.outgoingEdgeIds.length).toBeGreaterThan(0);
   });
@@ -199,7 +213,7 @@ describe("Atlas v7.6 semantic meaning contract", () => {
       caveat: item.caveat,
       metrics: item.metrics,
     }));
-    const meaning = buildAtlasMeaningV1({
+    const meaning = buildAtlasMeaningV2({
       graph,
       agency,
       generatedAt: current.generatedAt,
@@ -260,8 +274,8 @@ describe("Atlas v7.6 semantic meaning contract", () => {
       current: current.current,
       dossiers,
     };
-    const first = buildAtlasMeaningV1(structuredClone(input));
-    const second = buildAtlasMeaningV1(structuredClone(input));
+    const first = buildAtlasMeaningV2(structuredClone(input));
+    const second = buildAtlasMeaningV2(structuredClone(input));
     expect(JSON.stringify(first)).toBe(JSON.stringify(second));
     expect(first.manifest.projectionDigest).toMatch(/^[a-f0-9]{64}$/);
   });
@@ -269,7 +283,7 @@ describe("Atlas v7.6 semantic meaning contract", () => {
   test("uses explicit Owner movement judgment order and labels while deriving all truth from graph delta", () => {
     const fixture = ownerMovementFixture();
     const current = snapshotIdentity(fixture.graph);
-    const meaning = buildAtlasMeaningV1({
+    const meaning = buildAtlasMeaningV2({
       graph: fixture.graph,
       agency: fixture.agency,
       generatedAt: fixture.graph.generatedAt,
@@ -324,7 +338,7 @@ describe("Atlas v7.6 semantic meaning contract", () => {
       }],
     };
 
-    expect(() => buildAtlasMeaningV1({
+    expect(() => buildAtlasMeaningV2({
       graph: fixture.graph,
       agency: fixture.agency,
       generatedAt: fixture.graph.generatedAt,
@@ -348,8 +362,8 @@ describe("Atlas v7.6 semantic meaning contract", () => {
       current,
       graphDelta: fixture.graphDelta as never,
     };
-    const withoutJudgments = buildAtlasMeaningV1(structuredClone(input));
-    const withJudgments = buildAtlasMeaningV1({
+    const withoutJudgments = buildAtlasMeaningV2(structuredClone(input));
+    const withJudgments = buildAtlasMeaningV2({
       ...structuredClone(input),
       movementJudgments: structuredClone(fixture.movementJudgments) as never,
     });

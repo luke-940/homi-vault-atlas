@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import * as m from "motion/react-m";
 import homiMark from "../assets/brand/homi-mark-amber.svg";
 import { atlasData, graphNodeById } from "../data-runtime";
-import { LivingGraphCanvas } from "../graph/LivingGraphCanvas";
+import { AdaptiveSemanticSpace } from "../graph/AdaptiveSemanticSpace";
 import {
   graphNodeLabel,
 } from "../graph/model";
@@ -18,7 +18,7 @@ import type {
   OperationalAlignment,
 } from "../types";
 
-type HomeSceneId = "core-gravity" | "protagonists" | "vault-in-motion" | "operational-compass";
+type HomeSceneId = "domain-backbone" | "protagonists" | "vault-in-motion" | "operational-compass";
 
 const HOME_SCENES: Array<{
   id: HomeSceneId;
@@ -31,13 +31,13 @@ const HOME_SCENES: Array<{
   legacyVisual: string;
 }> = [
   {
-    id: "core-gravity",
+    id: "domain-backbone",
     index: "01",
-    shortLabel: "Core",
-    label: "Core Domain Gravity",
+    shortLabel: "Backbone",
+    label: "Domain Backbone",
     eyebrow: "HOMI KNOWLEDGE SYSTEM",
-    title: "지식의 주인공과,\n그들이 움직이는 방향을 본다.",
-    body: "Homi를 중심으로 MOC는 지식을 구조화하고, Papers는 근거를 공급하며, Signals는 변화를 감지합니다.",
+    title: "지식의 핵심 영역과,\n그 사이를 움직이는\n실제 관계를 본다.",
+    body: "MOC는 판단을 묶고, Papers는 근거를 공급하며, Signals는 변화를 감지합니다. 화면의 선은 실제 방향 참조만 사용합니다.",
     legacyVisual: "knowledge-field",
   },
   {
@@ -73,7 +73,8 @@ const HOME_SCENES: Array<{
 ];
 
 const sceneAliases = new Map<string, HomeSceneId>([
-  ["knowledge-field", "core-gravity"],
+  ["core-gravity", "domain-backbone"],
+  ["knowledge-field", "domain-backbone"],
   ["knowledge-gravity", "protagonists"],
   ["freshness-field", "vault-in-motion"],
   ["link-trace", "operational-compass"],
@@ -81,12 +82,12 @@ const sceneAliases = new Map<string, HomeSceneId>([
 
 function normalizedScene(sceneId: string): HomeSceneId {
   if (HOME_SCENES.some((scene) => scene.id === sceneId)) return sceneId as HomeSceneId;
-  return sceneAliases.get(sceneId) ?? "core-gravity";
+  return sceneAliases.get(sceneId) ?? "domain-backbone";
 }
 
 function graphScene(scene: HomeSceneId) {
   return ({
-    "core-gravity": "field",
+    "domain-backbone": "field",
     protagonists: "gravity",
     "vault-in-motion": "freshness",
     "operational-compass": "trace",
@@ -240,11 +241,14 @@ const CORE_DOMAINS = [
 ] as const;
 
 function defaultProtagonist() {
-  const openAiNode = atlasData.graph.nodes.find((node) => node.label === "OpenAI");
-  const openAiMeaning = openAiNode
-    ? atlasData.meaning.protagonists.find((item) => item.nodeId === openAiNode.id)
-    : null;
-  return openAiMeaning ?? atlasData.meaning.protagonists[0] ?? null;
+  for (const label of ["이미지생성", "에이전트"]) {
+    const node = atlasData.graph.nodes.find((candidate) => candidate.label === label);
+    const meaning = node
+      ? atlasData.meaning.protagonists.find((item) => item.nodeId === node.id)
+      : null;
+    if (meaning) return meaning;
+  }
+  return atlasData.meaning.protagonists[0] ?? null;
 }
 
 function ProtagonistRail({
@@ -382,7 +386,8 @@ export function HomeView() {
   const committedGraphFocus = state.focusId && graphNodeById.has(state.focusId) ? state.focusId : null;
   const sceneFallbackFocus = sceneId === "protagonists" ? defaultMeaningProtagonist?.nodeId ?? null : null;
   const graphFocus = committedGraphFocus ?? sceneFallbackFocus;
-  const previewId = state.previewId && graphNodeById.has(state.previewId) ? state.previewId : null;
+  const [localPreviewId, setLocalPreviewId] = useState<string | null>(null);
+  const previewId = localPreviewId && graphNodeById.has(localPreviewId) ? localPreviewId : null;
   const activeId = previewId ?? graphFocus;
   const focusedNode = activeId ? graphNodeById.get(activeId) ?? null : null;
   const selectedProtagonist = activeId
@@ -444,6 +449,7 @@ export function HomeView() {
   useEffect(() => {
     setPreviewStoryId(null);
     setCommittedStoryId(null);
+    setLocalPreviewId(null);
   }, [sceneId]);
 
   const openScene = (nextScene: HomeSceneId) => {
@@ -451,11 +457,11 @@ export function HomeView() {
   };
   const preview = (focusId: string | null) => {
     setPreviewStoryId(null);
-    dispatch({ type: "preview", focusId });
+    setLocalPreviewId(focusId);
   };
   const previewStory = (focusId: string | null, storyId: string | null) => {
     setPreviewStoryId(storyId);
-    dispatch({ type: "preview", focusId });
+    setLocalPreviewId(focusId);
   };
   const select = (focusId: string) => {
     setCommittedStoryId(null);
@@ -487,7 +493,7 @@ export function HomeView() {
 
   return (
     <div
-      className={`home-v75 home-v76 is-${scene.legacyVisual} is-v76-${sceneId}`}
+      className={`home-v75 home-v76 is-${scene.legacyVisual} is-v76-${sceneId}${hasExplicitFocus ? " has-home-focus" : ""}`}
       lang="ko"
       data-home-page={sceneId}
     >
@@ -498,7 +504,7 @@ export function HomeView() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
         >
-          <LivingGraphCanvas
+          <AdaptiveSemanticSpace
             graph={atlasData.graph}
             scene={graphScene(sceneId)}
             focusId={graphFocus}
@@ -519,7 +525,7 @@ export function HomeView() {
           />
         </m.div>
 
-        {sceneId === "core-gravity" && (
+        {sceneId === "domain-backbone" && (
           <button
             type="button"
             className="home-v76-system-anchor home-v76-system-origin"
@@ -532,29 +538,12 @@ export function HomeView() {
             onClick={() => dispatch({ type: "journey", target: { workspace: "agency", sceneId: "system" } })}
           >
             <img src={homiMark} alt="" aria-hidden="true" />
-            <span id="home-v76-system-origin-description" className="sr-only">방향을 정하고 지식의 순환과 번역을 잇는 Homi system origin</span>
+            <span className="home-v77-provenance-copy" aria-hidden="true">
+              <strong>Homi provenance</strong>
+              <small>제품 출처 · 지식 노드 아님</small>
+            </span>
+            <span id="home-v76-system-origin-description" className="sr-only">제품 provenance · 지식 노드 아님. 방향을 정하고 지식의 순환과 번역을 잇는 Homi system origin.</span>
           </button>
-        )}
-
-        {sceneId === "core-gravity" && (
-          <div className={`home-v76-domain-legend${systemPreview ? " is-system-active" : ""}`} aria-label="핵심 지식 영역">
-            {CORE_DOMAINS.map((domain) => (
-              <button
-                key={domain.key}
-                type="button"
-                className={`is-${domain.key}`}
-                disabled={!domain.node}
-                onPointerEnter={() => preview(domain.node?.id ?? null)}
-                onPointerLeave={() => preview(null)}
-                onFocus={() => preview(domain.node?.id ?? null)}
-                onBlur={() => preview(null)}
-                onClick={() => domain.node && select(domain.node.id)}
-              >
-                <strong>{domain.label}</strong>
-                <span>{domain.role}</span>
-              </button>
-            ))}
-          </div>
         )}
 
         <m.article
@@ -562,7 +551,7 @@ export function HomeView() {
           className="home-v75-editorial"
           initial={state.reducedMotion ? false : { opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
         >
           <div className="home-v75-copy-block">
             <span className="home-v75-eyebrow" lang="en">{scene.eyebrow}</span>
@@ -702,6 +691,8 @@ export function HomeView() {
         </nav>
 
         <footer className="home-v75-boundary" aria-label={`${atlasData.graph.profile === "atlas-owner" ? "Owner local" : "Public"} snapshot boundary`}>
+          <span>지식 항목 {atlasData.graph.manifest.nodeCount.toLocaleString("ko-KR")}</span>
+          <span>실제 방향 관계 {atlasData.graph.manifest.edgeCount.toLocaleString("ko-KR")}</span>
           <span>이름으로 표현 {atlasData.inventory.namedCount.toLocaleString("ko-KR")}</span>
           <span>지식 주인공 {atlasData.meaning.manifest.protagonistCount.toLocaleString("ko-KR")}</span>
           <span>검증된 변화 {atlasData.meaning.manifest.movementCount.toLocaleString("ko-KR")}</span>

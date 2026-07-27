@@ -20,6 +20,7 @@ import { resolveWorkspaceScene } from "../src/components/workspaceSceneRegistry"
 import { districtRelationRoutes, strongestConnectedNode, strongestIncidentEdge } from "../src/graph/model";
 import {
   defaultDistrictCorridorCommands,
+  defaultWorkspaceReferenceCommands,
   directedPathCommands,
   focusedReferenceCommands,
   interactionContext,
@@ -118,6 +119,18 @@ describe("Atlas v7.5 graph and dual-profile boundary", () => {
     expect(overview.length).toBeLessThanOrEqual(8);
     expect(overview.every((command) => command.semanticKind === "district_corridor"
       && command.provenance === "atlas.graph.v1" && command.weight > 0)).toBe(true);
+
+    const workspace = defaultWorkspaceReferenceCommands(graph);
+    const actualEdgeIds = new Set(graph.edges.map((edge: { id: string }) => edge.id));
+    expect(workspace.length).toBeGreaterThanOrEqual(18);
+    expect(workspace.length).toBeLessThanOrEqual(24);
+    expect(workspace.every((command) =>
+      command.semanticKind === "exact_reference"
+      && command.provenance === "atlas.graph.v1"
+      && graph.edges.some((edge: { id: string; source: string; target: string }) =>
+        actualEdgeIds.has(edge.id)
+        && edge.source === command.sourceId
+        && edge.target === command.targetId))).toBe(true);
 
     const focus = strongestConnectedNode(graph);
     expect(focus).not.toBeNull();
@@ -438,12 +451,12 @@ describe("Atlas v7.5 graph and dual-profile boundary", () => {
     expect(projection.sourceIndex.length).toBe(projection.inventory.namedCount);
     expect(paper).toMatchObject({
       schema: "atlas.paper_dimension_receipt.v1",
-      sourceDocuments: 138,
-      gatewayDocuments: 10,
+      ...projection.paperDimension,
       derivedFromFreshCapture: true,
       hardcodedHistoricalCounts: false,
       pass: true,
     });
+    expect(paper.sourceDocuments).toBe(paper.associatedSourceDocuments + paper.unassociatedSourceDocuments);
     const edgeByPair = new Map(graph.edges.map((edge: { source: string; target: string; occurrenceCount: number }) => [`${edge.source}\0${edge.target}`, edge.occurrenceCount]));
     for (const route of flow.routes) {
       expect(route.weight).toBe(edgeByPair.get(`${route.members[0]}\0${route.members[1]}`));

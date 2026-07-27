@@ -242,7 +242,17 @@ function cameraForGraphScene(
   scene: GraphScene,
 ) {
   const base = defaultCamera(graph, presentation, mobile);
-  if (presentation !== "home" || mobile) return base;
+  if (presentation !== "home" || mobile) {
+    if (mobile) return base;
+    return clampCamera({
+      ...base,
+      yaw: scene === "trace" ? -0.34 : -0.32,
+      pitch: scene === "freshness" ? 0.16 : 0.2,
+      zoom: scene === "trace" ? 1.12 : 1.16,
+      panX: -18,
+      panY: scene === "trace" ? 18 : 32,
+    });
+  }
   if (scene === "gravity") return clampCamera({ ...base, yaw: -0.28, pitch: 0.18, zoom: 1.16, panX: -30, panY: 0 });
   if (scene === "freshness") return clampCamera({ ...base, yaw: -0.16, pitch: 0.1, zoom: 1.16, panX: 100, panY: 10 });
   if (scene === "trace") return clampCamera({ ...base, yaw: -0.34, pitch: 0.18, zoom: 1.1, panX: 100, panY: -20 });
@@ -491,7 +501,10 @@ function placeLabels(
   const persistentIds = new Set(persistentLabelIds);
   const priorityIndex = new Map(priorityLabelIds.map((id, index) => [id, index]));
   const labelCandidates = presentation === "home"
-    ? nodes.filter((node) => node.id === focusId || priorityIndex.has(node.id) || persistentIds.has(node.id))
+    ? nodes.filter((node) =>
+      node.id === focusId
+      || persistentIds.has(node.id)
+      || (Boolean(focusId) && priorityIndex.has(node.id)))
     : nodes;
   const safeLeft = Math.max(18, (viewport.clipLeft ?? 0) + 12);
   const safeRight = Math.min(viewport.width - 18, viewport.width - (viewport.clipRight ?? 0) - 12);
@@ -542,12 +555,42 @@ function placeLabels(
       output.push({ node, x, y, depth: point.depth });
       break;
     }
-    if (node.id === focusId && !output.some((placement) => placement.node.id === node.id)) {
-      const x = Math.max(safeLeft + width / 2, Math.min(safeRight - width / 2, point.x));
-      const y = Math.max(safeTop + height / 2, Math.min(safeBottom - height / 2, point.y - radius - 17));
-      const box = { left: x - width / 2, right: x + width / 2, top: y - height / 2, bottom: y + height / 2 };
-      occupied.push(box);
-      output.push({ node, x, y, depth: point.depth });
+    if ((node.id === focusId || persistentIds.has(node.id))
+      && !output.some((placement) => placement.node.id === node.id)) {
+      const fallbackOffsets = [
+        [0, -radius - 17],
+        [radius + width / 2 + 8, 0],
+        [-radius - width / 2 - 8, 0],
+        [0, radius + 17],
+      ];
+      const candidates = fallbackOffsets.map(([offsetX, offsetY]) => {
+        const x = Math.max(
+          safeLeft + width / 2,
+          Math.min(safeRight - width / 2, point.x + offsetX),
+        );
+        const y = Math.max(
+          safeTop + height / 2,
+          Math.min(safeBottom - height / 2, point.y + offsetY),
+        );
+        return {
+          x,
+          y,
+          box: {
+            left: x - width / 2,
+            right: x + width / 2,
+            top: y - height / 2,
+            bottom: y + height / 2,
+          },
+        };
+      });
+      const fallback = candidates.find(({ box }) => !occupied.some((prior) => !(
+        box.right + 5 < prior.left
+        || box.left - 5 > prior.right
+        || box.bottom + 4 < prior.top
+        || box.top - 4 > prior.bottom
+      ))) ?? candidates[0];
+      occupied.push(fallback.box);
+      output.push({ node, x: fallback.x, y: fallback.y, depth: point.depth });
     }
   }
   return output.sort((left, right) => left.depth - right.depth);
@@ -848,7 +891,7 @@ export function LivingGraphCanvas({
     onHover?.(nextHoverId);
   }, [onHover]);
 
-  const animateCamera = useCallback((target: Camera3D, duration = 520) => {
+  const animateCamera = useCallback((target: Camera3D, duration = 420) => {
     cancelAnimationFrame(animationRef.current);
     if (reducedMotion || hidden) {
       cameraRef.current = target;
@@ -870,7 +913,7 @@ export function LivingGraphCanvas({
   }, [hidden, reducedMotion]);
 
   const resetCamera = useCallback(
-    () => animateCamera(cameraForGraphScene(graph, presentation, mobile, scene), 480),
+    () => animateCamera(cameraForGraphScene(graph, presentation, mobile, scene), 420),
     [animateCamera, graph, mobile, presentation, scene],
   );
 
@@ -880,7 +923,7 @@ export function LivingGraphCanvas({
       setCamera(target);
       return;
     }
-    const timer = requestAnimationFrame(() => animateCamera(target, 760));
+    const timer = requestAnimationFrame(() => animateCamera(target, 560));
     return () => cancelAnimationFrame(timer);
   }, [animateCamera, graph, mobile, presentation, reducedMotion, scene]);
 
@@ -908,7 +951,7 @@ export function LivingGraphCanvas({
         zoom: Math.min(selected.zoom, current.zoom * (mobile ? 1.04 : 1.06)),
         panX: mobile ? 0 : current.panX * 0.72,
         panY: mobile ? -8 : current.panY * 0.72,
-      }), 520);
+      }), 420);
     }
     // Selection is the event boundary. Camera is intentionally read at that moment only.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1043,7 +1086,7 @@ export function LivingGraphCanvas({
     presentation,
     mobile || compactLandscape,
     persistentLabelIds,
-    edgeEndpointLabelIds,
+    presentation === "home" && !layoutFocusId ? [] : edgeEndpointLabelIds,
   ), [compactLandscape, coordinateById, edgeEndpointLabelIds, graph.layout.labelBudget, layoutFocusId, mobile, persistentLabelIds, presentation, projectedById, scene, selection.nodes, size]);
   const hoverTooltip = useMemo(() => {
     if (!transientPreviewId || transientPreviewId === committedId) return null;
@@ -1052,7 +1095,8 @@ export function LivingGraphCanvas({
     if (!node || !point?.visible) return null;
     const clusterLabel = clusterById.get(node.clusterId)?.label ?? "구역 미확인";
     const x = Math.max(118, Math.min(size.width - 118, point.x));
-    const y = Math.max(62, Math.min(size.height - 72, point.y - 36));
+    const minimumY = presentation === "workspace" ? 98 : 62;
+    const y = Math.max(minimumY, Math.min(size.height - 72, point.y - 36));
     return {
       node,
       x,
@@ -1072,7 +1116,7 @@ export function LivingGraphCanvas({
           return neighbor ? [graphNodeLabel(neighbor)] : [];
         })[0] ?? null,
     };
-  }, [activeInteractionContext, clusterById, committedId, nodeById, projectedById, size.height, size.width, transientPreviewId]);
+  }, [activeInteractionContext, clusterById, committedId, nodeById, presentation, projectedById, size.height, size.width, transientPreviewId]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -2189,7 +2233,7 @@ export function LivingGraphCanvas({
           </li>
         ))}
       </ol>
-      <ol className="graph-accessible-list" aria-label="현재 렌더링된 실제 의미 선 목록">
+      <ol className="graph-accessible-list" aria-label="현재 렌더링된 실제 의미 선 목록" tabIndex={0}>
         {edgeCommands.map((command) => (
           <li key={`${command.semanticKind}:${command.sourceId}:${command.targetId}`}>
             {graphNodeLabel(nodeById.get(command.sourceId)!)} → {graphNodeLabel(nodeById.get(command.targetId)!)} · {
@@ -2203,7 +2247,7 @@ export function LivingGraphCanvas({
         ))}
       </ol>
       {operationalCommands.length > 0 && (
-        <ol className="graph-accessible-list" aria-label="현재 렌더링된 운영 정렬선 목록">
+        <ol className="graph-accessible-list" aria-label="현재 렌더링된 운영 정렬선 목록" tabIndex={0}>
           {operationalCommands.map((command) => (
             <li key={`${command.semanticKind}:${command.sourceActorId}:${command.targetId}`}>
               {resolvedOperationalActorLabel} → {graphNodeLabel(nodeById.get(command.targetId)!)} · {operationalAlignment?.label ?? "운영 정렬"} · 검증된 운영 의미
