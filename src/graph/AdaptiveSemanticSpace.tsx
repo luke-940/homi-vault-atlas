@@ -234,7 +234,7 @@ export function AdaptiveSemanticSpace({
       data-renderer={status === "ready" ? "three" : "canvas2d"}
       data-semantic-space="atlas.semantic_space_renderer.v1"
     >
-      <div className="semantic-space-fallback" aria-hidden={status === "ready"} inert={status === "ready"}>
+      {status !== "ready" && <div className="semantic-space-fallback">
         <LivingGraphCanvas
           graph={graph}
           scene={scene}
@@ -256,7 +256,7 @@ export function AdaptiveSemanticSpace({
           operationalActorLabel={operationalActorLabel}
           committedSelectionId={committedSelectionId}
         />
-      </div>
+      </div>}
       {!mobile && status !== "fallback" && (
         <>
           <div ref={engineRootRef} className="semantic-space-engine" />

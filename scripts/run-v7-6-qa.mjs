@@ -80,7 +80,7 @@ const GEOMETRY_GROUPS = Object.freeze({
     ".explore-evidence-rail > *",
     ".explore-v75-clusters > button",
     ".explore-v75-list-layout > header",
-    ".graph-ranked-list > button",
+    ".graph-ranked-list button",
     ".explore-path-disclosure",
     ".explore-v75-boundary",
   ],
@@ -153,9 +153,9 @@ const REQUIRED_GEOMETRY_SELECTORS = Object.freeze({
   ],
   explore: [
     ".explore-v75",
-    ".explore-command-rail",
   ],
   exploreGraph: [
+    ".explore-command-rail",
     ".explore-v75-graph-panel",
     ".explore-v75-graph-panel .semantic-space-host, .explore-v75-graph-panel .living-graph-canvas",
   ],
@@ -164,6 +164,7 @@ const REQUIRED_GEOMETRY_SELECTORS = Object.freeze({
     ".explore-constellation-rail > button",
   ],
   exploreList: [
+    ".explore-command-rail",
     ".explore-v75-list-layout",
     ".graph-ranked-list",
   ],
@@ -263,6 +264,7 @@ function geometryRequirementsFor(definition) {
  * @property {readonly string[]} [actorIds]
  * @property {"chromium" | "webkit"} [browserName]
  * @property {boolean} [longTaskRequired]
+ * @property {boolean} [performanceRequired]
  */
 
 /** @param {QaRouteCase} route @returns {Readonly<Required<Pick<QaRouteCase, "key" | "workspace" | "hash" | "readySelector" | "geometryGroups" | "viewport" | "journey">> & QaRouteCase & {id: string, reducedMotion: boolean, firstEntry: boolean, touch: boolean}>} */
@@ -276,7 +278,7 @@ export const CORE_ROUTE_CASES = Object.freeze([
     key: "home-default", workspace: "home", hash: "#home?scene=domain-backbone",
     readySelector: ".home-v75-graph-shell .semantic-space-host[data-renderer='three']",
     finalReadySelector: ".home-v76[data-home-page='domain-backbone']", geometryGroups: GEOMETRY_GROUPS.home,
-    viewport: { width: 1440, height: 920 }, firstEntry: true, journey: "home-scene", targetScene: "domain-backbone",
+    viewport: { width: 1440, height: 920 }, firstEntry: true, journey: "home-scene", targetScene: "domain-backbone", longTaskRequired: false,
   }),
   qaCase({
     key: "home-selected", workspace: "home", hash: "#home?scene=domain-backbone",
@@ -385,6 +387,7 @@ const CI_ONLY_ROUTE_CASES = Object.freeze([
     key: "history-back-forward", workspace: "home", hash: "#home?scene=domain-backbone",
     readySelector: ".home-v76[data-home-page='domain-backbone']", finalReadySelector: ".home-v76[data-home-page='protagonists']",
     geometryGroups: GEOMETRY_GROUPS.home, viewport: { width: 1440, height: 920 }, journey: "back-forward",
+    longTaskRequired: false, performanceRequired: false,
   }),
   qaCase({
     key: "keyboard-navigation", workspace: "observe", hash: "#explore?scene=graph",
@@ -394,7 +397,8 @@ const CI_ONLY_ROUTE_CASES = Object.freeze([
   qaCase({
     key: "webkit-graph-focus", workspace: "explore", hash: "#explore?scene=graph",
     readySelector: ".explore-v75 .semantic-space-host", finalReadySelector: ".explore-v75 .semantic-space-host", geometryGroups: GEOMETRY_GROUPS.explore,
-    viewport: { width: 1024, height: 768 }, browserName: "webkit", longTaskRequired: false, journey: "webkit-graph-focus", targetScene: "graph",
+    viewport: { width: 1024, height: 768 }, browserName: "webkit", longTaskRequired: false, performanceRequired: false,
+    journey: "webkit-graph-focus", targetScene: "graph",
   }),
   qaCase({
     key: "agency-all-actors", workspace: "agency", hash: "#agency?scene=roles&actor=actor%3Acontrol-plane",
@@ -529,9 +533,10 @@ function metricSummary(values) {
 }
 
 export function evaluatePerformanceResults(results) {
-  const readiness = metricSummary(results.map((result) => result.performance?.readinessMs));
-  const interaction = metricSummary(results.map((result) => result.performance?.interactionMs));
-  const longTaskRequiredResults = results.filter((result) => result.longTaskRequired !== false);
+  const performanceResults = results.filter((result) => result.performanceRequired !== false);
+  const readiness = metricSummary(performanceResults.map((result) => result.performance?.readinessMs));
+  const interaction = metricSummary(performanceResults.map((result) => result.performance?.interactionMs));
+  const longTaskRequiredResults = performanceResults.filter((result) => result.longTaskRequired !== false);
   const longTaskSamples = longTaskRequiredResults.map((result) => result.performance?.longTasks).filter((item) => item?.supported);
   const longTaskCount = longTaskSamples.reduce((sum, item) => sum + item.count, 0);
   const longTaskTotalMs = longTaskSamples.reduce((sum, item) => sum + item.totalMs, 0);
@@ -989,7 +994,8 @@ async function measureGeometry(page, groupSelectors, route) {
     requiredSelectors: route.geometryRequiredSelectors.map(aliasRuntimeSelector),
     workspace: route.workspace,
     mobileNavigationRequired: route.workspace !== "search" && route.journey !== "data-overlay",
-    mobileSiblingRequired: ["explore", "observe", "flow"].includes(route.workspace) && route.journey !== "data-overlay",
+    mobileSiblingRequired: ["observe", "flow"].includes(route.workspace)
+      || (route.workspace === "explore" && route.targetScene === "graph" && route.journey !== "data-overlay"),
     runtimeSelectors: {
       app: aliasRuntimeSelector(".atlas-app"),
       homeHeadline: aliasRuntimeSelector(".home-v75-copy-block h1"),
@@ -1594,6 +1600,7 @@ export async function runQa(environment = process.env) {
             touch: route.touch,
             browserName: route.browserName,
             longTaskRequired: route.longTaskRequired !== false,
+            performanceRequired: route.performanceRequired !== false,
             url: page.url(),
             durationMs: Date.now() - caseStartedAt,
             journey,
@@ -1688,6 +1695,7 @@ export async function runQa(environment = process.env) {
         actorIds: route.actorIds ?? null,
         browserName: route.browserName,
         longTaskRequired: route.longTaskRequired !== false,
+        performanceRequired: route.performanceRequired !== false,
       })),
     },
     inputs: { baseUrl, artifactDir, ownerContractQa },

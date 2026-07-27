@@ -44,7 +44,7 @@ createRoot(document.getElementById("root")!).render(
     <LazyMotion features={domAnimation} strict>
       <MotionConfig
         reducedMotion="user"
-        transition={{ duration: 0.48, ease: [0.2, 0.8, 0.2, 1] }}
+        transition={{ duration: 0.42, ease: [0.2, 0.8, 0.2, 1] }}
       >
         <AtlasErrorBoundary>
           <AtlasStateProvider>

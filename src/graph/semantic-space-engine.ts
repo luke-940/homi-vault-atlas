@@ -859,7 +859,7 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
     }
     this.focusAnimation = {
       started: performance.now(),
-      duration: 520,
+      duration: 420,
       fromPosition: this.camera.position.clone(),
       fromTarget: this.controls.target.clone(),
       toPosition: nextPosition,

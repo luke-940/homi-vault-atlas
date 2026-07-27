@@ -891,7 +891,7 @@ export function LivingGraphCanvas({
     onHover?.(nextHoverId);
   }, [onHover]);
 
-  const animateCamera = useCallback((target: Camera3D, duration = 520) => {
+  const animateCamera = useCallback((target: Camera3D, duration = 420) => {
     cancelAnimationFrame(animationRef.current);
     if (reducedMotion || hidden) {
       cameraRef.current = target;
@@ -913,7 +913,7 @@ export function LivingGraphCanvas({
   }, [hidden, reducedMotion]);
 
   const resetCamera = useCallback(
-    () => animateCamera(cameraForGraphScene(graph, presentation, mobile, scene), 480),
+    () => animateCamera(cameraForGraphScene(graph, presentation, mobile, scene), 420),
     [animateCamera, graph, mobile, presentation, scene],
   );
 
@@ -923,7 +923,7 @@ export function LivingGraphCanvas({
       setCamera(target);
       return;
     }
-    const timer = requestAnimationFrame(() => animateCamera(target, 760));
+    const timer = requestAnimationFrame(() => animateCamera(target, 560));
     return () => cancelAnimationFrame(timer);
   }, [animateCamera, graph, mobile, presentation, reducedMotion, scene]);
 
@@ -951,7 +951,7 @@ export function LivingGraphCanvas({
         zoom: Math.min(selected.zoom, current.zoom * (mobile ? 1.04 : 1.06)),
         panX: mobile ? 0 : current.panX * 0.72,
         panY: mobile ? -8 : current.panY * 0.72,
-      }), 520);
+      }), 420);
     }
     // Selection is the event boundary. Camera is intentionally read at that moment only.
     // eslint-disable-next-line react-hooks/exhaustive-deps
