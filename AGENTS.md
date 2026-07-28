@@ -1,26 +1,28 @@
-# Homi Vault Atlas v7.7 working contract
+# Homi Vault Atlas v7.8 working contract
 
-Before any task, read `docs/VISUALIZATION-NORTH-STAR.md`, `docs/ATLAS-DIPLOMAT-NORTH-STAR.md`, `docs/SEMANTIC-SPACE-RENDERER.md`, and the current Gate Understanding Packet under the local release evidence root.
+Before every task, read `DESIGN.md`, `docs/ATLAS-PRODUCT-CONTRACT.md`,
+`docs/V7.8-TECHNICAL-CONTRACT.md`, and the current Gate packet under the local
+`REL-ATLAS-V7-8-20260728-01` evidence root.
 
-The product is a commercial-grade knowledge visualization, not an MVP, demo, prototype, or temporary experiment. Atlas Builder is responsible for understanding the Vault as a whole and translating its structure, protagonists, real directional relations, verified change, and agent stewardship into a human-readable product.
+This is a commercial knowledge product, not an MVP, demo, prototype, or visual
+experiment. v7.8 is a replacement-led rebuild: every new production module or
+selector must replace and remove an older responsibility recorded in
+`docs/replacement-ledger.json`.
 
-Preserve the approved v7.5 spatial stage: warm graphite cosmic depth, node-owned evidence light, direct typography, factual routes, and unobstructed graph composition. Desktop Home and Explore use a bounded real Three.js scene; mobile and unsupported devices retain the deterministic Canvas2D sibling. Real 3D does not permit a dashboard, card wall, generic space wallpaper, runtime force field, glossy planet, or decorative relation.
+The default surface is one truthful three-dimensional Vault graph with four
+camera lenses: Whole Vault, Knowledge Core, Project Frontiers, and Agent
+Stewardship. MOC, Papers, Signals, Rocket, Groot, and Intelligence Layer are
+first-order public domains. An admitted public node keeps its actual safe title;
+unsafe nodes are excluded with a reason rather than masked.
 
-## Evidence and judgment
+Every knowledge line is an actual directed reference. Position is derived from
+link topology and domain structure, never file date. Homi is a provenance beacon
+and has no knowledge gravity or synthetic edge. Preview is transient and local;
+only committed selection changes the URL or camera.
 
-- `atlas.graph.v1` remains objective structural evidence. `atlas.meaning.v1` carries evidence-bound Atlas Builder judgment.
-- Metrics nominate candidates; they never command meaning. Builder judgment selects protagonists after reading their source documents and material neighbors.
-- MOC, Papers, and Signals are core knowledge domains. Valid nodes from all three must remain legible as first-order evidence.
-- Every constellation line references an actual directed `references` edge. Verified handoffs use a separate grammar and never masquerade as wikilinks.
-- Version movement is computed from stable content and graph evidence. `mtime`, execution count, and absence never become unsupported lifecycle claims.
-- Agency reflects the current sovereignty constitution: Luke sets direction, owners own judgment, and Control Plane does not command or approve sibling owners.
-
-## Product and interaction
-
-- Home scenes are `domain-backbone`, `protagonists`, `vault-in-motion`, and `operational-compass`.
-- `previewId` is transient. Only click, Enter, or tap commits `focusId` to the URL.
-- Owner and Public use one compiler. Owner keeps admitted titles unchanged; Public admits only approved public names and safe projections.
-- Desktop, mobile portrait, and mobile landscape are sibling compositions. Essential meaning never depends on hover or motion.
-- A screenshot or hash is never visual proof by itself. Compare the approved concept and implementation at identical viewport/state and keep independent geometry checks.
-
-Do not implement visual code before Luke approves the Gate 1 concept set. Do not modify Luke Vault, Notion, `graph.json`, Current State, Batch/cursor, Daily, Rocket, Groot, or HIL. Do not publish Owner data or internal evidence. Stop on privacy leakage, reconciliation failure, torn capture, false direction, synthetic relations, nondeterministic projection, default-view hairball, resource limits, or production readback failure.
+Do not modify Luke Vault, Notion, `graph.json`, Current State, Batch/cursor,
+Daily, Rocket, Groot, or HIL. Do not publish Owner bytes, document bodies,
+internal paths, PII, secrets, receipts, command history, or live operating state.
+Stop on torn capture, reconciliation failure, synthetic relations, public/private
+crossover, default-view hairball, interaction instability, resource limits, or
+production readback failure.

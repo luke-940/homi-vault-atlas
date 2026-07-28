@@ -1,4 +1,7 @@
-# Homi Vault Atlas Visualization North Star
+# Historical North Star — v7.5
+
+> Superseded by the repository-root `DESIGN.md` and
+> `docs/ATLAS-PRODUCT-CONTRACT.md`. Preserved for release history only.
 
 ## Commander's intent
 

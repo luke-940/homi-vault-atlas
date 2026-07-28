@@ -1,4 +1,7 @@
-# Atlas Diplomat North Star
+# Historical North Star — v7.6
+
+> Superseded by the repository-root `DESIGN.md` and
+> `docs/ATLAS-PRODUCT-CONTRACT.md`. Preserved for release history only.
 
 ## Mission
 

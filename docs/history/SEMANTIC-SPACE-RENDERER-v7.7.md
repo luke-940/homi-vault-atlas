@@ -1,4 +1,7 @@
-# Semantic Space Renderer
+# Historical Renderer Contract — v7.7
+
+> Superseded by `docs/V7.8-TECHNICAL-CONTRACT.md`. Preserved for release
+> history only.
 
 ## Intent
 
