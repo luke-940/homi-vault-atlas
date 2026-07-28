@@ -1,17 +1,13 @@
-import type { AtlasGraphNodeKind } from "../types";
-
-export type SemanticSpaceSceneKind = "field" | "gravity" | "freshness" | "trace";
-export type SemanticSpacePresentation = "home" | "workspace";
+import type { CosmosLens, GraphNodeKind } from "../app/contracts";
 
 export interface SemanticSpaceNode {
   id: string;
   label: string;
-  kind: AtlasGraphNodeKind;
-  clusterId: string;
+  kind: GraphNodeKind;
+  domain: string;
   position: [number, number, number];
   radius: number;
   color: string;
-  halo: number;
   gravity: number;
   occurrences: number;
   incomingCount: number;
@@ -24,43 +20,29 @@ export interface SemanticSpaceEdge {
   sourceId: string;
   targetId: string;
   weight: number;
-  semanticKind: "district_corridor" | "exact_reference" | "directed_path";
+  crossDomain: boolean;
   constituentEdgeIds: string[];
-  provenance: "atlas.graph.v1";
-  defaultVisible: boolean;
-}
-
-export interface SemanticSpaceEvidenceMark {
-  id: string;
-  parentId: string;
-  clusterId: string;
-  position: [number, number, number];
-  color: string;
-  size: number;
-  opacity: number;
-  representedDocuments: number;
+  provenance: "atlas.graph.v2";
 }
 
 export interface AuthoredCamera {
-  yaw: number;
-  pitch: number;
-  distance: number;
+  position: [number, number, number];
   target: [number, number, number];
+  fov: number;
   minDistance: number;
   maxDistance: number;
 }
 
 export interface SemanticSpaceScene {
-  id: string;
-  kind: SemanticSpaceSceneKind;
-  presentation: SemanticSpacePresentation;
+  graphVersion: string;
+  lens: CosmosLens;
   nodes: SemanticSpaceNode[];
   edges: SemanticSpaceEdge[];
-  evidenceMarks: SemanticSpaceEvidenceMark[];
   camera: AuthoredCamera;
   labelIds: string[];
   focusId: string | null;
   previewId: string | null;
+  activeDomains: string[];
   reducedMotion: boolean;
 }
 
@@ -83,8 +65,6 @@ export interface SemanticSpaceDebugCounters {
   visibleNodes: number;
   visibleEdges: number;
   idle: boolean;
-  cameraPosition: [number, number, number];
-  cameraTarget: [number, number, number];
   previewId: string | null;
   focusId: string | null;
 }
@@ -110,7 +90,7 @@ export interface SemanticSpaceController {
 }
 
 export interface SemanticSpaceModule {
-  version: "atlas.semantic_space_renderer.v1";
+  version: "atlas.semantic_space_renderer.v2";
   mount(
     container: HTMLElement,
     scene: SemanticSpaceScene,

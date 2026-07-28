@@ -1,0 +1,100 @@
+{
+  "schema": "atlas.replacement_ledger.v1",
+  "activity": "REL-ATLAS-V7-8-20260728-01",
+  "baseline": "e7f8b5a8fb3884ff2966876a1edc7e31a4091659",
+  "entries": [
+    {
+      "newResponsibility": "atlas.graph.v2 compiler and compact wire contract",
+      "replaces": ["scripts/lib/atlas-graph-v1.mjs", "AtlasGraphV1 runtime types"],
+      "preserves": ["stable IDs", "actual directed references", "deterministic layout", "Owner/Public profiles"],
+      "removalEvidence": {
+        "status": "completed",
+        "deleted": ["scripts/lib/atlas-graph-v1.mjs", "src/graph/model.ts", "src/types.ts"],
+        "activeContract": ["scripts/lib/atlas-graph-v2.mjs", "src/app/contracts.ts", "src/app/data.ts"],
+        "verification": "tests-public/graph-projection-contract.test.ts"
+      }
+    },
+    {
+      "newResponsibility": "single spatial scene and interaction controller",
+      "replaces": ["src/graph/LivingGraphCanvas.tsx", "src/graph/SemanticObservatoryCanvas.tsx", "duplicated Home/Explore preview state"],
+      "preserves": ["Three.js direct renderer", "Canvas mobile fallback", "URL-backed focus", "accessible node list"],
+      "removalEvidence": {
+        "status": "completed",
+        "deleted": ["src/graph/LivingGraphCanvas.tsx", "src/graph/SemanticObservatoryCanvas.tsx", "src/graph/AdaptiveSemanticSpace.tsx"],
+        "activeContract": ["src/app/CosmosStage.tsx", "src/app/scene.ts", "src/graph/semantic-space-engine.ts"],
+        "verification": "tests-browser/atlas.spec.mjs"
+      }
+    },
+    {
+      "newResponsibility": "versionless CSS modules and cascade layers",
+      "replaces": ["src/styles/v75.css", "src/styles/app.css cascade overrides", "scripts/lib/runtime-class-aliases.mjs"],
+      "preserves": ["v7.5 warm graphite stage", "responsive siblings", "reduced motion", "Homi brand assets"],
+      "removalEvidence": {
+        "status": "completed",
+        "deleted": ["src/styles/v75.css", "src/styles/app.css", "scripts/lib/runtime-class-aliases.mjs"],
+        "activeContract": ["src/styles/index.css", "src/styles/tokens.css", "src/styles/workspace.css", "src/styles/responsive.css"],
+        "verification": "source CSS 35,395B; duplicate selectors 0; !important 0"
+      }
+    },
+    {
+      "newResponsibility": "versionless release audit and QA",
+      "replaces": ["run-v7-6-* active scripts", "v7-4 budget naming", "selector tests bound to version classes"],
+      "preserves": ["serial local QA", "full CI matrix once", "publication audit", "production readback"],
+      "removalEvidence": {
+        "status": "completed",
+        "deleted": ["scripts/run-v7-6-qa.mjs", "scripts/run-v7-6-owner-contract-qa.mjs", ".github/workflows/visual-baseline-candidate.yml"],
+        "activeContract": ["scripts/run-local-qa.mjs", "tests-browser/atlas.spec.mjs", ".github/workflows/ci.yml", ".github/workflows/pages.yml"],
+        "verification": "npm run verify; npm run qa:local; PR browser matrix exactly once"
+      }
+    },
+    {
+      "newResponsibility": "curated Vault hierarchy and unified Explore index views",
+      "replaces": [
+        "inline Explore NodeList as the only non-graph orientation surface",
+        "flat domain counts as a surrogate for directory structure"
+      ],
+      "preserves": [
+        "safe actual titles",
+        "graph-backed focus identity",
+        "keyboard navigation",
+        "Owner/Public projection boundary"
+      ],
+      "removalEvidence": {
+        "status": "completed",
+        "deleted": [
+          "inline NodeList implementation in src/app/Explore.tsx"
+        ],
+        "activeContract": [
+          "atlas.graph.v2.structure",
+          "src/app/ExploreIndexes.tsx",
+          "view=structure URL state"
+        ],
+        "verification": "tests-public/graph-projection-contract.test.ts; tests-public/navigation-contract.test.ts"
+      }
+    },
+    {
+      "newResponsibility": "collapsible editorial rail with persistent lens controls",
+      "replaces": [
+        "permanently fixed 27 percent Home explanation column"
+      ],
+      "preserves": [
+        "Home editorial copy",
+        "lens navigation",
+        "evidence and coverage",
+        "spatial scene state"
+      ],
+      "removalEvidence": {
+        "status": "completed",
+        "deleted": [
+          "fixed-only Home rail behavior"
+        ],
+        "activeContract": [
+          "src/app/Home.tsx",
+          "src/styles/workspace.css",
+          "src/styles/responsive.css"
+        ],
+        "verification": "browser geometry and interaction readback at 1440x920 and 390x844"
+      }
+    }
+  ]
+}

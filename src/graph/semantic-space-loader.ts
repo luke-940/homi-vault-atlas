@@ -2,9 +2,8 @@ import type { SemanticSpaceModule } from "./semantic-space-contract";
 
 let modulePromise: Promise<SemanticSpaceModule> | null = null;
 
-export function semanticSpaceSupported() {
+export function webglAvailable() {
   if (typeof window === "undefined" || typeof document === "undefined") return false;
-  if (window.matchMedia("(max-width: 820px)").matches) return false;
   if ((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData) return false;
   try {
     const canvas = document.createElement("canvas");
@@ -14,6 +13,11 @@ export function semanticSpaceSupported() {
   }
 }
 
+export function semanticSpaceSupported() {
+  if (typeof window === "undefined") return false;
+  return !window.matchMedia("(max-width: 820px)").matches && webglAvailable();
+}
+
 export function loadSemanticSpaceModule() {
   if (window.HomiAtlasSemanticSpace) return Promise.resolve(window.HomiAtlasSemanticSpace);
   if (modulePromise) return modulePromise;
@@ -21,7 +25,7 @@ export function loadSemanticSpaceModule() {
     const script = document.createElement("script");
     script.src = new URL(__ATLAS_SEMANTIC_SPACE_ASSET__, document.baseURI).href;
     script.async = true;
-    script.dataset.atlasSemanticSpace = "v1";
+    script.dataset.atlasSemanticSpace = "v2";
     script.addEventListener("load", () => {
       if (!window.HomiAtlasSemanticSpace) {
         modulePromise = null;
@@ -38,4 +42,3 @@ export function loadSemanticSpaceModule() {
   });
   return modulePromise;
 }
-
