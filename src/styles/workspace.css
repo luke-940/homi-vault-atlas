@@ -353,6 +353,15 @@
   white-space: nowrap;
 }
 
+.cosmos-label--frontier span {
+  font-weight: 660;
+  text-shadow: 0 0 13px currentColor, 0 2px 10px rgba(0, 0, 0, 0.96);
+}
+
+.cosmos-label--frontier small {
+  color: rgba(228, 218, 209, 0.72);
+}
+
 .cosmos-label:hover,
 .cosmos-label:focus-visible {
   color: #fff8ef;

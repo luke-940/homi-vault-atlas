@@ -114,7 +114,7 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
     this.renderer.domElement.setAttribute("aria-hidden", "true");
     container.append(this.renderer.domElement);
 
-    this.scene3d.fog = new FogExp2(0x0b090d, 0.000085);
+    this.scene3d.fog = new FogExp2(0x0b090d, 0.000055);
     this.scene3d.add(new AmbientLight(0xf0d8c2, 2.05));
     const key = new DirectionalLight(0xffdfb5, 2.8);
     key.position.set(-380, 680, 920);
@@ -344,6 +344,7 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
 
   private updateAppearance() {
     const activeId = this.previewId ?? this.focusId;
+    const activeDomain = activeId ? this.nodeById.get(activeId)?.domain ?? null : null;
     const activeEdgeIndexes = this.activeEdges(activeId);
     const activeEdges = new Set(activeEdgeIndexes);
     const neighborIds = new Set<string>();
@@ -360,11 +361,14 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
           || node.domain === "Groot"
           || node.domain === "Intelligence Layer";
         const domainDimmed = activeDomains.size > 0 && !activeDomains.has(node.domain);
-        if (activeId && id !== activeId && !neighborIds.has(id)) color.multiplyScalar(0.12);
+        const sameDomain = activeDomain === node.domain;
+        if (activeId && id !== activeId && !neighborIds.has(id) && sameDomain) {
+          color.multiplyScalar(frontier ? 0.96 : 0.78);
+        } else if (activeId && id !== activeId && !neighborIds.has(id)) color.multiplyScalar(0.52);
         else if (id === activeId) color.lerp(amber, 0.58).multiplyScalar(1.22);
         else if (activeId && neighborIds.has(id)) color.multiplyScalar(1.08);
         else if (domainDimmed) color.multiplyScalar(0.24);
-        else color.multiplyScalar(frontier ? 1.46 : 0.92);
+        else color.multiplyScalar(frontier ? 1.9 : 0.92);
         bucket.mesh.setColorAt(index, color);
       });
       if (bucket.mesh.instanceColor) bucket.mesh.instanceColor.needsUpdate = true;
@@ -380,16 +384,17 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
           || node.domain === "Groot"
           || node.domain === "Intelligence Layer";
         const domainDimmed = activeDomains.size > 0 && !activeDomains.has(node.domain);
+        const sameDomain = activeDomain === node.domain;
         alpha[index] = activeId
-          ? selected ? 1 : neighbor ? 0.58 : 0.025
-          : domainDimmed ? 0.06 : frontier ? 0.72 : 0.5;
+          ? selected ? 1 : neighbor ? 0.74 : sameDomain ? frontier ? 0.46 : 0.36 : 0.22
+          : domainDimmed ? 0.1 : frontier ? 0.96 : 0.5;
         if (selected) color.lerp(amber, 0.64);
         colors.set([color.r, color.g, color.b], index * 3);
       });
       this.halo.alpha.needsUpdate = true;
       this.halo.colors.needsUpdate = true;
     }
-    this.updateEdges(activeEdges, activeId);
+    this.updateEdges(activeEdges, activeId, activeDomain);
     this.debugState.visibleEdges = activeId ? activeEdges.size : this.scene.edges.length;
     this.debugState.materialUpdates += 1;
     this.debugState.previewId = this.previewId;
@@ -398,7 +403,7 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
     this.schedule();
   }
 
-  private updateEdges(activeEdges: Set<number>, activeId: string | null) {
+  private updateEdges(activeEdges: Set<number>, activeId: string | null, activeDomain: string | null) {
     if (!this.edges) return;
     const colors = this.edges.lineColors.array as Float32Array;
     const baseColors = this.edges.baseColors;
@@ -409,8 +414,9 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
       const domainActive = !this.scene.activeDomains.length
         || this.scene.activeDomains.includes(source.domain)
         || this.scene.activeDomains.includes(target.domain);
+      const sharesFocusDomain = activeDomain === source.domain || activeDomain === target.domain;
       const intensity = activeId
-        ? selected ? 1.05 : 0.012
+        ? selected ? 1.05 : sharesFocusDomain ? 0.075 : 0.042
         : domainActive
           ? Math.min(
             this.scene.activeDomains.length ? 0.24 : 0.16,

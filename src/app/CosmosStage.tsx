@@ -205,6 +205,11 @@ export function CosmosStage({
           const node = atlas.runtime.graph.nodeById.get(id);
           if (!node) return null;
           const domainAnchor = domainAnchorIds.has(id);
+          const frontierAnchor = domainAnchor && (
+            node.domain === "Rocket"
+            || node.domain === "Groot"
+            || node.domain === "Intelligence Layer"
+          );
           return (
             <button
               key={id}
@@ -213,7 +218,7 @@ export function CosmosStage({
                 else labelRefs.current.delete(id);
               }}
               type="button"
-              className="cosmos-label"
+              className={`cosmos-label${domainAnchor ? " cosmos-label--domain" : ""}${frontierAnchor ? " cosmos-label--frontier" : ""}`}
               hidden
               onPointerEnter={() => atlas.setPreview(id)}
               onPointerLeave={() => atlas.setPreview(null)}

@@ -163,8 +163,11 @@ export function buildHaloField(nodes: SemanticSpaceNode[]) {
   nodes.forEach((node, index) => {
     positions.set(node.position, index * 3);
     const color = new Color(node.color);
+    const projectFrontier = node.domain === "Rocket"
+      || node.domain === "Groot"
+      || node.domain === "Intelligence Layer";
     colors.set([color.r, color.g, color.b], index * 3);
-    sizes[index] = Math.min(190, 22 + node.radius * 5.4);
+    sizes[index] = Math.min(projectFrontier ? 210 : 190, (projectFrontier ? 34 : 22) + node.radius * 5.8);
     alpha[index] = 0.58;
   });
   geometry.setAttribute("position", new BufferAttribute(positions, 3));

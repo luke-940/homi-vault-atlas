@@ -57,6 +57,7 @@ export function MobileGraphCanvas({
       const offsetY = (height - graph.bounds.depth * verticalScale) / 2 - height * 0.17;
       const activeId = previewId ?? focusId;
       const active = activeId ? graph.nodeById.get(activeId) : null;
+      const activeDomain = active?.domain ?? null;
       const edgeIndexes = new Set([
         ...(active?.incoming.slice(0, 6) ?? []),
         ...(active?.outgoing.slice(0, 6) ?? []),
@@ -74,7 +75,10 @@ export function MobileGraphCanvas({
         const domainVisible = !activeDomains.size
           || activeDomains.has(source.domain)
           || activeDomains.has(target.domain);
-        context.globalAlpha = activeId ? selected ? 0.72 : 0.018 : domainVisible ? 0.11 : 0.018;
+        const sharesFocusDomain = activeDomain === source.domain || activeDomain === target.domain;
+        context.globalAlpha = activeId
+          ? selected ? 0.82 : sharesFocusDomain ? 0.11 : 0.06
+          : domainVisible ? 0.11 : 0.018;
         context.strokeStyle = selected ? "#f2b35f" : "#79838b";
         context.beginPath();
         context.moveTo(
@@ -92,12 +96,13 @@ export function MobileGraphCanvas({
         const selected = node.id === activeId;
         const neighbor = neighbors.has(node.index);
         const domainDimmed = activeDomains.size > 0 && !activeDomains.has(node.domain);
+        const sameDomain = activeDomain === node.domain;
         const radius = Math.max(1.35, 1.55 + Math.sqrt(node.gravity / maxGravity) * 5.4);
         const color = graph.domains[node.domainIndex]?.color ?? "#8c959a";
         const x = offsetX + node.position[0] * horizontalScale;
         const y = offsetY + node.position[2] * verticalScale;
         context.globalAlpha = activeId
-          ? selected ? 1 : neighbor ? 0.9 : 0.12
+          ? selected ? 1 : neighbor ? 0.94 : sameDomain ? 0.72 : 0.44
           : domainDimmed ? 0.2 : 0.82;
         context.fillStyle = selected ? "#f2b35f" : color;
         context.shadowColor = selected ? "#f2b35f" : color;
