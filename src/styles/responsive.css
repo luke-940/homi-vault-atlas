@@ -253,14 +253,15 @@
   }
 
   .editorial-rail__toggle {
-    width: 36px;
-    min-width: 36px;
-    height: 36px;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
     padding: 0;
   }
 
   .editorial-rail__copy {
-    padding-right: 42px;
+    padding-right: 50px;
   }
 
   .editorial-rail__copy h1 {

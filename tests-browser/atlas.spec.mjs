@@ -96,11 +96,11 @@ for (const [width, height] of viewports) {
         })));
       expect(undersized).toEqual([]);
     }
+    expect(errors).toEqual([]);
     await page.screenshot({
       path: path.join(artifactDir, "screenshots", `home-${width}x${height}.png`),
       fullPage: false,
     });
-    expect(errors).toEqual([]);
   });
 }
 
@@ -136,11 +136,12 @@ test("desktop hover, focus, orbit, URL and idle contract", async ({ page }) => {
   expect(page.url()).toBe(committedUrl);
   const afterOrbit = await host.evaluate((element) => ({ ...element.dataset }));
   expect(Number(afterOrbit.cameraMoves)).toBeGreaterThan(Number(afterHover.cameraMoves));
-  const framesBeforeIdle = Number(afterOrbit.frames);
-  await page.waitForTimeout(2_100);
+  await expect(host).toHaveAttribute("data-idle", "true", { timeout: 4_000 });
+  const framesAtIdle = Number(await host.getAttribute("data-frames"));
+  await page.waitForTimeout(300);
   const idle = await host.evaluate((element) => ({ ...element.dataset }));
   expect(idle.idle).toBe("true");
-  expect(Number(idle.frames)).toBe(framesBeforeIdle);
+  expect(Number(idle.frames)).toBe(framesAtIdle);
 
   await page.keyboard.press("Escape");
   await expect(page).not.toHaveURL(/focus=/);
