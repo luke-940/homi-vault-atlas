@@ -597,6 +597,58 @@
   }
 }
 
+@media (max-height: 760px) and (min-width: 1180px) {
+  .home-layout--has-focus .editorial-rail {
+    grid-template-rows: auto auto auto auto;
+    align-content: start;
+    gap: 9px;
+    padding-block: 18px 13px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+  }
+
+  .home-layout--has-focus .editorial-rail__copy .lede,
+  .home-layout--has-focus .home-actions .primary-action,
+  .home-layout--has-focus .home-actions .quiet-action:not(:last-child),
+  .home-layout--has-focus .lens-rail button small {
+    display: none;
+  }
+
+  .home-layout--has-focus .home-actions {
+    margin-top: 9px;
+  }
+
+  .home-layout--has-focus .home-actions .quiet-action:last-child {
+    min-height: 36px;
+  }
+
+  .home-layout--has-focus .lens-rail {
+    align-content: start;
+    gap: 3px;
+  }
+
+  .home-layout--has-focus .lens-rail button {
+    min-height: 38px;
+    padding-block: 5px;
+  }
+
+  .home-layout--has-focus .evidence-rail {
+    gap: 5px;
+    padding-top: 9px;
+  }
+
+  .home-layout--has-focus .evidence-relations button {
+    padding-block: 3px;
+  }
+
+  .home-layout--has-focus .coverage-ledger {
+    gap: 6px;
+    padding-top: 9px;
+  }
+}
+
 @media (max-width: 1179px) {
   .home-layout--rail-collapsed {
     display: block;

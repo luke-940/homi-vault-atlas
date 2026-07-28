@@ -49,7 +49,9 @@ export function Home() {
       ? ["Rocket", "Groot", "Intelligence Layer"]
       : [];
   return (
-    <main className={`home-layout${railCollapsed ? " home-layout--rail-collapsed" : ""}`}>
+    <main
+      className={`home-layout${railCollapsed ? " home-layout--rail-collapsed" : ""}${atlas.route.focusId ? " home-layout--has-focus" : ""}`}
+    >
       <section
         className={`editorial-rail${railCollapsed ? " editorial-rail--collapsed" : ""}`}
         aria-labelledby="home-title"
