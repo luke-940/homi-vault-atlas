@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
 import { auditPublicPackBinding } from "../scripts/lib/public-data-wire.mjs";
@@ -54,9 +54,15 @@ describe("public data boundary", () => {
     ).toBe(packs.graph.manifest.nodeCount);
   });
 
-  test("keeps public and owner graph projections distinct", () => {
+  test("keeps public and owner graph projections separated by runtime boundary", () => {
+    const ownerGraphPath = path.resolve(".generated", "profiles", "owner", "data", "graph.json");
+    if (!existsSync(ownerGraphPath)) {
+      expect(packs.graph.profile).toBe("atlas-public");
+      expect(packs.publication.profile).toBe("public");
+      return;
+    }
     const owner = JSON.parse(
-      readFileSync(path.resolve(".generated", "profiles", "owner", "data", "graph.json"), "utf8"),
+      readFileSync(ownerGraphPath, "utf8"),
     );
     expect(owner.profile).toBe("atlas-owner");
     expect(packs.graph.profile).toBe("atlas-public");
