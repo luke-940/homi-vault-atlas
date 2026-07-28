@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import type { AtlasRuntime, CosmosLens, ExploreMode, GraphNode, Workspace } from "./contracts";
-import { DEFAULT_ROUTE, readRoute, writeRoute, type AtlasRoute } from "./url";
+import { readRoute, writeRoute, type AtlasRoute } from "./url";
 
 interface AtlasState {
   runtime: AtlasRuntime;
@@ -43,7 +43,7 @@ export function AtlasProvider({ runtime, children }: { runtime: AtlasRuntime; ch
   const [route, setRoute] = useState(() => sanitizeRoute(readRoute(), runtime));
   const [previewId, setPreviewState] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
-  const historyRef = useRef<AtlasRoute[]>([DEFAULT_ROUTE]);
+  const historyRef = useRef<AtlasRoute[]>([route]);
 
   useEffect(() => {
     const sync = () => {
