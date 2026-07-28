@@ -15,9 +15,9 @@ colors:
   moc: "#E59A70"
   papers: "#91BDD9"
   signals: "#E3BE73"
-  rocket: "#CF8580"
-  groot: "#92BEA0"
-  intelligence-layer: "#B29ACC"
+  rocket: "#EE9B94"
+  groot: "#A9DEB7"
+  intelligence-layer: "#C8B0EF"
   strategy: "#C1AA7D"
 typography:
   display:
@@ -128,6 +128,7 @@ restrained English product chrome.
 
 - `SpatialStage`: one scene owner, transparent WebGL above the graphite field.
 - `LensRail`: Whole Vault, Knowledge Core, Project Frontiers, Agent Stewardship.
+- `EditorialRailToggle`: collapses explanatory copy into a narrow lens control rail without covering or resetting the spatial scene.
 - `EvidenceRail`: selected title, kind, domain, inbound/outbound summary, caveat.
 - `SearchCommand`: previews in the existing stage and commits only on selection.
 - `VaultStructure`: curated Obsidian-style folder hierarchy; location and classification only, never relationship strength.

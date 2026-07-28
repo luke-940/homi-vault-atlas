@@ -1,4 +1,15 @@
-import { ArrowRight, Compass, FolderTree, Orbit, Rocket, RotateCcw, ShieldCheck } from "lucide-react";
+import {
+  ArrowRight,
+  Compass,
+  FolderTree,
+  Orbit,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Rocket,
+  RotateCcw,
+  ShieldCheck,
+} from "lucide-react";
+import { useState } from "react";
 import type { CosmosLens } from "./contracts";
 import { CosmosStage } from "./CosmosStage";
 import { EvidenceRail } from "./EvidenceRail";
@@ -29,6 +40,7 @@ const lensIcons = {
 
 export function Home() {
   const atlas = useAtlas();
+  const [railCollapsed, setRailCollapsed] = useState(false);
   const copy = LENS_COPY[atlas.route.lens];
   const inventory = atlas.runtime.inventory;
   const activeDomains = atlas.route.lens === "knowledge-core"
@@ -37,8 +49,24 @@ export function Home() {
       ? ["Rocket", "Groot", "Intelligence Layer"]
       : [];
   return (
-    <main className="home-layout">
-      <section className="editorial-rail" aria-labelledby="home-title">
+    <main className={`home-layout${railCollapsed ? " home-layout--rail-collapsed" : ""}`}>
+      <section
+        className={`editorial-rail${railCollapsed ? " editorial-rail--collapsed" : ""}`}
+        aria-labelledby="home-title"
+      >
+        <button
+          type="button"
+          className="editorial-rail__toggle"
+          aria-expanded={!railCollapsed}
+          aria-label={railCollapsed ? "설명 패널 펼치기" : "설명 패널 접기"}
+          title={railCollapsed ? "설명 패널 펼치기" : "설명 패널 접기"}
+          onClick={() => setRailCollapsed((collapsed) => !collapsed)}
+        >
+          {railCollapsed
+            ? <PanelLeftOpen size={16} aria-hidden="true" />
+            : <PanelLeftClose size={16} aria-hidden="true" />}
+          <span>{railCollapsed ? "Open" : "Hide"}</span>
+        </button>
         <div className="editorial-rail__copy">
           <p className="eyebrow">{copy.eyebrow}</p>
           <h1 id="home-title">{copy.title}</h1>
@@ -69,6 +97,8 @@ export function Home() {
                 key={lens}
                 onClick={() => atlas.setLens(lens)}
                 aria-current={atlas.route.lens === lens ? "step" : undefined}
+                aria-label={lensLabels[lens]}
+                title={lensLabels[lens]}
               >
                 <span><Icon aria-hidden="true" size={15} strokeWidth={1.55} /></span>
                 <strong>{lensLabels[lens]}</strong>

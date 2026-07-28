@@ -71,6 +71,30 @@
         ],
         "verification": "tests-public/graph-projection-contract.test.ts; tests-public/navigation-contract.test.ts"
       }
+    },
+    {
+      "newResponsibility": "collapsible editorial rail with persistent lens controls",
+      "replaces": [
+        "permanently fixed 27 percent Home explanation column"
+      ],
+      "preserves": [
+        "Home editorial copy",
+        "lens navigation",
+        "evidence and coverage",
+        "spatial scene state"
+      ],
+      "removalEvidence": {
+        "status": "completed",
+        "deleted": [
+          "fixed-only Home rail behavior"
+        ],
+        "activeContract": [
+          "src/app/Home.tsx",
+          "src/styles/workspace.css",
+          "src/styles/responsive.css"
+        ],
+        "verification": "browser geometry and interaction readback at 1440x920 and 390x844"
+      }
     }
   ]
 }

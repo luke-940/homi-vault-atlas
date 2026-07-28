@@ -46,6 +46,7 @@ export function nodeMaterial(family: string) {
       transparent: true,
       opacity: family === "project" ? 0.96 : 0.86,
       vertexColors: true,
+      fog: family !== "project",
     });
   }
   return new MeshStandardMaterial({
@@ -167,7 +168,7 @@ export function buildHaloField(nodes: SemanticSpaceNode[]) {
       || node.domain === "Groot"
       || node.domain === "Intelligence Layer";
     colors.set([color.r, color.g, color.b], index * 3);
-    sizes[index] = Math.min(projectFrontier ? 210 : 190, (projectFrontier ? 34 : 22) + node.radius * 5.8);
+    sizes[index] = Math.min(projectFrontier ? 238 : 190, (projectFrontier ? 42 : 22) + node.radius * 6.2);
     alpha[index] = 0.58;
   });
   geometry.setAttribute("position", new BufferAttribute(positions, 3));

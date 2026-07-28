@@ -252,6 +252,21 @@
     padding: 12px 16px 8px;
   }
 
+  .editorial-rail__toggle {
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+    padding: 0;
+  }
+
+  .editorial-rail__toggle span {
+    display: none;
+  }
+
+  .editorial-rail__copy {
+    padding-right: 42px;
+  }
+
   .editorial-rail__copy h1 {
     margin-top: 6px;
     font-size: clamp(30px, 8.8vw, 34px);
@@ -583,5 +598,26 @@
   .lens-rail button {
     min-height: 46px;
     padding-block: 8px;
+  }
+}
+
+@media (max-width: 1179px) {
+  .home-layout--rail-collapsed {
+    display: block;
+  }
+
+  .editorial-rail--collapsed {
+    display: block;
+    min-height: 58px;
+    height: 58px;
+    padding: 10px 12px;
+  }
+
+  .editorial-rail--collapsed .editorial-rail__toggle {
+    position: static;
+  }
+
+  .editorial-rail--collapsed .lens-rail {
+    display: none;
   }
 }

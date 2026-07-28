@@ -363,12 +363,12 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
         const domainDimmed = activeDomains.size > 0 && !activeDomains.has(node.domain);
         const sameDomain = activeDomain === node.domain;
         if (activeId && id !== activeId && !neighborIds.has(id) && sameDomain) {
-          color.multiplyScalar(frontier ? 0.96 : 0.78);
+          color.multiplyScalar(frontier ? 1.16 : 0.78);
         } else if (activeId && id !== activeId && !neighborIds.has(id)) color.multiplyScalar(0.52);
         else if (id === activeId) color.lerp(amber, 0.58).multiplyScalar(1.22);
-        else if (activeId && neighborIds.has(id)) color.multiplyScalar(1.08);
+        else if (activeId && neighborIds.has(id)) color.multiplyScalar(frontier ? 1.28 : 1.08);
         else if (domainDimmed) color.multiplyScalar(0.24);
-        else color.multiplyScalar(frontier ? 1.9 : 0.92);
+        else color.multiplyScalar(frontier ? 2.15 : 0.92);
         bucket.mesh.setColorAt(index, color);
       });
       if (bucket.mesh.instanceColor) bucket.mesh.instanceColor.needsUpdate = true;
@@ -386,8 +386,8 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
         const domainDimmed = activeDomains.size > 0 && !activeDomains.has(node.domain);
         const sameDomain = activeDomain === node.domain;
         alpha[index] = activeId
-          ? selected ? 1 : neighbor ? 0.74 : sameDomain ? frontier ? 0.46 : 0.36 : 0.22
-          : domainDimmed ? 0.1 : frontier ? 0.96 : 0.5;
+          ? selected ? 1 : neighbor ? frontier ? 0.9 : 0.74 : sameDomain ? frontier ? 0.62 : 0.36 : 0.22
+          : domainDimmed ? 0.1 : frontier ? 1 : 0.5;
         if (selected) color.lerp(amber, 0.64);
         colors.set([color.r, color.g, color.b], index * 3);
       });

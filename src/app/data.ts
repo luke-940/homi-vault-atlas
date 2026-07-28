@@ -13,9 +13,9 @@ export const DOMAIN_COLORS: Record<string, string> = {
   MOC: "#e59a70",
   Papers: "#91bdd9",
   Signals: "#e3be73",
-  Rocket: "#cf8580",
-  Groot: "#92bea0",
-  "Intelligence Layer": "#b29acc",
+  Rocket: "#ee9b94",
+  Groot: "#a9deb7",
+  "Intelligence Layer": "#c8b0ef",
   Strategy: "#c1aa7d",
   Research: "#9ba9af",
 };
