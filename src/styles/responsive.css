@@ -259,10 +259,6 @@
     padding: 0;
   }
 
-  .editorial-rail__toggle span {
-    display: none;
-  }
-
   .editorial-rail__copy {
     padding-right: 42px;
   }
@@ -563,11 +559,10 @@
   }
 
   .coverage-ledger {
-    display: block;
+    display: grid;
   }
 
   .coverage-ledger dl {
-    justify-content: space-between;
     margin-top: 12px;
   }
 }

@@ -7,7 +7,7 @@
 }
 
 .home-layout--rail-collapsed {
-  grid-template-columns: 68px minmax(0, 1fr);
+  grid-template-columns: 58px minmax(0, 1fr);
 }
 
 .editorial-rail {
@@ -15,11 +15,11 @@
   z-index: 8;
   display: grid;
   grid-template-rows: auto 1fr auto auto;
-  gap: 14px;
+  gap: 16px;
   min-width: 0;
   min-height: 0;
   height: 100%;
-  padding: clamp(30px, 4.2vh, 48px) clamp(24px, 3vw, 44px) 18px;
+  padding: clamp(32px, 4.2vh, 48px) clamp(28px, 2.7vw, 40px) 20px;
   overflow: hidden;
   border-right: 1px solid var(--line);
   background: rgba(11, 9, 13, 0.78);
@@ -34,27 +34,27 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-width: 42px;
-  min-height: 36px;
-  padding: 0 10px;
-  border: 1px solid var(--line);
+  width: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border: 1px solid transparent;
   border-radius: var(--radius-2);
-  background: rgba(17, 14, 19, 0.74);
+  background: transparent;
   color: var(--muted);
-  font: 540 12px/1 var(--font-display);
 }
 
 .editorial-rail__toggle:hover,
 .editorial-rail__toggle:focus-visible {
   border-color: var(--line-strong);
+  background: rgba(242, 236, 228, 0.045);
   color: var(--text);
 }
 
 .editorial-rail--collapsed {
   grid-template-rows: auto 1fr;
-  gap: 12px;
-  padding: 12px 9px;
+  gap: 14px;
+  padding: 11px 7px;
   background: rgba(11, 9, 13, 0.66);
 }
 
@@ -62,10 +62,11 @@
   position: static;
   justify-self: center;
   width: 44px;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0;
 }
 
-.editorial-rail--collapsed .editorial-rail__toggle span,
 .editorial-rail--collapsed .editorial-rail__copy,
 .editorial-rail--collapsed > .evidence-rail,
 .editorial-rail--collapsed > .coverage-ledger {
@@ -74,7 +75,7 @@
 
 .editorial-rail--collapsed .lens-rail {
   align-content: start;
-  gap: 7px;
+  gap: 10px;
 }
 
 .editorial-rail--collapsed .lens-rail button {
@@ -83,6 +84,9 @@
   min-width: 44px;
   min-height: 44px;
   padding: 0;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
   place-items: center;
 }
 
@@ -92,12 +96,40 @@
   width: 34px;
   height: 34px;
   padding: 0;
+  opacity: 0.52;
   place-items: center;
+  transition: color 150ms ease, opacity 150ms ease, filter 150ms ease;
 }
 
 .editorial-rail--collapsed .lens-rail button strong,
 .editorial-rail--collapsed .lens-rail button small {
   display: none;
+}
+
+.editorial-rail--collapsed .lens-rail button:hover,
+.editorial-rail--collapsed .lens-rail button[aria-current="step"],
+.editorial-rail--collapsed .lens-rail button:focus-visible {
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  outline: 0;
+}
+
+.editorial-rail--collapsed .lens-rail button:hover > span {
+  color: var(--text-soft);
+  opacity: 0.82;
+}
+
+.editorial-rail--collapsed .lens-rail button[aria-current="step"] > span,
+.editorial-rail--collapsed .lens-rail button:focus-visible > span {
+  color: var(--amber);
+  opacity: 1;
+  filter: drop-shadow(0 0 7px rgba(240, 177, 91, 0.48));
+}
+
+.editorial-rail__copy {
+  padding-right: 24px;
 }
 
 .editorial-rail__copy h1 {
@@ -163,7 +195,7 @@
 .lens-rail {
   display: grid;
   align-content: center;
-  gap: 5px;
+  gap: 7px;
   min-height: 0;
 }
 
@@ -171,8 +203,8 @@
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr);
   gap: 4px 12px;
-  min-height: 52px;
-  padding: 8px 12px;
+  min-height: 54px;
+  padding: 9px 11px;
   border: 1px solid transparent;
   border-radius: var(--radius-1);
   color: var(--muted);
@@ -221,9 +253,9 @@
 
 .evidence-rail {
   display: grid;
-  gap: 7px;
+  gap: 8px;
   min-width: 0;
-  padding: 11px 0 0;
+  padding: 14px 0 0;
   border-top: 1px solid var(--line);
 }
 
@@ -306,28 +338,29 @@
 }
 
 .coverage-ledger {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 16px;
-  padding-top: 10px;
+  display: grid;
+  gap: 10px;
+  padding-top: 13px;
   border-top: 1px solid var(--line);
 }
 
 .coverage-ledger > span {
-  max-width: 120px;
+  max-width: none;
   color: var(--muted);
-  font: 500 12px/1.35 var(--font-display);
-  letter-spacing: 0.1em;
+  font: 520 12px/1 var(--font-display);
+  letter-spacing: 0.12em;
+  white-space: nowrap;
 }
 
 .coverage-ledger dl {
-  display: flex;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .coverage-ledger dl div {
-  text-align: right;
+  min-width: 0;
+  text-align: left;
 }
 
 .coverage-ledger dt {

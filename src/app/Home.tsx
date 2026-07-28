@@ -65,7 +65,6 @@ export function Home() {
           {railCollapsed
             ? <PanelLeftOpen size={16} aria-hidden="true" />
             : <PanelLeftClose size={16} aria-hidden="true" />}
-          <span>{railCollapsed ? "Open" : "Hide"}</span>
         </button>
         <div className="editorial-rail__copy">
           <p className="eyebrow">{copy.eyebrow}</p>
@@ -78,14 +77,15 @@ export function Home() {
             <button type="button" className="quiet-action" onClick={() => atlas.setExploreMode("structure")}>
               <FolderTree size={14} aria-hidden="true" /> Vault Structure
             </button>
-            <button
-              type="button"
-              className="quiet-action"
-              onClick={() => atlas.commitFocus(null)}
-              disabled={!atlas.route.focusId}
-            >
-              <RotateCcw size={14} aria-hidden="true" /> Reset focus
-            </button>
+            {atlas.route.focusId ? (
+              <button
+                type="button"
+                className="quiet-action"
+                onClick={() => atlas.commitFocus(null)}
+              >
+                <RotateCcw size={14} aria-hidden="true" /> Reset focus
+              </button>
+            ) : null}
           </div>
         </div>
         <nav className="lens-rail" aria-label="Knowledge lenses">
