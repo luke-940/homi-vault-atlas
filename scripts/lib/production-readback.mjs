@@ -64,7 +64,14 @@ async function writeReceipt(receiptPath, receipt) {
 async function performReadback({ baseUrl, distDir, sourceCommit, fetchImpl }) {
   const tree = await collectReleaseTree(distDir);
   const exactFiles = tree.files.filter((item) => item.path.endsWith(".json") || item.path.endsWith(".js"));
-  for (const required of ["data/agency.json", "data/agency.js", "data/publication.json", "asset-manifest.json", "build-receipt.json"]) {
+  for (const required of [
+    "data/agency.json",
+    "data/graph.json",
+    "data/meaning.json",
+    "data/publication.json",
+    "asset-manifest.json",
+    "build-receipt.json",
+  ]) {
     if (!exactFiles.some((item) => item.path === required)) {
       throw new Error(`Production readback failed: required exact-byte target ${required} is missing.`);
     }
@@ -79,21 +86,21 @@ async function performReadback({ baseUrl, distDir, sourceCommit, fetchImpl }) {
     ));
   }
   const localIndex = await readFile(path.join(distDir, "index.html"));
-  const agencyUrl = new URL(baseUrl);
-  agencyUrl.hash = "agency?scene=system";
-  const agencyRequestUrl = requestUrlFor(baseUrl, "index.html", sourceCommit);
-  const agencyShell = await fetchExact(fetchImpl, agencyRequestUrl, localIndex, "#agency?scene=system shell");
+  const homeUrl = new URL(baseUrl);
+  homeUrl.hash = "home?lens=whole-vault";
+  const homeRequestUrl = requestUrlFor(baseUrl, "index.html", sourceCommit);
+  const homeShell = await fetchExact(fetchImpl, homeRequestUrl, localIndex, "#home?lens=whole-vault shell");
   const livePublicationBody = await readFile(path.join(distDir, "data", "publication.json"));
   const livePublication = JSON.parse(livePublicationBody.toString("utf8"));
   return {
     exactFiles: liveFiles,
     publicSnapshotDigest: livePublication.publicSnapshotDigest,
-    agencyRoute: {
-      url: agencyUrl.toString(),
-      requestUrl: agencyRequestUrl.toString(),
-      fragmentBoundary: "Client-side fragment; exact deployed index shell plus agency JSON and JS bytes verified.",
-      indexBytes: agencyShell.bytes,
-      indexSha256: agencyShell.sha256,
+    homeRoute: {
+      url: homeUrl.toString(),
+      requestUrl: homeRequestUrl.toString(),
+      fragmentBoundary: "Client-side fragment; exact deployed index shell plus graph and meaning JSON bytes verified.",
+      indexBytes: homeShell.bytes,
+      indexSha256: homeShell.sha256,
     },
   };
 }
@@ -135,7 +142,7 @@ export async function runProductionReadback({
         verified: false,
       },
       exactByteBoundary: { extensions: [".json", ".js"], files: [] },
-      agencyRoute: { url: new URL("#agency?scene=system", baseUrl).toString() },
+      homeRoute: { url: new URL("#home?lens=whole-vault", baseUrl).toString() },
       attemptsUsed: 0,
       findings: [error instanceof Error ? error.message : String(error)],
       changedSurfaces: [],
@@ -168,7 +175,7 @@ export async function runProductionReadback({
           extensions: [".json", ".js"],
           files: evidence.exactFiles,
         },
-        agencyRoute: evidence.agencyRoute,
+        homeRoute: evidence.homeRoute,
         attemptsUsed: attempt,
         findings: [],
         changedSurfaces: [],
@@ -195,7 +202,7 @@ export async function runProductionReadback({
       archiveSha256: verifiedArtifact.manifest.archive.sha256,
     },
     exactByteBoundary: { extensions: [".json", ".js"], files: [] },
-    agencyRoute: { url: new URL("#agency?scene=system", baseUrl).toString() },
+    homeRoute: { url: new URL("#home?lens=whole-vault", baseUrl).toString() },
     attemptsUsed: attempts,
     findings: [lastError instanceof Error ? lastError.message : String(lastError)],
     changedSurfaces: [],

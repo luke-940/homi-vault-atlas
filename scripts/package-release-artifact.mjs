@@ -2,9 +2,14 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createReleaseArtifact, verifyReleaseArtifact } from "./lib/release-artifact.mjs";
-import { releaseVersionFromSource } from "./lib/public-package.mjs";
 
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const releaseVersionFromSource = (value) => {
+  if (!/^\d+\.\d+\.\d+$/.test(String(value))) {
+    throw new Error(`Release artifact blocked: invalid package version ${JSON.stringify(value)}.`);
+  }
+  return String(value);
+};
 
 export async function releaseArtifactCommand({
   mode = "create",

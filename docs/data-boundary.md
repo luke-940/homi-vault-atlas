@@ -1,101 +1,81 @@
-# Atlas v7.4 Data Boundary
+# Atlas v7.8 Data Boundary
 
-Homi Vault Atlas는 canonical Vault 자체가 아니라, release capture에서 만든 읽기 전용 지식 지형입니다. v7.4는 하나의 코드베이스에서 서로 섞일 수 없는 두 프로필을 생성합니다.
+Homi Vault Atlas는 canonical Vault가 아니라, read-only release capture에서 생성한 버전 스냅샷입니다. 한 compiler가 `atlas-owner`와 `atlas-public`을 만들지만 두 profile의 source root와 output root는 물리적으로 분리됩니다.
 
-- `atlas-owner`: 오너의 Mac 안에서만 사용하는 전체 구조·실측 지표·운영 집계
-- `atlas-public`: GitHub Pages에 배포할 공개 승인 이름·구조적 별칭·집계 관계·커버리지 설명
+## Capture invariant
 
-Owner 산출물은 `.generated/owner`, public 산출물은 `.generated/public` 아래에 생성합니다. Owner browser reader는 고정 경계의 `.generated/owner/data`만 읽어 `.generated/owner-site`에 만들며 두 경로 모두 local-only입니다. Owner bytes는 Git tracked source, `public-safe`, `dist-public`, Actions artifact, Pages, GitHub Release에 들어갈 수 없습니다.
+- Vault source는 수정하지 않고 두 번 연속 읽습니다.
+- file inventory, bytes, SHA와 graph semantics가 같을 때만 capture를 채택합니다.
+- capture 뒤 source drift가 발견되면 해당 RC를 폐기하고 projection과 QA를 다시 수행합니다.
+- Current State, Batch/cursor, Notion, `graph.json`, Daily, Rocket, Groot와 HIL은 Atlas가 쓰지 않습니다.
 
-## Release capture
+## Publication policy v2
 
-프로필 생성 전 다음 입력을 읽기 전용으로 두 번 읽습니다.
+Public은 안전 검사를 통과한 실제 이름을 기본으로 사용합니다.
 
-- 백업과 도구 설정 폴더를 제외한 live Vault Markdown inventory
-- Memory Engine database
-- activity event/state ledger
+- 포함 영역: MOC, Papers, Signals, Rocket, Groot, Intelligence Layer
+- 조건부 포함: 위 영역과 실제 reference로 연결된 Strategy Insight
+- 제외: Strategy Request, Console, raw Daily와 날짜 노트, archive, backup, template, control/governance, receipt, scaffolding
+- 기본 라벨에서 제거: SI/SR와 의미 없는 numeric suffix
 
-두 번의 파일 목록·bytes·SHA-256·semantic structure가 다르면 torn read로 판정하고 RC를 폐기합니다. 생성 단계에서도 capture manifest의 각 SHA를 다시 확인하며, source drift가 있으면 재캡처 전까지 중지합니다.
+공개 node가 안전 검사를 통과하면 실제 제목을 유지하고, 실패하면 가명으로 바꾸지 않고 제외 사유 ledger에 기록합니다. Obsidian Graph View의 hidden 상태는 공개 허가가 아닙니다.
 
-## Public contracts
+## Runtime contracts
+
+### `atlas.graph.v2`
+
+- compact string table과 index 기반 node·edge arrays
+- stable node/edge ID
+- actual directed reference와 occurrence
+- domain, kind, unique inbound gravity, semantic zoom rank
+- deterministic build-time x/y/z
+- four fixed camera bookmarks
+- semantic, layout와 projection digest
+
+위치는 reference topology와 domain structure에서 계산합니다. 날짜, mtime, runtime force와 Homi provenance는 graph position이나 knowledge relation에 포함되지 않습니다.
 
 ### `atlas.inventory.v1`
 
-각 Markdown은 프로필마다 정확히 한 번 `named`, `aggregate`, `excluded` 중 하나로 분류됩니다.
+각 Markdown은 profile별로 `named / aggregate / excluded` 중 정확히 하나입니다.
 
-제외 사유 우선순위는 다음으로 고정합니다.
+`physical = named + aggregate + excluded`와 `unclassified = 0`이 모두 성립해야 합니다.
 
-1. `archive`
-2. `scaffolding`
-3. `control_internal`
-4. `raw_daily`
-5. `explicit_policy`
-6. `public_name_not_approved`
+### `atlas.meaning.v2`
 
-`physicalMarkdownCount = namedCount + aggregateCount + excludedCount`가 아니거나 `unclassifiedCount > 0`이면 빌드를 차단합니다. 폴더별 coverage도 같은 합계와 일치해야 합니다.
+모든 story와 강조선은 `atlas.graph.v2` stable edge ID에 결속됩니다. 합성·장식 edge는 허용하지 않습니다.
 
-### `atlas.structure.v2`
+### `atlas.agency.v1`
 
-지원 node kind는 다음으로 제한합니다.
+Luke와 전문 역할의 책임·공개 결과·경계를 투영합니다. actor는 knowledge node, gravity, relation count와 matrix에 들어가지 않습니다.
 
-- `district`, `moc_hub`, `paper_gateway`
-- `strategy_insight`, `strategy_request`
-- `project`, `project_stage`
-- `signal_domain`, `signal_storyline`
-- `source_document`, `aggregate_boundary`
+### `atlas.publication.v2`
 
-문서의 기본 부모는 하나뿐이며 다중 소속은 `associations` edge로 분리합니다. 유일하게 해석된 canonical wikilink가 허브 사이를 연결하면 방향과 occurrence weight를 가진 `references` association으로 집계합니다. Public은 allowlist를 통과한 허브끼리의 edge만 내보내며 원문 path는 내보내지 않습니다. 중요도는 `uniqueInboundDocuments`, 링크량은 `inboundLinkOccurrences`로 별도 표시하고 두 단위를 합산하지 않습니다. actor는 structure node나 relation count에 포함하지 않습니다.
+public snapshot digest, profile, blockers와 pack binding을 기록합니다. JSON이 권위 데이터이며 대응 JavaScript wrapper는 JSON의 정확한 bytes에서 생성됩니다.
 
-### `atlas.activity.v1`
+## Allowed public information
 
-Owner 전용입니다. 검증된 event ledger를 역할·단위 유형·상태·날짜별 건수와 lifecycle로만 집계합니다. 작업 ID, event ID, receipt, 원문 경로, hash, Batch/cursor는 포함하지 않습니다. `activity.json` 또는 `activity.js`가 public data root에서 발견되면 audit가 실패합니다.
+- 승인된 여섯 영역과 연결된 Strategy Insight의 실제 안전 제목
+- 실제 directed references와 occurrence
+- unique inbound document 수와 domain/kind
+- physical inventory 대비 named/aggregate/excluded coverage
+- release capture 기준일과 snapshot caveat
+- 공개 안전한 책임 역할명과 경계
 
-### Public title policy
+## Forbidden public information
 
-`public-title-allowlist.v1`은 `safe_hybrid` 모드입니다. 승인된 제목만 실제 이름으로 사용할 수 있고, 그 밖의 항목은 구조적 별칭이나 집계로 내려갑니다. Obsidian graph hidden 상태는 공개 허가로 사용하지 않습니다.
-
-## 정확한 지표 의미
-
-- `uniqueInboundDocuments`: 해당 대상에 하나 이상 링크한 고유 source 문서 수
-- `inboundLinkOccurrences`: 해당 대상으로 향한 모든 wikilink 출현 횟수
-- `lastMeaningfulDate`: frontmatter의 의미 날짜 또는 날짜형 Daily/Weekly 경로
-- 날짜 근거가 없으면 `null`; 0일 또는 비활성으로 추정하지 않음
-- filesystem mtime은 최신성 계산과 공개 bytes에 사용하지 않음
-
-## 공개 허용 범위
-
-- 여섯 공개 knowledge entity와 기존 `atlas.agency.v1` 역할 경계
-- 전체 physical inventory 대비 named·aggregate·excluded coverage
-- 승인된 일반 구조명과 구조적 별칭
-- 실제 실측값을 집계한 지형 중력·링크 출현·semantic freshness
-- 문서 본문을 포함하지 않는 district/hub/project 집계
-
-## 공개 금지 범위
-
-- 문서 본문, frontmatter, private alias/tag, 승인되지 않은 원문 title
-- 원본 path와 source document identifier
-- macOS/Linux 절대경로, Windows path, UNC path, file URL
-- 이메일, 전화번호, IP, JWT, token, secret/private key
-- raw Daily, archive, backup, control-plane 원문 event
-- 세션·task·thread·work order·lease·Batch·cursor·receipt·source hash
-- 현재 작업 목록, online 상태, 명령 이력, thought trace
-- Owner activity/source index 및 `.generated/owner`의 모든 bytes
-
-## JSON authority와 wrapper
-
-각 `data/<pack>.json`이 유일한 감사 대상입니다. file URL용 `data/<pack>.js`는 JSON의 정확한 bytes로부터 생성하며 marker에 JSON SHA-256을 결속합니다. Audit는 JSON/JS deep equality, exact embedded bytes, generated/public-safe/dist의 byte equality, stale output을 모두 검사합니다.
-
-Public pack은 `agency`, `bootstrap`, `inventory`, `structure`, `relation`, `flow`, `temporal`, `entity`, `health`, `insight`, `publication`입니다. `activity`는 이 목록에 들어갈 수 없습니다.
-
-Public `flow.routes`는 `references` association에서 만든 실제 허브 경로만 허용합니다. null station, 역할 단계, 구성원이 없는 경로는 허용하지 않으며 검증 가능한 edge가 없으면 빈 배열입니다. 실행 pulse는 항상 metadata `null`, `chains: []`인 공개 빈 상태입니다. Public `temporal`은 허용된 chronology가 없으므로 `eras: []`, `currentEra: null`이며 날짜가 없는 변화나 생성형 자리표시자를 만들지 않습니다.
+- 문서 본문과 frontmatter
+- 원본 path, canonical filename와 Owner-only node bytes
+- 개인정보, 이메일, 전화번호, IP, JWT, token, secret/private key
+- Batch, cursor, work order, receipt, lease, source hash와 명령 이력
+- 실시간 작업 목록, online state, thought trace와 운영 성과
+- archive, raw Daily, control-plane 원문 event
 
 ## Release blockers
 
-- torn capture 또는 capture 이후 source drift
-- inventory 합계 불일치 또는 unclassified 문서
-- Owner/Public root 교차 또는 owner bytes의 Git 추적
-- 공개 이름 allowlist 우회
-- mtime 기반 최신성
-- actor와 knowledge count 혼합
-- JSON/JS byte 불일치, stale `dist-public`, 개인정보 pattern 발견
-- 공개 knowledge entity 수 또는 Agency truth contract 불일치
+- torn capture 또는 source drift
+- inventory 합계 불일치와 unexplained exclusion
+- Owner/Public root 또는 byte crossover
+- 합성·장식·Homi knowledge edge
+- JSON/JS byte 불일치와 stale `dist-public`
+- private body/path/PII/secret/운영 ID 노출
+- budget 초과와 production byte readback 실패

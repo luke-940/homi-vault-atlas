@@ -7,7 +7,7 @@ import {
   forceX,
   forceY,
 } from "d3-force";
-import { privacySafeDigestToken, stableJson } from "./v7-4-profile-contract.mjs";
+import { privacySafeDigestToken, stableJson } from "./profile-contract.mjs";
 
 const compareText = (left, right) => String(left).localeCompare(String(right), "en");
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
@@ -20,7 +20,7 @@ const NODE_FLAGS = Object.freeze({
 
 export const GRAPH_V2_LAYOUT = Object.freeze({
   algorithm: "seeded-topology-domain-force-3d-v2",
-  seed: "homi-vault-atlas-v7.8-open-knowledge-cosmos-01",
+  seed: "homi-vault-atlas-open-knowledge-cosmos-01",
   ticks: 360,
   bounds: { width: 1600, height: 720, depth: 1120 },
 });
@@ -54,12 +54,25 @@ function fitCoordinates(nodes, width, depth, padding = 110) {
 }
 
 function domainAnchors(domains, edges, recordByPath, random) {
+  const authoredSlots = new Map(Object.entries({
+    MOC: [-250, -170],
+    Papers: [-330, 165],
+    Signals: [0, -5],
+    Rocket: [245, -180],
+    Groot: [345, 12],
+    "Intelligence Layer": [250, 190],
+    Strategy: [-20, 255],
+    Research: [-345, -10],
+  }));
   const domainNodes = domains.map((domain, index) => {
     const angle = (index / Math.max(1, domains.length)) * Math.PI * 2 - Math.PI / 2;
+    const slot = authoredSlots.get(domain) ?? [Math.cos(angle) * 330, Math.sin(angle) * 230];
     return {
       id: domain,
-      x: Math.cos(angle) * 380 + (random() - 0.5) * 18,
-      y: Math.sin(angle) * 260 + (random() - 0.5) * 18,
+      x: slot[0] + (random() - 0.5) * 14,
+      y: slot[1] + (random() - 0.5) * 14,
+      slotX: slot[0],
+      slotY: slot[1],
     };
   });
   const weights = new Map();
@@ -80,14 +93,14 @@ function domainAnchors(domains, edges, recordByPath, random) {
     .alpha(1)
     .alphaDecay(1 - Math.pow(0.001, 1 / 280))
     .velocityDecay(0.32)
-    .force("charge", forceManyBody().strength(-720))
-    .force("collision", forceCollide(105).iterations(4))
+    .force("charge", forceManyBody().strength(-590))
+    .force("collision", forceCollide(92).iterations(4))
     .force("link", forceLink(links)
-      .id((node) => node.id)
-      .distance((link) => Math.max(130, 310 - Math.log1p(link.weight) * 28))
-      .strength((link) => Math.min(0.18, 0.025 + Math.log1p(link.weight) * 0.018)))
-    .force("x", forceX(0).strength(0.012))
-    .force("y", forceY(0).strength(0.012))
+      .id((/** @type {any} */ node) => node.id)
+      .distance((/** @type {any} */ link) => Math.max(150, 320 - Math.log1p(link.weight) * 24))
+      .strength((/** @type {any} */ link) => Math.min(0.075, 0.012 + Math.log1p(link.weight) * 0.008)))
+    .force("x", forceX((/** @type {any} */ node) => node.slotX).strength(0.1))
+    .force("y", forceY((/** @type {any} */ node) => node.slotY).strength(0.1))
     .stop();
   for (let tick = 0; tick < 280; tick += 1) simulation.tick();
   fitCoordinates(domainNodes, GRAPH_V2_LAYOUT.bounds.width, GRAPH_V2_LAYOUT.bounds.depth, 190);
@@ -170,27 +183,62 @@ export function buildAtlasGraphV2({ records, resolvedEdges, profile, generatedAt
       radius: 5.5 + 9 * Math.sqrt(gravity / maxGravity),
     };
   });
-  const simulationLinks = admittedEdges.map((edge) => ({
-    source: edge.sourcePath,
-    target: edge.targetPath,
-    occurrences: edge.occurrences,
-    crossDomain: recordByPath.get(edge.sourcePath).domain !== recordByPath.get(edge.targetPath).domain,
-  }));
+  // Inter-domain topology already shapes the domain anchors above. Reapplying
+  // thousands of cross-domain links at node level collapses the authored
+  // semantic space into a single hairball, so this pass only resolves the
+  // topology inside each domain.
+  const simulationLinks = admittedEdges
+    .filter((edge) => recordByPath.get(edge.sourcePath).domain === recordByPath.get(edge.targetPath).domain)
+    .map((edge) => ({
+      source: edge.sourcePath,
+      target: edge.targetPath,
+      occurrences: edge.occurrences,
+    }));
   const simulation = forceSimulation(simulationNodes)
     .randomSource(random)
     .alpha(1)
     .alphaDecay(1 - Math.pow(0.001, 1 / GRAPH_V2_LAYOUT.ticks))
     .velocityDecay(0.34)
-    .force("x", forceX((node) => node.anchorX).strength(0.13))
-    .force("y", forceY((node) => node.anchorZ).strength(0.13))
-    .force("charge", forceManyBody().strength((node) => -18 - node.radius * 1.6))
-    .force("collision", forceCollide((node) => node.radius + 3.5).iterations(4))
+    .force("x", forceX((/** @type {any} */ node) => node.anchorX).strength(0.22))
+    .force("y", forceY((/** @type {any} */ node) => node.anchorZ).strength(0.22))
+    .force("charge", forceManyBody().strength((/** @type {any} */ node) => -18 - node.radius * 1.6))
+    .force("collision", forceCollide((/** @type {any} */ node) => node.radius + 3.5).iterations(4))
     .force("link", forceLink(simulationLinks)
-      .id((node) => node.id)
-      .distance((link) => link.crossDomain ? 138 : 56)
-      .strength((link) => Math.min(0.095, 0.01 + Math.log1p(link.occurrences) * 0.012)))
+      .id((/** @type {any} */ node) => node.id)
+      .distance(56)
+      .strength((/** @type {any} */ link) => Math.min(0.095, 0.01 + Math.log1p(link.occurrences) * 0.012)))
     .stop();
   for (let tick = 0; tick < GRAPH_V2_LAYOUT.ticks; tick += 1) simulation.tick();
+  // Large domains naturally push farther apart under collision, while small but
+  // strategically important domains can collapse into unreadable specks. Keep
+  // each topology-derived cluster intact, then normalize its authored visual
+  // envelope so all approved domains remain discoverable in the whole-vault
+  // camera without falsifying any edge.
+  for (const domain of domains) {
+    const members = simulationNodes.filter((node) => recordByPath.get(node.id)?.domain === domain);
+    if (!members.length) continue;
+    const anchor = anchors.get(domain);
+    const centerX = members.reduce((sum, node) => sum + node.x, 0) / members.length;
+    const centerZ = members.reduce((sum, node) => sum + node.y, 0) / members.length;
+    const distances = members
+      .map((node) => Math.hypot(node.x - centerX, node.y - centerZ))
+      .sort((left, right) => left - right);
+    const envelope = Math.max(1, distances[Math.floor((distances.length - 1) * 0.9)] ?? 1);
+    const targetRadius = Math.min(186, 72 + Math.sqrt(members.length) * 8.4);
+    const scale = targetRadius / envelope;
+    for (const node of members) {
+      let dx = (node.x - centerX) * scale;
+      let dz = (node.y - centerZ) * scale;
+      const distance = Math.hypot(dx, dz);
+      const limit = targetRadius * 1.16;
+      if (distance > limit) {
+        dx *= limit / distance;
+        dz *= limit / distance;
+      }
+      node.x = anchor.x + dx;
+      node.y = anchor.z + dz;
+    }
+  }
   fitCoordinates(simulationNodes, GRAPH_V2_LAYOUT.bounds.width, GRAPH_V2_LAYOUT.bounds.depth);
 
   const nodeIndexByPath = new Map(named.map((record, index) => [record.relativePath, index]));

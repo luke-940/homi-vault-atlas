@@ -1,97 +1,95 @@
 {
   "schema": "atlas.inventory.v1",
   "profile": "atlas-public",
-  "generatedAt": "2026-07-27T05:09:31.489Z",
-  "asOfDate": "2026-07-27",
-  "physicalMarkdownCount": 893,
-  "namedCount": 19,
-  "aggregateCount": 630,
-  "excludedCount": 244,
+  "generatedAt": "2026-07-28T04:47:09.915Z",
+  "physicalMarkdownCount": 905,
+  "namedCount": 477,
+  "aggregateCount": 0,
+  "excludedCount": 428,
   "unclassifiedCount": 0,
   "reconciliation": {
-    "classifiedTotal": 893,
+    "classifiedTotal": 905,
     "pass": true
   },
   "coverage": [
     {
-      "id": "coverage:bmfohnipgjoniceo",
-      "label": "Independent Projects",
-      "physical": 246,
-      "named": 0,
-      "aggregate": 246,
-      "excluded": 0
-    },
-    {
-      "id": "coverage:ebgmlojhnbdnpham",
-      "label": "신호",
-      "physical": 21,
-      "named": 1,
-      "aggregate": 20,
-      "excluded": 0
-    },
-    {
-      "id": "coverage:bnpdeghebdmopjhn",
-      "label": "연구 기록",
-      "physical": 116,
-      "named": 0,
-      "aggregate": 20,
-      "excluded": 96
-    },
-    {
-      "id": "coverage:gdoehndnngjokinc",
-      "label": "연구 논거",
-      "physical": 149,
-      "named": 9,
-      "aggregate": 140,
-      "excluded": 0
-    },
-    {
-      "id": "coverage:gcjmfjnihkncgmcf",
-      "label": "운영 기반",
+      "domain": "Console",
       "physical": 169,
       "named": 0,
-      "aggregate": 21,
-      "excluded": 148
+      "aggregate": 0,
+      "excluded": 169
     },
     {
-      "id": "coverage:mdbopkghhgbcjimo",
-      "label": "전략",
-      "physical": 31,
-      "named": 0,
-      "aggregate": 31,
-      "excluded": 0
+      "domain": "Groot",
+      "physical": 105,
+      "named": 48,
+      "aggregate": 0,
+      "excluded": 57
     },
     {
-      "id": "coverage:iifenbocdbbaijbj",
-      "label": "중심 지식",
+      "domain": "Intelligence Layer",
+      "physical": 29,
+      "named": 12,
+      "aggregate": 0,
+      "excluded": 17
+    },
+    {
+      "domain": "MOC",
       "physical": 161,
-      "named": 9,
-      "aggregate": 152,
+      "named": 159,
+      "aggregate": 0,
+      "excluded": 2
+    },
+    {
+      "domain": "Papers",
+      "physical": 149,
+      "named": 149,
+      "aggregate": 0,
       "excluded": 0
+    },
+    {
+      "domain": "Research",
+      "physical": 117,
+      "named": 0,
+      "aggregate": 0,
+      "excluded": 117
+    },
+    {
+      "domain": "Rocket",
+      "physical": 123,
+      "named": 71,
+      "aggregate": 0,
+      "excluded": 52
+    },
+    {
+      "domain": "Signals",
+      "physical": 21,
+      "named": 21,
+      "aggregate": 0,
+      "excluded": 0
+    },
+    {
+      "domain": "Strategy",
+      "physical": 31,
+      "named": 17,
+      "aggregate": 0,
+      "excluded": 14
     }
   ],
   "exclusions": {
-    "priority": [
-      "archive",
-      "scaffolding",
-      "control_internal",
-      "raw_daily",
-      "explicit_policy",
-      "public_name_not_approved"
-    ],
     "byReason": {
-      "archive": 54,
-      "scaffolding": 24,
-      "control_internal": 70,
-      "raw_daily": 96,
-      "explicit_policy": 0,
-      "public_name_not_approved": 0
+      "dated_note": 89,
+      "excluded_path": 266,
+      "operating_surface": 5,
+      "strategy_request": 10,
+      "structural_scaffolding": 35,
+      "unsupported_root": 23
     }
   },
-  "publicTitlePolicy": {
-    "schema": "public-title-allowlist.v1",
-    "mode": "safe_hybrid",
-    "fallback": "alias_or_aggregate",
-    "projectCountDisclosure": "combined_non_attributable"
+  "publicationPolicy": {
+    "schema": "atlas.publication_policy.v2",
+    "version": "2026-07-28",
+    "mode": "actual_safe_names",
+    "aggregateMode": "none"
   }
 }

@@ -1,3 +1,0 @@
-/* homi-atlas-public-pack:health:8a416cbcfabe35a39203b49b2b2e265c3cd874dde70d456639cdc401e4043828 */
-window.__HOMI_ATLAS_V7_PACKS__ = window.__HOMI_ATLAS_V7_PACKS__ || {};
-window.__HOMI_ATLAS_V7_PACKS__["health"] = JSON.parse("{\n  \"memoryEngine\": {\n    \"schema\": \"public-curated-snapshot.v1\",\n    \"files\": 6\n  },\n  \"currentnessCounts\": {\n    \"public_snapshot\": 6\n  },\n  \"authorityCounts\": {\n    \"공개 집계\": 5,\n    \"공개 경계\": 1\n  },\n  \"unresolvedLinks\": {},\n  \"ambiguousAutoSelections\": 0,\n  \"unresolvedTypedRelations\": 0,\n  \"activeIsolates\": [],\n  \"countReconciliation\": {\n    \"entities\": 6,\n    \"memoryFiles\": 6,\n    \"hierarchyDocuments\": 6,\n    \"pass\": true\n  }\n}\n");

@@ -16,29 +16,29 @@ import {
   extractWikilinkTargets,
   parseFrontmatterScalarMap,
   stableJson,
-} from "./lib/v7-4-profile-contract.mjs";
+} from "./lib/profile-contract.mjs";
 
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const captureDir = path.resolve(
-  process.env.ATLAS_V7_8_CAPTURE_DIR
+  process.env.ATLAS_CAPTURE_DIR
     ?? path.join(projectDir, ".generated", "capture"),
 );
 const capturePath = path.join(captureDir, "canonical-capture-manifest.json");
 const policyPath = path.join(projectDir, "public-safe", "atlas-publication-policy.v2.json");
 const outputRoot = path.resolve(
-  process.env.ATLAS_V7_8_GENERATED_ROOT
-    ?? path.join(projectDir, ".generated", "v7.8"),
+  process.env.ATLAS_GENERATED_ROOT
+    ?? path.join(projectDir, ".generated", "profiles"),
 );
 const gateOutput = process.env.ATLAS_GATE_OUTPUT ? path.resolve(process.env.ATLAS_GATE_OUTPUT) : null;
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 
 const captureBody = await readFile(capturePath);
-const capture = JSON.parse(captureBody);
+const capture = JSON.parse(captureBody.toString("utf8"));
 if (capture?.schema !== "atlas.canonical_capture.v1" || capture.pass !== true || capture.tornRead !== false) {
   throw new Error("Graph v2 build blocked: canonical capture is missing or torn.");
 }
 const policyBody = await readFile(policyPath);
-const policy = JSON.parse(policyBody);
+const policy = JSON.parse(policyBody.toString("utf8"));
 const policyFailures = validatePublicationPolicyV2(policy);
 if (policyFailures.length) throw new Error(`Graph v2 build blocked: invalid policy (${policyFailures.join(", ")}).`);
 

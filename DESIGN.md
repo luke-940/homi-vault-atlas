@@ -1,24 +1,24 @@
 ---
-version: "alpha"
+version: "1.0"
 name: Open Knowledge Cosmos
 description: Editorial cosmic graph for translating the Homi Vault into a legible public knowledge space.
 colors:
-  primary: "#F2F0EC"
-  secondary: "#A8A098"
-  tertiary: "#D88A48"
-  neutral: "#080907"
-  surface-deep: "#0D0C0C"
-  surface-raised: "#151211"
-  line-context: "rgba(229, 216, 201, 0.12)"
-  line-evidence: "rgba(238, 220, 199, 0.42)"
-  selected: "#F0A65C"
-  moc: "#D8B66D"
-  papers: "#9E8BC1"
-  signals: "#D98679"
-  rocket: "#C76D9A"
-  groot: "#6EAA86"
-  intelligence-layer: "#6A8FC7"
-  strategy: "#C9A26B"
+  primary: "#F2ECE4"
+  secondary: "#C9C0B8"
+  tertiary: "#8E8681"
+  neutral: "#0B090D"
+  surface-deep: "#110E13"
+  surface-raised: "#1C171F"
+  line-context: "rgba(238, 222, 203, 0.13)"
+  line-evidence: "rgba(238, 222, 203, 0.25)"
+  selected: "#F0B15B"
+  moc: "#E59A70"
+  papers: "#91BDD9"
+  signals: "#E3BE73"
+  rocket: "#CF8580"
+  groot: "#92BEA0"
+  intelligence-layer: "#B29ACC"
+  strategy: "#C1AA7D"
 typography:
   display:
     fontFamily: Pretendard Variable

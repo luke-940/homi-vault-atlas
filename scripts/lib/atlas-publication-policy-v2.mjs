@@ -1,6 +1,6 @@
 import path from "node:path";
 import { scanOperatingExposure, scanPrivacyText } from "./privacy-scanner.mjs";
-import { structureKindForDocument } from "./v7-4-profile-contract.mjs";
+import { structureKindForDocument } from "./profile-contract.mjs";
 
 const compareText = (left, right) => String(left).localeCompare(String(right), "en");
 const rawDateTitle = /^\d{4}(?:-\d{2}){1,2}(?:\b|[_ -])/;

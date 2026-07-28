@@ -1,619 +1,236 @@
+import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { gzipSync } from "node:zlib";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
-import { auditPublicFieldContract } from "./public-field-contract.mjs";
-import {
-  assertPublicAuditBoundary,
-  assertPublicAuditBoundaryPreflight,
-  resolvePublicAuditBoundary,
-} from "./lib/public-audit-boundary.mjs";
-import {
-  assertRepositorySourceManifestBinding,
-  collectRepositorySourceManifest,
-} from "./lib/repository-source-manifest.mjs";
 import { auditPublicAgencyContract } from "./lib/agency-contract.mjs";
+import { verifyAtlasGraphV2 } from "./lib/atlas-graph-v2.mjs";
 import { auditPublicPackBinding } from "./lib/public-data-wire.mjs";
-import { auditPublicSnapshotDigest } from "./lib/public-snapshot-digest.mjs";
-import {
-  publicOperatingPatternIds,
-  publicPrivacyPatternIds,
-  scanOperatingExposure,
-  scanPrivacyText,
-} from "./lib/privacy-scanner.mjs";
-import { V7_4_PUBLIC_BUDGETS } from "./lib/v7-4-budget-policy.mjs";
-import { validatePublicPackShapes } from "./lib/public-shape-validation.mjs";
+import { scanOperatingExposure, scanPrivacyText } from "./lib/privacy-scanner.mjs";
+import { stableJson } from "./lib/data-model.mjs";
 
+const execFileAsync = promisify(execFile);
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const defaultDataDir = process.env.GITHUB_ACTIONS === "true"
-  ? path.join(projectDir, "public-safe", "data")
-  : path.join(projectDir, ".generated", "public", "data");
-const dataDir = path.resolve(process.env.ATLAS_PUBLIC_DATA_DIR ?? defaultDataDir);
-const distDir = path.resolve(process.env.ATLAS_PUBLIC_OUTPUT_DIR ?? path.join(projectDir, "dist-public"));
-const auditBoundary = resolvePublicAuditBoundary({ projectDir });
-const { artifactDir, auditReceiptName, context: auditContext } = auditBoundary;
-const defaultPublicRepoDir = path.basename(projectDir) === "homi-vault-atlas"
-  ? projectDir
-  : path.join(projectDir, "..", "github", "homi-vault-atlas");
-const publicRepoDir = path.resolve(process.env.ATLAS_PUBLIC_REPO_DIR ?? defaultPublicRepoDir);
-const publicProfileReceiptPath = path.resolve(
-  process.env.ATLAS_PUBLIC_PROFILE_RECEIPT
-    ?? path.join(projectDir, ".generated", "public", "dual-profile-projection-receipt.json"),
+const sourceDataDir = path.resolve(
+  process.env.ATLAS_PUBLIC_DATA_DIR ?? path.join(projectDir, "public-safe", "data"),
 );
+const distDir = path.resolve(
+  process.env.ATLAS_PUBLIC_OUTPUT_DIR ?? path.join(projectDir, "dist-public"),
+);
+const receiptPath = path.resolve(
+  process.env.ATLAS_PUBLIC_AUDIT_RECEIPT
+    ?? path.join(projectDir, "artifacts", "v7.8-publication-audit.json"),
+);
+const ownerDataDir = path.join(projectDir, ".generated", "profiles", "owner", "data");
+const packNames = ["agency", "inventory", "graph", "meaning", "publication"];
+const requiredDomains = ["MOC", "Papers", "Signals", "Rocket", "Groot", "Intelligence Layer"];
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
-const compareText = (left, right) => left < right ? -1 : left > right ? 1 : 0;
-const publicPackNames = ["agency", "bootstrap", "inventory", "graph", "meaning", "relation", "flow", "temporal", "entity", "health", "insight", "publication"];
-const textExtensions = new Set([".css", ".html", ".js", ".json", ".md", ".mjs", ".svg", ".ts", ".tsx", ".txt", ".webmanifest"]);
-const trackedTextExtensions = new Set([...textExtensions, ".yml", ".yaml", ".toml"]);
 
-await assertPublicAuditBoundaryPreflight(auditBoundary);
-await mkdir(artifactDir, { recursive: true });
-await assertPublicAuditBoundary(auditBoundary);
-
-async function filesUnder(root) {
-  const output = [];
-  for (const entry of await readdir(root, { withFileTypes: true })) {
-    const absolute = path.join(root, entry.name);
-    if (entry.isDirectory()) output.push(...await filesUnder(absolute));
-    else if (entry.isFile()) output.push(absolute);
+async function filesUnder(root, current = root) {
+  const rows = [];
+  for (const entry of (await readdir(current, { withFileTypes: true }))
+    .sort((left, right) => left.name.localeCompare(right.name, "en"))) {
+    const absolute = path.join(current, entry.name);
+    if (entry.isDirectory()) rows.push(...await filesUnder(root, absolute));
+    else if (entry.isFile()) {
+      const body = await readFile(absolute);
+      rows.push({
+        absolute,
+        path: path.relative(root, absolute).replaceAll("\\", "/"),
+        bytes: body.length,
+        sha256: sha256(body),
+      });
+    }
   }
-  return output;
+  return rows;
+}
+
+function finding(id, target, extra = {}) {
+  return { id, path: target, ...extra };
 }
 
 const findings = [];
-const manifests = [];
-for (const root of [dataDir, distDir]) {
-  for (const file of await filesUnder(root)) {
-    const body = await readFile(file);
-    const relative = path.relative(projectDir, file).replaceAll("\\", "/");
-    manifests.push({ path: relative, bytes: body.length, sha256: sha256(body) });
-    const extension = path.extname(relative);
-    const authoritativeDataJson = extension === ".json"
-      && /(?:^|\/)(?:public-safe|dist-public|\.generated\/public)\/data\//.test(relative);
-    const staticReaderText = relative === "dist-public/index.html"
-      || relative.endsWith("/assets/brand/site.webmanifest")
-      || relative.endsWith("/assets/brand/homi-mark-amber.svg")
-      || relative.endsWith("/assets/brand/homi-favicon.svg");
-    if (authoritativeDataJson || staticReaderText) {
-      const text = body.toString("utf8");
-      const legalText = relative.includes("/licenses/") || /(?:\.LEGAL\.txt|THIRD_PARTY_NOTICES\.md)$/.test(relative);
-      findings.push(...scanPrivacyText(text, { path: relative, legalText }));
-      findings.push(...scanOperatingExposure(text, { path: relative, legalText }));
-    }
-  }
-}
-const repositorySource = await collectRepositorySourceManifest(publicRepoDir);
-if (repositorySource.sourceManifest.entries.some((entry) => entry.path === ".generated/owner"
-  || entry.path.startsWith(".generated/owner/"))) {
-  throw new Error("Public audit blocked: owner-generated bytes are tracked by Git.");
-}
-if (auditContext === "public-ci"
-  && repositorySource.sourceManifest.entries.some((entry) => entry.path === "artifacts" || entry.path.startsWith("artifacts/"))) {
-  throw new Error("Public audit blocked: public-ci artifacts are included in the Git source manifest.");
-}
-for (const sourceEntry of repositorySource.sourceManifest.entries) {
-    const relativePath = sourceEntry.path;
-    const sourceBody = await readFile(path.join(publicRepoDir, relativePath));
-    if (sourceBody.length !== sourceEntry.bytes || sha256(sourceBody) !== sourceEntry.sha256) {
-      throw new Error(`Public audit blocked: repository source changed while scanning (${relativePath}).`);
-    }
-    const sourceBasename = path.basename(relativePath);
-    const sourceExtension = path.extname(relativePath);
-    const trackedText = trackedTextExtensions.has(sourceExtension) || sourceBasename === ".gitignore";
-    if (!trackedText || relativePath === "scripts/lib/privacy-scanner.mjs") continue;
-    const text = sourceBody.toString("utf8");
-    const legalText = relativePath.includes("licenses/") || /(?:\.LEGAL\.txt|THIRD_PARTY_NOTICES\.md)$/.test(relativePath);
-    // Code, schemas, tests, and policy documentation necessarily name the
-    // forbidden concepts they enforce (for example CSS `cursor`, a receipt
-    // schema, or a privacy checklist). Treat those files as tooling while
-    // keeping authoritative public data, root product copy, and the emitted
-    // runtime under the strict scanner above.
-    const toolingText = /^(?:\.github|docs|scripts|src|tests|tests-public|tests-visual)\//.test(relativePath);
-    for (const privacyFinding of scanPrivacyText(text, { path: `github/homi-vault-atlas/${relativePath}`, legalText, toolingText })) {
-      findings.push({ ...privacyFinding, id: `tracked-${privacyFinding.id}` });
-    }
-    for (const operatingFinding of scanOperatingExposure(text, { path: `github/homi-vault-atlas/${relativePath}`, legalText, toolingText })) {
-      findings.push({ ...operatingFinding, id: `tracked-${operatingFinding.id}` });
-    }
-}
-const publication = JSON.parse(await readFile(path.join(dataDir, "publication.json"), "utf8"));
-const entities = JSON.parse(await readFile(path.join(dataDir, "entity.json"), "utf8"));
-const publicPacks = Object.fromEntries(await Promise.all(
-  publicPackNames
-    .map(async (name) => [name, JSON.parse(await readFile(path.join(dataDir, `${name}.json`), "utf8"))]),
-));
-const shapeValidation = await validatePublicPackShapes({
-  projectDir,
-  packs: publicPacks,
-  boundary: "audit",
-});
-findings.push(...auditPublicFieldContract(publicPacks));
-findings.push(...auditPublicAgencyContract(publicPacks.agency, {
-  knowledgeEntityIds: entities.entities.map((entity) => entity.id),
-}));
-const snapshotBinding = auditPublicSnapshotDigest(publicPacks);
-findings.push(...snapshotBinding.findings);
-const dataBindings = [];
-for (const name of publicPackNames) {
-  const sourceJson = await readFile(path.join(dataDir, `${name}.json`), "utf8");
-  const sourceJavaScript = await readFile(path.join(dataDir, `${name}.js`), "utf8");
+const packs = {};
+const bindings = [];
+for (const name of packNames) {
+  const jsonText = await readFile(path.join(sourceDataDir, `${name}.json`), "utf8");
+  const jsText = await readFile(path.join(sourceDataDir, `${name}.js`), "utf8");
   const distJson = await readFile(path.join(distDir, "data", `${name}.json`), "utf8");
-  const distJavaScript = await readFile(path.join(distDir, "data", `${name}.js`), "utf8");
-  const binding = auditPublicPackBinding({ name, jsonText: sourceJson, jsText: sourceJavaScript });
-  const distBinding = auditPublicPackBinding({ name, jsonText: distJson, jsText: distJavaScript });
-  const sourceDistExact = sourceJson === distJson && sourceJavaScript === distJavaScript;
-  dataBindings.push({
+  const distJs = await readFile(path.join(distDir, "data", `${name}.js`), "utf8");
+  packs[name] = JSON.parse(jsonText);
+  const binding = auditPublicPackBinding({ name, jsonText, jsText });
+  const distBinding = auditPublicPackBinding({ name, jsonText: distJson, jsText: distJs });
+  const exactSourceDist = jsonText === distJson && jsText === distJs;
+  bindings.push({
     name,
     jsonSha256: binding.jsonSha256,
-    jsSha256: binding.jsSha256,
+    javascriptSha256: binding.jsSha256,
     exactJsonBytesEmbedded: binding.exactJsonBytesEmbedded,
     deepEqual: binding.deepEqual,
-    distJsonSha256: distBinding.jsonSha256,
-    distJsSha256: distBinding.jsSha256,
-    sourceDistExact,
-    pass: binding.pass && distBinding.pass && sourceDistExact,
+    exactSourceDist,
+    pass: binding.pass && distBinding.pass && exactSourceDist,
   });
-  findings.push(...binding.findings, ...distBinding.findings.map((item) => ({ ...item, path: `dist-public/${item.path}` })));
-  if (!sourceDistExact) findings.push({ id: "public-data-dist-stale", path: `dist-public/data/${name}` });
+  findings.push(...binding.findings, ...distBinding.findings);
+  if (!exactSourceDist) findings.push(finding("stale-dist-pack", `data/${name}`));
+  findings.push(
+    ...scanPrivacyText(jsonText, { path: `data/${name}.json` }),
+    ...scanOperatingExposure(jsonText, { path: `data/${name}.json` }),
+  );
 }
-let profileProjectionBinding = { required: auditContext === "internal-release", checked: false, pass: auditContext !== "internal-release" };
-if (auditContext === "internal-release") {
-  try {
-    const profileProjection = JSON.parse(await readFile(publicProfileReceiptPath, "utf8"));
-    const projectedPublic = profileProjection.public ?? {};
-    const outputBindingsPass = dataBindings.every((binding) => {
-      const expected = projectedPublic.outputBindings?.[binding.name];
-      return expected?.jsonSha256 === binding.jsonSha256
-        && expected?.javascriptSha256 === binding.jsSha256;
-    });
-    const profilePass = profileProjection.schema === "atlas.dual_profile_projection.v1"
-      && profileProjection.pass === true
-      && profileProjection.ownerPublicRootsDisjoint === true
-      && profileProjection.unclassified === 0
-      && projectedPublic.activityPackPresent === false
-      && projectedPublic.publicSnapshotDigest === publication.publicSnapshotDigest
-      && projectedPublic.publicKnowledgeEntities === entities.entities.length
-      && outputBindingsPass;
-    profileProjectionBinding = {
-      required: true,
-      checked: true,
-      schema: profileProjection.schema ?? null,
-      publicSnapshotDigest: projectedPublic.publicSnapshotDigest ?? null,
-      publicEntityCount: projectedPublic.publicKnowledgeEntities ?? null,
-      unclassified: profileProjection.unclassified ?? null,
-      ownerPublicRootsDisjoint: profileProjection.ownerPublicRootsDisjoint ?? null,
-      outputBindingsPass,
-      pass: profilePass,
-    };
-    if (!profilePass) findings.push({ id: "public-profile-projection-binding-mismatch", path: "private-profile-projection-receipt" });
-  } catch (error) {
-    if (error?.code !== "ENOENT") throw error;
-    findings.push({ id: "public-profile-projection-receipt-missing", path: "private-profile-projection-receipt" });
+
+findings.push(...verifyAtlasGraphV2(packs.graph).map((id) => finding(`graph-v2-${id}`, "data/graph.json")));
+const graphNodeIds = packs.graph.nodes.map((node) => packs.graph.strings[node[0]]);
+findings.push(...auditPublicAgencyContract(packs.agency, { knowledgeEntityIds: graphNodeIds }));
+
+const inventoryTotal = packs.inventory.namedCount
+  + packs.inventory.aggregateCount
+  + packs.inventory.excludedCount;
+if (packs.inventory.schema !== "atlas.inventory.v1"
+  || packs.inventory.profile !== "atlas-public"
+  || packs.inventory.unclassifiedCount !== 0
+  || packs.inventory.physicalMarkdownCount !== inventoryTotal
+  || packs.inventory.reconciliation?.pass !== true) {
+  findings.push(finding("inventory-reconciliation", "data/inventory.json"));
+}
+if (packs.meaning.schema !== "atlas.meaning.v2"
+  || packs.meaning.manifest?.graphProjectionDigest !== packs.graph.manifest.projectionDigest) {
+  findings.push(finding("meaning-graph-binding", "data/meaning.json"));
+}
+const expectedSnapshotDigest = sha256(stableJson({
+  agency: packs.agency,
+  graph: packs.graph,
+  inventory: packs.inventory,
+  meaning: packs.meaning,
+}));
+if (packs.publication.schema !== "atlas.publication.v2"
+  || packs.publication.profile !== "public"
+  || packs.publication.publicSnapshotDigest !== expectedSnapshotDigest
+  || packs.publication.blockers?.length) {
+  findings.push(finding("publication-binding", "data/publication.json"));
+}
+const domains = packs.graph.domains.map((domain) => packs.graph.strings[domain[1]]);
+for (const domain of requiredDomains) {
+  if (!domains.includes(domain)) findings.push(finding("required-domain-missing", `data/graph.json#${domain}`));
+}
+if (packs.graph.nodes.some((node) => packs.graph.strings[node[0]].startsWith("actor:")
+  || packs.graph.strings[node[1]] === "Homi")) {
+  findings.push(finding("knowledge-node-namespace", "data/graph.json"));
+}
+if (packs.graph.edges.some((edge) => edge[1] === edge[2] || edge[3] < 1)) {
+  findings.push(finding("directed-edge-invalid", "data/graph.json"));
+}
+
+const assetManifest = JSON.parse(await readFile(path.join(distDir, "asset-manifest.json"), "utf8"));
+const buildReceipt = JSON.parse(await readFile(path.join(distDir, "build-receipt.json"), "utf8"));
+if (assetManifest.schema !== "atlas.public_assets.v2"
+  || assetManifest.profile !== "public"
+  || assetManifest.publicSnapshotDigest !== expectedSnapshotDigest
+  || assetManifest.runtimeClassAliases !== 0
+  || assetManifest.unhashedJavaScriptOrCss?.length) {
+  findings.push(finding("asset-manifest", "asset-manifest.json"));
+}
+if (buildReceipt.schema !== "atlas.public_build.v2"
+  || buildReceipt.profile !== "public"
+  || buildReceipt.publicSnapshotDigest !== expectedSnapshotDigest
+  || buildReceipt.stylesheet?.bytes > 48 * 1024
+  || buildReceipt.javascript?.gzipBytes > 180 * 1024
+  || buildReceipt.semanticSpace?.gzipBytes > 240 * 1024
+  || buildReceipt.initialRawBytes > 3 * 1024 * 1024) {
+  findings.push(finding("build-budget-or-binding", "build-receipt.json"));
+}
+
+const distFiles = await filesUnder(distDir);
+for (const file of distFiles) {
+  if (/\.(?:js|css)$/.test(file.path)
+    && !/^(?:app|semantic-space)\.[a-f0-9]{16}\.(?:js|css)$/.test(file.path)
+    && !file.path.startsWith("data/")
+    && !file.path.startsWith("assets/")) {
+    findings.push(finding("unhashed-runtime-asset", file.path));
   }
-}
-if (publication.profile !== "public") findings.push({ id: "wrong-profile", path: "public-safe/data/publication.json" });
-if (publication.blockers.length) findings.push({ id: "publication-blocker", path: "public-safe/data/publication.json" });
-if (entities.entities.length !== 6) findings.push({ id: "public-entity-count-not-six", path: "public-safe/data/entity.json", actual: entities.entities.length });
-if (publication.redactionCounts?.publicEntities !== entities.entities.length) {
-  findings.push({
-    id: "public-entity-redaction-count-mismatch",
-    path: "public-safe/data/publication.json",
-    expected: entities.entities.length,
-    actual: publication.redactionCounts?.publicEntities ?? null,
-  });
-}
-const redactionCountEntries = Object.entries(publication.redactionCounts ?? {});
-const redactionCountsValid = redactionCountEntries.length > 0
-  && redactionCountEntries.every(([, value]) => Number.isInteger(value) && value >= 0);
-if (!redactionCountsValid) {
-  findings.push({ id: "public-redaction-counts-invalid", path: "public-safe/data/publication.json" });
-}
-const inventory = publicPacks.inventory;
-const inventoryClassified = (inventory.namedCount ?? 0) + (inventory.aggregateCount ?? 0) + (inventory.excludedCount ?? 0);
-if (inventory.schema !== "atlas.inventory.v1"
-  || inventory.profile !== "atlas-public"
-  || inventory.unclassifiedCount !== 0
-  || inventoryClassified !== inventory.physicalMarkdownCount
-  || inventory.reconciliation?.classifiedTotal !== inventoryClassified
-  || inventory.reconciliation?.pass !== true) {
-  findings.push({ id: "public-inventory-reconciliation-invalid", path: "public-safe/data/inventory.json" });
-}
-const expectedRepresented = (inventory.namedCount ?? 0) + (inventory.aggregateCount ?? 0);
-const expectedRedactionCounts = {
-  sourceEntities: inventory.physicalMarkdownCount,
-  namedSourceDocuments: inventory.namedCount,
-  aggregateSourceDocuments: inventory.aggregateCount,
-  aggregatedSourceDocuments: expectedRepresented,
-  representedSourceDocuments: expectedRepresented,
-  excludedEntities: inventory.excludedCount,
-  excludedSourceDocuments: inventory.excludedCount,
-  archiveExcluded: inventory.exclusions?.byReason?.archive,
-  scaffoldingExcluded: inventory.exclusions?.byReason?.scaffolding,
-  controlDocumentsExcluded: inventory.exclusions?.byReason?.control_internal,
-  rawDailyExcluded: inventory.exclusions?.byReason?.raw_daily,
-  explicitPolicyExcluded: inventory.exclusions?.byReason?.explicit_policy,
-  publicNameNotApproved: inventory.exclusions?.byReason?.public_name_not_approved,
-};
-for (const [field, expected] of Object.entries(expectedRedactionCounts)) {
-  if (publication.redactionCounts?.[field] !== expected) {
-    findings.push({
-      id: "public-redaction-inventory-mismatch",
-      path: `public-safe/data/publication.json#redactionCounts.${field}`,
-      expected,
-      actual: publication.redactionCounts?.[field] ?? null,
-    });
-  }
-}
-const graph = publicPacks.graph;
-if (graph.schema !== "atlas.graph.v1"
-  || graph.profile !== "atlas-public"
-  || graph.layout?.algorithm !== "seeded-d3-force-projected-3d-v1"
-  || graph.layout?.axes?.x?.field !== "districtId"
-  || graph.layout?.axes?.y?.field !== "freshness"
-  || graph.layout?.axes?.z?.field !== "kind") {
-  findings.push({ id: "public-graph-v1-invalid", path: "public-safe/data/graph.json" });
-}
-if (graph.nodes?.some((node) => node.id?.startsWith("actor:"))) {
-  findings.push({ id: "agency-node-in-knowledge-graph", path: "public-safe/data/graph.json" });
-}
-const publicGraphNodes = graph.nodes ?? [];
-const publicGraphNodeById = new Map(publicGraphNodes.map((node) => [node.id, node]));
-const publicRepresentedNodeCount = publicGraphNodes
-  .filter((node) => node.kind !== "district" && node.nameMode !== "public_alias")
-  .reduce((total, node) => total + (node.representedDocuments ?? 0), 0);
-if (publicRepresentedNodeCount !== expectedRepresented) {
-  findings.push({
-    id: "public-graph-primary-count-mismatch",
-    path: "public-safe/data/graph.json",
-    expected: expectedRepresented,
-    actual: publicRepresentedNodeCount,
-  });
-}
-for (const node of publicGraphNodes.filter((item) => item.nameMode === "aggregate")) {
-  const parent = publicGraphNodeById.get(node.parentId);
-  if (!parent || parent.kind === "district" || node.kind !== "aggregate_boundary"
-    || !node.label.endsWith("· 공개 안전 원천 집계") || !Number.isInteger(node.representedDocuments) || node.representedDocuments <= 0) {
-    findings.push({ id: "public-aggregate-child-invalid", path: node.id });
-  }
-}
-if (graph.manifest?.nodeCount !== publicGraphNodes.length
-  || graph.manifest?.edgeCount !== (graph.edges ?? []).length
-  || graph.manifest?.clusterCount !== (graph.clusters ?? []).length
-  || (graph.layout?.defaultNodeIds ?? []).length > 60
-  || (graph.layout?.defaultEdgeIds ?? []).length > 48) {
-  findings.push({ id: "public-graph-manifest-or-budget-invalid", path: "public-safe/data/graph.json#manifest" });
-}
-const publicGraphNodeIds = new Set(publicGraphNodes.map((node) => node.id));
-for (const edge of graph.edges ?? []) {
-  if (edge.kind !== "references" || edge.direction !== "forward" || edge.occurrenceCount <= 0
-    || !publicGraphNodeIds.has(edge.source) || !publicGraphNodeIds.has(edge.target)) {
-    findings.push({ id: "public-graph-edge-invalid", path: edge.id });
-  }
-}
-const allowedPublicHashPaths = new Set([
-  "agency.projectionDigest",
-  "graph.manifest.semanticDigest",
-  "graph.manifest.layoutDigest",
-  "graph.manifest.projectionDigest",
-  "meaning.baseline.graphSemanticDigest",
-  "meaning.current.graphSemanticDigest",
-  "meaning.manifest.projectionDigest",
-  "publication.publicSnapshotDigest",
-]);
-const visitPublicHashes = (value, currentPath) => {
-  if (typeof value === "string" && /^[a-f0-9]{64}$/.test(value) && !allowedPublicHashPaths.has(currentPath)) {
-    findings.push({ id: "public-data-hash-not-allowed", path: currentPath });
-    return;
-  }
-  if (Array.isArray(value)) {
-    value.forEach((child, index) => visitPublicHashes(child, `${currentPath}[${index}]`));
-  } else if (value && typeof value === "object") {
-    for (const [key, child] of Object.entries(value)) visitPublicHashes(child, currentPath ? `${currentPath}.${key}` : key);
-  }
-};
-for (const [packName, pack] of Object.entries(publicPacks)) visitPublicHashes(pack, packName);
-for (const entity of entities.entities) {
-  if (!/^doc:pub:[a-f0-9]{18}$/.test(entity.id)) findings.push({ id: "unstable-public-id", path: entity.id });
-  if (Object.keys(entity.frontmatter ?? {}).length) findings.push({ id: "frontmatter-not-empty", path: entity.id });
-  if (entity.aliases?.length || entity.tags?.length) findings.push({ id: "metadata-not-redacted", path: entity.id });
-  if (!["public_aggregate", "public_snapshot_boundary"].includes(entity.sourceRole)) findings.push({ id: "document-level-entity", path: entity.id });
-  if (entity.wordCount !== 0) findings.push({ id: "public-word-count-must-be-zero", path: entity.id });
-  if (!Number.isInteger(entity.documentCount) || entity.documentCount < 0) findings.push({ id: "public-document-count-invalid", path: entity.id });
-  if (entity.ageDays !== null) findings.push({ id: "public-age-days-must-be-null", path: entity.id });
-  if (Object.hasOwn(entity, "sha256")) findings.push({ id: "public-entity-hash-not-allowed", path: entity.id });
-}
-const relation = JSON.parse(await readFile(path.join(dataDir, "relation.json"), "utf8"));
-if (Object.keys(relation.neighborhoods ?? {}).length) findings.push({ id: "document-level-relation", path: "public-safe/data/relation.json" });
-const flow = JSON.parse(await readFile(path.join(dataDir, "flow.json"), "utf8"));
-const referenceWeightByPair = new Map((graph.edges ?? [])
-  .map((edge) => [`${edge.source}\0${edge.target}`, edge.occurrenceCount]));
-for (const route of flow.routes ?? []) {
-  if (route.provenance !== "resolved_wikilink_path") findings.push({ id: "unverified-public-route", path: route.id });
-  const referenceWeight = referenceWeightByPair.get(`${route.members?.[0]}\0${route.members?.[1]}`);
-  if (!Number.isInteger(route.weight) || route.weight <= 0 || route.weight !== referenceWeight) {
-    findings.push({ id: "public-route-weight-mismatch", path: route.id, expected: referenceWeight ?? null, actual: route.weight ?? null });
-  }
-  if (!String(route.classifier ?? "").includes("weight 단위는 link occurrence")) {
-    findings.push({ id: "public-route-weight-unit-missing", path: route.id });
-  }
-  if ((route.members ?? []).length < 2 || (route.stations ?? []).length < 2) {
-    findings.push({ id: "empty-or-placeholder-public-route", path: route.id });
-  }
-  if ((route.sourceRefs ?? []).length) findings.push({ id: "source-reference-not-redacted", path: route.id });
-  for (const station of route.stations ?? []) {
-    if (!station.entityId || !publicGraphNodeIds.has(station.entityId)) {
-      findings.push({ id: "unresolved-public-route-station", path: station.id });
+  if (/\.(?:html|json|webmanifest)$/.test(file.path)) {
+    const text = await readFile(file.absolute, "utf8");
+    const legal = file.path.startsWith("licenses/") || file.path === "THIRD_PARTY_NOTICES.md";
+    findings.push(...scanPrivacyText(text, { path: `dist-public/${file.path}`, legalText: legal }));
+    if (file.path === "index.html" || file.path.startsWith("data/")) {
+      findings.push(...scanOperatingExposure(text, { path: `dist-public/${file.path}`, legalText: legal }));
     }
   }
 }
-if (flow.pulse?.latestDailyId !== null
-  || flow.pulse?.latestDailyDate !== null
-  || flow.pulse?.sourceItemCount !== null
-  || (flow.pulse?.chains ?? []).length !== 0) {
-  findings.push({ id: "public-pulse-must-be-honest-empty", path: "public-safe/data/flow.json" });
-}
-const temporal = JSON.parse(await readFile(path.join(dataDir, "temporal.json"), "utf8"));
-if ((temporal.eras ?? []).length !== 0 || temporal.currentEra !== null) {
-  findings.push({ id: "public-chronology-must-be-honest-empty", path: "public-safe/data/temporal.json" });
-}
-const publicRouteIds = new Set((flow.routes ?? []).map((route) => route.id));
-const publicEraIds = new Set((temporal.eras ?? []).map((era) => era.id));
-for (const insight of publicPacks.insight?.items ?? []) {
-  if (insight.targetScene?.routeId && !publicRouteIds.has(insight.targetScene.routeId)) {
-    findings.push({ id: "insight-route-reference-missing", path: insight.id });
+
+const ownerHashes = new Set();
+const publicSourceHashes = new Set((await filesUnder(sourceDataDir)).map((file) => file.sha256));
+try {
+  for (const file of await filesUnder(ownerDataDir)) {
+    if (!publicSourceHashes.has(file.sha256)) ownerHashes.add(file.sha256);
   }
-  if (insight.targetScene?.eraId && !publicEraIds.has(insight.targetScene.eraId)) {
-    findings.push({ id: "insight-era-reference-missing", path: insight.id });
-  }
+} catch (error) {
+  if (error?.code !== "ENOENT") throw error;
 }
-if (/역할 경계 \d+|새로 생김 집계 \d+|미확정 변화 \d+/.test(JSON.stringify({ flow, temporal }))) {
-  findings.push({ id: "legacy-placeholder-visible", path: "public-safe/data" });
+for (const file of distFiles) {
+  if (ownerHashes.has(file.sha256)) findings.push(finding("owner-byte-exact-leak", `dist-public/${file.path}`));
 }
-for (const root of [dataDir, path.join(distDir, "data"), path.join(projectDir, "public-safe", "data")]) {
-  try {
-    await readFile(path.join(root, "activity.json"));
-    findings.push({ id: "owner-activity-pack-public", path: path.relative(projectDir, root).replaceAll("\\", "/") });
-  } catch (error) {
-    if (error?.code !== "ENOENT") throw error;
-  }
+const { stdout: trackedOutput } = await execFileAsync("git", ["ls-files", "-z"], {
+  cwd: projectDir,
+  encoding: "utf8",
+});
+const trackedPaths = trackedOutput.split("\0").filter(Boolean);
+if (trackedPaths.some((item) => item === ".generated/owner" || item.startsWith(".generated/owner/"))) {
+  findings.push(finding("owner-generated-tracked", ".generated/owner"));
 }
-const assetManifest = JSON.parse(await readFile(path.join(distDir, "asset-manifest.json"), "utf8"));
-const appJavaScript = assetManifest.entrypoints?.javascript;
-const semanticSpaceJavaScript = assetManifest.entrypoints?.semanticSpace;
-const appStylesheet = assetManifest.entrypoints?.stylesheet;
-const javascriptPattern = /^app\.[a-f0-9]{16}\.js$/;
-const semanticSpacePattern = /^semantic-space\.[a-f0-9]{16}\.js$/;
-const stylesheetPattern = /^app\.[a-f0-9]{16}\.css$/;
-if (!javascriptPattern.test(appJavaScript?.path ?? "")) findings.push({ id: "application-javascript-not-content-hashed", path: appJavaScript?.path ?? "missing" });
-if (!semanticSpacePattern.test(semanticSpaceJavaScript?.path ?? "")) findings.push({ id: "semantic-space-javascript-not-content-hashed", path: semanticSpaceJavaScript?.path ?? "missing" });
-if (!stylesheetPattern.test(appStylesheet?.path ?? "")) findings.push({ id: "application-css-not-content-hashed", path: appStylesheet?.path ?? "missing" });
-const appJavaScriptBody = appJavaScript?.path ? await readFile(path.join(distDir, appJavaScript.path)) : Buffer.alloc(0);
-const semanticSpaceJavaScriptBody = semanticSpaceJavaScript?.path
-  ? await readFile(path.join(distDir, semanticSpaceJavaScript.path))
-  : Buffer.alloc(0);
-const appStylesheetBody = appStylesheet?.path ? await readFile(path.join(distDir, appStylesheet.path)) : Buffer.alloc(0);
-const appJavaScriptSha256 = sha256(appJavaScriptBody);
-const semanticSpaceJavaScriptSha256 = sha256(semanticSpaceJavaScriptBody);
-const appStylesheetSha256 = sha256(appStylesheetBody);
-if (appJavaScript?.bytes !== appJavaScriptBody.length || appJavaScript?.sha256 !== appJavaScriptSha256) {
-  findings.push({ id: "application-javascript-manifest-binding-mismatch", path: appJavaScript?.path ?? "missing" });
-}
-if (appStylesheet?.bytes !== appStylesheetBody.length || appStylesheet?.sha256 !== appStylesheetSha256) {
-  findings.push({ id: "application-css-manifest-binding-mismatch", path: appStylesheet?.path ?? "missing" });
-}
-if (semanticSpaceJavaScript?.bytes !== semanticSpaceJavaScriptBody.length
-  || semanticSpaceJavaScript?.sha256 !== semanticSpaceJavaScriptSha256) {
-  findings.push({ id: "semantic-space-javascript-manifest-binding-mismatch", path: semanticSpaceJavaScript?.path ?? "missing" });
-}
-if (appJavaScript?.path !== `app.${appJavaScriptSha256.slice(0, 16)}.js`) {
-  findings.push({ id: "application-javascript-filename-hash-mismatch", path: appJavaScript?.path ?? "missing" });
-}
-if (appStylesheet?.path !== `app.${appStylesheetSha256.slice(0, 16)}.css`) {
-  findings.push({ id: "application-css-filename-hash-mismatch", path: appStylesheet?.path ?? "missing" });
-}
-if (semanticSpaceJavaScript?.path !== `semantic-space.${semanticSpaceJavaScriptSha256.slice(0, 16)}.js`) {
-  findings.push({ id: "semantic-space-javascript-filename-hash-mismatch", path: semanticSpaceJavaScript?.path ?? "missing" });
-}
-if (assetManifest.publicSnapshotDigest !== publication.publicSnapshotDigest) {
-  findings.push({ id: "asset-manifest-snapshot-digest-mismatch", path: "dist-public/asset-manifest.json" });
-}
-if ((assetManifest.unhashedJavaScriptOrCss ?? []).length !== 0) {
-  findings.push({ id: "asset-manifest-unhashed-javascript-or-css", path: "dist-public/asset-manifest.json" });
-}
-const appJavaScriptGzipBytes = gzipSync(appJavaScriptBody, { level: 9 }).length;
-const semanticSpaceJavaScriptGzipBytes = gzipSync(semanticSpaceJavaScriptBody, { level: 9 }).length;
-if (appJavaScriptBody.length > V7_4_PUBLIC_BUDGETS.applicationJavaScriptRawBytes) findings.push({ id: "application-javascript-raw-budget", path: appJavaScript?.path ?? "missing", actual: appJavaScriptBody.length });
-if (appJavaScriptGzipBytes > V7_4_PUBLIC_BUDGETS.applicationJavaScriptGzipBytes) findings.push({ id: "application-javascript-gzip-budget", path: appJavaScript?.path ?? "missing", actual: appJavaScriptGzipBytes });
-if (semanticSpaceJavaScriptGzipBytes > V7_4_PUBLIC_BUDGETS.semanticSpaceJavaScriptGzipBytes) findings.push({ id: "semantic-space-javascript-gzip-budget", path: semanticSpaceJavaScript?.path ?? "missing", actual: semanticSpaceJavaScriptGzipBytes });
-if (appJavaScriptGzipBytes + semanticSpaceJavaScriptGzipBytes > V7_4_PUBLIC_BUDGETS.combinedExecutableJavaScriptGzipBytes) findings.push({ id: "combined-executable-javascript-gzip-budget", path: "dist-public", actual: appJavaScriptGzipBytes + semanticSpaceJavaScriptGzipBytes });
-if (appStylesheetBody.length > V7_4_PUBLIC_BUDGETS.applicationCssRawBytes) findings.push({ id: "application-css-raw-budget", path: appStylesheet?.path ?? "missing", actual: appStylesheetBody.length });
-const rootAssets = (await readdir(distDir)).filter((name) => /\.(?:js|css)$/.test(name));
-for (const name of rootAssets) {
-  if (!javascriptPattern.test(name) && !semanticSpacePattern.test(name) && !stylesheetPattern.test(name)) findings.push({ id: "unhashed-root-javascript-or-css", path: `dist-public/${name}` });
-}
-const declaredRootAssets = [appJavaScript?.path, semanticSpaceJavaScript?.path, appStylesheet?.path].filter(Boolean).sort(compareText);
-if (JSON.stringify([...rootAssets].sort(compareText)) !== JSON.stringify(declaredRootAssets)) {
-  findings.push({ id: "undeclared-root-javascript-or-css", path: "dist-public" });
-}
-const fontSubset = assetManifest.fontSubset;
-const fontCssRelative = fontSubset?.cssPath ?? "assets/fonts/pretendard/pretendardvariable-dynamic-subset.css";
-const fontCssBody = await readFile(path.join(distDir, fontCssRelative), "utf8");
-const referencedFontFiles = [...fontCssBody.matchAll(/url\((?:['"])?\.\/woff2-dynamic-subset\/([^)'"\s]+)(?:['"])?\)/g)]
-  .map((match) => match[1])
-  .sort(compareText);
-const emittedFontFiles = (await readdir(path.join(distDir, "assets/fonts/pretendard/woff2-dynamic-subset")))
-  .filter((name) => name.endsWith(".woff2"))
-  .sort(compareText);
-if (fontSubset?.schema !== "atlas.pretendard_subset.v1") {
-  findings.push({ id: "pretendard-subset-receipt-missing", path: "dist-public/asset-manifest.json" });
-} else {
-  if (fontSubset.cssSha256 !== sha256(fontCssBody)) findings.push({ id: "pretendard-subset-css-hash-mismatch", path: fontCssRelative });
-  if (!Number.isInteger(fontSubset.renderedCodePoints) || fontSubset.renderedCodePoints <= 0) findings.push({ id: "pretendard-subset-codepoints-invalid", path: fontCssRelative });
-  if (!Number.isInteger(fontSubset.selectedAssets) || fontSubset.selectedAssets <= 0) findings.push({ id: "pretendard-subset-empty", path: fontCssRelative });
-  if (fontSubset.originalAssets !== 92 || fontSubset.selectedAssets >= fontSubset.originalAssets) findings.push({ id: "pretendard-subset-not-reduced", path: fontCssRelative });
-  if (JSON.stringify(fontSubset.selectedFiles) !== JSON.stringify(referencedFontFiles)) findings.push({ id: "pretendard-subset-css-inventory-mismatch", path: fontCssRelative });
-}
-if (JSON.stringify(referencedFontFiles) !== JSON.stringify(emittedFontFiles)) {
-  findings.push({ id: "pretendard-subset-emitted-inventory-mismatch", path: "dist-public/assets/fonts/pretendard/woff2-dynamic-subset" });
-}
-const indexHtml = await readFile(path.join(distDir, "index.html"), "utf8");
-if (!indexHtml.includes(`src="./${appJavaScript?.path}"`)) {
-  findings.push({ id: "index-javascript-entrypoint-mismatch", path: "dist-public/index.html" });
-}
-if (!appJavaScriptBody.includes(Buffer.from(`./${semanticSpaceJavaScript?.path}`))) {
-  findings.push({ id: "semantic-space-lazy-entrypoint-not-bound-to-shell", path: appJavaScript?.path ?? "missing" });
-}
-if (!indexHtml.includes(`href="./${appStylesheet?.path}"`)) {
-  findings.push({ id: "index-css-entrypoint-mismatch", path: "dist-public/index.html" });
-}
-for (const brandAsset of [
-  "assets/brand/homi-mark-amber.svg",
-  "assets/brand/homi-favicon.svg",
-  "assets/brand/homi-mark-amber-32.png",
-  "assets/brand/homi-mark-amber-180.png",
-  "assets/brand/homi-mark-amber-192.png",
-  "assets/brand/homi-mark-amber-512.png",
-  "assets/brand/og-card.png",
-  "assets/fonts/space-grotesk/SpaceGrotesk-wght.woff2",
-  "assets/fonts/space-grotesk/OFL.txt",
-  "assets/fonts/space-grotesk/space-grotesk.css",
-]) {
-  try {
-    await readFile(path.join(distDir, brandAsset));
-  } catch (error) {
-    if (error?.code === "ENOENT") findings.push({ id: "brand-asset-missing", path: `dist-public/${brandAsset}` });
-    else throw error;
-  }
-}
-const approvedBrandAssetDigests = new Map([
-  ["assets/brand/homi-mark-amber.svg", "1fb6f1a3de10f2a9ff0b56ff795aa5165fc7431f1cef4bab871e2421b17d8718"],
-  ["assets/brand/homi-favicon.svg", "87871b9d2a87b055e7f8895e5f995ad019e0587ae3086e879f4b1d6c298ce894"],
-  ["assets/brand/homi-mark-amber-32.png", "558420b5372a951550a54542742c6ade1577495288e29ca05f9d9e243323d2fa"],
-  ["assets/brand/homi-mark-amber-180.png", "bfe655b09ce42855389f0d848842127193391557f23e4233886a0cbd852166ab"],
-  ["assets/brand/homi-mark-amber-192.png", "1d3d0ce332427de959374f80c2a3fbe61f3e0008b2078eba3d2734eaca65e7e2"],
-  ["assets/brand/homi-mark-amber-512.png", "4131308ca5ee15292b98b69f11751c9ad8b2da71da8d09077497e937145d1eed"],
-  ["assets/brand/og-card.png", "30438fd130047815f9c539d20db2b975cbea5d6cfd99f5f2dcc3ab0f9fee0872"],
-  ["assets/fonts/space-grotesk/SpaceGrotesk-wght.woff2", "8e085aa438094f11487a836652edd5c054fa6a96f63fc7c282105ee3a4b08c07"],
-  ["assets/fonts/space-grotesk/OFL.txt", "564ce565c371c5e5bbf286006565a7c9aa55a9f56e7ca58d56e05d649dd61a72"],
-]);
-for (const [assetPath, expectedDigest] of approvedBrandAssetDigests) {
-  const body = await readFile(path.join(distDir, assetPath));
-  if (sha256(body) !== expectedDigest) findings.push({ id: "approved-brand-asset-drift", path: `dist-public/${assetPath}` });
-}
-if (!indexHtml.includes("homi-favicon.svg")
-  || !indexHtml.includes("homi-mark-amber-32.png")
-  || !indexHtml.includes("homi-mark-amber-180.png")
-  || !indexHtml.includes("assets/fonts/space-grotesk/space-grotesk.css")
-  || !indexHtml.includes("https://luke-940.github.io/homi-vault-atlas/")
-  || !indexHtml.includes("summary_large_image")
-  || !indexHtml.includes("assets/brand/og-card.png")) {
-  findings.push({ id: "brand-head-contract-mismatch", path: "dist-public/index.html" });
-}
-const distFiles = await filesUnder(distDir);
-const distEntries = await Promise.all(distFiles.map(async (file) => {
-  const body = await readFile(file);
-  return {
-    path: path.relative(distDir, file).replaceAll("\\", "/"),
-    bytes: body.length,
-    sha256: sha256(body),
-  };
-}));
-distEntries.sort((left, right) => compareText(left.path, right.path));
-const distTreeBytes = distEntries.reduce((sum, entry) => sum + entry.bytes, 0);
-if (distTreeBytes > V7_4_PUBLIC_BUDGETS.initialTransferBytes) {
-  findings.push({ id: "initial-static-transfer-upper-bound-over-3-mib", path: "dist-public", actual: distTreeBytes });
-}
-const publicBuildReceipt = JSON.parse(await readFile(path.join(distDir, "build-receipt.json"), "utf8"));
-const buildInputEntries = distEntries.filter((entry) => entry.path !== "build-receipt.json");
-const buildInputBytes = buildInputEntries.reduce((sum, entry) => sum + entry.bytes, 0);
-if (publicBuildReceipt.schema !== "atlas.public_build.v1"
-  || publicBuildReceipt.publicSnapshotDigest !== publication.publicSnapshotDigest
-  || publicBuildReceipt.files !== buildInputEntries.length
-  || publicBuildReceipt.bytes !== buildInputBytes
-  || JSON.stringify(publicBuildReceipt.javascript) !== JSON.stringify(appJavaScript)
-  || JSON.stringify(publicBuildReceipt.semanticSpace) !== JSON.stringify(semanticSpaceJavaScript)
-  || JSON.stringify(publicBuildReceipt.stylesheet) !== JSON.stringify(appStylesheet)
-  || JSON.stringify(publicBuildReceipt.fontSubset) !== JSON.stringify(fontSubset)) {
-  findings.push({ id: "public-build-receipt-binding-mismatch", path: "dist-public/build-receipt.json" });
-}
+
+const uniqueFindings = [
+  ...new Map(findings.map((item) => [`${item.id}\0${item.path}`, item])).values(),
+];
 const receipt = {
-  schema: "atlas.publication_audit.v1",
-  auditContext,
-  generatedAt: new Date().toISOString(),
-  profile: publication.profile,
-  snapshot: publication.publicSnapshotDigest,
-  files: manifests.sort((a, b) => compareText(a.path, b.path)),
-  trackedSourceFiles: repositorySource.sourceManifest.files,
-  repository: {
-    target: "luke-940/homi-vault-atlas",
-    head: repositorySource.head,
-    tree: repositorySource.tree,
-    clean: repositorySource.clean,
-    sourceManifest: repositorySource.sourceManifest,
+  schema: "atlas.publication_audit.v2",
+  activityId: "REL-ATLAS-V7-8-20260728-01",
+  auditedAt: new Date().toISOString(),
+  profile: "public",
+  publicSnapshotDigest: expectedSnapshotDigest,
+  graph: {
+    schema: packs.graph.schema,
+    nodes: packs.graph.manifest.nodeCount,
+    directedEdges: packs.graph.manifest.edgeCount,
+    domains,
+    requiredDomainsPresent: requiredDomains.every((domain) => domains.includes(domain)),
   },
-  redactionCounts: publication.redactionCounts,
-  redactionCountBinding: {
-    fields: redactionCountEntries.length,
-    sha256: sha256(JSON.stringify(publication.redactionCounts ?? {})),
-    allNonNegativeIntegers: redactionCountsValid,
-    publicEntitiesMatchesActual: publication.redactionCounts?.publicEntities === entities.entities.length,
+  inventory: {
+    physical: packs.inventory.physicalMarkdownCount,
+    named: packs.inventory.namedCount,
+    aggregate: packs.inventory.aggregateCount,
+    excluded: packs.inventory.excludedCount,
+    unclassified: packs.inventory.unclassifiedCount,
   },
-  profileProjectionBinding,
-  publicEntityBinding: {
-    expectedCount: 6,
-    actualCount: entities.entities.length,
-    perEntityHashesExposed: entities.entities.some((entity) => Object.hasOwn(entity, "sha256")),
+  bindings,
+  budgets: {
+    cssBytes: buildReceipt.stylesheet.bytes,
+    shellGzipBytes: buildReceipt.javascript.gzipBytes,
+    semanticSpaceGzipBytes: buildReceipt.semanticSpace.gzipBytes,
+    initialRawBytes: buildReceipt.initialRawBytes,
   },
-  inventoryBinding: {
-    schema: inventory.schema ?? null,
-    physicalMarkdownCount: inventory.physicalMarkdownCount ?? null,
-    namedCount: inventory.namedCount ?? null,
-    aggregateCount: inventory.aggregateCount ?? null,
-    excludedCount: inventory.excludedCount ?? null,
-    unclassifiedCount: inventory.unclassifiedCount ?? null,
-    reconciled: inventory.reconciliation?.pass === true && inventoryClassified === inventory.physicalMarkdownCount,
-  },
-  agencyBinding: {
-    schema: publicPacks.agency.schema,
-    generatedAt: publicPacks.agency.generatedAt ?? null,
-    snapshot: publicPacks.agency.snapshot ?? null,
-    principal: publicPacks.agency.principal?.id ?? null,
-    groups: publicPacks.agency.groups?.length ?? 0,
-    actors: publicPacks.agency.actors?.length ?? 0,
-    ownershipSurfaces: publicPacks.agency.surfaces?.length ?? 0,
-    directionEdges: publicPacks.agency.links?.filter((link) => link.kind === "sets_direction").length ?? 0,
-    resultEdges: publicPacks.agency.links?.filter((link) => link.kind === "returns_result").length ?? 0,
-    evidenceEdges: publicPacks.agency.links?.filter((link) => link.kind === "returns_evidence").length ?? 0,
-    boundaryEdges: publicPacks.agency.links?.filter((link) => link.kind === "coordinates_boundary").length ?? 0,
-    transition: publicPacks.agency.transition?.id ?? null,
-    projectionDigest: publicPacks.agency.projectionDigest ?? null,
-  },
-  snapshotBinding,
-  shapeValidation,
-  assetBinding: {
-    javascript: { ...appJavaScript, gzipBytes: appJavaScriptGzipBytes },
-    semanticSpace: { ...semanticSpaceJavaScript, gzipBytes: semanticSpaceJavaScriptGzipBytes },
-    stylesheet: appStylesheet,
-    fontSubset,
-    emittedFontFiles,
-    rootAssets,
-    declaredRootAssets,
-    distTree: {
-      files: distEntries.length,
-      bytes: distTreeBytes,
-      budgetBytes: V7_4_PUBLIC_BUDGETS.initialTransferBytes,
-      manifestSha256: sha256(distEntries.map((entry) => `${entry.path}\0${entry.sha256}\n`).join("")),
-    },
-  },
-  dataBindings,
-  privacyPatternIds: publicPrivacyPatternIds,
-  operatingPatternIds: publicOperatingPatternIds,
-  findings,
-  pass: findings.length === 0,
+  privacyFindings: uniqueFindings.filter((item) => (
+    !item.id.startsWith("graph-v2-")
+    && !item.id.startsWith("agency-")
+    && ![
+      "inventory-reconciliation",
+      "meaning-graph-binding",
+      "publication-binding",
+      "required-domain-missing",
+      "knowledge-node-namespace",
+      "directed-edge-invalid",
+      "asset-manifest",
+      "build-budget-or-binding",
+      "unhashed-runtime-asset",
+      "owner-generated-tracked",
+    ].includes(item.id)
+  )).length,
+  findings: uniqueFindings,
+  verdict: uniqueFindings.length ? "fail" : "pass",
 };
-await writeFile(path.join(artifactDir, auditReceiptName), `${JSON.stringify(receipt, null, 2)}\n`, "utf8");
-const repositoryAfterReceipt = await collectRepositorySourceManifest(publicRepoDir);
-assertRepositorySourceManifestBinding(receipt.repository, repositoryAfterReceipt);
-if (findings.length) throw new Error(`Public bundle audit failed: ${findings.slice(0, 10).map((item) => `${item.id}:${item.path}`).join(", ")}`);
-console.log(JSON.stringify({ pass: true, files: manifests.length, entities: entities.entities.length, snapshot: publication.publicSnapshotDigest }, null, 2));
+await mkdir(path.dirname(receiptPath), { recursive: true });
+await writeFile(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`);
+if (uniqueFindings.length) {
+  throw new Error(`Publication audit blocked with ${uniqueFindings.length} findings; see ${receiptPath}.`);
+}
+console.log(JSON.stringify({ receiptPath, ...receipt }, null, 2));

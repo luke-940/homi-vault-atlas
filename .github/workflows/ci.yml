@@ -1,4 +1,4 @@
-name: Atlas Public Contract
+name: Atlas Public Release Contract
 
 on:
   pull_request:
@@ -8,14 +8,14 @@ permissions:
   contents: read
 
 concurrency:
-  group: atlas-public-contract-${{ github.event.pull_request.number }}
+  group: atlas-public-release-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
-  atlas-public-contract:
-    name: Atlas Public Contract
+  public-release:
+    name: Atlas Public Release
     runs-on: ubuntu-24.04
-    timeout-minutes: 36
+    timeout-minutes: 28
     steps:
       - name: Check out the exact PR head
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -27,37 +27,34 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run lint
-      - run: npm run typecheck
-      - name: Run the serial unit and release-contract suite once
-        run: npm run test:public
-      - name: Build and audit the only deployable public profile
-        run: npm run build
+      - name: Run source, type, data, build, and publication gates once
+        run: npm run verify
         env:
-          ATLAS_PUBLIC_AUDIT_CONTEXT: public-ci
-          ATLAS_PUBLIC_AUDIT_DIR: artifacts/publication
-          ATLAS_PUBLIC_AUDIT_RECEIPT: v7-4-publication-audit.json
-      - name: Install the two browser engines used by the one release QA matrix
-        if: ${{ github.event.pull_request.number != 11 }}
-        run: npx --no-install playwright install --with-deps chromium webkit
-      - name: Run the single serial v7.6 browser QA stage and prove shutdown
-        if: ${{ github.event.pull_request.number != 11 }}
+          ATLAS_PUBLIC_AUDIT_RECEIPT: artifacts/publication/publication-audit.json
+      - name: Bind static QA to the verified public bytes
+        run: npm run qa:local
+        env:
+          ATLAS_PUBLIC_AUDIT_RECEIPT: artifacts/publication/publication-audit.json
+          ATLAS_LOCAL_QA_RECEIPT: artifacts/local-qa/local-qa.json
+      - name: Install the single browser engine used by the release matrix
+        run: npx --no-install playwright install --with-deps chromium
+      - name: Run the one serial browser matrix and prove server shutdown
         shell: bash
         env:
-          ATLAS_QA_MODE: ci
           ATLAS_URL: http://127.0.0.1:4173/
-          ATLAS_QA_ARTIFACT_DIR: artifacts/v7-6-browser-qa
+          ATLAS_QA_ARTIFACT_DIR: artifacts/browser-qa
         run: |
           set -euo pipefail
-          mkdir -p artifacts/v7-6-browser-qa
-          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-public \
-            > artifacts/v7-6-browser-qa/static-server.log 2>&1 &
-          server_pid="$!"
+          mkdir -p artifacts/browser-qa
+          server_pid=""
           cleanup() {
-            if [[ -n "${server_pid:-}" ]]; then
+            status=$?
+            trap - EXIT
+            if [[ -n "${server_pid}" ]] && kill -0 "${server_pid}" 2>/dev/null; then
               kill "${server_pid}" 2>/dev/null || true
+            fi
+            if [[ -n "${server_pid}" ]]; then
               wait "${server_pid}" 2>/dev/null || true
-              server_pid=""
             fi
             node --input-type=module -e '
               import { writeFileSync } from "node:fs";
@@ -74,12 +71,16 @@ jobs:
                 });
               });
               writeFileSync(
-                "artifacts/v7-6-browser-qa/server-shutdown.json",
+                "artifacts/browser-qa/server-shutdown.json",
                 `${JSON.stringify({ pass: true, host: "127.0.0.1", port: 4173, status: "ECONNREFUSED" }, null, 2)}\n`,
               );
             '
+            exit "${status}"
           }
           trap cleanup EXIT
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-public \
+            > artifacts/browser-qa/static-server.log 2>&1 &
+          server_pid="$!"
           for attempt in {1..50}; do
             if curl --fail --silent --show-error "${ATLAS_URL}" >/dev/null; then
               break
@@ -88,8 +89,6 @@ jobs:
           done
           curl --fail --silent --show-error "${ATLAS_URL}" >/dev/null
           npm run qa:ci
-          cleanup
-          trap - EXIT
       - name: Create and verify the commit-bound public release bundle
         run: npm run release:package && npm run release:verify
         env:
@@ -107,18 +106,29 @@ jobs:
             find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum
           ) > artifacts/ci-binding/DIST_PUBLIC_SHA256SUMS
           ATLAS_HEAD_TREE="$(git rev-parse 'HEAD^{tree}')" node --input-type=module -e '
-            import { writeFileSync } from "node:fs";
+            import { createHash } from "node:crypto";
+            import { readFileSync, writeFileSync } from "node:fs";
+            const sha256 = (body) => createHash("sha256").update(body).digest("hex");
+            const build = readFileSync("dist-public/build-receipt.json");
+            const publication = JSON.parse(readFileSync("dist-public/data/publication.json", "utf8"));
             const value = {
-              schema: "homi.atlas_v7_4.ci_artifact_binding.v1",
+              schema: "homi.atlas_ci_artifact_binding.v2",
               pullRequest: Number(process.env.ATLAS_PR_NUMBER),
               headSha: process.env.ATLAS_HEAD_SHA,
               testedTree: process.env.ATLAS_HEAD_TREE,
               publicRoot: "dist-public",
               checksumManifest: "artifacts/ci-binding/DIST_PUBLIC_SHA256SUMS",
+              buildReceiptSha256: sha256(build),
+              publicSnapshotDigest: publication.publicSnapshotDigest,
+              qa: {
+                publication: "artifacts/publication/publication-audit.json",
+                static: "artifacts/local-qa/local-qa.json",
+                browser: "artifacts/browser-qa/playwright-report.json",
+              },
             };
             writeFileSync("artifacts/ci-binding/binding.json", `${JSON.stringify(value, null, 2)}\n`);
           '
-      - name: Upload the exact tested public artifact and QA evidence
+      - name: Upload the exact tested public artifact and evidence
         id: public-artifact
         if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -127,9 +137,10 @@ jobs:
           path: |
             dist-public
             artifacts/publication
+            artifacts/local-qa
+            artifacts/browser-qa
             artifacts/release
             artifacts/ci-binding
-            artifacts/v7-6-browser-qa
           if-no-files-found: warn
           retention-days: 30
       - name: Record the immutable Actions artifact digest
