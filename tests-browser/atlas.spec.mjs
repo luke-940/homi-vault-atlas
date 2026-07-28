@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const artifactDir = path.resolve(process.env.ATLAS_QA_ARTIFACT_DIR ?? path.join(projectDir, "artifacts", "browser-qa"));
 const requiredDomains = ["MOC", "Papers", "Signals", "Rocket", "Groot", "Intelligence Layer"];
+const chromiumGpuReadbackDiagnostic = /^\[\.WebGL-[^\]]+\]GL Driver Message \(OpenGL, Performance, GL_CLOSE_PATH_NV, High\): GPU stall due to ReadPixels$/;
 const viewports = [
   [1440, 920],
   [1280, 720],
@@ -69,7 +70,10 @@ for (const [width, height] of viewports) {
   test(`Home geometry ${width}x${height}`, async ({ page }) => {
     const errors = [];
     page.on("console", (message) => {
-      if (message.type() === "error" || message.type() === "warning") errors.push(message.text());
+      if ((message.type() === "error" || message.type() === "warning")
+        && !chromiumGpuReadbackDiagnostic.test(message.text())) {
+        errors.push(message.text());
+      }
     });
     page.on("pageerror", (error) => errors.push(error.message));
     await page.setViewportSize({ width, height });

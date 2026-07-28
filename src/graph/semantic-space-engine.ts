@@ -68,6 +68,7 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
   private frame = 0;
   private pointerFrame = 0;
   private settleUntil = 0;
+  private forceSettleAt = 0;
   private visible = true;
   private disposed = false;
   private hoveredId: string | null = null;
@@ -147,6 +148,8 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
   private installEvents() {
     const canvas = this.renderer.domElement;
     this.controls.addEventListener("start", () => {
+      this.cameraTween = null;
+      this.forceSettleAt = 0;
       this.settleUntil = performance.now() + 580;
       this.schedule();
     });
@@ -156,6 +159,7 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
       this.schedule();
     });
     this.controls.addEventListener("end", () => {
+      this.forceSettleAt = performance.now() + 900;
       this.settleUntil = performance.now() + 260;
       this.schedule();
     });
@@ -518,7 +522,17 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
     this.frame = 0;
     if (!this.visible || this.disposed) return;
     const tweening = this.updateCameraTween(now);
-    const controlsMoving = this.controls.update();
+    let controlsMoving;
+    if (this.forceSettleAt && now >= this.forceSettleAt && !this.cameraTween) {
+      const damping = this.controls.enableDamping;
+      this.controls.enableDamping = false;
+      this.controls.update();
+      this.controls.enableDamping = damping;
+      this.forceSettleAt = 0;
+      controlsMoving = false;
+    } else {
+      controlsMoving = this.controls.update();
+    }
     this.renderer.render(this.scene3d, this.camera);
     this.debugState.frames += 1;
     this.debugState.drawCalls = this.renderer.info.render.calls;
