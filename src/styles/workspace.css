@@ -576,6 +576,11 @@
   align-items: center;
   gap: 4px;
   overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.domain-filters::-webkit-scrollbar {
+  display: none;
 }
 
 .domain-filters button {
@@ -591,6 +596,299 @@
 .domain-filters button[aria-pressed="true"] {
   border-color: var(--amber-soft);
   color: var(--text);
+}
+
+.vault-structure {
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+.vault-structure__header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: var(--radius-3) var(--radius-3) 0 0;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(240, 177, 91, 0.08), transparent 38%),
+    rgba(17, 14, 19, 0.64);
+}
+
+.vault-structure__header h2 {
+  margin-top: 6px;
+  font: 520 26px/1.05 var(--font-display);
+  letter-spacing: -0.035em;
+}
+
+.vault-structure__header p:last-child {
+  max-width: 680px;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+  word-break: keep-all;
+}
+
+.vault-structure__header dl {
+  display: flex;
+  gap: 20px;
+}
+
+.vault-structure__header dl div {
+  min-width: 54px;
+  text-align: right;
+}
+
+.vault-structure__header dt {
+  color: var(--muted);
+  font: 520 12px/1 var(--font-display);
+  text-transform: uppercase;
+}
+
+.vault-structure__header dd {
+  margin-top: 5px;
+  color: var(--text);
+  font: 560 15px/1 var(--font-display);
+}
+
+.vault-structure__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  min-height: 520px;
+  height: min(690px, calc(100svh - 278px));
+  border: 1px solid var(--line);
+  border-radius: 0 0 var(--radius-3) var(--radius-3);
+  overflow: hidden;
+}
+
+.vault-tree-panel {
+  min-width: 0;
+  overflow: auto;
+  padding: 14px 16px 18px;
+  background:
+    linear-gradient(rgba(242, 236, 228, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(242, 236, 228, 0.018) 1px, transparent 1px),
+    radial-gradient(circle at 24% 18%, rgba(95, 66, 91, 0.12), transparent 42%),
+    var(--bg);
+  background-size: 28px 28px, 28px 28px, auto, auto;
+}
+
+.vault-tree,
+.vault-tree ul {
+  display: grid;
+  gap: 2px;
+}
+
+.vault-tree ul {
+  position: relative;
+  margin-left: 17px;
+  padding-left: 13px;
+}
+
+.vault-tree ul::before {
+  position: absolute;
+  top: 0;
+  bottom: 5px;
+  left: 0;
+  width: 1px;
+  background: linear-gradient(var(--line-strong), transparent);
+  content: "";
+}
+
+.vault-tree__folder,
+.vault-tree__node {
+  width: 100%;
+  min-height: 40px;
+  color: var(--text-soft);
+  text-align: left;
+}
+
+.vault-tree__folder {
+  display: grid;
+  grid-template-columns: 16px 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 9px 4px 7px;
+  border-left: 2px solid color-mix(in srgb, var(--domain-color), transparent 38%);
+  border-radius: var(--radius-1);
+}
+
+.vault-tree__folder:hover,
+.vault-tree__folder:focus-visible {
+  background: rgba(242, 236, 228, 0.055);
+  color: var(--text);
+}
+
+.vault-tree__folder > svg:nth-of-type(2) {
+  color: var(--domain-color);
+}
+
+.vault-tree__folder strong {
+  overflow: hidden;
+  font: 520 13px/1.25 var(--font-body);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vault-tree__folder small {
+  color: var(--muted);
+  font: 520 12px/1 var(--font-display);
+}
+
+.vault-tree__chevron {
+  color: var(--muted);
+  transition: rotate 160ms var(--ease);
+}
+
+.vault-tree li[aria-expanded="true"] > .vault-tree__folder .vault-tree__chevron {
+  rotate: 90deg;
+}
+
+.vault-tree__node {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: var(--radius-1);
+}
+
+.vault-tree__node svg {
+  color: rgba(242, 236, 228, 0.34);
+}
+
+.vault-tree__node span {
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vault-tree__node small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.vault-tree__node:hover,
+.vault-tree__node:focus-visible,
+.vault-tree__node[aria-current="true"] {
+  background: rgba(240, 177, 91, 0.075);
+  color: var(--text);
+}
+
+.vault-tree__node[aria-current="true"] svg {
+  color: var(--amber);
+}
+
+.vault-tree__empty,
+.vault-tree__boundary {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.vault-tree__empty {
+  padding: 24px 8px;
+}
+
+.vault-tree__boundary {
+  margin: 18px 4px 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.structure-inspector {
+  min-width: 0;
+  overflow: auto;
+  padding: 22px 20px;
+  border-left: 1px solid var(--line);
+  background:
+    radial-gradient(circle at 30% 0%, rgba(240, 177, 91, 0.075), transparent 34%),
+    rgba(17, 14, 19, 0.82);
+}
+
+.structure-inspector > span {
+  color: var(--amber);
+  font: 560 12px/1 var(--font-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.structure-inspector h2 {
+  margin-top: 10px;
+  font: 530 22px/1.12 var(--font-display);
+  letter-spacing: -0.035em;
+  word-break: keep-all;
+}
+
+.structure-inspector > p {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.65;
+  word-break: keep-all;
+}
+
+.structure-inspector > .primary-action {
+  margin-top: 18px;
+}
+
+.structure-inspector__roots,
+.structure-inspector__relations {
+  display: grid;
+  gap: 5px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.structure-inspector__roots div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  color: var(--text-soft);
+}
+
+.structure-inspector__roots div::before {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--domain-color);
+  box-shadow: 0 0 12px var(--domain-color);
+  content: "";
+}
+
+.structure-inspector__roots span {
+  min-width: 0;
+  flex: 1;
+  font-size: 12px;
+}
+
+.structure-inspector__roots b {
+  color: var(--text);
+  font: 540 12px/1 var(--font-display);
+}
+
+.structure-inspector__relations button {
+  display: grid;
+  grid-template-columns: 15px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  color: var(--text-soft);
+  text-align: left;
+}
+
+.structure-inspector__relations button span {
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .explore-stage-grid {

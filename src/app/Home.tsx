@@ -1,4 +1,4 @@
-import { ArrowRight, Compass, Orbit, Rocket, RotateCcw, ShieldCheck } from "lucide-react";
+import { ArrowRight, Compass, FolderTree, Orbit, Rocket, RotateCcw, ShieldCheck } from "lucide-react";
 import type { CosmosLens } from "./contracts";
 import { CosmosStage } from "./CosmosStage";
 import { EvidenceRail } from "./EvidenceRail";
@@ -46,6 +46,9 @@ export function Home() {
           <div className="home-actions">
             <button type="button" className="primary-action" onClick={() => atlas.goWorkspace("explore")}>
               전체 지형 탐색 <ArrowRight size={15} aria-hidden="true" />
+            </button>
+            <button type="button" className="quiet-action" onClick={() => atlas.setExploreMode("structure")}>
+              <FolderTree size={14} aria-hidden="true" /> Vault Structure
             </button>
             <button
               type="button"

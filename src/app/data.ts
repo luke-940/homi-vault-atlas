@@ -77,6 +77,26 @@ export function decodeGraph(rawValue: unknown): AtlasGraphModel {
     target: edge[2],
     occurrences: edge[3],
   }));
+  const folders = raw.structure.folders.map((folder, index) => ({
+    index,
+    id: raw.strings[folder[0]],
+    label: raw.strings[folder[1]],
+    parentIndex: folder[2],
+    domainIndex: folder[3],
+    depth: folder[4],
+    nodeIndexes: folder[5],
+    childIndexes: [] as number[],
+    subtreeNodeCount: folder[5].length,
+  }));
+  for (const folder of folders) {
+    if (folder.parentIndex >= 0) folders[folder.parentIndex]?.childIndexes.push(folder.index);
+  }
+  for (let index = folders.length - 1; index >= 0; index -= 1) {
+    const folder = folders[index];
+    if (folder.parentIndex >= 0) {
+      folders[folder.parentIndex].subtreeNodeCount += folder.subtreeNodeCount;
+    }
+  }
   for (const edge of edges) {
     nodes[edge.source]?.outgoing.push(edge.index);
     nodes[edge.target]?.incoming.push(edge.index);
@@ -93,6 +113,16 @@ export function decodeGraph(rawValue: unknown): AtlasGraphModel {
     domains,
     nodeById: new Map(nodes.map((node) => [node.id, node])),
     edgeById: new Map(edges.map((edge) => [edge.id, edge])),
+    directory: {
+      rootLabel: raw.strings[raw.structure.rootLabel],
+      folders,
+      rootIndexes: folders.filter((folder) => folder.parentIndex < 0).map((folder) => folder.index),
+      omitted: raw.structure.omitted.map((item) => ({
+        reason: raw.strings[item[0]],
+        count: item[1],
+      })),
+      manifest: raw.structure.manifest,
+    },
     cameras: raw.layout.cameras,
     bounds: raw.layout.bounds,
     manifest: raw.manifest,

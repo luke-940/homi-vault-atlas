@@ -17,6 +17,10 @@ const NODE_FLAGS = Object.freeze({
   domainAnchor: 2,
   protagonistCandidate: 4,
 });
+const STRUCTURE_OMISSION_PATTERNS = Object.freeze([
+  { reason: "operating_branch", pattern: /(?:^|[\s_-])(?:daily|queue|receipt|qa|ledger|changelog)(?:$|[\s_-])/i },
+  { reason: "operating_branch", pattern: /(?:manager|agent)[\s_-]+operating[\s_-]+notes?/i },
+]);
 
 export const GRAPH_V2_LAYOUT = Object.freeze({
   algorithm: "seeded-topology-domain-force-3d-v2",
@@ -38,6 +42,93 @@ function seededRandom(seedText) {
 
 function stableId(prefix, source, length = 16) {
   return `${prefix}:${privacySafeDigestToken(source, length)}`;
+}
+
+function structureFolderLabel(segment) {
+  return segment
+    .replace(/^\d{2}\s*[-—–]\s*/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function structureOmissionReason(record) {
+  const directory = record.relativePath.split("/").slice(0, -1);
+  for (const segment of directory.slice(1)) {
+    const finding = STRUCTURE_OMISSION_PATTERNS.find((item) => item.pattern.test(segment));
+    if (finding) return finding.reason;
+  }
+  return null;
+}
+
+function buildDirectoryStructure({
+  named,
+  nodeIndexByPath,
+  domainIndex,
+  stringId,
+}) {
+  const folders = [];
+  const folderByPath = new Map();
+  const omittedByReason = new Map();
+  let representedNodeCount = 0;
+
+  const ensureFolder = (segments, record) => {
+    const folderPath = segments.join("/");
+    if (folderByPath.has(folderPath)) return folderByPath.get(folderPath);
+    const parentPath = segments.slice(0, -1).join("/");
+    const parentIndex = parentPath ? ensureFolder(segments.slice(0, -1), record) : -1;
+    const index = folders.length;
+    folders.push({
+      id: stableId("folder", folderPath, 14),
+      label: structureFolderLabel(segments.at(-1) ?? record.domain),
+      parentIndex,
+      domainIndex: domainIndex.get(record.domain),
+      depth: segments.length - 1,
+      nodeIndexes: [],
+    });
+    folderByPath.set(folderPath, index);
+    return index;
+  };
+
+  for (const record of named) {
+    const omission = structureOmissionReason(record);
+    if (omission) {
+      omittedByReason.set(omission, (omittedByReason.get(omission) ?? 0) + 1);
+      continue;
+    }
+    const segments = record.relativePath.split("/").slice(0, -1);
+    if (!segments.length) continue;
+    const folderIndex = ensureFolder(segments, record);
+    folders[folderIndex].nodeIndexes.push(nodeIndexByPath.get(record.relativePath));
+    representedNodeCount += 1;
+  }
+
+  const compactFolders = folders.map((folder) => [
+    stringId(folder.id),
+    stringId(folder.label),
+    folder.parentIndex,
+    folder.domainIndex,
+    folder.depth,
+    folder.nodeIndexes,
+  ]);
+  const omitted = [...omittedByReason]
+    .sort(([left], [right]) => compareText(left, right))
+    .map(([reason, count]) => [stringId(reason), count]);
+  const projection = {
+    rootLabel: stringId("Homi Vault"),
+    folders: compactFolders,
+    omitted,
+  };
+  return {
+    schema: "atlas.directory.v1",
+    ...projection,
+    manifest: {
+      folderCount: compactFolders.length,
+      representedNodeCount,
+      omittedNodeCount: named.length - representedNodeCount,
+      maxDepth: Math.max(0, ...folders.map((folder) => folder.depth)),
+      structureDigest: graphDigest(projection),
+    },
+  };
 }
 
 function fitCoordinates(nodes, width, depth, padding = 110) {
@@ -319,6 +410,12 @@ export function buildAtlasGraphV2({ records, resolvedEdges, profile, generatedAt
       flags,
     ];
   });
+  const structure = buildDirectoryStructure({
+    named,
+    nodeIndexByPath,
+    domainIndex,
+    stringId,
+  });
   const edges = edgeModels.map((edge) => [
     stringId(edge.id),
     edge.source,
@@ -344,6 +441,7 @@ export function buildAtlasGraphV2({ records, resolvedEdges, profile, generatedAt
     kinds,
     nodes: nodes.map((node) => node.slice(0, 6)),
     edges: edges.map((edge) => edge.slice(1)),
+    structure,
   };
   const layoutProjection = { coordinates, cameras, algorithm: GRAPH_V2_LAYOUT.algorithm, seed: GRAPH_V2_LAYOUT.seed };
   const base = {
@@ -355,6 +453,7 @@ export function buildAtlasGraphV2({ records, resolvedEdges, profile, generatedAt
     domains: domainModels,
     nodes,
     edges,
+    structure,
     layout: {
       algorithm: GRAPH_V2_LAYOUT.algorithm,
       seed: GRAPH_V2_LAYOUT.seed,
@@ -398,6 +497,33 @@ export function verifyAtlasGraphV2(graph) {
   if (graph?.layout?.axes?.dateAxis !== false) failures.push("date-axis");
   if (graph?.manifest?.nodeCount !== nodeCount || graph?.manifest?.edgeCount !== graph?.edges?.length) {
     failures.push("manifest-counts");
+  }
+  const structure = graph?.structure;
+  if (structure?.schema !== "atlas.directory.v1"
+    || !Array.isArray(structure?.folders)
+    || structure.folders.some((folder) => folder.length !== 6)) {
+    failures.push("directory-structure");
+  } else {
+    const represented = structure.folders.flatMap((folder) => folder[5]);
+    const representedSet = new Set(represented);
+    const omitted = (structure.omitted ?? []).reduce((sum, row) => sum + row[1], 0);
+    if (represented.length !== representedSet.size
+      || represented.some((index) => index < 0 || index >= nodeCount)
+      || represented.length + omitted !== nodeCount) failures.push("directory-node-reconciliation");
+    if (structure.folders.some((folder, index) => folder[2] >= index || folder[2] < -1)) {
+      failures.push("directory-parent-order");
+    }
+    const structureDigest = graphDigest({
+      rootLabel: structure.rootLabel,
+      folders: structure.folders,
+      omitted: structure.omitted,
+    });
+    if (structure.manifest?.folderCount !== structure.folders.length
+      || structure.manifest?.representedNodeCount !== represented.length
+      || structure.manifest?.omittedNodeCount !== omitted
+      || structure.manifest?.structureDigest !== structureDigest) {
+      failures.push("directory-manifest");
+    }
   }
   const projectionDigest = graphDigest({
     ...graph,

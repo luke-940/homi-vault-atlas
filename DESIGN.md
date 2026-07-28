@@ -130,6 +130,7 @@ restrained English product chrome.
 - `LensRail`: Whole Vault, Knowledge Core, Project Frontiers, Agent Stewardship.
 - `EvidenceRail`: selected title, kind, domain, inbound/outbound summary, caveat.
 - `SearchCommand`: previews in the existing stage and commits only on selection.
+- `VaultStructure`: curated Obsidian-style folder hierarchy; location and classification only, never relationship strength.
 - `MobileEvidenceSheet`: tap/focus replacement for hover-only detail.
 
 ## Do's and Don'ts

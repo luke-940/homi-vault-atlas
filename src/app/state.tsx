@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { AtlasRuntime, CosmosLens, GraphNode, Workspace } from "./contracts";
+import type { AtlasRuntime, CosmosLens, ExploreMode, GraphNode, Workspace } from "./contracts";
 import { DEFAULT_ROUTE, readRoute, writeRoute, type AtlasRoute } from "./url";
 
 interface AtlasState {
@@ -23,7 +23,7 @@ interface AtlasState {
   openPath(fromId: string, toId: string): void;
   setLens(lens: CosmosLens): void;
   commitFocus(id: string | null): void;
-  setExploreMode(mode: "graph" | "list"): void;
+  setExploreMode(mode: ExploreMode): void;
   setPath(fromId: string | null, toId: string | null): void;
   escape(): void;
 }

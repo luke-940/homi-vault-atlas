@@ -40,6 +40,18 @@ describe("public data boundary", () => {
       "Signals",
       "Strategy",
     ]));
+    expect(packs.graph.structure).toMatchObject({
+      schema: "atlas.directory.v1",
+      manifest: {
+        folderCount: expect.any(Number),
+        representedNodeCount: expect.any(Number),
+        omittedNodeCount: expect.any(Number),
+      },
+    });
+    expect(
+      packs.graph.structure.manifest.representedNodeCount
+      + packs.graph.structure.manifest.omittedNodeCount,
+    ).toBe(packs.graph.manifest.nodeCount);
   });
 
   test("keeps public and owner graph projections distinct", () => {

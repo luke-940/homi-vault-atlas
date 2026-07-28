@@ -1,4 +1,4 @@
-import type { CosmosLens, Workspace } from "./contracts";
+import type { CosmosLens, ExploreMode, Workspace } from "./contracts";
 
 export interface AtlasRoute {
   workspace: Workspace;
@@ -6,7 +6,7 @@ export interface AtlasRoute {
   focusId: string | null;
   fromId: string | null;
   toId: string | null;
-  exploreMode: "graph" | "list";
+  exploreMode: ExploreMode;
 }
 
 const workspaces = new Set<Workspace>(["home", "explore", "observe", "flow", "time", "agency"]);
@@ -49,7 +49,11 @@ export function readRoute(hash = window.location.hash): AtlasRoute {
     focusId: params.get("focus"),
     fromId: params.get("from"),
     toId: params.get("to"),
-    exploreMode: params.get("view") === "list" || params.get("scene") === "list" ? "list" : "graph",
+    exploreMode: params.get("view") === "structure" || params.get("scene") === "structure"
+      ? "structure"
+      : params.get("view") === "list" || params.get("scene") === "list"
+        ? "list"
+        : "graph",
   };
 }
 
@@ -72,4 +76,3 @@ export function writeRoute(route: AtlasRoute, mode: "push" | "replace" = "push")
   else history.pushState(null, "", next);
   window.dispatchEvent(new Event("atlasroute"));
 }
-

@@ -1,7 +1,7 @@
 {
   "schema": "atlas.meaning.v2",
   "profile": "atlas-public",
-  "generatedAt": "2026-07-28T04:47:09.915Z",
+  "generatedAt": "2026-07-28T05:41:47.648Z",
   "domainBackbone": [
     {
       "id": "meaning:domain:d:ceijmdigcdkk",
@@ -457,7 +457,7 @@
       "Signals",
       "Strategy"
     ],
-    "graphProjectionDigest": "cd836fc8689740f37afa6059f7108fe540426aaa7261b8cb802341815d6d62f8",
-    "projectionDigest": "998511a1404e246e7cd6deb34e925250f1b9c35dab1c88bee255b4177102fd0d"
+    "graphProjectionDigest": "f19e0d28b7a02604f5b43ef4d09c6c68910301bd17381c6fde195477da31c0ca",
+    "projectionDigest": "bab9355410edc59dd3c2b9867aa673e849945494b15efec63dc919a38c841fc7"
   }
 }

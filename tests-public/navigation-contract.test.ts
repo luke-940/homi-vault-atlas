@@ -20,4 +20,10 @@ describe("semantic navigation codec", () => {
     expect(readRoute("#home?scene=operational-compass").lens).toBe("agent-stewardship");
     expect(readRoute("#unknown?scene=bad")).toEqual(DEFAULT_ROUTE);
   });
+
+  test("keeps the curated directory as a shareable Explore view", () => {
+    const route = readRoute("#explore?view=structure&focus=n%3Asafe");
+    expect(route.exploreMode).toBe("structure");
+    expect(routeHash(route)).toBe("#explore?focus=n%3Asafe&view=structure");
+  });
 });

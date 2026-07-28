@@ -417,6 +417,49 @@
     margin-top: 10px;
   }
 
+  .vault-structure__header {
+    display: block;
+    padding: 16px;
+  }
+
+  .vault-structure__header dl {
+    justify-content: space-between;
+    margin-top: 16px;
+  }
+
+  .vault-structure__header dl div {
+    text-align: left;
+  }
+
+  .vault-structure__grid {
+    display: block;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .vault-tree-panel {
+    max-height: 560px;
+  }
+
+  .vault-tree__folder,
+  .vault-tree__node {
+    min-height: 44px;
+  }
+
+  .vault-tree__node {
+    grid-template-columns: 16px minmax(0, 1fr);
+  }
+
+  .vault-tree__node small {
+    display: none;
+  }
+
+  .structure-inspector {
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+
   .node-index ul {
     grid-template-columns: 1fr;
   }

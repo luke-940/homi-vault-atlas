@@ -46,6 +46,31 @@
         "activeContract": ["scripts/run-local-qa.mjs", "tests-browser/atlas.spec.mjs", ".github/workflows/ci.yml", ".github/workflows/pages.yml"],
         "verification": "npm run verify; npm run qa:local; PR browser matrix exactly once"
       }
+    },
+    {
+      "newResponsibility": "curated Vault hierarchy and unified Explore index views",
+      "replaces": [
+        "inline Explore NodeList as the only non-graph orientation surface",
+        "flat domain counts as a surrogate for directory structure"
+      ],
+      "preserves": [
+        "safe actual titles",
+        "graph-backed focus identity",
+        "keyboard navigation",
+        "Owner/Public projection boundary"
+      ],
+      "removalEvidence": {
+        "status": "completed",
+        "deleted": [
+          "inline NodeList implementation in src/app/Explore.tsx"
+        ],
+        "activeContract": [
+          "atlas.graph.v2.structure",
+          "src/app/ExploreIndexes.tsx",
+          "view=structure URL state"
+        ],
+        "verification": "tests-public/graph-projection-contract.test.ts; tests-public/navigation-contract.test.ts"
+      }
     }
   ]
 }

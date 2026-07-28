@@ -90,6 +90,15 @@ describe("publication policy and compact graph", () => {
       },
     });
     expect(first.edges.every((edge) => edge[3] > 0)).toBe(true);
+    expect(first.structure).toMatchObject({
+      schema: "atlas.directory.v1",
+      manifest: {
+        representedNodeCount: 7,
+        omittedNodeCount: 0,
+      },
+    });
+    expect(first.structure.folders.flatMap((folder) => folder[5]).sort((left, right) => left - right))
+      .toEqual(first.nodes.map((_, index) => index));
     expect(JSON.stringify(first)).not.toMatch(/relativePath|sourcePath|frontmatter|Work Order/);
   });
 });

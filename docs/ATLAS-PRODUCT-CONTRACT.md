@@ -55,6 +55,17 @@ position, radius, glow, or default visibility.
 Lenses share one graph, coordinate set, selection, and URL codec. They change
 camera bookmarks, label rank, and emphasis only.
 
+## Curated directory
+
+Explore includes `Graph · Structure · List`. Structure is a direct, accessible
+hierarchy derived from the admitted Vault folders and titles. It preserves
+folder parentage but removes numeric ordering prefixes from visible folder
+labels. Console, raw Daily, dated notes, receipts, QA ledgers, queues,
+changelogs, and other operating branches are not presented as knowledge
+structure. Their omission is counted and explained; no hidden branch is
+reinterpreted as another folder. Folder hierarchy explains location, while the
+graph remains the sole source for relationship direction and strength.
+
 ## Interaction
 
 - `previewId` is local and transient.

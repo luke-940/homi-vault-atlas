@@ -5,6 +5,7 @@ export type CosmosLens =
   | "knowledge-core"
   | "project-frontiers"
   | "agent-stewardship";
+export type ExploreMode = "graph" | "structure" | "list";
 
 export type GraphNodeKind =
   | "moc_hub"
@@ -39,6 +40,19 @@ export interface RawAtlasGraphV2 {
     number,
   ]>;
   edges: Array<[number, number, number, number]>;
+  structure: {
+    schema: "atlas.directory.v1";
+    rootLabel: number;
+    folders: Array<[number, number, number, number, number, number[]]>;
+    omitted: Array<[number, number]>;
+    manifest: {
+      folderCount: number;
+      representedNodeCount: number;
+      omittedNodeCount: number;
+      maxDepth: number;
+      structureDigest: string;
+    };
+  };
   layout: {
     algorithm: string;
     seed: string;
@@ -137,6 +151,26 @@ export interface GraphEdge {
   occurrences: number;
 }
 
+export interface GraphDirectoryFolder {
+  index: number;
+  id: string;
+  label: string;
+  parentIndex: number;
+  domainIndex: number;
+  depth: number;
+  nodeIndexes: number[];
+  childIndexes: number[];
+  subtreeNodeCount: number;
+}
+
+export interface AtlasDirectoryModel {
+  rootLabel: string;
+  folders: GraphDirectoryFolder[];
+  rootIndexes: number[];
+  omitted: Array<{ reason: string; count: number }>;
+  manifest: RawAtlasGraphV2["structure"]["manifest"];
+}
+
 export interface AtlasGraphModel {
   profile: AtlasProfile;
   generatedAt: string;
@@ -145,6 +179,7 @@ export interface AtlasGraphModel {
   domains: GraphDomain[];
   nodeById: Map<string, GraphNode>;
   edgeById: Map<string, GraphEdge>;
+  directory: AtlasDirectoryModel;
   cameras: RawAtlasGraphV2["layout"]["cameras"];
   bounds: RawAtlasGraphV2["layout"]["bounds"];
   manifest: RawAtlasGraphV2["manifest"];

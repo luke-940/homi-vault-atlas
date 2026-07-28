@@ -1,7 +1,8 @@
-import { ArrowDownLeft, ArrowUpRight, List, Orbit, Search } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, FolderTree, List, Orbit, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CosmosStage } from "./CosmosStage";
 import { EvidenceRail } from "./EvidenceRail";
+import { NodeList, VaultStructure } from "./ExploreIndexes";
 import { relationSummary } from "./data";
 import { useAtlas } from "./state";
 
@@ -31,6 +32,13 @@ export function Explore() {
             onClick={() => atlas.setExploreMode("graph")}
           >
             <Orbit size={14} /> Graph
+          </button>
+          <button
+            type="button"
+            aria-current={atlas.route.exploreMode === "structure" ? "page" : undefined}
+            onClick={() => atlas.setExploreMode("structure")}
+          >
+            <FolderTree size={14} /> Structure
           </button>
           <button
             type="button"
@@ -96,6 +104,8 @@ export function Explore() {
             <RelationList />
           </aside>
         </div>
+      ) : atlas.route.exploreMode === "structure" ? (
+        <VaultStructure query={query} domain={domain} />
       ) : (
         <NodeList nodes={nodes} />
       )}
@@ -138,34 +148,5 @@ function RelationList() {
         <p>추가 관계 {summary.hiddenIncoming + summary.hiddenOutgoing}개는 List/Search에서 접근할 수 있습니다.</p>
       ) : null}
     </div>
-  );
-}
-
-function NodeList({ nodes }: { nodes: ReturnType<typeof useAtlas>["runtime"]["graph"]["nodes"] }) {
-  const atlas = useAtlas();
-  return (
-    <section className="node-index" aria-label="Keyboard-operable knowledge node index">
-      <p>{nodes.length.toLocaleString("ko-KR")} safe knowledge nodes</p>
-      <ul>
-        {nodes.map((node) => (
-          <li key={node.id}>
-            <button
-              type="button"
-              onFocus={() => atlas.setPreview(node.id)}
-              onBlur={() => atlas.setPreview(null)}
-              onPointerEnter={() => atlas.setPreview(node.id)}
-              onPointerLeave={() => atlas.setPreview(null)}
-              onClick={() => {
-                atlas.openNode(node.id, "explore");
-              }}
-            >
-              <span className="node-index__domain">{node.domain}</span>
-              <strong>{node.label}</strong>
-              <span>{node.kind.replaceAll("_", " ")} · inbound {node.gravity}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </section>
   );
 }
