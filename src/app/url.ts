@@ -1,4 +1,10 @@
-import type { CosmosLens, ExploreMode, Workspace } from "./contracts";
+import type {
+  CosmosLens,
+  DossierTab,
+  ExploreMode,
+  ObserveMode,
+  Workspace,
+} from "./contracts";
 
 export interface AtlasRoute {
   workspace: Workspace;
@@ -7,15 +13,31 @@ export interface AtlasRoute {
   fromId: string | null;
   toId: string | null;
   exploreMode: ExploreMode;
+  panel: "none" | "dossier";
+  dossierTab: DossierTab;
+  observeMode: ObserveMode;
+  claimId: string | null;
+  readerNodeId: string | null;
+  readerSectionId: string | null;
 }
 
-const workspaces = new Set<Workspace>(["home", "explore", "observe", "flow", "time", "agency"]);
+const workspaces = new Set<Workspace>([
+  "home",
+  "explore",
+  "observe",
+  "flow",
+  "time",
+  "agency",
+  "read",
+]);
 const lenses = new Set<CosmosLens>([
   "whole-vault",
   "knowledge-core",
   "project-frontiers",
   "agent-stewardship",
 ]);
+const dossierTabs = new Set<DossierTab>(["overview", "relations", "evidence"]);
+const observeModes = new Set<ObserveMode>(["global", "node", "relation", "evidence"]);
 const lensAliases: Record<string, CosmosLens> = {
   "domain-backbone": "whole-vault",
   "core-gravity": "knowledge-core",
@@ -32,6 +54,12 @@ export const DEFAULT_ROUTE: AtlasRoute = {
   fromId: null,
   toId: null,
   exploreMode: "graph",
+  panel: "none",
+  dossierTab: "overview",
+  observeMode: "global",
+  claimId: null,
+  readerNodeId: null,
+  readerSectionId: null,
 };
 
 export function readRoute(hash = window.location.hash): AtlasRoute {
@@ -43,10 +71,13 @@ export function readRoute(hash = window.location.hash): AtlasRoute {
   const lens = lenses.has(rawLens as CosmosLens)
     ? rawLens as CosmosLens
     : lensAliases[rawLens] ?? "whole-vault";
+  const focusId = params.get("focus");
+  const rawDossierTab = params.get("tab") as DossierTab | null;
+  const rawObserveMode = params.get("mode") as ObserveMode | null;
   return {
     workspace,
     lens,
-    focusId: params.get("focus"),
+    focusId,
     fromId: params.get("from"),
     toId: params.get("to"),
     exploreMode: params.get("view") === "structure" || params.get("scene") === "structure"
@@ -54,20 +85,57 @@ export function readRoute(hash = window.location.hash): AtlasRoute {
       : params.get("view") === "list" || params.get("scene") === "list"
         ? "list"
         : "graph",
+    panel: params.get("panel") === "dossier" && focusId ? "dossier" : "none",
+    dossierTab: rawDossierTab && dossierTabs.has(rawDossierTab) ? rawDossierTab : "overview",
+    observeMode: rawObserveMode && observeModes.has(rawObserveMode) ? rawObserveMode : "global",
+    claimId: params.get("claim"),
+    readerNodeId: workspace === "read" ? params.get("node") : null,
+    readerSectionId: workspace === "read" ? params.get("section") : null,
   };
 }
 
 export function routeHash(route: AtlasRoute) {
+  if (route.workspace === "read") return readerHash(route);
   const params = new URLSearchParams();
+  appendGraphState(params, route);
+  appendDossierState(params, route);
+  appendWorkspaceState(params, route);
+  const query = params.toString();
+  return `#${route.workspace}${query ? `?${query}` : ""}`;
+}
+
+function readerHash(route: AtlasRoute) {
+  const params = new URLSearchParams();
+  if (route.readerNodeId) params.set("node", route.readerNodeId);
+  if (route.readerSectionId) params.set("section", route.readerSectionId);
+  const query = params.toString();
+  return `#read${query ? `?${query}` : ""}`;
+}
+
+function appendGraphState(params: URLSearchParams, route: AtlasRoute) {
   if (route.lens !== "whole-vault") params.set("lens", route.lens);
   if (route.focusId) params.set("focus", route.focusId);
   if (route.fromId) params.set("from", route.fromId);
   if (route.toId) params.set("to", route.toId);
+}
+
+function appendDossierState(params: URLSearchParams, route: AtlasRoute) {
+  const dossierWorkspace = route.workspace === "home" || route.workspace === "explore";
+  if (!dossierWorkspace || route.panel !== "dossier") return;
+  params.set("panel", "dossier");
+  if (route.dossierTab !== "overview") params.set("tab", route.dossierTab);
+}
+
+function appendWorkspaceState(params: URLSearchParams, route: AtlasRoute) {
   if (route.workspace === "explore" && route.exploreMode !== "graph") {
     params.set("view", route.exploreMode);
   }
-  const query = params.toString();
-  return `#${route.workspace}${query ? `?${query}` : ""}`;
+  if (route.workspace !== "observe") return;
+  if (route.observeMode !== "global") params.set("mode", route.observeMode);
+  if (route.observeMode === "node" && route.dossierTab !== "overview") {
+    params.set("tab", route.dossierTab);
+  }
+  if (route.claimId) params.set("claim", route.claimId);
 }
 
 export function writeRoute(route: AtlasRoute, mode: "push" | "replace" = "push") {

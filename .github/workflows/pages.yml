@@ -102,7 +102,7 @@ jobs:
              and .pullRequest == $pr
              and .publicRoot == "dist-public"' \
             validated-artifact/artifacts/ci-binding/binding.json >/dev/null
-          jq -e '.schema == "atlas.publication_audit.v2" and .verdict == "pass" and (.findings | length) == 0' \
+          jq -e '.schema == "atlas.publication_audit.v3" and .verdict == "pass" and (.findings | length) == 0' \
             validated-artifact/artifacts/publication/publication-audit.json >/dev/null
           (
             cd validated-artifact/dist-public

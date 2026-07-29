@@ -43,6 +43,7 @@ export interface SemanticSpaceScene {
   focusId: string | null;
   previewId: string | null;
   activeDomains: string[];
+  activeKinds: GraphNodeKind[];
   reducedMotion: boolean;
 }
 
@@ -80,6 +81,7 @@ export interface SemanticSpaceCallbacks {
 
 export interface SemanticSpaceController {
   setScene(scene: SemanticSpaceScene): void;
+  setLabelIds(ids: string[]): void;
   setPreview(id: string | null): void;
   setFocus(id: string | null): void;
   resize(width: number, height: number, dpr: number): void;

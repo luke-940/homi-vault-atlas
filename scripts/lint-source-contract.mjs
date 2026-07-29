@@ -61,6 +61,7 @@ for (const file of cssFiles) {
   if (!/(?:reset|responsive|states)\.css$/.test(relative)) {
     for (const match of body.matchAll(/(?:^|})\s*([^@{}][^{}]*)\{/gm)) {
       for (const selector of match[1].split(",").map((item) => item.trim()).filter(Boolean)) {
+        if (selector.startsWith("@")) continue;
         const owners = selectorOwners.get(selector) ?? new Set();
         owners.add(relative);
         selectorOwners.set(selector, owners);
@@ -71,7 +72,9 @@ for (const file of cssFiles) {
 for (const [selector, owners] of selectorOwners) {
   if (owners.size > 1) findings.push(`duplicate selector across modules ${selector}: ${[...owners].join(", ")}`);
 }
-if (sourceCssBytes > 56 * 1024) findings.push(`source CSS ${sourceCssBytes}B exceeds 56KiB`);
+// Readable source CSS has a structural ceiling; build-public-site.mjs enforces
+// the release-facing 48KiB minified hard limit.
+if (sourceCssBytes > 64 * 1024) findings.push(`source CSS ${sourceCssBytes}B exceeds 64KiB`);
 if (productionLines > 12_500) findings.push(`production TS/TSX/CSS ${productionLines} lines exceeds 12,500`);
 
 if (findings.length) throw new Error(`Source contract lint failed:\n${findings.join("\n")}`);

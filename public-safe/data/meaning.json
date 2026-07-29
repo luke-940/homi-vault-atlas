@@ -1,7 +1,7 @@
 {
   "schema": "atlas.meaning.v2",
   "profile": "atlas-public",
-  "generatedAt": "2026-07-28T05:41:47.648Z",
+  "generatedAt": "2026-07-29T10:30:20.914Z",
   "domainBackbone": [
     {
       "id": "meaning:domain:d:ceijmdigcdkk",
@@ -23,8 +23,8 @@
       "anchorNodeId": "n:jbicjpkfogcagbmo",
       "edgeIds": [
         "e:idkaeaacfbfc",
-        "e:beejkadagmin",
-        "e:enhnjnnohkia"
+        "e:enhnjnnohkia",
+        "e:beejkadagmin"
       ],
       "evidenceGap": null
     },
@@ -79,8 +79,8 @@
         "e:lemodibjldmi",
         "e:pebhigffjbdg",
         "e:aabblcfjgjii",
-        "e:geogkjhjmlid",
-        "e:jabeohjjecga",
+        "e:bmoidjjdohgf",
+        "e:efnkmpkjjbln",
         "e:aijgfdohcddl",
         "e:bnhpihagbljc",
         "e:ckchidkiieep",
@@ -93,8 +93,8 @@
         "e:lemodibjldmi",
         "e:pebhigffjbdg",
         "e:aabblcfjgjii",
-        "e:geogkjhjmlid",
-        "e:jabeohjjecga"
+        "e:bmoidjjdohgf",
+        "e:efnkmpkjjbln"
       ],
       "outgoingEdgeIds": [
         "e:aijgfdohcddl",
@@ -138,9 +138,9 @@
       "edgeIds": [
         "e:idkaeaacfbfc",
         "e:icmapiebpabm",
+        "e:enhnjnnohkia",
         "e:kcigbjldhenc",
         "e:beejkadagmin",
-        "e:enhnjnnohkia",
         "e:lgpjbabmpkjf",
         "e:cchpbhdkckai",
         "e:fdgdkdnlfbge",
@@ -152,9 +152,9 @@
       "incomingEdgeIds": [
         "e:idkaeaacfbfc",
         "e:icmapiebpabm",
+        "e:enhnjnnohkia",
         "e:kcigbjldhenc",
         "e:beejkadagmin",
-        "e:enhnjnnohkia",
         "e:lgpjbabmpkjf"
       ],
       "outgoingEdgeIds": [
@@ -302,9 +302,9 @@
       "thesis": "Intellible Product Blueprint은 Groot 영역에서 실제 참조가 집중되는 공개 지식 주인공입니다.",
       "caveat": "중력은 품질 점수가 아니라 고유 inbound 문서 수를 뜻합니다.",
       "metrics": {
-        "gravity": 10,
-        "occurrences": 13,
-        "incomingCount": 10,
+        "gravity": 12,
+        "occurrences": 15,
+        "incomingCount": 12,
         "outgoingCount": 13
       },
       "selectionMode": "atlas_builder_judgment",
@@ -336,9 +336,9 @@
       "thesis": "AI 신뢰성은 MOC 영역에서 실제 참조가 집중되는 공개 지식 주인공입니다.",
       "caveat": "중력은 품질 점수가 아니라 고유 inbound 문서 수를 뜻합니다.",
       "metrics": {
-        "gravity": 203,
-        "occurrences": 500,
-        "incomingCount": 203,
+        "gravity": 201,
+        "occurrences": 502,
+        "incomingCount": 201,
         "outgoingCount": 56
       },
       "selectionMode": "atlas_builder_judgment",
@@ -353,10 +353,10 @@
       "thesis": "AI and Society Papers은 Papers 영역에서 실제 참조가 집중되는 공개 지식 주인공입니다.",
       "caveat": "중력은 품질 점수가 아니라 고유 inbound 문서 수를 뜻합니다.",
       "metrics": {
-        "gravity": 57,
-        "occurrences": 92,
-        "incomingCount": 57,
-        "outgoingCount": 72
+        "gravity": 59,
+        "occurrences": 95,
+        "incomingCount": 59,
+        "outgoingCount": 74
       },
       "selectionMode": "atlas_builder_judgment",
       "storyIds": [
@@ -370,9 +370,9 @@
       "thesis": "Beachhead Candidate Ledger은 Rocket 영역에서 실제 참조가 집중되는 공개 지식 주인공입니다.",
       "caveat": "중력은 품질 점수가 아니라 고유 inbound 문서 수를 뜻합니다.",
       "metrics": {
-        "gravity": 11,
-        "occurrences": 30,
-        "incomingCount": 11,
+        "gravity": 10,
+        "occurrences": 29,
+        "incomingCount": 10,
         "outgoingCount": 16
       },
       "selectionMode": "atlas_builder_judgment",
@@ -390,7 +390,7 @@
         "gravity": 46,
         "occurrences": 98,
         "incomingCount": 46,
-        "outgoingCount": 21
+        "outgoingCount": 20
       },
       "selectionMode": "atlas_builder_judgment",
       "storyIds": [
@@ -457,7 +457,7 @@
       "Signals",
       "Strategy"
     ],
-    "graphProjectionDigest": "f19e0d28b7a02604f5b43ef4d09c6c68910301bd17381c6fde195477da31c0ca",
-    "projectionDigest": "bab9355410edc59dd3c2b9867aa673e849945494b15efec63dc919a38c841fc7"
+    "graphProjectionDigest": "c9fb344d53e02a47fb831029ff781ca7552e85ee0148638358c9ae7144015056",
+    "projectionDigest": "f395f849cbbcacc89c242bba7b9ef93d5464e9ca275ef9caa046627f7105f6f9"
   }
 }

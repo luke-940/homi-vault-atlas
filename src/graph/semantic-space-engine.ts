@@ -6,10 +6,8 @@ import {
   DynamicDrawUsage,
   FogExp2,
   InstancedMesh,
-  Matrix4,
   Object3D,
   PerspectiveCamera,
-  Quaternion,
   Raycaster,
   Scene,
   SRGBColorSpace,
@@ -30,25 +28,33 @@ import type {
 import {
   buildEdgeField,
   buildHaloField,
+  applyNodeTransform,
   geometryFamily,
   nodeGeometry,
   nodeMaterial,
   type EdgeField,
 } from "./semantic-space-resources";
+import {
+  paintEdges,
+  paintTrace,
+  type ActiveEdgeIndexes,
+} from "./semantic-space-edge-painter";
+import {
+  buildSelectionLight, disposeSelectionLight, selectionLightTone, selectionLightWeights,
+  updateSelectionLight,
+  type SelectionLightField,
+} from "./semantic-space-selection-light";
 
 type NodeBucket = { mesh: InstancedMesh; ids: string[] };
+type EdgeTrace = ActiveEdgeIndexes & { start: number; duration: number };
 const MAX_DPR = 1.5;
-const up = new Vector3(0, 1, 0);
+const EDGE_TRACE_DURATION = 520;
 const tempObject = new Object3D();
-const tempQuaternion = new Quaternion();
-const tempMatrix = new Matrix4();
 const amber = new Color("#f2b35f");
-const hidden = new Color("#050507");
 
 function copyDebug(debug: SemanticSpaceDebugCounters) {
   return { ...debug };
 }
-
 export class SemanticSpaceEngine implements SemanticSpaceController {
   private readonly renderer: WebGLRenderer;
   private readonly scene3d = new Scene();
@@ -60,11 +66,13 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
   private readonly hitIds = new Map<InstancedMesh, string[]>();
   private readonly callbacks: SemanticSpaceCallbacks;
   private scene: SemanticSpaceScene;
+  private labelIds: string[] = [];
   private nodeById = new Map<string, SemanticSpaceNode>();
   private positionById = new Map<string, Vector3>();
   private edgeIndexesByNode = new Map<string, { incoming: number[]; outgoing: number[] }>();
   private edges: EdgeField | null = null;
   private halo: ReturnType<typeof buildHaloField> | null = null;
+  private selectionLight: SelectionLightField | null = null;
   private frame = 0;
   private pointerFrame = 0;
   private settleUntil = 0;
@@ -75,6 +83,8 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
   private previewId: string | null = null;
   private focusId: string | null = null;
   private pointerDown: { x: number; y: number; moved: boolean } | null = null;
+  private appearanceId: string | null = null;
+  private edgeTrace: EdgeTrace | null = null;
   private cameraTween: {
     start: number;
     duration: number;
@@ -248,6 +258,7 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
   }
 
   private clearGraph() {
+    this.edgeTrace = null;
     for (const bucket of this.buckets) {
       this.scene3d.remove(bucket.mesh);
       bucket.mesh.geometry.dispose();
@@ -276,11 +287,17 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
       this.halo.points.material.dispose();
       this.halo = null;
     }
+    if (this.selectionLight) {
+      this.scene3d.remove(this.selectionLight.points, ...this.selectionLight.buckets.map((bucket) => bucket.mesh));
+      disposeSelectionLight(this.selectionLight);
+      this.selectionLight = null;
+    }
   }
 
   private rebuild(scene: SemanticSpaceScene) {
     this.clearGraph();
     this.scene = scene;
+    this.labelIds = scene.labelIds;
     this.previewId = scene.previewId;
     this.focusId = scene.focusId;
     this.nodeById = new Map(scene.nodes.map((node) => [node.id, node]));
@@ -308,18 +325,7 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
       mesh.instanceMatrix.setUsage(DynamicDrawUsage);
       mesh.frustumCulled = false;
       nodes.forEach((node, index) => {
-        const seed = ((index * 0.61803398875) % 1) * Math.PI;
-        tempObject.position.set(...node.position);
-        tempObject.rotation.set(seed * 0.08, seed, family === "paper" ? 0.34 : 0);
-        const scale = family === "paper"
-          ? [node.radius * 0.82, node.radius * 1.28, node.radius * 0.68]
-          : family === "signal"
-            ? [node.radius * 0.9, node.radius * 1.22, node.radius * 0.9]
-            : family === "project"
-              ? [node.radius * 1.04, node.radius * 0.86, node.radius * 0.92]
-              : [node.radius, node.radius, node.radius];
-        tempObject.scale.set(scale[0], scale[1], scale[2]);
-        tempObject.updateMatrix();
+        applyNodeTransform(tempObject, node, family, index);
         mesh.setMatrixAt(index, tempObject.matrix);
         mesh.setColorAt(index, new Color(node.color));
       });
@@ -334,44 +340,62 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
     this.scene3d.add(this.halo.points);
     this.edges = buildEdgeField(scene.edges, this.positionById, this.nodeById);
     this.scene3d.add(this.edges.lines, this.edges.arrows);
+    this.selectionLight = buildSelectionLight(scene.nodes);
+    this.scene3d.add(this.selectionLight.points, ...this.selectionLight.buckets.map((bucket) => bucket.mesh));
     this.debugState.sceneBuilds += 1;
     this.debugState.visibleNodes = scene.nodes.length;
     this.updateAppearance();
   }
 
   private activeEdges(activeId: string | null) {
-    if (!activeId) return [] as number[];
+    if (!activeId) return { incoming: [] as number[], outgoing: [] as number[] };
     const indexes = this.edgeIndexesByNode.get(activeId);
-    if (!indexes) return [];
-    return [...indexes.incoming.slice(0, 6), ...indexes.outgoing.slice(0, 6)];
+    if (!indexes) return { incoming: [] as number[], outgoing: [] as number[] };
+    return {
+      incoming: indexes.incoming.slice(0, 6),
+      outgoing: indexes.outgoing.slice(0, 6),
+    };
   }
 
   private updateAppearance() {
     const activeId = this.previewId ?? this.focusId;
     const activeDomain = activeId ? this.nodeById.get(activeId)?.domain ?? null : null;
     const activeEdgeIndexes = this.activeEdges(activeId);
-    const activeEdges = new Set(activeEdgeIndexes);
+    const committedEdgeIndexes = this.activeEdges(this.focusId);
+    const committedWeights = selectionLightWeights(this.scene, this.focusId, committedEdgeIndexes);
+    const committedWeightById = new Map(
+      this.scene.nodes.map((node, index) => [node.id, committedWeights[index]]),
+    );
+    const activeEdges = new Set([...activeEdgeIndexes.incoming, ...activeEdgeIndexes.outgoing]);
     const neighborIds = new Set<string>();
-    for (const index of activeEdgeIndexes) {
+    for (const index of activeEdges) {
       neighborIds.add(this.scene.edges[index].sourceId);
       neighborIds.add(this.scene.edges[index].targetId);
     }
     const activeDomains = new Set(this.scene.activeDomains);
+    const activeKinds = new Set(this.scene.activeKinds);
+    const filteredOut = (node: SemanticSpaceNode) => (activeDomains.size > 0 && !activeDomains.has(node.domain)) || (activeKinds.size > 0 && !activeKinds.has(node.kind));
     for (const bucket of this.buckets) {
       bucket.ids.forEach((id, index) => {
         const node = this.nodeById.get(id)!;
         const color = new Color(node.color);
+        const committedWeight = committedWeightById.get(id) ?? 0;
         const frontier = node.domain === "Rocket"
           || node.domain === "Groot"
           || node.domain === "Intelligence Layer";
-        const domainDimmed = activeDomains.size > 0 && !activeDomains.has(node.domain);
+        const committed = id === this.focusId;
+        const filterDimmed = filteredOut(node);
         const sameDomain = activeDomain === node.domain;
-        if (activeId && id !== activeId && !neighborIds.has(id) && sameDomain) {
+        if (committedWeight > 0) {
+          color.set(selectionLightTone(committedWeight))
+            .multiplyScalar(committed ? 1.5 : 1.24);
+        }
+        else if (activeId && id !== activeId && !neighborIds.has(id) && sameDomain) {
           color.multiplyScalar(frontier ? 1.16 : 0.78);
         } else if (activeId && id !== activeId && !neighborIds.has(id)) color.multiplyScalar(0.52);
-        else if (id === activeId) color.lerp(amber, 0.58).multiplyScalar(1.22);
+        else if (id === activeId) color.lerp(amber, 0.52).multiplyScalar(1.38);
         else if (activeId && neighborIds.has(id)) color.multiplyScalar(frontier ? 1.28 : 1.08);
-        else if (domainDimmed) color.multiplyScalar(0.24);
+        else if (filterDimmed) color.multiplyScalar(0.24);
         else color.multiplyScalar(frontier ? 2.15 : 0.92);
         bucket.mesh.setColorAt(index, color);
       });
@@ -387,18 +411,36 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
         const frontier = node.domain === "Rocket"
           || node.domain === "Groot"
           || node.domain === "Intelligence Layer";
-        const domainDimmed = activeDomains.size > 0 && !activeDomains.has(node.domain);
+        const filterDimmed = filteredOut(node);
         const sameDomain = activeDomain === node.domain;
         alpha[index] = activeId
           ? selected ? 1 : neighbor ? frontier ? 0.9 : 0.74 : sameDomain ? frontier ? 0.62 : 0.36 : 0.22
-          : domainDimmed ? 0.1 : frontier ? 1 : 0.5;
+          : filterDimmed ? 0.1 : frontier ? 1 : 0.5;
         if (selected) color.lerp(amber, 0.64);
         colors.set([color.r, color.g, color.b], index * 3);
       });
       this.halo.alpha.needsUpdate = true;
       this.halo.colors.needsUpdate = true;
     }
-    this.updateEdges(activeEdges, activeId, activeDomain);
+    if (this.selectionLight) {
+      updateSelectionLight(this.selectionLight, this.scene, this.focusId, committedEdgeIndexes);
+    }
+    const shouldTrace = Boolean(
+      activeId
+      && activeId !== this.appearanceId
+      && activeEdges.size
+      && !this.scene.reducedMotion,
+    );
+    this.appearanceId = activeId;
+    this.edgeTrace = shouldTrace
+      ? {
+        incoming: activeEdgeIndexes.incoming,
+        outgoing: activeEdgeIndexes.outgoing,
+        start: performance.now(),
+        duration: EDGE_TRACE_DURATION,
+      }
+      : null;
+    this.updateEdges(activeEdgeIndexes, activeId, activeDomain, shouldTrace ? 0 : 1);
     this.debugState.visibleEdges = activeId ? activeEdges.size : this.scene.edges.length;
     this.debugState.materialUpdates += 1;
     this.debugState.previewId = this.previewId;
@@ -407,59 +449,37 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
     this.schedule();
   }
 
-  private updateEdges(activeEdges: Set<number>, activeId: string | null, activeDomain: string | null) {
+  private updateEdges(
+    activeEdgeIndexes: ActiveEdgeIndexes,
+    activeId: string | null,
+    activeDomain: string | null,
+    traceProgress: number,
+  ) {
     if (!this.edges) return;
-    const colors = this.edges.lineColors.array as Float32Array;
-    const baseColors = this.edges.baseColors;
-    this.scene.edges.forEach((edge, edgeIndex) => {
-      const source = this.nodeById.get(edge.sourceId)!;
-      const target = this.nodeById.get(edge.targetId)!;
-      const selected = activeEdges.has(edgeIndex);
-      const domainActive = !this.scene.activeDomains.length
-        || this.scene.activeDomains.includes(source.domain)
-        || this.scene.activeDomains.includes(target.domain);
-      const sharesFocusDomain = activeDomain === source.domain || activeDomain === target.domain;
-      const intensity = activeId
-        ? selected ? 1.05 : sharesFocusDomain ? 0.075 : 0.042
-        : domainActive
-          ? Math.min(
-            this.scene.activeDomains.length ? 0.24 : 0.16,
-            (this.scene.activeDomains.length ? 0.055 : 0.035) + Math.log1p(edge.weight) * 0.024,
-          )
-          : 0.012;
-      for (let segment = 0; segment < this.edges!.segments; segment += 1) {
-        const offset = (edgeIndex * this.edges!.segments + segment) * 6;
-        for (let component = 0; component < 6; component += 1) {
-          const amberComponent = component % 3 === 0 ? amber.r : component % 3 === 1 ? amber.g : amber.b;
-          colors[offset + component] = selected
-            ? amberComponent * intensity
-            : baseColors[offset + component] * intensity;
-        }
-      }
+    paintEdges({
+      field: this.edges,
+      scene: this.scene,
+      nodeById: this.nodeById,
+      active: activeEdgeIndexes,
+      activeId,
+      activeDomain,
+      traceProgress,
     });
-    this.edges.lineColors.needsUpdate = true;
-    const activeEdgeIndexes = [...activeEdges];
-    for (let slot = 0; slot < 12; slot += 1) {
-      const edgeIndex = activeEdgeIndexes[slot];
-      if (edgeIndex === undefined) {
-        this.edges.arrows.setColorAt(slot, hidden);
-        tempObject.position.set(0, -10_000, 0);
-        tempObject.scale.setScalar(0.001);
-        tempObject.updateMatrix();
-        this.edges.arrows.setMatrixAt(slot, tempObject.matrix);
-        continue;
-      }
-      const points = this.edges.edgePoints[edgeIndex];
-      const end = points.at(-1)!;
-      const before = points.at(-2)!;
-      tempQuaternion.setFromUnitVectors(up, end.clone().sub(before).normalize());
-      const scale = Math.min(3.8, 1.25 + Math.sqrt(this.scene.edges[edgeIndex].weight) * 0.34);
-      tempMatrix.compose(end, tempQuaternion, new Vector3(scale, scale, scale));
-      this.edges.arrows.setMatrixAt(slot, tempMatrix);
-      this.edges.arrows.setColorAt(slot, amber);
-    }
-    this.edges.arrows.instanceMatrix.needsUpdate = true;
-    if (this.edges.arrows.instanceColor) this.edges.arrows.instanceColor.needsUpdate = true;
+  }
+
+  private updateSelectedTrace(progress: number) {
+    if (!this.edges || !this.edgeTrace) return;
+    paintTrace(this.edges, this.scene, this.edgeTrace, progress);
+  }
+
+  private updateEdgeTrace(now: number) {
+    if (!this.edgeTrace) return false;
+    const elapsed = Math.max(0, now - this.edgeTrace.start);
+    const progress = Math.min(1, elapsed / this.edgeTrace.duration);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    this.updateSelectedTrace(eased);
+    if (progress >= 1) this.edgeTrace = null;
+    return progress < 1;
   }
 
   private moveCamera(camera: AuthoredCamera, duration = 480) {
@@ -501,7 +521,7 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
   private labelAnchors(): SemanticSpaceLabelAnchor[] {
     const width = this.renderer.domElement.clientWidth || 1;
     const height = this.renderer.domElement.clientHeight || 1;
-    return this.scene.labelIds.map((id) => {
+    return this.labelIds.map((id) => {
       const position = this.positionById.get(id);
       if (!position) return { id, x: 0, y: 0, depth: 1, visible: false };
       const projected = position.clone().project(this.camera);
@@ -522,6 +542,7 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
     this.frame = 0;
     if (!this.visible || this.disposed) return;
     const tweening = this.updateCameraTween(now);
+    const tracing = this.updateEdgeTrace(now);
     let controlsMoving;
     if (this.forceSettleAt && now >= this.forceSettleAt && !this.cameraTween) {
       const damping = this.controls.enableDamping;
@@ -539,7 +560,7 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
     this.debugState.idle = false;
     this.callbacks.onLabelFrame(this.labelAnchors());
     this.callbacks.onDebug?.(copyDebug(this.debugState));
-    if (tweening || controlsMoving || now < this.settleUntil) this.schedule();
+    if (tweening || tracing || controlsMoving || now < this.settleUntil) this.schedule();
     else {
       this.debugState.idle = true;
       this.callbacks.onDebug?.(copyDebug(this.debugState));
@@ -562,11 +583,18 @@ export class SemanticSpaceEngine implements SemanticSpaceController {
     const graphChanged = scene.graphVersion !== this.scene.graphVersion;
     const cameraChanged = scene.lens !== this.scene.lens;
     this.scene = scene;
+    this.labelIds = scene.labelIds;
     this.previewId = scene.previewId;
     this.focusId = scene.focusId;
     if (graphChanged) this.rebuild(scene);
     else this.updateAppearance();
     if (cameraChanged) this.moveCamera(scene.camera);
+  }
+
+  setLabelIds(ids: string[]) {
+    if (ids.length === this.labelIds.length && ids.every((id, index) => id === this.labelIds[index])) return;
+    this.labelIds = ids;
+    this.schedule();
   }
 
   setPreview(id: string | null) {

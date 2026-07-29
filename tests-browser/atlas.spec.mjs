@@ -114,9 +114,11 @@ test("desktop hover, focus, orbit, URL and idle contract", async ({ page }) => {
   await waitForAtlas(page, false);
   const host = page.locator(".cosmos-stage__webgl");
   const canvas = page.locator(".cosmos-stage__webgl canvas");
+  const label = page.locator(".cosmos-label:not([hidden])").first();
+  await label.hover();
+  await page.waitForTimeout(50);
   const before = await host.evaluate((element) => ({ ...element.dataset }));
   const beforeUrl = page.url();
-  const label = page.locator(".cosmos-label:not([hidden])").first();
   const box = await label.boundingBox();
   expect(box).not.toBeNull();
   for (let index = 0; index < 300; index += 1) {
@@ -151,29 +153,31 @@ test("desktop hover, focus, orbit, URL and idle contract", async ({ page }) => {
   await expect(page).not.toHaveURL(/focus=/);
   await page.goBack();
   await page.goForward();
-  await expect(page.getByRole("heading", { name: "실제 이름과 방향 관계를 탐색한다." })).toBeVisible();
+  await expect(page.locator(".workspace-heading__identity")).toContainText("Explore");
+  await expect(page.locator("h1.visually-hidden")).toContainText("Explore · Knowledge Map");
 });
 
 test("analysis workspaces and search share committed navigation", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 920 });
-  for (const [hash, heading] of [
-    ["#observe", "구역 사이의 방향 관계를 비교한다."],
-    ["#flow", "실제 영역 경계를 건너는 경로를 읽는다."],
-    ["#time", "검증된 버전 변화만 시간으로 읽는다."],
-    ["#agency", "방향, 소유, 순환과 번역의 책임을 읽는다."],
+  for (const [hash, workspace, heading] of [
+    ["#observe", "Observe", "Observe · Global Relations"],
+    ["#flow", "Flow", "Flow · Verified Trails"],
+    ["#time", "Time", "Time · Version Evolution"],
+    ["#agency", "Agency", "Agency · Responsibility Boundary"],
   ]) {
     await page.goto(`/?qa=ci-analysis${hash}`);
-    await expect(page.getByRole("heading", { name: heading })).toBeVisible();
+    await expect(page.locator(".workspace-heading__identity")).toContainText(workspace);
+    await expect(page.locator("h1.visually-hidden")).toContainText(heading);
     const findings = await page.evaluate(pageFindings);
     expect(findings.overflow).toBeLessThanOrEqual(0);
     expect(findings.smallText).toEqual([]);
   }
   await page.getByRole("button", { name: "Search Atlas" }).click();
-  const search = page.getByPlaceholder(/Search \d+ safe knowledge nodes/);
+  const search = page.getByPlaceholder("Search titles, insights, source sections and relationships");
   await search.fill("Rocket");
   await expect(page.getByRole("dialog", { name: "Search Atlas" })).toContainText("Rocket");
   await search.press("Enter");
-  await expect(page).toHaveURL(/#explore\?focus=/);
+  await expect(page).toHaveURL(/#home\?focus=.*panel=dossier/);
 });
 
 test("WebGL failure and reduced motion preserve semantic state", async ({ browser }) => {
@@ -198,7 +202,7 @@ test("file URL loads the same public graph without module fetches", async ({ pag
   const fileUrl = new URL(`file://${path.join(projectDir, "dist-public", "index.html")}`);
   fileUrl.hash = "home?scene=whole-vault";
   await page.goto(fileUrl.toString());
-  await expect(page.getByRole("heading", { name: "살아 있는 지식의 전체 지형을 본다." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Homi Vault" })).toBeVisible();
   await expect(page.locator(".mobile-cosmos-canvas")).toBeVisible();
   expect(await page.locator('script[src*="semantic-space"]').count()).toBe(0);
 });

@@ -3,18 +3,24 @@ import path from "node:path";
 import { describe, expect, test } from "vitest";
 import { auditPublicPackBinding } from "../scripts/lib/public-data-wire.mjs";
 import { verifyAtlasGraphV2 } from "../scripts/lib/atlas-graph-v2.mjs";
+import {
+  validateKnowledgeIndex,
+  validatePublicationV3,
+} from "../scripts/lib/knowledge-pack-contract.mjs";
 
-const packNames = ["agency", "inventory", "graph", "meaning", "publication"] as const;
+const dataRoot = path.resolve(process.env.ATLAS_TEST_DATA_DIR ?? "public-safe/data");
+const gate1Slice = process.env.ATLAS_GATE1_SLICE === "true";
+const packNames = ["agency", "inventory", "graph", "meaning", "knowledge", "publication"] as const;
 const packs = Object.fromEntries(packNames.map((name) => [
   name,
-  JSON.parse(readFileSync(path.resolve("public-safe", "data", `${name}.json`), "utf8")),
+  JSON.parse(readFileSync(path.join(dataRoot, `${name}.json`), "utf8")),
 ]));
 
 describe("public data boundary", () => {
   test("binds every browser wrapper to exact authoritative JSON bytes", () => {
     for (const name of packNames) {
-      const jsonText = readFileSync(path.resolve("public-safe", "data", `${name}.json`), "utf8");
-      const jsText = readFileSync(path.resolve("public-safe", "data", `${name}.js`), "utf8");
+      const jsonText = readFileSync(path.join(dataRoot, `${name}.json`), "utf8");
+      const jsText = readFileSync(path.join(dataRoot, `${name}.js`), "utf8");
       expect(auditPublicPackBinding({ name, jsonText, jsText })).toMatchObject({
         pass: true,
         exactJsonBytesEmbedded: true,
@@ -52,6 +58,24 @@ describe("public data boundary", () => {
       packs.graph.structure.manifest.representedNodeCount
       + packs.graph.structure.manifest.omittedNodeCount,
     ).toBe(packs.graph.manifest.nodeCount);
+  });
+
+  test("keeps knowledge coverage fail-closed outside the five-node Gate 1 slice", () => {
+    expect(validateKnowledgeIndex(packs.knowledge, packs.graph, {
+      gate1: gate1Slice,
+    })).toEqual([]);
+    expect(validatePublicationV3(packs.publication, packs, {
+      gate1: gate1Slice,
+    })).toEqual([]);
+    if (gate1Slice) {
+      expect(packs.knowledge.releaseEligible).toBe(false);
+      expect(packs.knowledge.manifest.dossierCount).toBe(5);
+      expect(packs.publication.blockers).toContain("gate1_vertical_slice_not_full_coverage");
+    } else {
+      expect(packs.knowledge.releaseEligible).toBe(true);
+      expect(packs.knowledge.manifest.dossierCount).toBe(packs.graph.manifest.nodeCount);
+      expect(packs.publication.blockers).toEqual([]);
+    }
   });
 
   test("keeps public and owner graph projections separated by runtime boundary", () => {

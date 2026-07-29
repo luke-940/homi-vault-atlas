@@ -9,6 +9,11 @@ import { verifyAtlasGraphV2 } from "./lib/atlas-graph-v2.mjs";
 import { auditPublicPackBinding } from "./lib/public-data-wire.mjs";
 import { scanOperatingExposure, scanPrivacyText } from "./lib/privacy-scanner.mjs";
 import { stableJson } from "./lib/data-model.mjs";
+import {
+  auditKnowledgeArtifacts,
+  validateKnowledgeIndex,
+  validatePublicationV3,
+} from "./lib/knowledge-pack-contract.mjs";
 
 const execFileAsync = promisify(execFile);
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -20,12 +25,25 @@ const distDir = path.resolve(
 );
 const receiptPath = path.resolve(
   process.env.ATLAS_PUBLIC_AUDIT_RECEIPT
-    ?? path.join(projectDir, "artifacts", "v7.8-publication-audit.json"),
+    ?? path.join(projectDir, "artifacts", "v7.9-publication-audit.json"),
 );
-const ownerDataDir = path.join(projectDir, ".generated", "profiles", "owner", "data");
-const packNames = ["agency", "inventory", "graph", "meaning", "publication"];
+const ownerDataDir = path.resolve(
+  process.env.ATLAS_OWNER_DATA_DIR
+    ?? path.join(projectDir, ".generated", "profiles", "owner", "data"),
+);
+const gate1Slice = process.env.ATLAS_GATE1_SLICE === "true";
+const reviewCandidate = process.env.ATLAS_REVIEW_CANDIDATE === "true";
+const packNames = ["agency", "inventory", "graph", "meaning", "knowledge", "publication"];
 const requiredDomains = ["MOC", "Papers", "Signals", "Rocket", "Groot", "Intelligence Layer"];
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
+
+if (gate1Slice && path.basename(distDir) !== "dist-gate1") {
+  throw new Error("Gate 1 non-release audit may only inspect dist-gate1.");
+}
+if (reviewCandidate
+  && (gate1Slice || path.basename(distDir) !== "dist-gate2")) {
+  throw new Error("Gate 2 review audit may only inspect dist-gate2.");
+}
 
 async function filesUnder(root, current = root) {
   const rows = [];
@@ -82,6 +100,45 @@ for (const name of packNames) {
 findings.push(...verifyAtlasGraphV2(packs.graph).map((id) => finding(`graph-v2-${id}`, "data/graph.json")));
 const graphNodeIds = packs.graph.nodes.map((node) => packs.graph.strings[node[0]]);
 findings.push(...auditPublicAgencyContract(packs.agency, { knowledgeEntityIds: graphNodeIds }));
+findings.push(...validateKnowledgeIndex(packs.knowledge, packs.graph, {
+  gate1: gate1Slice,
+  reviewCandidate,
+}).map((id) => finding(`knowledge-${id}`, "data/knowledge.json")));
+findings.push(...validatePublicationV3(packs.publication, packs, {
+  gate1: gate1Slice,
+  reviewCandidate,
+}).map((id) => finding(`publication-v3-${id}`, "data/publication.json")));
+
+const sourceKnowledgeAudit = await auditKnowledgeArtifacts(sourceDataDir, packs.knowledge, {
+  graph: packs.graph,
+});
+const distKnowledgeAudit = await auditKnowledgeArtifacts(
+  path.join(distDir, "data"),
+  JSON.parse(await readFile(path.join(distDir, "data", "knowledge.json"), "utf8")),
+  { graph: packs.graph },
+);
+findings.push(...sourceKnowledgeAudit.findings, ...distKnowledgeAudit.findings);
+const sourceArtifactIdentity = sourceKnowledgeAudit.shardPairs
+  .concat(sourceKnowledgeAudit.searchPairs)
+  .map((item) => ({
+    kind: item.kind,
+    jsonPath: item.jsonPath,
+    javascriptPath: item.javascriptPath,
+    jsonSha256: item.jsonSha256,
+    javascriptSha256: item.javascriptSha256,
+  }));
+const distArtifactIdentity = distKnowledgeAudit.shardPairs
+  .concat(distKnowledgeAudit.searchPairs)
+  .map((item) => ({
+    kind: item.kind,
+    jsonPath: item.jsonPath,
+    javascriptPath: item.javascriptPath,
+    jsonSha256: item.jsonSha256,
+    javascriptSha256: item.javascriptSha256,
+  }));
+if (JSON.stringify(sourceArtifactIdentity) !== JSON.stringify(distArtifactIdentity)) {
+  findings.push(finding("stale-dist-knowledge-artifact", "data/knowledge-shards"));
+}
 
 const inventoryTotal = packs.inventory.namedCount
   + packs.inventory.aggregateCount
@@ -97,16 +154,21 @@ if (packs.meaning.schema !== "atlas.meaning.v2"
   || packs.meaning.manifest?.graphProjectionDigest !== packs.graph.manifest.projectionDigest) {
   findings.push(finding("meaning-graph-binding", "data/meaning.json"));
 }
+for (const name of ["agency", "inventory", "graph", "meaning", "knowledge"]) {
+  const sourceText = await readFile(path.join(sourceDataDir, `${name}.json`), "utf8");
+  if (packs.publication.packDigests?.[name] !== sha256(sourceText)) {
+    findings.push(finding("publication-pack-digest", `data/${name}.json`));
+  }
+}
 const expectedSnapshotDigest = sha256(stableJson({
   agency: packs.agency,
   graph: packs.graph,
   inventory: packs.inventory,
   meaning: packs.meaning,
+  knowledge: packs.knowledge,
 }));
-if (packs.publication.schema !== "atlas.publication.v2"
-  || packs.publication.profile !== "public"
-  || packs.publication.publicSnapshotDigest !== expectedSnapshotDigest
-  || packs.publication.blockers?.length) {
+if (packs.publication.profile !== "public"
+  || packs.publication.publicSnapshotDigest !== expectedSnapshotDigest) {
   findings.push(finding("publication-binding", "data/publication.json"));
 }
 const domains = packs.graph.domains.map((domain) => packs.graph.strings[domain[1]]);
@@ -123,24 +185,39 @@ if (packs.graph.edges.some((edge) => edge[1] === edge[2] || edge[3] < 1)) {
 
 const assetManifest = JSON.parse(await readFile(path.join(distDir, "asset-manifest.json"), "utf8"));
 const buildReceipt = JSON.parse(await readFile(path.join(distDir, "build-receipt.json"), "utf8"));
-if (assetManifest.schema !== "atlas.public_assets.v2"
+if (assetManifest.schema !== "atlas.public_assets.v3"
   || assetManifest.profile !== "public"
   || assetManifest.publicSnapshotDigest !== expectedSnapshotDigest
   || assetManifest.runtimeClassAliases !== 0
-  || assetManifest.unhashedJavaScriptOrCss?.length) {
+  || assetManifest.unhashedJavaScriptOrCss?.length
+  || assetManifest.knowledge?.initialBodies !== 0
+  || assetManifest.knowledge?.shards?.length !== packs.knowledge.manifest.dossierCount
+  || !assetManifest.knowledge?.search) {
   findings.push(finding("asset-manifest", "asset-manifest.json"));
 }
-if (buildReceipt.schema !== "atlas.public_build.v2"
+if (buildReceipt.schema !== "atlas.public_build.v3"
   || buildReceipt.profile !== "public"
   || buildReceipt.publicSnapshotDigest !== expectedSnapshotDigest
   || buildReceipt.stylesheet?.bytes > 48 * 1024
   || buildReceipt.javascript?.gzipBytes > 180 * 1024
   || buildReceipt.semanticSpace?.gzipBytes > 240 * 1024
-  || buildReceipt.initialRawBytes > 3 * 1024 * 1024) {
+  || buildReceipt.initialRawBytes > 3 * 1024 * 1024
+  || buildReceipt.knowledge?.initialBodies !== 0
+  || buildReceipt.knowledge?.releaseEligible !== !(gate1Slice || reviewCandidate)
+  || buildReceipt.gate1Slice !== gate1Slice
+  || buildReceipt.reviewCandidate !== reviewCandidate) {
   findings.push(finding("build-budget-or-binding", "build-receipt.json"));
 }
 
 const distFiles = await filesUnder(distDir);
+const totalArtifactBytes = distFiles.reduce((sum, file) => sum + file.bytes, 0);
+if (totalArtifactBytes > 15 * 1024 * 1024) {
+  findings.push(finding("public-artifact-size", "dist-public", { bytes: totalArtifactBytes }));
+}
+const indexHtml = await readFile(path.join(distDir, "index.html"), "utf8");
+if (/knowledge-shards\/|search\.[a-f0-9]{16,64}\.js/.test(indexHtml)) {
+  findings.push(finding("knowledge-body-eager-load", "index.html"));
+}
 for (const file of distFiles) {
   if (/\.(?:js|css)$/.test(file.path)
     && !/^(?:app|semantic-space)\.[a-f0-9]{16}\.(?:js|css)$/.test(file.path)
@@ -151,9 +228,20 @@ for (const file of distFiles) {
   if (/\.(?:html|json|webmanifest)$/.test(file.path)) {
     const text = await readFile(file.absolute, "utf8");
     const legal = file.path.startsWith("licenses/") || file.path === "THIRD_PARTY_NOTICES.md";
-    findings.push(...scanPrivacyText(text, { path: `dist-public/${file.path}`, legalText: legal }));
-    if (file.path === "index.html" || file.path.startsWith("data/")) {
-      findings.push(...scanOperatingExposure(text, { path: `dist-public/${file.path}`, legalText: legal }));
+    const tooling = file.path === "index.html"
+      || file.path === "asset-manifest.json"
+      || file.path === "build-receipt.json";
+    const decodedKnowledgeWire = file.path.startsWith("data/knowledge-shards/")
+      || /^data\/search\.[a-f0-9]{16,64}\.json$/.test(file.path);
+    if (!decodedKnowledgeWire) {
+      findings.push(...scanPrivacyText(text, {
+        path: `dist-public/${file.path}`,
+        legalText: legal,
+        toolingText: tooling,
+      }));
+      if (file.path === "index.html" || file.path.startsWith("data/")) {
+        findings.push(...scanOperatingExposure(text, { path: `dist-public/${file.path}`, legalText: legal }));
+      }
     }
   }
 }
@@ -183,10 +271,13 @@ const uniqueFindings = [
   ...new Map(findings.map((item) => [`${item.id}\0${item.path}`, item])).values(),
 ];
 const receipt = {
-  schema: "atlas.publication_audit.v2",
-  activityId: "REL-ATLAS-V7-8-20260728-01",
+  schema: "atlas.publication_audit.v3",
+  activityId: "REL-ATLAS-V7-9-20260729-01",
   auditedAt: new Date().toISOString(),
   profile: "public",
+  gate1Slice,
+  reviewCandidate,
+  releaseEligible: packs.publication.releaseEligible,
   publicSnapshotDigest: expectedSnapshotDigest,
   graph: {
     schema: packs.graph.schema,
@@ -203,11 +294,25 @@ const receipt = {
     unclassified: packs.inventory.unclassifiedCount,
   },
   bindings,
+  knowledge: {
+    schema: packs.knowledge.schema,
+    dossiers: packs.knowledge.manifest.dossierCount,
+    documents: packs.knowledge.manifest.documentCount,
+    claims: packs.knowledge.manifest.claimCount,
+    evidence: packs.knowledge.manifest.evidenceCount,
+    relationExplanations: packs.knowledge.manifest.relationExplanationCount,
+    publishedSections: packs.knowledge.manifest.publishedSectionCount,
+    omittedSections: packs.knowledge.manifest.omittedSectionCount,
+    shards: sourceKnowledgeAudit.shardPairs.length,
+    searchIndexes: sourceKnowledgeAudit.searchPairs.length,
+    initialBodies: 0,
+  },
   budgets: {
     cssBytes: buildReceipt.stylesheet.bytes,
     shellGzipBytes: buildReceipt.javascript.gzipBytes,
     semanticSpaceGzipBytes: buildReceipt.semanticSpace.gzipBytes,
     initialRawBytes: buildReceipt.initialRawBytes,
+    totalArtifactBytes,
   },
   privacyFindings: uniqueFindings.filter((item) => (
     !item.id.startsWith("graph-v2-")
@@ -216,6 +321,7 @@ const receipt = {
       "inventory-reconciliation",
       "meaning-graph-binding",
       "publication-binding",
+      "publication-pack-digest",
       "required-domain-missing",
       "knowledge-node-namespace",
       "directed-edge-invalid",
@@ -226,7 +332,18 @@ const receipt = {
     ].includes(item.id)
   )).length,
   findings: uniqueFindings,
-  verdict: uniqueFindings.length ? "fail" : "pass",
+  residualRisks: gate1Slice
+    ? ["knowledge-workbench chunk split pending Gate 2"]
+    : reviewCandidate
+      ? ["Gate 2 domain-review candidate is not release eligible."]
+      : [],
+  verdict: uniqueFindings.length
+    ? "fail"
+    : gate1Slice
+      ? "pass_gate1_nonrelease"
+      : reviewCandidate
+        ? "pass_gate2_review_candidate"
+        : "pass",
 };
 await mkdir(path.dirname(receiptPath), { recursive: true });
 await writeFile(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`);

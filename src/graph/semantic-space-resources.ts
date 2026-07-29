@@ -13,6 +13,7 @@ import {
   MeshBasicMaterial,
   MeshStandardMaterial,
   OctahedronGeometry,
+  Object3D,
   Points,
   ShaderMaterial,
   TetrahedronGeometry,
@@ -56,6 +57,27 @@ export function nodeMaterial(family: string) {
     opacity: 1,
     vertexColors: true,
   });
+}
+
+export function applyNodeTransform(
+  object: Object3D,
+  node: SemanticSpaceNode,
+  family: string,
+  index: number,
+  multiplier = 1,
+) {
+  const seed = ((index * 0.61803398875) % 1) * Math.PI;
+  object.position.set(...node.position);
+  object.rotation.set(seed * 0.08, seed, family === "paper" ? 0.34 : 0);
+  const scale = family === "paper"
+    ? [node.radius * 0.82, node.radius * 1.28, node.radius * 0.68]
+    : family === "signal"
+      ? [node.radius * 0.9, node.radius * 1.22, node.radius * 0.9]
+      : family === "project"
+        ? [node.radius * 1.04, node.radius * 0.86, node.radius * 0.92]
+        : [node.radius, node.radius, node.radius];
+  object.scale.set(scale[0] * multiplier, scale[1] * multiplier, scale[2] * multiplier);
+  object.updateMatrix();
 }
 
 function routeBias(id: string) {

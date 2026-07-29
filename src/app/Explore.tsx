@@ -1,10 +1,10 @@
-import { ArrowDownLeft, ArrowUpRight, FolderTree, List, Orbit, Search } from "lucide-react";
+import { FolderTree, List, Orbit, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CosmosStage } from "./CosmosStage";
 import { EvidenceRail } from "./EvidenceRail";
 import { NodeList, VaultStructure } from "./ExploreIndexes";
-import { relationSummary } from "./data";
 import { useAtlas } from "./state";
+import { WorkspaceTitle } from "./WorkspaceTitle";
 
 export function Explore() {
   const atlas = useAtlas();
@@ -20,35 +20,35 @@ export function Explore() {
   ]);
   return (
     <main className="workspace-layout explore-layout">
-      <header className="workspace-heading">
-        <div>
-          <p className="eyebrow">EXPLORE · OPEN KNOWLEDGE COSMOS</p>
-          <h1>실제 이름과 방향 관계를 탐색한다.</h1>
-        </div>
-        <div className="view-switch" aria-label="Explore view">
-          <button
-            type="button"
-            aria-current={atlas.route.exploreMode === "graph" ? "page" : undefined}
-            onClick={() => atlas.setExploreMode("graph")}
-          >
-            <Orbit size={14} /> Graph
-          </button>
-          <button
-            type="button"
-            aria-current={atlas.route.exploreMode === "structure" ? "page" : undefined}
-            onClick={() => atlas.setExploreMode("structure")}
-          >
-            <FolderTree size={14} /> Structure
-          </button>
-          <button
-            type="button"
-            aria-current={atlas.route.exploreMode === "list" ? "page" : undefined}
-            onClick={() => atlas.setExploreMode("list")}
-          >
-            <List size={14} /> List
-          </button>
-        </div>
-      </header>
+      <WorkspaceTitle
+        workspace="Explore"
+        context="Knowledge Map"
+        actions={(
+          <div className="view-switch" aria-label="Explore view">
+            <button
+              type="button"
+              aria-current={atlas.route.exploreMode === "graph" ? "page" : undefined}
+              onClick={() => atlas.setExploreMode("graph")}
+            >
+              <Orbit size={14} /> Graph
+            </button>
+            <button
+              type="button"
+              aria-current={atlas.route.exploreMode === "structure" ? "page" : undefined}
+              onClick={() => atlas.setExploreMode("structure")}
+            >
+              <FolderTree size={14} /> Structure
+            </button>
+            <button
+              type="button"
+              aria-current={atlas.route.exploreMode === "list" ? "page" : undefined}
+              onClick={() => atlas.setExploreMode("list")}
+            >
+              <List size={14} /> List
+            </button>
+          </div>
+        )}
+      />
       <div className="command-rail">
         <label>
           <Search size={15} aria-hidden="true" />
@@ -100,8 +100,7 @@ export function Explore() {
             <CosmosStage mode="explore" activeDomains={domain ? [domain] : undefined} />
           </section>
           <aside className="explore-inspector">
-            <EvidenceRail compact />
-            <RelationList />
+            <EvidenceRail compact surface="explore" />
           </aside>
         </div>
       ) : atlas.route.exploreMode === "structure" ? (
@@ -110,43 +109,5 @@ export function Explore() {
         <NodeList nodes={nodes} />
       )}
     </main>
-  );
-}
-
-function RelationList() {
-  const atlas = useAtlas();
-  const node = atlas.runtime.graph.nodeById.get(atlas.route.focusId ?? "");
-  if (!node) {
-    return (
-      <div className="inspector-overview">
-        <p>노드를 선택하면 정확한 incoming/outgoing 관계를 표시합니다.</p>
-        <dl>
-          {atlas.runtime.graph.domains.map((domain) => (
-            <div key={domain.id}>
-              <dt>{domain.label}</dt>
-              <dd>{domain.nodeCount}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-    );
-  }
-  const summary = relationSummary(atlas.runtime.graph, node);
-  return (
-    <div className="relation-list">
-      <h2>Directed relations</h2>
-      {[...summary.incoming, ...summary.outgoing].map((item) => (
-        <button type="button" key={item.edge.id} onClick={() => atlas.commitFocus(item.node.id)}>
-          {item.direction === "incoming"
-            ? <ArrowDownLeft aria-label="incoming" size={14} />
-            : <ArrowUpRight aria-label="outgoing" size={14} />}
-          <span>{item.node.label}</span>
-          <small>{item.edge.occurrences}</small>
-        </button>
-      ))}
-      {summary.hiddenIncoming + summary.hiddenOutgoing > 0 ? (
-        <p>추가 관계 {summary.hiddenIncoming + summary.hiddenOutgoing}개는 List/Search에서 접근할 수 있습니다.</p>
-      ) : null}
-    </div>
   );
 }

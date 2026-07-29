@@ -13,7 +13,7 @@ import type { GraphDirectoryFolder, GraphNode } from "./contracts";
 import { relationSummary } from "./data";
 import { useAtlas } from "./state";
 
-const kindLabels: Record<GraphNode["kind"], string> = {
+export const kindLabels: Record<GraphNode["kind"], string> = {
   moc_hub: "지식 허브",
   paper_gateway: "논문 관문",
   signal_domain: "신호 영역",
@@ -24,6 +24,41 @@ const kindLabels: Record<GraphNode["kind"], string> = {
   strategy_insight: "전략 인사이트",
   aggregate_boundary: "집계 경계",
 };
+
+export function NodeList({ nodes }: { nodes: GraphNode[] }) {
+  const atlas = useAtlas();
+  const selected = atlas.runtime.graph.nodeById.get(atlas.route.focusId ?? "") ?? null;
+  return (
+    <section className="vault-structure" aria-label="공개 지식 노드 목록">
+      <div className="vault-structure__grid">
+        <div className="vault-tree-panel">
+          <ul className="vault-tree">
+            {nodes.map((node) => (
+              <li key={node.id}>
+                <button
+                  type="button"
+                  className="vault-tree__node"
+                  aria-current={atlas.route.focusId === node.id ? "true" : undefined}
+                  onFocus={() => atlas.setPreview(node.id)}
+                  onBlur={() => atlas.setPreview(null)}
+                  onPointerEnter={() => atlas.setPreview(node.id)}
+                  onPointerLeave={() => atlas.setPreview(null)}
+                  onClick={() => atlas.commitFocus(node.id)}
+                >
+                  <FileText size={14} aria-hidden="true" />
+                  <span>{node.label}</span>
+                  <small>{node.domain} · {kindLabels[node.kind]}</small>
+                </button>
+              </li>
+            ))}
+          </ul>
+          {!nodes.length ? <p className="vault-tree__empty">해당 조건에 맞는 공개 노드가 없습니다.</p> : null}
+        </div>
+        <StructureInspector selected={selected} />
+      </div>
+    </section>
+  );
+}
 
 export function VaultStructure({ query, domain }: { query: string; domain: string | null }) {
   const atlas = useAtlas();
@@ -268,32 +303,5 @@ function StructureInspector({ selected }: { selected: GraphNode | null }) {
         ))}
       </div>
     </aside>
-  );
-}
-
-export function NodeList({ nodes }: { nodes: GraphNode[] }) {
-  const atlas = useAtlas();
-  return (
-    <section className="node-index" aria-label="Keyboard-operable knowledge node index">
-      <p>{nodes.length.toLocaleString("ko-KR")} safe knowledge nodes</p>
-      <ul>
-        {nodes.map((node) => (
-          <li key={node.id}>
-            <button
-              type="button"
-              onFocus={() => atlas.setPreview(node.id)}
-              onBlur={() => atlas.setPreview(null)}
-              onPointerEnter={() => atlas.setPreview(node.id)}
-              onPointerLeave={() => atlas.setPreview(null)}
-              onClick={() => atlas.openNode(node.id, "explore")}
-            >
-              <span className="node-index__domain">{node.domain}</span>
-              <strong>{node.label}</strong>
-              <span>{kindLabels[node.kind]} · inbound {node.gravity}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </section>
   );
 }

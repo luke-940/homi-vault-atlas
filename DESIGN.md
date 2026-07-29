@@ -1,7 +1,7 @@
 ---
 version: "1.0"
-name: Open Knowledge Cosmos
-description: Editorial cosmic graph for translating the Homi Vault into a legible public knowledge space.
+name: Homi Vault Knowledge Map
+description: Editorial cosmic graph and evidence workbench for reading the Homi Vault as a useful public knowledge map.
 colors:
   primary: "#F2ECE4"
   secondary: "#C9C0B8"
@@ -62,7 +62,7 @@ components:
     textColor: "{colors.primary}"
     rounded: "{rounded.control}"
     padding: 10px
-  evidence-rail:
+  dossier-dock:
     backgroundColor: "{colors.surface-deep}"
     textColor: "{colors.primary}"
     rounded: "{rounded.none}"
@@ -71,9 +71,10 @@ components:
 
 ## Overview
 
-Homi Vault Atlas is an editorial knowledge instrument. It should feel like a
-human-authored map of a living institution: spatial, atmospheric, and
-emotionally resonant, while every visible mark retains a factual job.
+Homi Vault Atlas is an editorial knowledge instrument, not a landing page. It
+should feel like a human-authored map of a living institution: spatial,
+atmospheric, useful, and evidence-bound, while every visible mark and sentence
+retains a factual job.
 
 The signature is not a generic dark theme. It is the combination of a warm
 graphite field, domain-owned color, node-local evidence light, legible negative
@@ -94,7 +95,8 @@ restrained English product chrome.
 
 - Korean editorial copy uses Pretendard Variable with `word-break: keep-all`.
 - Product chrome and compact evidence labels use Space Grotesk.
-- Headlines are direct and large, but must not cover the graph.
+- Every workspace uses a compact tool bar with only its name and active mode.
+  Explanatory sentences may not return as oversized page headlines.
 - Internal identifiers such as SI, SR, or numeric suffixes are metadata, not
   default labels.
 - Essential UI and graph labels never render below 12px.
@@ -121,15 +123,38 @@ restrained English product chrome.
 
 - Node shape encodes kind, size encodes unique inbound documents, color encodes
   domain, and local halo encodes the same gravity monotonically.
+- A committed selection keeps the authored geometry, but its base surface
+  itself switches to an emissive interaction tone; the outer aura is secondary,
+  never the selection carrier. The focal node is warm white, actual
+  incoming neighbors are cool white, outgoing neighbors are amber white, and
+  bidirectional neighbors are violet white. Domain color remains in the local
+  halo, while unrelated nodes stay dark; transient hover never ignites the
+  committed selection layer.
+- Default Home has no committed node and persistently labels only one central
+  anchor per published domain. Relation labels appear only during preview or
+  committed focus. Graph labels contain the node title only; domain and
+  incoming/outgoing metadata belong in the evidence rail or dossier.
+- Every dossier state, including an unreviewed Gate 1 node, keeps a visible
+  `선택 해제` action beside its title. Escape provides the keyboard equivalent.
 - Homi is a small provenance mark, not a graph node.
 - Far zoom may simplify geometry but may not change semantic identity.
 
 ## Components
 
 - `SpatialStage`: one scene owner, transparent WebGL above the graphite field.
-- `LensRail`: Whole Vault, Knowledge Core, Project Frontiers, Agent Stewardship.
+- `LensRail`: Homi Vault, Knowledge Core, Project Frontiers, Agent Stewardship.
 - `EditorialRailToggle`: collapses explanatory copy into a narrow lens control rail without covering or resetting the spatial scene.
-- `EvidenceRail`: selected title, kind, domain, inbound/outbound summary, caveat.
+- `MapConsole`: snapshot, scale, Search, lenses, one-line interaction help, and
+  coverage without a marketing hero or CTA.
+- `MapIndex`: Home rail의 기본 지식 탐색기. Domain·kind facet은 노드 좌표와
+  카메라를 바꾸지 않고 해당 집합의 광량만 강조하며, 제목 검색과 전체
+  노드 목록은 기존 focus·dossier·실제 관계 선택으로 이어진다.
+- `DossierDock`: summary, insights, Homi relevance, relationship reasons,
+  caveats, evidence, and Safe Source entry without covering the plot.
+- `SafeSourceReader`: semantic public-safe source sections with exact Atlas
+  links and return-state restoration.
+- `InsightWorkbench`: matrix, node dossier, directed relation contexts, and
+  exact evidence modes.
 - `SearchCommand`: previews in the existing stage and commits only on selection.
 - `VaultStructure`: curated Obsidian-style folder hierarchy; location and classification only, never relationship strength.
 - `MobileEvidenceSheet`: tap/focus replacement for hover-only detail.
@@ -140,6 +165,9 @@ restrained English product chrome.
 - Do use actual directed references and disclose evidence gaps.
 - Do preserve the same coordinate field across every lens.
 - Do make hover stable: no camera, layout, URL, or label repack.
+- Do let the Home index orient the whole map before a committed dossier replaces
+  it; Search text filters the list, while domain and kind facets also illuminate
+  the same fixed graph.
 - Don't substitute mood for data.
 - Don't invent cross-project links to improve composition.
 - Don't mask a safe public title; admit it unchanged or exclude it with a reason.

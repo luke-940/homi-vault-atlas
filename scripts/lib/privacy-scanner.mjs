@@ -3,6 +3,8 @@ const patterns = Object.freeze([
   { id: "absolute-posix-path", pattern: /(?:^|[\s"'`(=:\[])\/(?:private|var|Volumes|tmp|opt|etc|workspace|srv|usr\/local)\/[^\s"'`<>\])}]*/g, legalExempt: false },
   { id: "windows-drive-path", pattern: /\b[A-Za-z]:\\(?:[^\\\r\n:*?"<>|]+\\)+[^\\\r\n:*?"<>|]*/g, legalExempt: false },
   { id: "unc-path", pattern: /\\\\[A-Za-z0-9._$ -]+\\[^\s"'<>|]+/g, legalExempt: false },
+  { id: "relative-project-file-path", pattern: /(?<![:/])\b[A-Za-z0-9._-]+(?:\/[A-Za-z0-9._~%+@=-]+)+\.(?:png|jpe?g|webp|gif|svg|tsv|csv|json|ya?ml|md|txt|pdf|mov|mp4|zip|html?|tsx?|jsx?|mjs|cjs)\b/gi, legalExempt: false },
+  { id: "relative-project-directory-path", pattern: /(?<![:/])\b(?:derived|manifests?|artifacts?|outputs?|workspaces?|screenshots?|contact-sheets?|blind-pairwise|mobile-crops|assets?|docs?|scripts?|src|tests?|node_modules)\/(?:[A-Za-z0-9._~%+@=-]+\/)+/gi, legalExempt: false },
   { id: "file-url", pattern: /file:\/\/(?:\/|localhost\/)/gi, legalExempt: true },
   { id: "email-address", pattern: /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, legalExempt: true },
   { id: "phone-number-kr", pattern: /(?<!\d)(?:(?:\+?82)[ .-]?)?0?1[016789][ .-]?\d{3,4}[ .-]?\d{4}(?!\d)/g, legalExempt: true },
@@ -21,20 +23,24 @@ const patterns = Object.freeze([
 ]);
 
 const operatingPatterns = Object.freeze([
-  { id: "operating-session-identifier", pattern: /\b(?:(?:session|thread|task)(?:[-_ ]?(?:id|name))?|model(?:[-_ ]?name)?|internal[-_ ]?(?:id|number))\b["']?\s*[:=#]\s*["']?[A-Za-z0-9][A-Za-z0-9._:-]*(?:\s+[A-Za-z0-9][A-Za-z0-9._:-]*)?|(?:모델명|내부\s*번호|(?:세션|스레드|태스크|작업)\s*ID)["']?\s*[:=#]\s*["']?[^\s"',}\]]+/gi, legalExempt: false },
+  { id: "operating-session-identifier", pattern: /\b(?:(?:session|thread|task)(?:[-_ ]?(?:id|name))?|internal[-_ ]?(?:id|number|model(?:[-_ ]?name)?))\b["']?\s*[:=#]\s*["']?[A-Za-z0-9][A-Za-z0-9._:-]*(?:\s+[A-Za-z0-9][A-Za-z0-9._:-]*)?|(?:내부\s*(?:번호|모델명)|(?:세션|스레드|태스크|작업)\s*ID)["']?\s*[:=#]\s*["']?[^\s"',}\]]+/gi, legalExempt: false },
   { id: "operating-control-identifier", pattern: /\b(?:batch|cursor|high[-_ ]?watermark|owner[-_ ]?lease|work[-_ ]?order)\b\s*[:=#]?\s*[A-Za-z0-9._:-]+/gi, legalExempt: false },
   { id: "operating-event-identifier", pattern: /\b(?:(?:run|release|event)[-_ ]?id|pull request|pr)\b["']?\s*[:=#]\s*["']?[A-Za-z0-9._:-]+|\b(?:REL|EVT)-[A-Z0-9-]{6,}\b/gi, legalExempt: false },
   { id: "operating-receipt-reference", pattern: /\b(?:receipt|source[-_ ]?hash)\b|영수증|소스\s*해시/gi, legalExempt: false },
   { id: "operating-process-metric", pattern: /\b(?:pid|port)\b\s*[:=#]?\s*\d{2,6}\b|(?:포트|프로세스\s*ID)\s*[:=#]?\s*\d{2,6}/gi, legalExempt: false },
-  { id: "operating-performance-metric", pattern: /\b(?:cost|latency|success[-_ ]?rate|agent[-_ ]?score|agent[-_ ]?rank)\b\s*[:=#]?\s*[\d.]+%?/gi, legalExempt: false },
+  { id: "operating-performance-metric", pattern: /\b(?:(?:agent|run|session|internal)[-_ ]?(?:cost|latency|success[-_ ]?rate|score|rank)|agent[-_ ]?(?:score|rank))\b\s*[:=#]?\s*[\d.]+%?|(?:운영\s*(?:비용|지연|성공률)|에이전트\s*(?:점수|순위))\s*[:=#]?\s*[\d.]+%?/gi, legalExempt: false },
   { id: "operating-private-state", pattern: /\b(?:current[-_ ]?(?:work|status)|online[-_ ]?status|thought[-_ ]?trace|command[-_ ]?history)\b|현재\s*작업|온라인\s*상태|사고\s*추적|명령\s*이력/gi, legalExempt: false },
+  { id: "operating-private-document-reference", pattern: /\b(?:Intellible\s+)?(?:Current Decisions Registry|Direction and Decision Ledger|Program Current State and Resume Capsule)\b/gi, legalExempt: false },
 ]);
 
 export const publicPrivacyPatternIds = Object.freeze(patterns.map(({ id }) => id));
 export const publicOperatingPatternIds = Object.freeze(operatingPatterns.map(({ id }) => id));
 
 function isAllowedToolingLiteral(id, value) {
-  if (id === "absolute-posix-path" || id.startsWith("operating-")) return true;
+  if (id === "absolute-posix-path"
+    || id === "relative-project-file-path"
+    || id === "relative-project-directory-path"
+    || id.startsWith("operating-")) return true;
   if (id === "file-url") return true;
   if (id === "ipv4-address") return value === "127.0.0.1";
   if (id === "ipv6-address") return value.toLowerCase() === "::1";
@@ -49,6 +55,18 @@ function isInsideCanonicalDigest(body, offset, length) {
   return end - start === 64;
 }
 
+function isInsideArtifactHash(body, offset, length, targetPath) {
+  if (!/(?:asset-manifest|build-receipt|knowledge|publication|graph)\.json$/i.test(targetPath)) {
+    return false;
+  }
+  let start = offset;
+  let end = offset + length;
+  while (start > 0 && /[a-f0-9]/i.test(body[start - 1])) start -= 1;
+  while (end < body.length && /[a-f0-9]/i.test(body[end])) end += 1;
+  const runLength = end - start;
+  return runLength >= 16 && runLength <= 64;
+}
+
 function scanDefinitions(definitions, text, { path = "unknown", legalText = false, toolingText = false } = {}) {
   const body = String(text);
   const findings = [];
@@ -59,7 +77,8 @@ function scanDefinitions(definitions, text, { path = "unknown", legalText = fals
     while ((match = definition.pattern.exec(body))) {
       if (toolingText && isAllowedToolingLiteral(definition.id, match[0])) continue;
       if (definition.id === "phone-number-kr"
-        && isInsideCanonicalDigest(body, match.index, match[0].length)) continue;
+        && (isInsideCanonicalDigest(body, match.index, match[0].length)
+          || isInsideArtifactHash(body, match.index, match[0].length, path))) continue;
       findings.push({
         id: definition.id,
         path,
