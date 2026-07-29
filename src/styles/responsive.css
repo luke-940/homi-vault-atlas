@@ -8,18 +8,6 @@
     padding-inline: 9px;
   }
 
-  .home-layout {
-    grid-template-columns: minmax(350px, 30%) minmax(0, 70%);
-  }
-
-  .editorial-rail {
-    padding-inline: 28px;
-  }
-
-  .editorial-rail__copy h1 {
-    font-size: clamp(34px, 4vw, 50px);
-  }
-
   .explore-stage-grid {
     grid-template-columns: minmax(0, 1fr) 270px;
   }
@@ -37,39 +25,6 @@
 
   .atlas-nav button span {
     display: none;
-  }
-
-  .home-layout {
-    display: block;
-    height: auto;
-    overflow: visible;
-  }
-
-  .editorial-rail {
-    display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
-    grid-template-rows: auto auto;
-    min-height: 470px;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .editorial-rail__copy {
-    align-self: center;
-  }
-
-  .lens-rail {
-    align-self: center;
-  }
-
-  .evidence-rail,
-  .coverage-ledger {
-    align-self: end;
-  }
-
-  .home-stage {
-    height: 72svh;
-    min-height: 600px;
   }
 
   .workspace-layout {
@@ -95,85 +50,10 @@
     overflow: hidden;
   }
 
-  .home-layout {
-    display: grid;
-    grid-template-columns: minmax(220px, 27%) minmax(0, 73%);
-    height: calc(100svh - var(--chrome-height));
-    overflow: hidden;
-  }
-
-  .editorial-rail {
-    display: block;
-    min-height: 0;
-    height: 100%;
-    padding: 12px 16px 10px;
-    overflow: hidden;
-    border-right: 1px solid var(--line);
-    border-bottom: 0;
-  }
-
-  .editorial-rail__copy h1 {
-    margin-top: 6px;
-    font-size: 24px;
-    line-height: 1.02;
-  }
-
-  .editorial-rail__copy .lede {
-    margin-top: 7px;
-    font-size: 12px;
-    line-height: 1.4;
-  }
-
-  .home-actions {
-    display: none;
-  }
-
-  .lens-rail {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 2px;
-    margin-top: 8px;
-  }
-
-  .lens-rail button {
-    grid-template-columns: 22px minmax(0, 1fr);
-    min-height: 38px;
-    padding: 4px 7px;
-  }
-
-  .lens-rail button > span {
-    width: 22px;
-    height: 22px;
-  }
-
-  .lens-rail button strong {
-    font-size: 12px;
-  }
-
-  .lens-rail button small {
-    font-size: 12px;
-  }
-
-  .editorial-rail > .evidence-rail {
-    display: none;
-  }
-
-  .editorial-rail > .coverage-ledger {
-    display: none;
-  }
-
-  .home-stage {
-    height: 100%;
-    min-height: 0;
-  }
-
   .cosmos-label {
     max-width: 150px;
   }
 
-  .cosmos-label small {
-    display: none;
-  }
 }
 
 @media (max-width: 820px) {
@@ -246,112 +126,6 @@
     color: var(--amber);
   }
 
-  .editorial-rail {
-    display: block;
-    min-height: auto;
-    padding: 12px 16px 8px;
-  }
-
-  .editorial-rail__toggle {
-    width: 44px;
-    min-width: 44px;
-    height: 44px;
-    min-height: 44px;
-    padding: 0;
-  }
-
-  .editorial-rail__copy {
-    padding-right: 50px;
-  }
-
-  .editorial-rail__copy h1 {
-    margin-top: 6px;
-    font-size: clamp(30px, 8.8vw, 34px);
-    line-height: 0.96;
-  }
-
-  .editorial-rail__copy .lede {
-    margin-top: 8px;
-    font-size: 12px;
-    line-height: 1.45;
-  }
-
-  .home-actions {
-    display: none;
-  }
-
-  .primary-action,
-  .quiet-action {
-    min-height: 44px;
-  }
-
-  .lens-rail {
-    display: flex;
-    gap: 4px;
-    margin-top: 10px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    scroll-snap-type: x mandatory;
-  }
-
-  .lens-rail::-webkit-scrollbar {
-    display: none;
-  }
-
-  .lens-rail button {
-    display: block;
-    min-width: 118px;
-    min-height: 44px;
-    padding: 8px 10px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-2);
-    scroll-snap-align: start;
-  }
-
-  .lens-rail button:last-child {
-    border-bottom: 1px solid var(--line);
-  }
-
-  .lens-rail button > span {
-    display: none;
-  }
-
-  .lens-rail button small {
-    display: none;
-  }
-
-  .lens-rail button:hover,
-  .lens-rail button[aria-current="step"] {
-    padding-left: 10px;
-    border-color: var(--amber-soft);
-  }
-
-  .editorial-rail > .evidence-rail,
-  .editorial-rail > .coverage-ledger {
-    display: none;
-  }
-
-  .mobile-home-meta {
-    display: grid;
-    gap: 18px;
-    padding: 6px 18px 30px;
-    background: rgba(11, 9, 13, 0.9);
-  }
-
-  .mobile-home-meta .evidence-rail,
-  .mobile-home-meta .coverage-ledger {
-    margin-top: 0;
-  }
-
-  .mobile-home-meta .coverage-ledger {
-    align-items: center;
-  }
-
-  .home-stage {
-    height: 440px;
-    min-height: 440px;
-  }
-
   .domain-legend {
     top: 14px;
     right: 14px;
@@ -389,17 +163,7 @@
   }
 
   .workspace-heading {
-    display: block;
-    margin-bottom: 18px;
-  }
-
-  .workspace-heading h1 {
-    font-size: 30px;
-  }
-
-  .workspace-heading .snapshot-chip,
-  .workspace-heading .view-switch {
-    margin-top: 16px;
+    margin-bottom: 12px;
   }
 
   .command-rail {
@@ -472,26 +236,12 @@
     border-left: 0;
   }
 
-  .node-index ul {
-    grid-template-columns: 1fr;
-  }
-
-  .node-index button {
-    min-height: 80px;
-  }
-
-  .analysis-grid,
   .agency-map {
     grid-template-columns: 1fr;
   }
 
-  .pair-lens,
   .agency-group {
     grid-column: 1;
-  }
-
-  .matrix-panel {
-    padding: 12px;
   }
 
   .trail-list > button {
@@ -532,40 +282,6 @@
     max-height: calc(100svh - 92px);
   }
 
-  .search-results > button {
-    grid-template-columns: 76px minmax(0, 1fr) 18px;
-  }
-
-  .search-results > button > small {
-    display: none;
-  }
-}
-
-@media (max-width: 360px) {
-  .editorial-rail {
-    padding-inline: 14px;
-  }
-
-  .editorial-rail__copy h1 {
-    font-size: 33px;
-  }
-
-  .home-actions {
-    display: grid;
-  }
-
-  .primary-action,
-  .quiet-action {
-    width: 100%;
-  }
-
-  .coverage-ledger {
-    display: grid;
-  }
-
-  .coverage-ledger dl {
-    margin-top: 12px;
-  }
 }
 
 @media (max-height: 760px) and (min-width: 821px) {
@@ -573,99 +289,4 @@
     --chrome-height: 54px;
   }
 
-  .editorial-rail {
-    gap: 12px;
-    padding-block: 24px 16px;
-  }
-
-  .editorial-rail__copy h1 {
-    font-size: clamp(32px, 3.2vw, 48px);
-  }
-
-  .editorial-rail__copy .lede {
-    margin-top: 12px;
-    line-height: 1.55;
-  }
-
-  .home-actions {
-    margin-top: 14px;
-  }
-
-  .lens-rail button {
-    min-height: 46px;
-    padding-block: 8px;
-  }
-}
-
-@media (max-height: 760px) and (min-width: 1180px) {
-  .home-layout--has-focus .editorial-rail {
-    grid-template-rows: auto auto auto auto;
-    align-content: start;
-    gap: 9px;
-    padding-block: 18px 13px;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
-    scrollbar-color: var(--line-strong) transparent;
-  }
-
-  .home-layout--has-focus .editorial-rail__copy .lede,
-  .home-layout--has-focus .home-actions .primary-action,
-  .home-layout--has-focus .home-actions .quiet-action:not(:last-child),
-  .home-layout--has-focus .lens-rail button small {
-    display: none;
-  }
-
-  .home-layout--has-focus .home-actions {
-    margin-top: 9px;
-  }
-
-  .home-layout--has-focus .home-actions .quiet-action:last-child {
-    min-height: 36px;
-  }
-
-  .home-layout--has-focus .lens-rail {
-    align-content: start;
-    gap: 3px;
-  }
-
-  .home-layout--has-focus .lens-rail button {
-    min-height: 38px;
-    padding-block: 5px;
-  }
-
-  .home-layout--has-focus .evidence-rail {
-    gap: 5px;
-    padding-top: 9px;
-  }
-
-  .home-layout--has-focus .evidence-relations button {
-    padding-block: 3px;
-  }
-
-  .home-layout--has-focus .coverage-ledger {
-    gap: 6px;
-    padding-top: 9px;
-  }
-}
-
-@media (max-width: 1179px) {
-  .home-layout--rail-collapsed {
-    display: block;
-  }
-
-  .editorial-rail--collapsed {
-    display: block;
-    min-height: 58px;
-    height: 58px;
-    padding: 10px 12px;
-  }
-
-  .editorial-rail--collapsed .editorial-rail__toggle {
-    position: static;
-  }
-
-  .editorial-rail--collapsed .lens-rail {
-    display: none;
-  }
 }

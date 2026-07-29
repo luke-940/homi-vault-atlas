@@ -3,6 +3,7 @@ import type {
   CosmosLens,
   GraphNode,
 } from "./contracts";
+import { relationSummary } from "./data";
 import type {
   AuthoredCamera,
   SemanticSpaceEdge,
@@ -110,7 +111,16 @@ function labelIds(
     : LENS_DOMAINS[lens];
   const chosen = new Set<string>();
   if (focusId && graph.nodeById.has(focusId)) chosen.add(focusId);
+  const focus = focusId ? graph.nodeById.get(focusId) : null;
+  if (focus) {
+    const relations = relationSummary(graph, focus);
+    for (const relation of [...relations.incoming, ...relations.outgoing]) {
+      if (chosen.size >= budget) break;
+      chosen.add(relation.node.id);
+    }
+  }
   for (const domain of requiredDomains) {
+    if (chosen.size >= budget) break;
     const anchor = pickDomainAnchor(graph, domain);
     if (anchor) chosen.add(anchor.id);
   }
@@ -130,12 +140,31 @@ function labelIds(
   return [...chosen];
 }
 
+export function interactionLabelIds(
+  graph: AtlasGraphModel,
+  baselineIds: string[],
+  activeId: string | null,
+  budget: number,
+) {
+  if (!activeId) return baselineIds.slice(0, budget);
+  const active = graph.nodeById.get(activeId);
+  if (!active) return baselineIds.slice(0, budget);
+  const chosen = new Set<string>([activeId]);
+  const relations = relationSummary(graph, active);
+  for (const relation of [...relations.incoming, ...relations.outgoing]) {
+    if (chosen.size >= budget) break;
+    chosen.add(relation.node.id);
+  }
+  return [...chosen];
+}
+
 export function buildSemanticScene({
   graph,
   lens,
   focusId,
   previewId,
   activeDomainsOverride,
+  activeKindsOverride,
   compact,
   mode,
   reducedMotion,
@@ -145,6 +174,7 @@ export function buildSemanticScene({
   focusId: string | null;
   previewId: string | null;
   activeDomainsOverride?: string[];
+  activeKindsOverride?: GraphNode["kind"][];
   compact: boolean;
   mode: "home" | "explore";
   reducedMotion: boolean;
@@ -183,6 +213,7 @@ export function buildSemanticScene({
     focusId,
     previewId,
     activeDomains: activeDomainsOverride ?? LENS_DOMAINS[lens],
+    activeKinds: activeKindsOverride ?? [],
     reducedMotion,
   };
 }

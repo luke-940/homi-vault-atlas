@@ -2,11 +2,13 @@ import type {
   AtlasAgencyV1,
   AtlasGraphModel,
   AtlasInventoryV1,
+  AtlasKnowledgeV1,
   AtlasRuntime,
   GraphDomain,
   GraphEdge,
   GraphNode,
   RawAtlasGraphV2,
+  RawAtlasKnowledgeV1,
 } from "./contracts";
 
 export const DOMAIN_COLORS: Record<string, string> = {
@@ -41,6 +43,70 @@ function assertInventory(value: unknown): asserts value is AtlasInventoryV1 {
   if (!inventory.reconciliation?.pass || inventory.unclassifiedCount !== 0) {
     throw new Error("Atlas inventory is not reconciled.");
   }
+}
+
+function assertKnowledge(
+  value: unknown,
+  graphProjectionDigest: string,
+): asserts value is RawAtlasKnowledgeV1 {
+  const knowledge = value as Partial<RawAtlasKnowledgeV1> | null;
+  if (!knowledge
+    || knowledge.schema !== "atlas.knowledge.v1"
+    || knowledge.encoding !== "string_table_v1") {
+    throw new Error("Atlas knowledge index v1 is missing.");
+  }
+  if (!Array.isArray(knowledge.dossiers)
+    || !Array.isArray(knowledge.strings)) {
+    throw new Error("Atlas knowledge index arrays are malformed.");
+  }
+  if (knowledge.graphProjectionDigest !== graphProjectionDigest) {
+    throw new Error("Atlas knowledge index is not bound to the active graph.");
+  }
+  if (knowledge.manifest?.dossierCount !== knowledge.dossiers.length
+    || knowledge.manifest?.documentCount !== knowledge.dossiers.length
+    || knowledge.manifest?.unclassifiedSectionCount !== 0) {
+    throw new Error("Atlas knowledge index manifest does not reconcile.");
+  }
+  const dossierIds = knowledge.dossiers.map((entry) => knowledge.strings?.[entry[0]]);
+  if (dossierIds.some((nodeId) => !nodeId)
+    || new Set(dossierIds).size !== dossierIds.length) {
+    throw new Error("Atlas knowledge dossier index does not reconcile.");
+  }
+}
+
+function decodeKnowledge(raw: RawAtlasKnowledgeV1): AtlasKnowledgeV1 {
+  const dossiers = raw.dossiers.map((entry) => {
+    const jsonSha256 = raw.strings[entry[5]];
+    const token = jsonSha256.slice(0, 20);
+    return {
+      nodeId: raw.strings[entry[0]],
+      title: raw.strings[entry[1]],
+      domain: raw.strings[entry[2]],
+      kind: raw.strings[entry[3]] as AtlasKnowledgeV1["dossiers"][number]["kind"],
+      readerSummary: raw.strings[entry[4]],
+      shardPath: `data/knowledge-shards/${token}.js`,
+      shardJsonSha256: jsonSha256,
+      shardJavascriptSha256: raw.strings[entry[6]],
+      shardBytes: entry[7],
+      publishedSectionCount: entry[8],
+      omittedSectionCount: entry[9],
+    };
+  });
+  return {
+    schema: raw.schema,
+    generatedAt: raw.generatedAt,
+    graphProjectionDigest: raw.graphProjectionDigest,
+    releaseEligible: raw.releaseEligible,
+    dossiers,
+    search: {
+      path: `data/search.${raw.search.token}.json`,
+      javascriptPath: `data/search.${raw.search.token}.js`,
+      jsonSha256: raw.search.jsonSha256,
+      javascriptSha256: raw.search.javascriptSha256,
+      bytes: raw.search.bytes,
+    },
+    manifest: raw.manifest,
+  };
 }
 
 export function decodeGraph(rawValue: unknown): AtlasGraphModel {
@@ -133,14 +199,18 @@ export function loadAtlasRuntime(): AtlasRuntime {
   const packs = window.__HOMI_ATLAS_V7_PACKS__;
   if (!packs) throw new Error("Atlas data packs are missing.");
   assertInventory(packs.inventory);
+  const graph = decodeGraph(packs.graph);
+  assertKnowledge(packs.knowledge, graph.manifest.projectionDigest);
+  const knowledge = decodeKnowledge(packs.knowledge);
   const agency = (packs.agency as AtlasAgencyV1 | undefined) ?? null;
   if (agency && agency.schema !== "atlas.agency.v1") {
     throw new Error("Atlas agency pack is malformed.");
   }
   return {
-    graph: decodeGraph(packs.graph),
+    graph,
     inventory: packs.inventory,
     agency,
+    knowledge,
   };
 }
 

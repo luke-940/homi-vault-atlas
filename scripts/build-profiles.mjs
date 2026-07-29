@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -9,6 +9,11 @@ import {
 import { agencyProjectionDigest } from "./lib/agency-contract.mjs";
 import { stableJson } from "./lib/data-model.mjs";
 import { scanOperatingExposure, scanPrivacyText } from "./lib/privacy-scanner.mjs";
+import {
+  auditKnowledgeArtifacts,
+  validateKnowledgeIndex,
+  validatePublicationV3,
+} from "./lib/knowledge-pack-contract.mjs";
 
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const sourceRoot = path.resolve(
@@ -18,6 +23,11 @@ const outputRoot = path.resolve(
   process.env.ATLAS_PROFILE_ROOT ?? path.join(projectDir, ".generated", "profiles"),
 );
 const promotePublicSafe = process.argv.includes("--promote-public-safe");
+const gate1Slice = process.env.ATLAS_GATE1_SLICE === "true";
+const reviewCandidate = process.env.ATLAS_REVIEW_CANDIDATE === "true";
+if (gate1Slice && reviewCandidate) {
+  throw new Error("Profile build cannot be both Gate 1 and Gate 2 review candidate.");
+}
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 
 function decodeGraph(graph) {
@@ -145,15 +155,77 @@ function buildMeaning(graph) {
   return base;
 }
 
-function buildPublication({ profile, graph, inventory, agency, meaning }) {
-  const semantic = { agency, graph, inventory, meaning };
+function shardDigestsFromKnowledge(knowledge) {
+  if (knowledge?.encoding === "string_table_v1") {
+    return knowledge.dossiers.map((row) => ({
+      nodeId: knowledge.strings[row[0]],
+      jsonSha256: knowledge.strings[row[5]],
+      javascriptSha256: knowledge.strings[row[6]],
+    }));
+  }
+  const rows = knowledge.knowledgeShardDigests
+    ?? knowledge.shards
+    ?? knowledge.manifest?.shards
+    ?? [];
+  return rows.map((row) => ({
+    nodeId: row.nodeId,
+    jsonSha256: row.jsonSha256 ?? row.digests?.json ?? row.json?.sha256,
+    javascriptSha256: row.javascriptSha256
+      ?? row.digests?.javascript
+      ?? row.javascript?.sha256,
+  }));
+}
+
+function searchDigestFromKnowledge(knowledge) {
+  if (knowledge?.encoding === "string_table_v1") {
+    return knowledge.search
+      ? {
+          jsonSha256: knowledge.search.jsonSha256,
+          javascriptSha256: knowledge.search.javascriptSha256,
+        }
+      : null;
+  }
+  const row = knowledge.search
+    ?? knowledge.searchDigest
+    ?? knowledge.searchIndex
+    ?? knowledge.manifest?.searchIndex;
+  if (!row) return null;
   return {
-    schema: "atlas.publication.v2",
+    jsonSha256: row.jsonSha256 ?? row.digests?.json ?? row.json?.sha256,
+    javascriptSha256: row.javascriptSha256
+      ?? row.digests?.javascript
+      ?? row.javascript?.sha256,
+  };
+}
+
+function buildPublication({
+  profile,
+  graph,
+  inventory,
+  agency,
+  meaning,
+  knowledge,
+  packDigests,
+  projectionReviewCandidate,
+}) {
+  const semantic = { agency, graph, inventory, meaning, knowledge };
+  const releaseEligible = knowledge.releaseEligible === true;
+  const blockers = releaseEligible
+    ? []
+    : [projectionReviewCandidate
+      ? "gate2_review_candidate_not_release_eligible"
+      : "gate1_vertical_slice_not_full_coverage"];
+  return {
+    schema: "atlas.publication.v3",
     profile: profile === "atlas-public" ? "public" : "owner",
     generatedAt: graph.generatedAt,
     publicSnapshotDigest: sha256(stableJson(semantic)),
     graphSchema: graph.schema,
-    publicationPolicy: "atlas.publication_policy.v2",
+    publicationPolicy: "atlas.publication_policy.v3",
+    packDigests,
+    knowledgeShardDigests: shardDigestsFromKnowledge(knowledge),
+    searchDigest: searchDigestFromKnowledge(knowledge),
+    releaseEligible,
     redactionCounts: {
       physical: inventory.physicalMarkdownCount,
       named: inventory.namedCount,
@@ -168,7 +240,7 @@ function buildPublication({ profile, graph, inventory, agency, meaning }) {
       "agency_role_projection",
       "semantic_connection_stories",
     ],
-    blockers: [],
+    blockers,
   };
 }
 
@@ -188,38 +260,125 @@ async function writePack(root, name, value, exactJsonText = null) {
   };
 }
 
+async function syncKnowledgeArtifacts(source, target, artifactAudit) {
+  if (source === target) return;
+  await rm(path.join(target, "knowledge-shards"), { recursive: true, force: true });
+  await mkdir(target, { recursive: true });
+  let targetEntries = [];
+  try {
+    targetEntries = await readdir(target);
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw error;
+  }
+  await Promise.all(targetEntries
+    .filter((name) => /^search\.[a-f0-9]{16,64}\.(?:json|js)$/.test(name))
+    .map((name) => rm(path.join(target, name), { force: true })));
+  for (const pair of [...artifactAudit.shardPairs, ...artifactAudit.searchPairs]) {
+    for (const relative of [pair.jsonPath, pair.javascriptPath]) {
+      const destination = path.join(target, relative);
+      await mkdir(path.dirname(destination), { recursive: true });
+      await cp(path.join(source, relative), destination);
+    }
+  }
+}
+
 const agencySource = JSON.parse(await readFile(path.join(projectDir, "public-safe", "data", "agency.json"), "utf8"));
 const receipt = {
-  schema: "atlas.dual_profile_projection.v2",
-  activityId: "REL-ATLAS-V7-8-20260728-01",
+  schema: "atlas.dual_profile_projection.v3",
+  activityId: "REL-ATLAS-V7-9-20260729-01",
+  gate1Slice,
+  reviewCandidate,
   profiles: {},
   pass: true,
 };
 for (const profile of ["public", "owner"]) {
   const atlasProfile = profile === "public" ? "atlas-public" : "atlas-owner";
+  // Public is the only release target. The local Owner companion deliberately
+  // remains non-release-eligible when its superset contains nodes outside the
+  // reviewed public corpus.
+  const projectionReviewCandidate = reviewCandidate || (!gate1Slice && profile === "owner");
   const graphPath = path.join(sourceRoot, profile, "data", "graph.json");
   const graphText = await readFile(graphPath, "utf8");
   const graph = JSON.parse(graphText);
-  const inventory = JSON.parse(await readFile(path.join(sourceRoot, profile, "data", "inventory.json"), "utf8"));
+  const inventoryText = await readFile(path.join(sourceRoot, profile, "data", "inventory.json"), "utf8");
+  const inventory = JSON.parse(inventoryText);
+  const knowledgePath = path.join(sourceRoot, profile, "data", "knowledge.json");
+  const knowledgeText = await readFile(knowledgePath, "utf8");
+  const knowledge = JSON.parse(knowledgeText);
   const agency = structuredClone(agencySource);
   agency.generatedAt = graph.generatedAt;
   agency.snapshot.asOfDate = graph.generatedAt.slice(0, 10);
   agency.projectionDigest = agencyProjectionDigest(agency);
   const meaning = buildMeaning(graph);
-  const publication = buildPublication({ profile: atlasProfile, graph, inventory, agency, meaning });
+  const knowledgeFailures = validateKnowledgeIndex(knowledge, graph, {
+    gate1: gate1Slice,
+    reviewCandidate: projectionReviewCandidate,
+    requireCompleteGraphCoverage: profile === "public",
+  });
+  if (knowledgeFailures.length) {
+    throw new Error(`${profile} knowledge projection blocked: ${knowledgeFailures.join(", ")}.`);
+  }
+  const sourceDataRoot = path.dirname(knowledgePath);
+  const knowledgeArtifactAudit = await auditKnowledgeArtifacts(sourceDataRoot, knowledge, {
+    graph,
+    scanPublic: profile === "public",
+  });
+  if (!knowledgeArtifactAudit.pass) {
+    throw new Error(`${profile} knowledge artifacts blocked: ${
+      knowledgeArtifactAudit.findings.map((item) => `${item.id}:${item.path}`).join(", ")
+    }.`);
+  }
+  const agencyText = `${JSON.stringify(agency, null, 2)}\n`;
+  const meaningText = `${JSON.stringify(meaning, null, 2)}\n`;
+  const packDigests = {
+    agency: sha256(agencyText),
+    graph: sha256(graphText),
+    inventory: sha256(inventoryText),
+    meaning: sha256(meaningText),
+    knowledge: sha256(knowledgeText),
+  };
+  const publication = buildPublication({
+    profile: atlasProfile,
+    graph,
+    inventory,
+    agency,
+    meaning,
+    knowledge,
+    packDigests,
+    projectionReviewCandidate,
+  });
+  const publicationFailures = validatePublicationV3(publication, {
+    agency,
+    graph,
+    inventory,
+    meaning,
+    knowledge,
+  }, {
+    gate1: gate1Slice,
+    reviewCandidate: projectionReviewCandidate,
+  });
+  if (publicationFailures.length) {
+    throw new Error(`${profile} publication projection blocked: ${publicationFailures.join(", ")}.`);
+  }
   const root = path.join(outputRoot, profile, "data");
+  await syncKnowledgeArtifacts(sourceDataRoot, root, knowledgeArtifactAudit);
   const bindings = {};
   bindings.graph = await writePack(root, "graph", graph, graphText);
-  bindings.inventory = await writePack(root, "inventory", inventory);
+  bindings.inventory = await writePack(root, "inventory", inventory, inventoryText);
   bindings.agency = await writePack(root, "agency", agency);
   bindings.meaning = await writePack(root, "meaning", meaning);
+  bindings.knowledge = await writePack(root, "knowledge", knowledge, knowledgeText);
   bindings.publication = await writePack(root, "publication", publication);
-  const dataText = await Promise.all(["graph", "inventory", "agency", "meaning", "publication"]
+  const dataText = await Promise.all(["graph", "inventory", "agency", "meaning", "knowledge", "publication"]
     .map((name) => readFile(path.join(root, `${name}.json`), "utf8")));
   const findings = profile === "public"
     ? dataText.flatMap((text, index) => [
-        ...scanPrivacyText(text, { path: `${["graph", "inventory", "agency", "meaning", "publication"][index]}.json` }),
-        ...scanOperatingExposure(text, { path: `${["graph", "inventory", "agency", "meaning", "publication"][index]}.json` }),
+        ...scanPrivacyText(text, {
+          path: `${["graph", "inventory", "agency", "meaning", "knowledge", "publication"][index]}.json`,
+        }),
+        ...scanOperatingExposure(text, {
+          path: `${["graph", "inventory", "agency", "meaning", "knowledge", "publication"][index]}.json`,
+        }),
       ])
     : [];
   if (findings.length) throw new Error(`Public projection blocked: ${JSON.stringify(findings)}.`);
@@ -232,19 +391,26 @@ for (const profile of ["public", "owner"]) {
       unclassified: inventory.unclassifiedCount,
     },
     meaningManifest: meaning.manifest,
+    knowledgeManifest: knowledge.manifest,
+    knowledgeArtifacts: {
+      shards: knowledgeArtifactAudit.shardPairs.length,
+      searchIndexes: knowledgeArtifactAudit.searchPairs.length,
+    },
     publicationDigest: publication.publicSnapshotDigest,
+    releaseEligible: publication.releaseEligible,
     bindings,
     privacyFindings: findings.length,
   };
 }
 if (promotePublicSafe) {
+  if (gate1Slice || reviewCandidate) {
+    throw new Error("Non-release profile bytes must never be promoted to public-safe.");
+  }
   const source = path.join(outputRoot, "public", "data");
   const target = path.join(projectDir, "public-safe", "data");
+  await rm(target, { recursive: true, force: true });
   await mkdir(target, { recursive: true });
-  for (const name of ["graph", "inventory", "agency", "meaning", "publication"]) {
-    await writeFile(path.join(target, `${name}.json`), await readFile(path.join(source, `${name}.json`)));
-    await writeFile(path.join(target, `${name}.js`), await readFile(path.join(source, `${name}.js`)));
-  }
+  await cp(source, target, { recursive: true });
 }
 await writeFile(
   path.join(outputRoot, "dual-profile-projection-receipt.json"),

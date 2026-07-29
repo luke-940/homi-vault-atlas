@@ -1,0 +1,155 @@
+{
+  "schema": "atlas.publication_policy.v3",
+  "version": "2026-07-29",
+  "mode": "actual_safe_names_and_reviewed_sections",
+  "publicRoots": [
+    "MOC",
+    "Papers",
+    "Signals",
+    "Rocket",
+    "Groot",
+    "Intelligence Layer"
+  ],
+  "ownerAdditionalRoots": [
+    "Research"
+  ],
+  "conditionalRoots": {
+    "Strategy": {
+      "admitKinds": [
+        "strategy_insight"
+      ],
+      "requiresResolvedReferenceToPrimaryRoot": true
+    }
+  },
+  "excludedPathSegments": [
+    "Archive",
+    "Backups",
+    "Templates",
+    "Console",
+    "Daily",
+    "Daily Radar",
+    "QA and Receipts",
+    "Operating Changelog",
+    "05 - Decisions and Changelog",
+    "06 - Decisions and Changelog",
+    "vault-backups"
+  ],
+  "excludedBasenames": [
+    "AGENTS",
+    "GROOT_HANDOFF",
+    "_Index",
+    "_README"
+  ],
+  "excludedTitlePatterns": [
+    "\\bcontrol[ _-]?tower\\b",
+    "\\bhandoff\\b",
+    "\\breceipt\\b",
+    "\\bwork[ _-]?order\\b",
+    "\\bowner[ _-]?lease\\b",
+    "\\bagent[ _-]?control[ _-]?plane\\b",
+    "\\bowner[ _-]?charter\\b",
+    "\\bsession[ _-]?topology\\b",
+    "\\bactivity[ _-]?(?:event|registry|index)\\b",
+    "\\bbatch\\b",
+    "\\bcursor\\b",
+    "(?:^|\\s)Understanding Packet$",
+    "(?:^|\\s)Observation Packet$",
+    "Internal Review Packet$",
+    "Current State and Resume Capsule$",
+    "Current Decisions Registry$",
+    "Creative Game Director Subagent Contract$",
+    "^Daily Radar Log$",
+    "Operating Changelog$",
+    "Active Surface QA Criteria$",
+    "^Domain Scouting QA Review",
+    "V2 Migration and Validation Plan$",
+    "^HIL Daily Radar Contract$",
+    "^(?:Obsidian Workbench|Computer Use|Tool Atlas)$",
+    "^P3-C-01-07-revision$",
+    "^Intellible P4-R2 Korean Copy and Microtypography Revision$",
+    "^Rocket Figure Registry$",
+    "^Rocket Meta Plan Overview\\.excalidraw$",
+    "^Rocket Shared Vault Retrieval Map$"
+  ],
+  "sectionTaxonomy": [
+    "knowledge",
+    "maintenance",
+    "sensitive",
+    "unsupported"
+  ],
+  "sectionHints": {
+    "maintenanceHeadingPatterns": [
+      "^(?:20\\d{2}-\\d{2}-\\d{2}\\s+)?(?:Batch|Routine Delta|Daily Delta|Daily Refresh|Cold Canary|Graph Reveal|운영 규칙)",
+      "(?:Closeout|QA Receipt|Source QA Receipt|Operating Log|Implementation Dependency|Current Preview Validation|Public Release Hold)"
+    ],
+    "maintenanceBlockPatterns": [
+      "\\bRetrieval trace\\b",
+      "\\b(?:no|zero)\\s+(?:Rocket|Groot|Daily|Atlas|HIL|Vault|Notion|graph\\.json)\\s+write\\b",
+      "\\b(?:Rocket|Groot|Daily|Atlas|HIL|Vault|Notion|graph\\.json)\\s+write\\s*0\\b",
+      "\\bimmediate fix\\b",
+      "\\brecall via this delta\\b",
+      "\\baffected[- ]layer deltas?\\b"
+    ],
+    "unsupportedHeadingPatterns": [
+      "(?:Visual Appendix|Asset Registry|Embedded Figure)"
+    ]
+  },
+  "metadata": {
+    "allowedKeys": [
+      "aliases",
+      "created",
+      "last_updated",
+      "source_type",
+      "status"
+    ],
+    "dateKeys": [
+      "created",
+      "last_updated"
+    ]
+  },
+  "display": {
+    "stripLeadingStrategyCode": true,
+    "stripLeadingBracketNumber": true,
+    "fallbackAliases": false
+  },
+  "reader": {
+    "allowedBlockTypes": [
+      "heading",
+      "paragraph",
+      "list",
+      "table",
+      "blockquote",
+      "callout",
+      "code"
+    ],
+    "allowedCalloutTypes": [
+      "abstract",
+      "check",
+      "caution",
+      "example",
+      "important",
+      "info",
+      "note",
+      "quote",
+      "summary",
+      "tip",
+      "warning"
+    ],
+    "allowRawHtml": false,
+    "allowImagesByDefault": false,
+    "maxShardBytes": 184320
+  },
+  "review": {
+    "required": true,
+    "reviewer": "atlas-builder",
+    "requiredDocumentStatus": "reviewed",
+    "releaseRequiresCompleteGraphCoverage": true
+  },
+  "reconciliation": {
+    "requireDocumentUnclassifiedZero": true,
+    "requireSectionUnclassifiedZero": true,
+    "requireClaimEvidenceCoverage": true,
+    "requireGraphDossierReaderOneToOne": true,
+    "aggregateMode": "none"
+  }
+}

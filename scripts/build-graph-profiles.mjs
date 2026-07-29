@@ -8,8 +8,11 @@ import {
 } from "./lib/atlas-graph-v2.mjs";
 import {
   classifyRecordsWithPublicationPolicy,
-  validatePublicationPolicyV2,
 } from "./lib/atlas-publication-policy-v2.mjs";
+import {
+  graphAdmissionPolicyFromV3,
+  validatePublicationPolicyV3,
+} from "./lib/atlas-publication-policy-v3.mjs";
 import { scanOperatingExposure, scanPrivacyText } from "./lib/privacy-scanner.mjs";
 import {
   buildResolvedLinkEdges,
@@ -24,7 +27,7 @@ const captureDir = path.resolve(
     ?? path.join(projectDir, ".generated", "capture"),
 );
 const capturePath = path.join(captureDir, "canonical-capture-manifest.json");
-const policyPath = path.join(projectDir, "public-safe", "atlas-publication-policy.v2.json");
+const policyPath = path.join(projectDir, "public-safe", "atlas-publication-policy.v3.json");
 const outputRoot = path.resolve(
   process.env.ATLAS_GENERATED_ROOT
     ?? path.join(projectDir, ".generated", "profiles"),
@@ -39,8 +42,9 @@ if (capture?.schema !== "atlas.canonical_capture.v1" || capture.pass !== true ||
 }
 const policyBody = await readFile(policyPath);
 const policy = JSON.parse(policyBody.toString("utf8"));
-const policyFailures = validatePublicationPolicyV2(policy);
+const policyFailures = validatePublicationPolicyV3(policy);
 if (policyFailures.length) throw new Error(`Graph v2 build blocked: invalid policy (${policyFailures.join(", ")}).`);
+const graphAdmissionPolicy = graphAdmissionPolicyFromV3(policy);
 
 const records = [];
 for (const file of capture.vault.files) {
@@ -63,8 +67,19 @@ if (records.length !== capture.vault.markdownCount) {
 const resolvedEdges = buildResolvedLinkEdges(records);
 
 function buildProfile(profile) {
-  const reconciliation = classifyRecordsWithPublicationPolicy(records, resolvedEdges, profile, policy);
+  const reconciliation = classifyRecordsWithPublicationPolicy(
+    records,
+    resolvedEdges,
+    profile,
+    graphAdmissionPolicy,
+  );
   reconciliation.inventory.generatedAt = capture.capturedAt;
+  reconciliation.inventory.publicationPolicy = {
+    schema: policy.schema,
+    version: policy.version,
+    mode: policy.mode,
+    aggregateMode: policy.reconciliation.aggregateMode,
+  };
   const graph = buildAtlasGraphV2({
     records: reconciliation.classified,
     resolvedEdges,
@@ -123,7 +138,7 @@ await writeFile(
 
 const receipt = {
   schema: "atlas.graph_v2_projection_receipt.v1",
-  activityId: "REL-ATLAS-V7-8-20260728-01",
+  activityId: "REL-ATLAS-V7-9-20260729-01",
   generatedAt: capture.capturedAt,
   inputs: {
     captureManifestSha256: sha256(captureBody),

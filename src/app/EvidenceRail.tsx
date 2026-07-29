@@ -1,46 +1,47 @@
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
-import { relationSummary } from "./data";
+import { DossierDock } from "../knowledge/DossierDock";
+import { useKnowledge } from "../knowledge/KnowledgeProvider";
 import { activeNode, useAtlas } from "./state";
 
-export function EvidenceRail({ compact = false }: { compact?: boolean }) {
+export function EvidenceRail({
+  compact = false,
+  surface = "home",
+}: {
+  compact?: boolean;
+  surface?: "home" | "explore" | "observe";
+}) {
   const atlas = useAtlas();
-  const node = activeNode(atlas);
-  if (!node) {
-    return (
-      <div className={`evidence-rail ${compact ? "evidence-rail--compact" : ""}`}>
-        <span>NODE EVIDENCE</span>
-        <p>노드에 손을 올리거나 키보드로 선택하면 실제 제목과 방향 관계가 나타납니다.</p>
-      </div>
-    );
+  const knowledge = useKnowledge();
+  if (atlas.route.focusId) {
+    return <DossierDock nodeId={atlas.route.focusId} compact={compact} surface={surface} />;
   }
-  const relation = relationSummary(atlas.runtime.graph, node);
+  const preview = activeNode(atlas);
+  const entry = preview ? knowledge.entry(preview.id) : null;
   return (
-    <div className={`evidence-rail ${compact ? "evidence-rail--compact" : ""}`}>
-      <span>{node.domain} · {node.kind.replaceAll("_", " ")}</span>
-      <strong>{node.label}</strong>
-      <dl>
-        <div><dt>Unique inbound</dt><dd>{node.gravity.toLocaleString("ko-KR")}</dd></div>
-        <div><dt>Occurrences</dt><dd>{node.occurrences.toLocaleString("ko-KR")}</dd></div>
-        <div><dt><ArrowDownLeft size={12} /> Incoming</dt><dd>{node.incoming.length}</dd></div>
-        <div><dt><ArrowUpRight size={12} /> Outgoing</dt><dd>{node.outgoing.length}</dd></div>
-      </dl>
-      {compact ? null : (
-        <div className="evidence-relations">
-          {relation.incoming.slice(0, 2).map((item) => (
-            <button type="button" key={`in-${item.edge.id}`} onClick={() => atlas.commitFocus(item.node.id)}>
-              <ArrowDownLeft aria-hidden="true" size={12} />
-              <span>{item.node.label}</span>
-            </button>
-          ))}
-          {relation.outgoing.slice(0, 2).map((item) => (
-            <button type="button" key={`out-${item.edge.id}`} onClick={() => atlas.commitFocus(item.node.id)}>
-              <ArrowUpRight aria-hidden="true" size={12} />
-              <span>{item.node.label}</span>
-            </button>
-          ))}
-        </div>
+    <section className={`map-preview${compact ? " map-preview--compact" : ""}`}>
+      {preview ? (
+        <>
+          <span>{preview.domain} · {preview.kind.replaceAll("_", " ")}</span>
+          <h2>{preview.label}</h2>
+          <p>{entry?.readerSummary ?? "이 노드는 아직 Atlas Builder의 심층 검수를 기다리고 있습니다."}</p>
+          <dl className="relation-metrics">
+            <div data-direction="incoming">
+              <dt><ArrowDownLeft size={12} /> Incoming</dt><dd>{preview.incoming.length}</dd>
+            </div>
+            <div data-direction="outgoing">
+              <dt><ArrowUpRight size={12} /> Outgoing</dt><dd>{preview.outgoing.length}</dd>
+            </div>
+          </dl>
+          {!entry
+            ? <small>검수 대기 · releaseEligible=false</small>
+            : <small>선택하면 dossier를 엽니다.</small>}
+        </>
+      ) : (
+        <>
+          <span>KNOWLEDGE MAP</span>
+          <p>노드에 손을 올리면 이름과 실제 방향 관계가 드러납니다. 선택하면 근거와 원문을 읽을 수 있습니다.</p>
+        </>
       )}
-    </div>
+    </section>
   );
 }
-

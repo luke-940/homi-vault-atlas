@@ -47,7 +47,7 @@ position, radius, glow, or default visibility.
 
 ## One space, four lenses
 
-1. **Whole Vault** — all admitted nodes and a quiet field of actual references.
+1. **Homi Vault** (`whole-vault`) — all admitted nodes and a quiet field of actual references.
 2. **Knowledge Core** — MOC, Papers, Signals, and their cross-domain evidence.
 3. **Project Frontiers** — Rocket, Groot, Intelligence Layer, and honest gaps.
 4. **Agent Stewardship** — ownership and circulation with separate grammar.

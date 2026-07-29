@@ -1,7 +1,7 @@
 {
   "schema": "atlas.replacement_ledger.v1",
-  "activity": "REL-ATLAS-V7-8-20260728-01",
-  "baseline": "e7f8b5a8fb3884ff2966876a1edc7e31a4091659",
+  "activity": "REL-ATLAS-V7-9-20260729-01",
+  "baseline": "8881bdb4f6ab23a3be0f98ab29e092d73e2a7f6a",
   "entries": [
     {
       "newResponsibility": "atlas.graph.v2 compiler and compact wire contract",
@@ -48,7 +48,7 @@
       }
     },
     {
-      "newResponsibility": "curated Vault hierarchy and unified Explore index views",
+      "newResponsibility": "curated Vault hierarchy and shared graph index",
       "replaces": [
         "inline Explore NodeList as the only non-graph orientation surface",
         "flat domain counts as a surrogate for directory structure"
@@ -67,18 +67,19 @@
         "activeContract": [
           "atlas.graph.v2.structure",
           "src/app/ExploreIndexes.tsx",
+          "src/app/home/HomeNavigator.tsx",
           "view=structure URL state"
         ],
         "verification": "tests-public/graph-projection-contract.test.ts; tests-public/navigation-contract.test.ts"
       }
     },
     {
-      "newResponsibility": "collapsible editorial rail with persistent lens controls",
+      "newResponsibility": "collapsible and resizable presentation-only Map Console rail",
       "replaces": [
         "permanently fixed 27 percent Home explanation column"
       ],
       "preserves": [
-        "Home editorial copy",
+        "Map Console information",
         "lens navigation",
         "evidence and coverage",
         "spatial scene state"
@@ -86,14 +87,179 @@
       "removalEvidence": {
         "status": "completed",
         "deleted": [
-          "fixed-only Home rail behavior"
+          "fixed-only Home rail behavior",
+          "Home selectors from workspace.css, knowledge.css and responsive.css"
         ],
         "activeContract": [
           "src/app/Home.tsx",
-          "src/styles/workspace.css",
-          "src/styles/responsive.css"
+          "src/app/home/HomeRail.tsx",
+          "src/app/home/useResizableRail.ts",
+          "src/styles/home.css"
         ],
-        "verification": "browser geometry and interaction readback at 1440x920 and 390x844"
+        "verification": "pointer and keyboard resize; route, focus and camera identity stable; browser geometry at 1440x920 and 390x844"
+      }
+    },
+    {
+      "newResponsibility": "Map Console and evidence-bound dossier dock",
+      "replaces": [
+        "marketing-oriented Home editorial hero and Explore metric-only inspector",
+        "src/app/EvidenceRail.tsx metric and neighbor surface"
+      ],
+      "preserves": [
+        "v7.8 rail footprint",
+        "lens navigation",
+        "stable Three.js stage",
+        "URL-backed committed focus"
+      ],
+      "removalEvidence": {
+        "status": "completed",
+        "deleted": [
+          "marketing Home hero responsibility from src/app/Home.tsx",
+          "Home component selectors from shared CSS modules",
+          "generic MAP PREVIEW empty state as the only default knowledge entry",
+          "always-visible reviewed brief list from the Home default state"
+        ],
+        "activeContract": [
+          "src/app/home/HomeRail.tsx",
+          "src/knowledge/KnowledgeProvider.tsx",
+          "src/knowledge/DossierDock.tsx",
+          "src/styles/home.css",
+          "docs/V7.9-ADVANCED-INTERACTIVE-CONTRACT.md"
+        ],
+        "verification": "Gate 1 Home quiet default, hover preview with actual directed neighbors, resize, committed dossier and three dossier tabs"
+      }
+    },
+    {
+      "newResponsibility": "Home Map Index and fixed-space facet illumination",
+      "replaces": [
+        "passive About and interaction notes in the Home default rail",
+        "duplicated Explore-only node list surface"
+      ],
+      "preserves": [
+        "v7.8 spatial coordinates and camera",
+        "shared preview and committed focus",
+        "actual directed relation highlighting",
+        "dossier rail after selection"
+      ],
+      "removalEvidence": {
+        "status": "completed",
+        "deleted": [
+          "Home default About and map-note blocks",
+          "monolithic mobile draw responsibility"
+        ],
+        "activeContract": [
+          "src/app/home/HomeNavigator.tsx",
+          "src/app/home/HomeRail.tsx",
+          "src/app/ExploreIndexes.tsx",
+          "src/app/mobile-graph-painter.ts",
+          "src/graph/semantic-space-engine.ts",
+          "docs/V7.9-ADVANCED-INTERACTIVE-CONTRACT.md"
+        ],
+        "verification": "Home Domain/kind highlight preserves camera and geometry; list preview preserves URL; list commit opens existing dossier and factual relations"
+      }
+    },
+    {
+      "newResponsibility": "section-aware knowledge publication and Safe Source Reader",
+      "replaces": [
+        "whole-file wikilink regex as graph occurrence source",
+        "title-only public admission",
+        "unused automatic meaning summaries"
+      ],
+      "preserves": [
+        "actual directed references",
+        "deterministic public projection",
+        "public privacy boundary"
+      ],
+      "removalEvidence": {
+        "status": "in_progress",
+        "deleted": [],
+        "activeContract": [
+          "scripts/lib/atlas-publication-policy-v3.mjs",
+          "scripts/lib/knowledge-publication.mjs",
+          "docs/V7.9-KNOWLEDGE-PUBLICATION-CONTRACT.md"
+        ],
+        "verification": "Gate 1 occurrence, claim-evidence, shard, and Reader contract tests"
+      }
+    },
+    {
+      "newResponsibility": "Observe Insight Workbench",
+      "replaces": [
+        "empty directional pair panel",
+        "bare edge occurrence list without context"
+      ],
+      "preserves": [
+        "directional domain matrix",
+        "exact edge identity",
+        "Explore path navigation"
+      ],
+      "removalEvidence": {
+        "status": "completed",
+        "deleted": [
+          "Observe implementation from src/app/AnalysisViews.tsx",
+          "disabled Observe mode switch",
+          "Observe selectors from shared CSS modules"
+        ],
+        "activeContract": [
+          "src/app/observe/Observe.tsx",
+          "src/app/observe/ObserveGlobal.tsx",
+          "src/app/observe/ObserveNode.tsx",
+          "src/app/observe/ObserveRelation.tsx",
+          "src/app/observe/ObserveEvidence.tsx",
+          "src/styles/observe.css",
+          "docs/V7.9-ADVANCED-INTERACTIVE-CONTRACT.md"
+        ],
+        "verification": "Gate 1 Global, Node, Relation and Evidence modes create distinct data-bound DOM and routes"
+      }
+    },
+    {
+      "newResponsibility": "executable architecture erosion contract",
+      "replaces": [
+        "green tests as the only structure signal",
+        "implicit module ownership"
+      ],
+      "preserves": [
+        "v7.8 renderer behavior",
+        "release build commands",
+        "human review authority"
+      ],
+      "removalEvidence": {
+        "status": "completed",
+        "deleted": [
+          "Observe responsibility from miscellaneous AnalysisViews",
+          "cross-module Home and Observe selector ownership"
+        ],
+        "activeContract": [
+          "ARCHITECTURE.md",
+          "scripts/check-architecture.mjs",
+          "docs/architecture-debt-ratchet.json"
+        ],
+        "verification": "npm run architecture; complexity mass, module line, selector ownership and debt ratchet checks"
+      }
+    },
+    {
+      "newResponsibility": "shape-preserving committed selection light",
+      "replaces": [
+        "selection communicated only by darkened neighbors and an overloaded gravity halo"
+      ],
+      "preserves": [
+        "node kind geometry",
+        "domain color",
+        "gravity halo",
+        "fixed graph coordinates",
+        "actual directed relation highlighting"
+      ],
+      "removalEvidence": {
+        "status": "completed",
+        "deleted": [
+          "selection-only reliance on the gravity halo"
+        ],
+        "activeContract": [
+          "src/graph/semantic-space-selection-light.ts",
+          "src/graph/semantic-space-engine.ts",
+          "DESIGN.md",
+          "docs/V7.9-ADVANCED-INTERACTIVE-CONTRACT.md"
+        ],
+        "verification": "focused renderer contract proves one committed self-light, actual-neighbor companion light, unrelated-node darkness, and unchanged node geometry"
       }
     }
   ]
