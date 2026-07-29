@@ -49,6 +49,7 @@
 
 .observe-mode-deck small {
   overflow: hidden;
+  font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -171,6 +172,10 @@
   display: grid;
   gap: 5px;
   min-width: 0;
+}
+
+.pair-lens__route small {
+  font-size: 12px;
 }
 
 .pair-lens__route strong,
