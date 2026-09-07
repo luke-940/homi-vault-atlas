@@ -139,7 +139,10 @@ jobs:
           '
           gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" -f "ref=refs/tags/${RELEASE_TAG}" -f "sha=${SOURCE_COMMIT}" >/dev/null
           gh release create "${RELEASE_TAG}" artifacts/release/* --verify-tag --target "${SOURCE_COMMIT}" --title "Homi Atlas ${RELEASE_TAG}" --notes-file release-notes.md --draft
-          release_id="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" --jq '.id')"
+          release_id="$(gh release view "${RELEASE_TAG}" --json databaseId --jq '.databaseId')"
+          [[ "${release_id}" =~ ^[0-9]+$ ]]
+          [[ "$(gh api "repos/${GITHUB_REPOSITORY}/releases/${release_id}" --jq '.tag_name')" == "${RELEASE_TAG}" ]]
+          [[ "$(gh api "repos/${GITHUB_REPOSITORY}/releases/${release_id}" --jq '.draft')" == "true" ]]
           echo "release_id=${release_id}" >> "${GITHUB_OUTPUT}"
           gh release download "${RELEASE_TAG}" --dir artifacts/release-readback
       - name: Verify bytes downloaded from the draft Release
@@ -219,6 +222,7 @@ jobs:
           set -euo pipefail
           [[ "${RELEASE_ID}" =~ ^[0-9]+$ ]]
           [[ "$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}" --jq '.object.sha')" == "${SOURCE_COMMIT}" ]]
-          [[ "$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" --jq '.id')" == "${RELEASE_ID}" ]]
+          [[ "$(gh release view "${RELEASE_TAG}" --json databaseId --jq '.databaseId')" == "${RELEASE_ID}" ]]
+          [[ "$(gh api "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" --jq '.draft')" == "true" ]]
           gh release edit "${RELEASE_TAG}" --draft=false --latest
           gh api "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" --jq '{id,tag_name,draft,html_url}'
