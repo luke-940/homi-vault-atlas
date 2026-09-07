@@ -27,12 +27,15 @@ const waterFragment = `precision highp float; varying vec3 vWorld; uniform float
 float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1)),f.x),f.y);}
 float swell(vec2 p){return noise(p*.38)*.5+noise(p*1.5)*.25+noise(p*5.0)*.125;}
-void main(){vec2 p=vWorld.xz;float t=uTime*.05;float n=swell(p+vec2(t,-t*.7));float a=swell(p+vec2(.05,0)+vec2(t,-t*.7));float b=swell(p+vec2(0,.05)+vec2(t,-t*.7));vec3 normal=normalize(vec3((n-a)*8.,1.,(n-b)*8.));vec3 V=normalize(uCamera-vWorld);float fr=pow(1.-max(dot(V,normal),0.),3.);vec3 col=mix(vec3(.018,.13,.15),vec3(.065,.30,.31),n);col=mix(col,vec3(.29,.42,.40),fr*.5);vec3 H=normalize(normalize(vec3(-.6,1.,-.4))+V);float s=pow(max(dot(normal,H),0.),150.);col+=vec3(.65,.7,.51)*s*.25;float lines=pow(max(0.,sin(p.x*6.+p.y*2.+n*18.+t*3.)),20.);col+=vec3(.08,.19,.18)*lines*.04;float fog=1.-exp(-length(p)*.012);col=mix(col,vec3(.035,.14,.16),fog);gl_FragColor=vec4(col,1.);}`;
+void main(){vec2 p=vWorld.xz;float t=uTime*.05;float n=swell(p+vec2(t,-t*.7));float a=swell(p+vec2(.05,0)+vec2(t,-t*.7));float b=swell(p+vec2(0,.05)+vec2(t,-t*.7));vec3 normal=normalize(vec3((n-a)*8.,1.,(n-b)*8.));vec3 V=normalize(uCamera-vWorld);float fr=pow(1.-max(dot(V,normal),0.),3.);vec3 col=mix(vec3(.015,.10,.12),vec3(.045,.22,.23),n);col=mix(col,vec3(.29,.42,.40),fr*.5);vec3 H=normalize(normalize(vec3(-.6,1.,-.4))+V);float s=pow(max(dot(normal,H),0.),150.);col+=vec3(.65,.7,.51)*s*.13;float lines=pow(max(0.,sin(p.x*6.+p.y*2.+n*18.+t*3.)),20.);col+=vec3(.08,.19,.18)*lines*.04;float fog=1.-exp(-length(p)*.012);col=mix(col,vec3(.035,.14,.16),fog);gl_FragColor=vec4(col,1.);
+#include <tonemapping_fragment>
+#include <colorspace_fragment>
+}`;
 
 export class AtlasWorld {
   renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(37, 1, 0.1, 220);
+  camera = new THREE.PerspectiveCamera(37, 1, 0.1, 600);
   controls: OrbitControls;
   model: THREE.Group | null = null;
   private observer: ResizeObserver;
@@ -57,6 +60,8 @@ export class AtlasWorld {
   private lastRender = 0;
   private contextLost = false;
   private samples: number[] = [];
+  private activeProject?: ProjectId;
+  private mobileViewport = innerWidth <= 800;
   private options: Options;
   private host: HTMLElement;
   private sun: THREE.DirectionalLight;
@@ -70,7 +75,7 @@ export class AtlasWorld {
     });
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.6));
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 0.95;
     this.renderer.setClearColor("#0b343b");
@@ -105,7 +110,7 @@ export class AtlasWorld {
     const fill = new THREE.DirectionalLight("#88c9d0", 0.65);
     fill.position.set(18, 9, 16);
     this.scene.add(fill);
-    const waterGeometry = new THREE.PlaneGeometry(180, 180, 96, 96);
+    const waterGeometry = new THREE.PlaneGeometry(800, 800, 96, 96);
     waterGeometry.rotateX(-Math.PI / 2);
     this.water = new THREE.Mesh(
       waterGeometry,
@@ -121,9 +126,9 @@ export class AtlasWorld {
     this.water.position.y = -0.25;
     this.scene.add(this.water);
     this.camera.position.set(
-      host.clientWidth < 700 ? 23 : 12,
-      host.clientWidth < 700 ? 30 : 18,
-      host.clientWidth < 700 ? 35 : 24,
+      this.mobileViewport ? 23 : 12,
+      this.mobileViewport ? 30 : 18,
+      this.mobileViewport ? 35 : 24,
     );
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.target.set(-1, 0.5, 2);
@@ -186,6 +191,11 @@ export class AtlasWorld {
   private resize() {
     const { width, height } = this.host.getBoundingClientRect();
     if (!width || !height) return;
+    const mobile = innerWidth <= 800;
+    if (mobile !== this.mobileViewport) {
+      this.mobileViewport = mobile;
+      this.focus(this.activeProject);
+    }
     this.renderer.setSize(width, height, false);
     this.camera.aspect = width / height;
     if (width > 900) {
@@ -202,6 +212,10 @@ export class AtlasWorld {
     }
     this.camera.updateProjectionMatrix();
     this.composer?.setSize(width, height);
+    if (this.composer && this.model && !this.contextLost) {
+      if (this.quality === "high") this.composer.render();
+      else this.renderer.render(this.scene, this.camera);
+    }
   }
   private onDown = (e: PointerEvent) => {
     this.pointerDown = { x: e.clientX, y: e.clientY };
@@ -239,8 +253,11 @@ export class AtlasWorld {
     );
   };
   focus(id?: ProjectId) {
+    this.activeProject = id;
+    this.camera.fov = !id && this.mobileViewport ? 48 : 37;
+    this.camera.updateProjectionMatrix();
     if (!id) {
-      const mobile = this.host.clientWidth < 700;
+      const mobile = this.mobileViewport;
       this.destination = {
         position: new THREE.Vector3(
           mobile ? 23 : 12,
@@ -268,6 +285,7 @@ export class AtlasWorld {
     }
   }
   setReduced(value: boolean) {
+    this.samples = [];
     this.reduced = value;
     if (value && this.destination) {
       this.camera.position.copy(this.destination.position);
@@ -276,9 +294,11 @@ export class AtlasWorld {
     }
   }
   setPaused(value: boolean) {
+    this.samples = [];
     this.paused = value;
   }
   setQuality(value: "high" | "low") {
+    this.samples = [];
     this.quality = value;
     this.renderer.setPixelRatio(
       value === "low" ? 1 : Math.min(devicePixelRatio, 1.6),
@@ -361,6 +381,11 @@ export class AtlasWorld {
       camera: this.camera.position.toArray(),
       target: this.controls.target.toArray(),
     };
+    if (Math.floor(now / 1000) !== Math.floor((now - renderMs) / 1000)) {
+      this.renderer.domElement.dataset.runtime = JSON.stringify(
+        (window as any).__ATLAS_DIAGNOSTICS__,
+      );
+    }
   };
   private disposeObject(o: THREE.Object3D) {
     const materials = new Set<THREE.Material>(),

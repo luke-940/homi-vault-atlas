@@ -88,9 +88,8 @@ function useDialog(
     if (!open || !ref.current) return;
     const previous = document.activeElement as HTMLElement;
     const root = ref.current;
-    const first = root.querySelector<HTMLElement>(
-      'input,button,a[href],[tabindex="0"]',
-    );
+    const first = root.querySelector<HTMLElement>("input") ||
+      root.querySelector<HTMLElement>('button,a[href],[tabindex="0"]');
     first?.focus();
     const key = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -117,7 +116,7 @@ function useDialog(
     document.addEventListener("keydown", key);
     return () => {
       document.removeEventListener("keydown", key);
-      previous?.focus();
+      requestAnimationFrame(() => previous?.isConnected && previous.focus());
     };
   }, [open]);
 }
@@ -303,7 +302,9 @@ export default function App() {
               for (const [key, p] of Object.entries(positions)) {
                 const el = labels.current[key];
                 if (el) {
-                  el.style.transform = `translate(${p.x}px,${p.y}px) translate(-50%,0)`;
+                  el.style.left = `clamp(88px, ${p.x}px, calc(100% - 88px))`;
+                  el.style.top = `clamp(0px, ${p.y}px, calc(100% - var(--label-floor, 240px)))`;
+                  el.style.transform = "translateX(-50%)";
                   el.style.visibility = p.visible ? "visible" : "hidden";
                 }
               }
@@ -340,6 +341,12 @@ export default function App() {
   useEffect(() => {
     world.current?.setPaused(searchOpen || Boolean(record));
   }, [searchOpen, record]);
+  useEffect(() => {
+    if (error) {
+      world.current?.dispose();
+      world.current = null;
+    }
+  }, [error]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (
@@ -494,6 +501,7 @@ export default function App() {
                     <a className="button" href="#/projects">
                       프로젝트 둘러보기 <ArrowRight size={16} />
                     </a>
+                    <a className="fallback-reading-link" href="./reading.html">글로만 읽기</a>
                   </div>
                 </>
               ) : (
@@ -505,7 +513,7 @@ export default function App() {
               )}
             </div>
           )}
-          {isWorld && (
+          {isWorld && !error && (
             <section className="world-intro">
               <div className="overline">
                 <span /> A WORLD OF IDEAS & MAKING
@@ -525,7 +533,7 @@ export default function App() {
               </a>
             </section>
           )}
-          {isWorld && (
+          {isWorld && !error && (
             <section
               className="discovery-dock"
               aria-label="여기서 시작해 보세요"
@@ -580,7 +588,7 @@ export default function App() {
               <ArrowLeft size={16} /> 전체 세계
             </a>
           )}
-          <div className="world-tools">
+          {!error && ready && <div className="world-tools">
             <span className="interaction-hint">
               드래그해 둘러보기 · 스크롤로 가까이
             </span>
@@ -616,7 +624,8 @@ export default function App() {
               </button>
             </div>
           </div>
-          {settingsOpen && (
+          }
+          {settingsOpen && !error && (
             <div className="settings">
               <strong>편안한 탐험</strong>
               <button
@@ -639,7 +648,7 @@ export default function App() {
               </p>
             </div>
           )}
-          {isWorld && (
+          {isWorld && !error && (
             <footer className="world-footer">
               <span>HOMI ATLAS · VOL. 08</span>
               <span>

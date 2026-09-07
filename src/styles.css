@@ -2028,3 +2028,14 @@ img {
   color: #d2ddc6 !important;
   font-size: 10px !important;
 }
+
+@media (max-width: 800px) {
+  .world-labels { --label-floor: 245px; }
+}
+@media (max-width: 500px) {
+  .world-labels { --label-floor: 215px; }
+}
+@media (min-width: 1600px) {
+  .world-labels { --label-floor: 255px; }
+}
+.fallback-reading-link { display: block; font-size: 12px; margin-top: 18px; text-decoration: underline; text-underline-offset: 4px; }
