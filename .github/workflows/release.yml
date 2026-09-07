@@ -1,0 +1,224 @@
+name: Release and deploy the same Atlas artifact
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Version 8 release tag matching package.json
+        type: string
+        required: true
+        default: v8.0.0
+      reviewed_commit:
+        description: Full main commit SHA reviewed for this release
+        type: string
+        required: true
+
+permissions: {}
+
+concurrency:
+  group: atlas-release-and-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    outputs:
+      commit: ${{ steps.identity.outputs.commit }}
+      tree: ${{ steps.identity.outputs.tree }}
+      tag: ${{ steps.identity.outputs.tag }}
+      package_name: ${{ steps.identity.outputs.package_name }}
+      artifact_digest: ${{ steps.upload.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Bind the reviewed main commit and new version
+        id: identity
+        env:
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${REVIEWED_COMMIT}" =~ ^[0-9a-f]{40}$ ]]
+          [[ "${REVIEWED_COMMIT}" == "${GITHUB_SHA}" ]]
+          [[ "$(git rev-parse HEAD)" == "${GITHUB_SHA}" ]]
+          [[ "${RELEASE_TAG}" =~ ^v8\.[0-9]+\.[0-9]+(-[a-zA-Z0-9][a-zA-Z0-9.-]*)?$ ]]
+          [[ "${RELEASE_TAG}" == "v$(node -p 'JSON.parse(require("fs").readFileSync("package.json","utf8")).version')" ]]
+          {
+            echo "commit=${GITHUB_SHA}"
+            echo "tree=$(git rev-parse 'HEAD^{tree}')"
+            echo "tag=${RELEASE_TAG}"
+            echo "package_name=atlas-release-${GITHUB_SHA}-${GITHUB_RUN_ID}"
+          } >> "${GITHUB_OUTPUT}"
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run validate
+      - run: npm test
+      - name: Build exactly once
+        run: npm run build
+      - name: Package the built directory without rebuilding
+        env:
+          RELEASE_TAG: ${{ steps.identity.outputs.tag }}
+          SOURCE_TREE: ${{ steps.identity.outputs.tree }}
+        run: |
+          node scripts/verify-artifact.mjs --dist dist --commit "${GITHUB_SHA}" --tag "${RELEASE_TAG}"
+          node scripts/package-release.mjs --dist dist --out artifacts/release --commit "${GITHUB_SHA}" --tag "${RELEASE_TAG}"
+          node scripts/verify-artifact.mjs --package artifacts/release --commit "${GITHUB_SHA}" --tree "${SOURCE_TREE}" --tag "${RELEASE_TAG}"
+      - name: Upload only the verified release package
+        id: upload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ steps.identity.outputs.package_name }}
+          path: artifacts/release
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload the same unchanged dist for Pages
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: dist
+
+  stage-release:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      actions: read
+    outputs:
+      release_id: ${{ steps.stage.outputs.release_id }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ needs.build.outputs.commit }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ needs.build.outputs.package_name }}
+          path: artifacts/release
+      - name: Recheck package commit, tree, and every byte
+        env:
+          SOURCE_COMMIT: ${{ needs.build.outputs.commit }}
+          SOURCE_TREE: ${{ needs.build.outputs.tree }}
+          RELEASE_TAG: ${{ needs.build.outputs.tag }}
+        run: node scripts/verify-artifact.mjs --package artifacts/release --commit "${SOURCE_COMMIT}" --tree "${SOURCE_TREE}" --tag "${RELEASE_TAG}"
+      - name: Create a new draft release without replacing an existing tag
+        id: stage
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SOURCE_COMMIT: ${{ needs.build.outputs.commit }}
+          RELEASE_TAG: ${{ needs.build.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}" >/dev/null 2>&1; then
+            echo 'An existing tag will not be replaced.' >&2
+            exit 1
+          fi
+          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+            echo 'An existing release will not be replaced.' >&2
+            exit 1
+          fi
+          node --input-type=module -e '
+            import { readFileSync, writeFileSync } from "node:fs";
+            const binding = JSON.parse(readFileSync("artifacts/release/release-binding.json", "utf8"));
+            writeFileSync("release-notes.md", `Homi Atlas ${binding.version}\n\nSource commit: ${binding.sourceCommit}\n\nArtifact tree SHA-256: ${binding.artifactTreeSha256}\n\nRelease and Pages use the same verified static files.\n`);
+          '
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" -f "ref=refs/tags/${RELEASE_TAG}" -f "sha=${SOURCE_COMMIT}" >/dev/null
+          gh release create "${RELEASE_TAG}" artifacts/release/* --verify-tag --target "${SOURCE_COMMIT}" --title "Homi Atlas ${RELEASE_TAG}" --notes-file release-notes.md --draft
+          release_id="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" --jq '.id')"
+          echo "release_id=${release_id}" >> "${GITHUB_OUTPUT}"
+          gh release download "${RELEASE_TAG}" --dir artifacts/release-readback
+      - name: Verify bytes downloaded from the draft Release
+        env:
+          SOURCE_COMMIT: ${{ needs.build.outputs.commit }}
+          SOURCE_TREE: ${{ needs.build.outputs.tree }}
+          RELEASE_TAG: ${{ needs.build.outputs.tag }}
+        run: node scripts/verify-artifact.mjs --package artifacts/release-readback --commit "${SOURCE_COMMIT}" --tree "${SOURCE_TREE}" --tag "${RELEASE_TAG}"
+
+  deploy-pages:
+    needs: [build, stage-release]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
+        id: deploy
+
+  readback:
+    needs: [build, stage-release, deploy-pages]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ needs.build.outputs.commit }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ needs.build.outputs.package_name }}
+          path: artifacts/release
+      - name: Compare every deployed file with the Release archive
+        env:
+          SOURCE_COMMIT: ${{ needs.build.outputs.commit }}
+          SOURCE_TREE: ${{ needs.build.outputs.tree }}
+          RELEASE_TAG: ${{ needs.build.outputs.tag }}
+          PAGES_URL: ${{ needs.deploy-pages.outputs.page_url }}
+        run: |
+          mkdir -p artifacts/readback
+          node scripts/verify-artifact.mjs --package artifacts/release --commit "${SOURCE_COMMIT}" --tree "${SOURCE_TREE}" --tag "${RELEASE_TAG}" --url "${PAGES_URL}" > artifacts/readback/production-readback.json
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: atlas-production-readback-${{ needs.build.outputs.commit }}-${{ github.run_id }}
+          path: artifacts/readback/production-readback.json
+          if-no-files-found: error
+          retention-days: 30
+
+  publish-release:
+    needs: [build, stage-release, readback]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Publish only after Pages byte readback succeeds
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SOURCE_COMMIT: ${{ needs.build.outputs.commit }}
+          RELEASE_TAG: ${{ needs.build.outputs.tag }}
+          RELEASE_ID: ${{ needs.stage-release.outputs.release_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${RELEASE_ID}" =~ ^[0-9]+$ ]]
+          [[ "$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}" --jq '.object.sha')" == "${SOURCE_COMMIT}" ]]
+          [[ "$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" --jq '.id')" == "${RELEASE_ID}" ]]
+          gh release edit "${RELEASE_TAG}" --draft=false --latest
+          gh api "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" --jq '{id,tag_name,draft,html_url}'

@@ -1,10 +1,10 @@
 node_modules
-dist-public/
-dist-gate*/
-.dist-gate*-staging-*/
-artifacts/
-.generated/
-public-safe/reviewed-dossiers*.json
-design-qa.md
+dist/
 .DS_Store
 *.log
+coverage/
+local-evidence/
+
+design-qa.md
+artifacts/
+release-artifact/

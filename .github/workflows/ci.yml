@@ -1,148 +1,36 @@
-name: Atlas Public Release Contract
+name: Atlas artifact checks
 
 on:
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: atlas-public-release-${{ github.event.pull_request.number }}
+  group: atlas-ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  public-release:
+  check:
     name: Atlas Public Release
     runs-on: ubuntu-24.04
-    timeout-minutes: 28
+    timeout-minutes: 15
     steps:
-      - name: Check out the exact PR head
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       - run: npm ci
-      - name: Run source, type, data, build, and publication gates once
-        run: npm run verify
-        env:
-          ATLAS_PUBLIC_AUDIT_RECEIPT: artifacts/publication/publication-audit.json
-      - name: Bind static QA to the verified public bytes
-        run: npm run qa:local
-        env:
-          ATLAS_PUBLIC_AUDIT_RECEIPT: artifacts/publication/publication-audit.json
-          ATLAS_LOCAL_QA_RECEIPT: artifacts/local-qa/local-qa.json
-      - name: Install the single browser engine used by the release matrix
-        run: npx --no-install playwright install --with-deps chromium
-      - name: Run the one serial browser matrix and prove server shutdown
-        shell: bash
-        env:
-          ATLAS_URL: http://127.0.0.1:4173/
-          ATLAS_QA_ARTIFACT_DIR: artifacts/browser-qa
-        run: |
-          set -euo pipefail
-          mkdir -p artifacts/browser-qa
-          server_pid=""
-          cleanup() {
-            status=$?
-            trap - EXIT
-            if [[ -n "${server_pid}" ]] && kill -0 "${server_pid}" 2>/dev/null; then
-              kill "${server_pid}" 2>/dev/null || true
-            fi
-            if [[ -n "${server_pid}" ]]; then
-              wait "${server_pid}" 2>/dev/null || true
-            fi
-            node --input-type=module -e '
-              import { writeFileSync } from "node:fs";
-              import { createConnection } from "node:net";
-              await new Promise((resolve, reject) => {
-                const socket = createConnection({ host: "127.0.0.1", port: 4173 });
-                socket.once("connect", () => {
-                  socket.destroy();
-                  reject(new Error("Atlas CI server remained reachable after shutdown"));
-                });
-                socket.once("error", (error) => {
-                  if (error.code !== "ECONNREFUSED") reject(error);
-                  else resolve();
-                });
-              });
-              writeFileSync(
-                "artifacts/browser-qa/server-shutdown.json",
-                `${JSON.stringify({ pass: true, host: "127.0.0.1", port: 4173, status: "ECONNREFUSED" }, null, 2)}\n`,
-              );
-            '
-            exit "${status}"
-          }
-          trap cleanup EXIT
-          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist-public \
-            > artifacts/browser-qa/static-server.log 2>&1 &
-          server_pid="$!"
-          for attempt in {1..50}; do
-            if curl --fail --silent --show-error "${ATLAS_URL}" >/dev/null; then
-              break
-            fi
-            sleep 0.2
-          done
-          curl --fail --silent --show-error "${ATLAS_URL}" >/dev/null
-          npm run qa:ci
-      - name: Create and verify the commit-bound public release bundle
-        run: npm run release:package && npm run release:verify
-        env:
-          ATLAS_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha }}
-      - name: Bind the tested tree and every public byte
-        shell: bash
-        env:
-          ATLAS_PR_NUMBER: ${{ github.event.pull_request.number }}
-          ATLAS_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          set -euo pipefail
-          mkdir -p artifacts/ci-binding
-          (
-            cd dist-public
-            find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum
-          ) > artifacts/ci-binding/DIST_PUBLIC_SHA256SUMS
-          ATLAS_HEAD_TREE="$(git rev-parse 'HEAD^{tree}')" node --input-type=module -e '
-            import { createHash } from "node:crypto";
-            import { readFileSync, writeFileSync } from "node:fs";
-            const sha256 = (body) => createHash("sha256").update(body).digest("hex");
-            const build = readFileSync("dist-public/build-receipt.json");
-            const publication = JSON.parse(readFileSync("dist-public/data/publication.json", "utf8"));
-            const value = {
-              schema: "homi.atlas_ci_artifact_binding.v2",
-              pullRequest: Number(process.env.ATLAS_PR_NUMBER),
-              headSha: process.env.ATLAS_HEAD_SHA,
-              testedTree: process.env.ATLAS_HEAD_TREE,
-              publicRoot: "dist-public",
-              checksumManifest: "artifacts/ci-binding/DIST_PUBLIC_SHA256SUMS",
-              buildReceiptSha256: sha256(build),
-              publicSnapshotDigest: publication.publicSnapshotDigest,
-              qa: {
-                publication: "artifacts/publication/publication-audit.json",
-                static: "artifacts/local-qa/local-qa.json",
-                browser: "artifacts/browser-qa/playwright-report.json",
-              },
-            };
-            writeFileSync("artifacts/ci-binding/binding.json", `${JSON.stringify(value, null, 2)}\n`);
-          '
-      - name: Upload the exact tested public artifact and evidence
-        id: public-artifact
-        if: ${{ always() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: atlas-public-${{ github.event.pull_request.head.sha }}
-          path: |
-            dist-public
-            artifacts/publication
-            artifacts/local-qa
-            artifacts/browser-qa
-            artifacts/release
-            artifacts/ci-binding
-          if-no-files-found: warn
-          retention-days: 30
-      - name: Record the immutable Actions artifact digest
-        if: ${{ always() && steps.public-artifact.outputs.artifact-digest != '' }}
-        run: echo "Atlas public artifact digest ${{ steps.public-artifact.outputs.artifact-digest }}" >> "$GITHUB_STEP_SUMMARY"
+      - run: npm run typecheck
+      - run: npm run validate
+      - run: npm test
+      - name: Build once
+        run: npm run build
+      - name: Verify the exact built bytes
+        run: node scripts/verify-artifact.mjs --dist dist --commit "$(git rev-parse HEAD)"
