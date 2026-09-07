@@ -1,0 +1,804 @@
+{
+  "schemaVersion": "atlas-public-evidence-1",
+  "language": "ko",
+  "recordCount": 23,
+  "readingNote": "인용문은 공개에 적합한 원문 문단·문장만 선별했습니다. 편집 제목과 설명용 재작성은 인용문과 구분합니다.",
+  "records": [
+    {
+      "id": "ev_6d3799f3fa4a",
+      "publicationTitle": "Rocket이 연구하는 변화",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "현행 연구 사명",
+      "basisDate": "2026-09-07",
+      "basisNote": "2026-09-07에 읽은 동결 본문 기준입니다. 사실의 발생일이나 제품 완성일을 뜻하지 않습니다.",
+      "nodeIds": [
+        "rocket"
+      ],
+      "claim": "Rocket은 AI 능력이 현실로 전파되는 과정과 다음 병목을 연구합니다.",
+      "limitations": [
+        "연구 사명의 근거이며 특정 미래의 실현이나 외부 조직의 성과를 입증하지 않습니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "Rocket은 AI 자체의 발전만 보지 않습니다. 발전이 현실 변화가 되는 전달 사슬을 봅니다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "각 고리는 같은 속도로 움직이지 않습니다. 모델 능력이 분기 단위로 바뀌어도 전력망, 실험실, 조직 권한, 법과 사회적 정당성은 더 긴 시계를 가질 수 있습니다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ]
+    },
+    {
+      "id": "ev_5a50e42fa6ae",
+      "publicationTitle": "서로 다른 일곱 연구 질문",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "현행 연구 범위 발췌 모음",
+      "basisDate": "2026-09-07",
+      "basisNote": "2026-09-07에 읽은 동결 본문 기준입니다. 사실의 발생일이나 제품 완성일을 뜻하지 않습니다.",
+      "nodeIds": [
+        "rocket-desks",
+        "desk-frontier",
+        "desk-compute",
+        "desk-physical",
+        "desk-science",
+        "desk-markets",
+        "desk-society",
+        "desk-governance"
+      ],
+      "claim": "일곱 데스크는 서로 다른 범위의 질문을 맡고 하나의 전망으로 연결됩니다.",
+      "limitations": [
+        "데스크별로 연구할 질문의 범위입니다. 실험 성공률이나 기능 검증 결과가 아닙니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "능력의 경계",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "모델·에이전트·멀티모달·기억·도구 사용·multi-agent·자동 평가·제한적 자기개선의 실제 능력 경계를 추적합니다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "계산과 인프라",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "가속기·HBM·networking·cooling·데이터센터·전력·추론 비용·open/edge compute·공급망과 commissioning clock을 추적합니다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "물리 세계의 AI",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "로봇·world model·자율시스템·제조·mobility·embodied agent와 sim-to-real·field validation을 추적합니다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "과학과 발견",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "수학·이론 컴퓨터과학·생물·의학·유전체·신약·화학·소재·에너지·autonomous lab에서 AI가 연구 cycle을 어떻게 바꾸는지 추적합니다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "시장과 구조",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "기업·스타트업·산업구조·SaaS·platform·capital·competition·internal builder·FDE/RDO와 AI의 시장 전달을 추적합니다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "일과 사회",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "노동·직무·교육·숙련·문화·경험·창작·불평등·개인의 역량과 삶이 AI로 어떻게 재구성되는지 추적합니다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "제도와 권리",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "법·규제·표준·권리·사이버 안보·국가 컴퓨트·수출 통제·공공조달·정책 시장 형성·지정학을 추적합니다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ]
+    },
+    {
+      "id": "ev_021e376c6fb3",
+      "publicationTitle": "변화에는 서로 다른 시계가 있다",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "현행 전망의 해석 원리",
+      "basisDate": "2026-09-07",
+      "basisNote": "2026-09-07에 읽은 동결 본문 기준입니다. 사실의 발생일이나 제품 완성일을 뜻하지 않습니다.",
+      "nodeIds": [
+        "rocket-clocks"
+      ],
+      "claim": "능력의 변화와 현실 검증·제도의 변화는 같은 속도로 끝나지 않습니다.",
+      "limitations": [
+        "구체적인 완료 날짜나 속도의 배수를 보증하지 않는 해석입니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "한 시계의 가속은 다른 시계의 완료를 보증하지 않습니다. 모델은 분기 단위로 바뀔 수 있지만 변전소·임상·조직 책임은 같은 속도로 움직이지 않습니다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ]
+    },
+    {
+      "id": "ev_a4311d8e432a",
+      "publicationTitle": "네 갈래를 읽는 방법",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "조건부 전망",
+      "basisDate": "2026-09-07",
+      "basisNote": "2026-09-07에 읽은 동결 본문 기준입니다. 사실의 발생일이나 제품 완성일을 뜻하지 않습니다.",
+      "nodeIds": [
+        "rocket-horizon",
+        "horizon-base",
+        "horizon-acceleration",
+        "horizon-constraints",
+        "horizon-fragmentation"
+      ],
+      "claim": "네 전망은 확률 순위가 아니며 여러 갈래의 조건이 함께 나타날 수 있습니다.",
+      "limitations": [
+        "특정 시나리오가 이미 실현됐다는 결과표가 아닙니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "아래는 확률이나 순위가 아닙니다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "네 전개는 상호 배타적인 세계가 아닙니다. 계산 연구에서 가속하면서 물리 적용은 늦고, 개인의 도구 접근이 넓어지면서 대규모 학습의 통제는 집중될 수 있습니다. 고용·GDP·출시일의 정량 효과는 추정하지 않습니다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ],
+      "editorialExplanation": {
+        "kind": "editorial_rewrite_not_quote",
+        "text": "공개 원고의 네 갈래는 선택적 확산, 연구의 환류, 물리·안전 제약, 접근의 집중과 분절을 각각 설명합니다. 이 문장은 원문의 시나리오 표를 독자를 위해 다시 풀어 쓴 설명입니다."
+      }
+    },
+    {
+      "id": "ev_51aaa52883ca",
+      "publicationTitle": "맡긴 일과 남은 일을 함께 읽기",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "상세 연구의 사례 해석 방법",
+      "basisDate": "2026-09-07",
+      "basisNote": "2026-09-07에 읽은 동결 본문 기준입니다. 사실의 발생일이나 제품 완성일을 뜻하지 않습니다.",
+      "nodeIds": [
+        "rocket-delegation"
+      ],
+      "claim": "작업 위임을 평가할 때 맡긴 범위와 사람이 준 기반, 보이는 산출물, 남은 일을 나누어 봅니다.",
+      "limitations": [
+        "외부 사례의 인물·회사·결과는 이 공개 근거에 포함하지 않습니다. 사례 수를 성공률이나 독립 실험 수로 읽지 않습니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "sentence_sequence",
+          "text": "서로 다른 작업에서 **맡긴 범위, 사람이 제공한 기반, 관찰 가능한 산출물, 마지막에 남은 일**을 복원했습니다. ‘작성자가 성공했다고 말함’, ‘공개 파일·화면이 있음’, ‘다른 사람이 재현함’은 다른 증거입니다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ]
+    },
+    {
+      "id": "ev_8e8f52dfcfa9",
+      "publicationTitle": "연구의 앞 단계와 다음 단계를 구분하기",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "상세 연구의 연결 원리",
+      "basisDate": "2026-09-07",
+      "basisNote": "2026-09-07에 읽은 동결 본문 기준입니다. 사실의 발생일이나 제품 완성일을 뜻하지 않습니다.",
+      "nodeIds": [
+        "rocket-feedback"
+      ],
+      "claim": "연구가 빨라지는지 보려면 실험뿐 아니라 평가·채택·다음 연구로의 연결을 읽어야 합니다.",
+      "limitations": [
+        "특정 연구소나 모델의 발전 속도를 여기서 측정한 것은 아닙니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "연구 사슬을 `문제 선택 → 가설·코드 → 실험 → 평가·선별 → 채택 → 다음 연구 능력 → 반복`으로 읽습니다. 앞 단계의 성공이 뒷 단계까지 자동으로 증명하지는 않습니다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "실험 한 번이 싸지고 빨라지면 연구자는 세 가지를 선택할 수 있습니다. 같은 결과를 더 빨리 얻거나, 같은 기간에 더 많은 가설을 시험하거나, 이전에는 너무 비쌌던 큰 문제를 시도할 수 있습니다. **처리 속도, 탐색 폭, 연구 목표의 난도는 다른 변화**입니다. 효율이 높아져도 총컴퓨트 지출은 늘 수 있습니다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ]
+    },
+    {
+      "id": "ev_ac5001fbac67",
+      "publicationTitle": "Groot가 함께 담는 세 가지 삶",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "채택된 게임 방향",
+      "basisDate": "2026-09-07",
+      "basisNote": "2026-09-07에 읽은 동결 본문 기준입니다. 사실의 발생일이나 제품 완성일을 뜻하지 않습니다.",
+      "nodeIds": [
+        "groot"
+      ],
+      "claim": "탐험·생활·관계를 같은 게임에서 함께 즐기는 방향이 현재 제작의 출발점입니다.",
+      "limitations": [
+        "제작 방향이며 출시된 완성 게임의 기능표가 아닙니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "스타일화된 3D 탐험과 동료 1대1 카드 전투, 고해상도 2D 대화·인물·사건을 만든다. 금지된 땅의 발견·희귀 동료·보물·경쟁, 독립적으로 재미있는 생활·농업·제작·경제·집·주민 활동, 성인 여성 중심 연애를 함께 즐기는 싱글플레이 게임이다. 성별 선택 주인공 두 기본 외형은 같은 역할과 이야기를 공유하며 공통 공략 대상을 제공한다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "이 세 날은 모드 선택으로 분리하지 않는다. 같은 세계, 같은 저장, 같은 하루의 기회를 플레이어가 다르게 사용한 예다. 모험이 생활의 유일한 돈줄이거나, 연애가 모험의 필수 능력 해금이면 균형이 깨진다. 반대로 세 축이 서로 아무 의미 없이 병렬로만 놓여 있어도 그루트의 결합이 약해진다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ]
+    },
+    {
+      "id": "ev_e4658ca02cda",
+      "publicationTitle": "탐험과 중요한 대결의 다른 재미",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "게임 플레이 설계",
+      "basisDate": "2026-09-07",
+      "basisNote": "2026-09-07에 읽은 동결 본문 기준입니다. 사실의 발생일이나 제품 완성일을 뜻하지 않습니다.",
+      "nodeIds": [
+        "groot-adventure"
+      ],
+      "claim": "필드의 직접 행동과 주요 적을 만났을 때의 카드 판단이 다른 역할을 가집니다.",
+      "limitations": [
+        "평상시 입력과 전환 규칙의 설계입니다. 전체 필드와 전투의 구현 완료를 뜻하지 않습니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "작은 야생 개체와 짧게 교전하고, 예고된 돌진을 피하고, 장애물·상자를 도구로 다루는 범위부터 만든다. 약한 적 한 유형, 기본 공격 하나, 회피 하나, 파괴 가능한 물건 한 종류가 대표 지역의 추가 필드 액션 초도 범위다. 실시간 스킬 트리·다수 직업·복잡한 연계 전투를 함께 추가하지 않는다. 인간의 도구 동작과 동료의 필드 능력을 구별한다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "주요 적·조련사·보스는 대결 표식과 진입 안내를 갖고 카드 전투로 전환한다. 진입 순간 주변 필드 공격과 시간이 멈추며 전투 결과만 한 번 적용된다. 종료하면 안전한 복귀 위치에서 입력·카메라가 돌아오고, 대결용 적과 필드 적을 중복 생성하지 않는다. 대화가 끝나는 순간 숨은 공격을 맞는 상황도 방지한다. 필드에서는 방향·회피·공간 읽기, 주요 대결에서는 적 의도·덱·비용·연계 판단이 재미의 중심이다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ]
+    },
+    {
+      "id": "ev_320adafee413",
+      "publicationTitle": "모험을 쉬어도 의미 있는 하루",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "게임 생활 설계",
+      "basisDate": "2026-09-07",
+      "basisNote": "2026-09-07에 읽은 동결 본문 기준입니다. 사실의 발생일이나 제품 완성일을 뜻하지 않습니다.",
+      "nodeIds": [
+        "groot-living"
+      ],
+      "claim": "농장과 제작, 취향의 공간과 관계가 생활의 독립적인 재미를 만듭니다.",
+      "limitations": [
+        "허구 세계의 설계 예시이며 경제 성과나 실제 이용자 행동 기록이 아닙니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "**생활을 고른 날.** 아침에 밭을 돌아보고 오늘 장터에 내놓을 과일과 가공품을 고른다. 갈퀴형 모코는 압착 작업을 돕고, 주인공은 새 건조대를 놓을 자리를 바꾼다. 공방에서는 주문 가구를 받고, 장터에서는 잘 팔린 품목으로 수익을 얻는다. 남은 돈으로 집 창가의 의자를 사고, 하나에게 시제품을 맛보게 한다. 그날은 금지구역에 들어가지 않아도 집과 작업, 상품과 사람 사이에서 여러 결정을 했다. 모험을 하지 않았다는 이유로 실패한 하루로 집계하지 않는다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "집 꾸미기는 실제 이동하는 집 안에서 가구 방향과 배치를 바꾸고 인물이 그것에 반응하는 작은 묶음부터 만든다. 주민 활동은 시장 시식회 한 종류로 시작한다. 생활의 장기 목표는 집·농장·공방의 완성과 자기 생산 방식이며, 메인 결전에 필요한 충전 수치를 채우는 일로 대체하지 않는다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ]
+    },
+    {
+      "id": "ev_7c70823c5e2d",
+      "publicationTitle": "서로 다른 두 인물과 가까워지는 방식",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "허구 인물·관계 설계",
+      "basisDate": "2026-09-07",
+      "basisNote": "2026-09-07에 읽은 동결 본문 기준입니다. 사실의 발생일이나 제품 완성일을 뜻하지 않습니다.",
+      "nodeIds": [
+        "groot-relationships",
+        "groot-rin",
+        "groot-hana"
+      ],
+      "claim": "린과 하나는 자기 목표와 취향을 가진 허구 인물이며 관계의 접근도 다릅니다.",
+      "limitations": [
+        "현실의 회사 구성원이나 개인에 대한 설명·평가가 아닙니다. 이름과 세부 설정은 제작 과정에서 조정될 수 있습니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "린은 경쟁을 즐기지만 상대를 이용하는 관계는 거부한다. 하나는 친절하지만 자기 일과 결정권을 지킨다. 만남의 위치·갈등·플레이 행동부터 다르다. 선물은 취향을 표현하는 보조 수단이며 같은 물건 반복은 이야기 사건을 대체하지 못한다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "**린, 28세.** 금지구역에서 돌아오면 가장 먼저 전리품을 자랑하고, 진짜 귀한 물건은 끝까지 보여 주지 않는 보물사냥꾼이다. 주인공을 귀엽다고만 하는 안내자가 아니라 이길 수 있는 경쟁자다. 첫 대사는 “내가 먼저 봤거든. 네가 먼저 집었을 뿐이지.”가 어울린다. 플레이어가 잘하면 시샘하면서 인정하고, 실패했을 때는 대신 해 주기보다 다음에 갚을 빚 하나를 만들어 준다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "**하나, 30세.** 과수원과 작은 향료 공방을 함께 운영한다. 다정한 목소리와 느긋한 움직임 때문에 무엇이든 부탁하면 들어줄 것 같지만, 자기 시간과 상품의 값을 분명하게 말한다. “비싸다고 하는 건 괜찮아. 좋다고 해 놓고 그냥 가는 게 더 서운하지.”처럼 일과 감정을 부드러운 농담으로 함께 드러낸다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ]
+    },
+    {
+      "id": "ev_2073d6896eeb",
+      "publicationTitle": "동료의 성장과 선택의 흔적",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "현재 게임 설계 원리",
+      "basisDate": "2026-09-07",
+      "basisNote": "2026-09-07에 읽은 동결 본문 기준입니다. 사실의 발생일이나 제품 완성일을 뜻하지 않습니다.",
+      "nodeIds": [
+        "groot-moko",
+        "groot-choices"
+      ],
+      "claim": "선택은 동료의 외형뿐 아니라 행동과 세계의 변화로 이어지도록 설계합니다.",
+      "limitations": [
+        "게임의 인지 능력 향상 효능은 입증되지 않았습니다. 성장 설계가 모두 구현됐다는 근거도 아닙니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "Groot의 출발점은 AI가 실행을 맡아도 사람이 판단할 근거와 경험을 잃지 않게 하는 것이다. 현재 게임에서는 설명문이나 퀴즈보다 내가 키운 동료가 어떻게 달라졌고 어떤 길과 사람에게 영향을 주는지를 보고 다음 선택을 하게 한다. 게임이 실제 인지 능력을 향상시킨다는 효능은 아직 입증되지 않았다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "성장에는 돌봄과 실제 활동 이력이 함께 반영된다. 특정 간식 하나를 반복하는 정답표로 만들지 않는다. 성장 확정 전 예상 실루엣·가능한 행동·카드 변화를 함께 보여 주고 플레이어가 결정한다. 돌봄을 잠시 쉬면 피로·기분 회복을 도와야 할 수 있지만 숨은 방치 사망이나 영구 능력 하락은 기본에 없다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ]
+    },
+    {
+      "id": "ev_97468b20a587",
+      "publicationTitle": "그림이 보여 주는 것과 아직 보여 주지 않는 것",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "목표 원화와 미술 원리",
+      "basisDate": "2026-09-07",
+      "basisNote": "2026-09-07에 읽은 동결 본문 기준입니다. 사실의 발생일이나 제품 완성일을 뜻하지 않습니다.",
+      "nodeIds": [
+        "groot-art-explore",
+        "groot-art-characters",
+        "groot-art-combat",
+        "groot-art-dialogue"
+      ],
+      "claim": "네 그림은 미술 목표이며 실제 모델·게임 화면·보행 결과와 구분해야 합니다.",
+      "limitations": [
+        "이미지의 존재는 모델 품질이나 플레이 품질의 통과 증거가 아닙니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "list_item",
+          "text": "린·하나 원화와 탐험·전투·대화 목표 이미지를 생성했다. 탐험 밀도와 동료 형태를 한 번 교정했다. 이 그림은 목표 원화이며 실제 모델·런타임·보행 결과가 아니다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "캐주얼함은 낮은 해상도나 미완성 모델을 뜻하지 않는다. 멀리서는 큰 색면과 실루엣, 가까이서는 얼굴과 손·옷 구조의 정교함으로 품질을 만든다. 배경의 모든 돌과 잎을 같은 강도로 묘사하지 않는다. 광택은 눈·유리·금속의 필요한 곳에만 둔다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ]
+    },
+    {
+      "id": "ev_4cee9a0da21a",
+      "publicationTitle": "만들어진 첫 인물과 남은 제작",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "제작 기록의 부분 확인",
+      "basisDate": "2026-09-07",
+      "basisNote": "2026-09-07에 읽은 동결 본문 기준입니다. 사실의 발생일이나 제품 완성일을 뜻하지 않습니다.",
+      "nodeIds": [
+        "groot",
+        "groot-hana"
+      ],
+      "claim": "첫 3D 인물의 제작과 검토가 있었지만 품질·동작·통합에는 남은 일이 있습니다.",
+      "limitations": [
+        "제작 담당의 기록을 읽은 근거입니다. Atlas가 엔진을 재실행해 확인한 결과가 아닙니다. 저장 복원 화면의 미검증도 남아 있습니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "하나 원본과 검토용 GLB·5개 렌더를 실제 만들고 별도 검토자가 원화 3시트와 대조했다. 색·의상 부위는 이어지나 얼굴 미형·머리 연결·옷 겹이 미달이다. 약 104만 삼각형의 게임용 최적화와 보행/스키닝/엔진 통합도 아직이다. 이 결과를 제품 승인으로 올리지 않았다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ],
+      "editorialExplanation": {
+        "kind": "editorial_rewrite_not_quote",
+        "text": "같은 시점의 제작 기록에는 기본 이동·회피·대화 선택·카드 효과·선택 중 저장의 실제 입력 확인이 있습니다. 재실행에서는 입력 로그와 화면 표시가 일치하지 않아 저장 복원 화면을 미검증으로 남겼습니다. 이 단락은 원문을 그대로 인용한 것이 아니라 확인된 범위와 한계를 재작성한 설명입니다."
+      }
+    },
+    {
+      "id": "ev_76037ae33609",
+      "publicationTitle": "검색한 정보가 다음 판단에 남으려면",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "지식 재사용의 원리",
+      "basisDate": "2026-09-07",
+      "basisNote": "현재 정의와 2026-07-22의 지식 순환 판단을 2026-09-07 동결본에서 읽었습니다. 9월의 편집 날짜를 전체 원문 재검증일로 바꾸지 않습니다.",
+      "nodeIds": [
+        "knowledge-library",
+        "concept-reuse"
+      ],
+      "claim": "지식은 자료를 저장하는 일뿐 아니라 근거와 판단을 다음 작업에서 다시 쓰는 연결입니다.",
+      "limitations": [
+        "도구의 기능이나 가격을 최신 검증했다는 근거가 아닙니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "sentence",
+          "text": "문서, 지식베이스, memory, skill, RAG, 검색을 agent가 반복 재사용 가능한 작업 지식으로 바꾸는 도구 지형이다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "sentence_sequence",
+          "text": "검색량이나 요약 저장만으로는 순환이 아니다. 원문 identity와 확인 수준, 사람·에이전트의 판단, 실제 재사용 대상 또는 보류 이유가 함께 넘어가야 한다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ]
+    },
+    {
+      "id": "ev_1f18a275ea79",
+      "publicationTitle": "오늘의 자료에서 한 주의 해석과 연구 근거로",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "연구 운영과 실제 주간 해석의 발췌 모음",
+      "basisDate": "2026-09-07",
+      "basisNote": "Daily의 현행 사명, 2026-08-31~09-04 주간 해석, 2026-09-07 논문 편입 원칙을 각각 읽었습니다.",
+      "nodeIds": [
+        "research-cycle",
+        "daily-lens",
+        "weekly-lens",
+        "papers-lens"
+      ],
+      "claim": "Daily는 근거를 선택·해석·연결하고, Weekly는 관점을 정리하며, Papers는 연구의 조건과 한계를 읽게 합니다.",
+      "limitations": [
+        "주간 예시는 당시의 해석입니다. 외부 제품 성능이나 연구 재현 성공으로 읽지 않습니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "Turn current evidence into useful Daily reader surfaces and a living Vault. Select, interpret, route, summarize, and connect evidence using agent judgment.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "Homi 관점에서는 memory와 automation을 보이지 않는 편의 기능으로 두지 않는다. source identity, 실행 trace, 사용자에게 보이는 상태, fresh readback과 복구 경로가 함께 있어야 agent가 더 오래 일하면서도 책임을 잃지 않는다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "list_item",
+          "text": "승격은 연구 근거의 정리이며 모델·코드·로봇 도입이나 독립 재현의 성공 판정이 아닙니다. 아래 날짜별 기록은 당시 수치를 보존합니다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ],
+      "editorialExplanation": {
+        "kind": "editorial_rewrite_not_quote",
+        "text": "첫 인용문은 “현재 근거를 유용한 Daily 읽기 화면과 살아 있는 지식으로 바꾸며, 판단을 통해 선택·해석·정리·연결한다”는 뜻입니다. 이 한국어 문장은 영어 원문의 설명용 번역입니다."
+      }
+    },
+    {
+      "id": "ev_c2689a9ddbae",
+      "publicationTitle": "현재의 질문에 맞는 기억으로 돌아가기",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "운영 기억의 의미",
+      "basisDate": "2026-09-07",
+      "basisNote": "2026-09-07에 읽은 동결 본문 기준입니다. 사실의 발생일이나 제품 완성일을 뜻하지 않습니다.",
+      "nodeIds": [
+        "concept-memory"
+      ],
+      "claim": "기억은 원문·확인 범위·판단·다음 확인 경로를 이어 주어야 합니다.",
+      "limitations": [
+        "저장된 기록이나 검색 결과가 자동으로 현재 사실이 되지는 않습니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "sentence_sequence",
+          "text": "필요한 기억은 원문 identity, 확인한 수준과 시점, 판단, 실제 대상 또는 구체적 보류 이유, 다시 확인할 경로로 이어져야 한다. 캐시나 검색 결과는 후보를 찾는 수단이다. 현재 파일과 원문을 확인하지 않고 자동으로 현재 사실이 되지는 않는다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ]
+    },
+    {
+      "id": "ev_d2e09fce25de",
+      "publicationTitle": "근거를 찾은 것과 답을 뒷받침하는 것",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "검색과 답변의 개념",
+      "basisDate": "2026-09-07",
+      "basisNote": "2026-09-07에 읽은 동결 본문 기준입니다. 사실의 발생일이나 제품 완성일을 뜻하지 않습니다.",
+      "nodeIds": [
+        "concept-evidence"
+      ],
+      "claim": "자료를 찾았다는 사실과 그 자료가 답을 지지한다는 사실을 구분합니다.",
+      "limitations": [
+        "현재 Homi에 새 검색 서버가 필요하다는 결론이나 특정 제품 채택 근거가 아닙니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "설계를 비교할 때는 자료를 못 찾은 실패와 찾고도 잘못 읽은 실패를 먼저 구분한다. 필요한 문서가 몇 장이고 사람이 지정할 수 있다면 그 문서를 직접 넣는 것으로 충분할 수 있다. 문서 규모·변경 빈도·접근 범위 때문에 필요한 근거를 찾기 어렵다면 검색 구성을 개선할 이유가 생긴다. 이는 방법을 선택하는 판단이며, 볼트에 새 검색 서버가 필요하다는 결론은 아니다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "검색 결과는 확인할 자료다. 오래된 자료, 접근할 수 없는 자료, 원문 안의 실행 지시를 현재의 사실이나 권한으로 자동 승격하지 않는다. 출처가 없거나 충돌을 해소하지 못한 부분은 답을 좁혀 설명할 수 있다. **근거를 붙일 수 있다는 능력과 그 근거가 답을 지지한다는 사실을 구분하는 것**이 RAG를 평가할 때의 중심이다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ]
+    },
+    {
+      "id": "ev_433e6970cdbf",
+      "publicationTitle": "선이 많다는 것보다 관계의 뜻",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "관계 지도의 의미 원리",
+      "basisDate": "2026-09-07",
+      "basisNote": "2026-09-07에 읽은 동결 본문 기준입니다. 사실의 발생일이나 제품 완성일을 뜻하지 않습니다.",
+      "nodeIds": [
+        "concept-graphs"
+      ],
+      "claim": "연결에는 근거로 뒷받침되는 의미가 필요하며 숫자만으로 이해를 보증할 수 없습니다.",
+      "limitations": [
+        "문서의 동시 등장이나 링크를 인과 관계로 승격하지 않습니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "링크는 기본적으로 `related_to`다. 다음과 같이 행동을 바꾸는 관계만 본문에서 명시한다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "relation 수나 고정 taxonomy를 기계 gate로 강제하지 않는다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "0개의 신규 node·relation도 유효할 수 있다. 다만 무엇을 읽었고 왜 durable change가 필요하지 않은지 실제 근거를 남긴다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ]
+    },
+    {
+      "id": "ev_8341193205b0",
+      "publicationTitle": "멋진 장면과 세계를 이해하는 능력",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "장면·행동 개념의 한계",
+      "basisDate": "2026-09-07",
+      "basisNote": "2026-09-07에 읽은 동결 본문 기준입니다. 사실의 발생일이나 제품 완성일을 뜻하지 않습니다.",
+      "nodeIds": [
+        "concept-world-model"
+      ],
+      "claim": "영상의 시각적 품질만으로 세계 이해나 제품 준비 상태를 입증하지 않습니다.",
+      "limitations": [
+        "이 발췌는 개념의 한계를 설명합니다. 특정 외부 모델의 성능이나 Homi의 모델 구현을 주장하지 않습니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "비디오 생성 품질은 world understanding의 일부 신호일 수 있지만 충분조건은 아니다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ],
+      "editorialExplanation": {
+        "kind": "editorial_rewrite_not_quote",
+        "text": "공개 원고에서 다루는 세계 모델의 질문은 장면이 시간에 따라 이어지는지, 행동에 일관되게 반응하는지, 실제 환경에서도 맞는지입니다. 이 단락은 개념 지도를 설명하기 위한 재작성이며 원문 인용은 아닙니다."
+      }
+    },
+    {
+      "id": "ev_9fac734984f9",
+      "publicationTitle": "정상 종료와 원하는 결과는 다를 수 있다",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "결과 확인의 원리",
+      "basisDate": "2026-09-07",
+      "basisNote": "2026-09-07에 읽은 동결 본문 기준입니다. 사실의 발생일이나 제품 완성일을 뜻하지 않습니다.",
+      "nodeIds": [
+        "concept-trust"
+      ],
+      "claim": "검사나 도구의 종료만으로 사용자가 원한 결과가 달성됐다고 판단하지 않습니다.",
+      "limitations": [
+        "설명용 가상 예시입니다. 특정 고객이나 회사의 실제 사고를 공개하는 내용이 아닙니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "AI 신뢰성은 결과의 정확성뿐 아니라 누가 어떤 범위에서 행동했고, 무엇을 근거로 확인했으며, 실패하면 어떻게 멈추고 복구할 수 있는지를 다룬다. 좋은 답변이나 통과한 점수만으로 이 조건이 충족되지는 않는다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "예를 들어 생성 도구가 정상 종료돼도 상품 로고가 달라졌다면 상품 보존 요구는 실패했다. 결과를 검토하지 않았다면 미검증이다. 테스트나 screenshot은 이 판단을 돕는 증거이며, 요청한 결과를 달성했는지에 대한 판단을 대신하지 않는다. 부분 수리를 전체 범위의 성공으로 확대하지 않는다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ]
+    },
+    {
+      "id": "ev_fb116cbb9579",
+      "publicationTitle": "목표를 받아 다음 행동을 선택하기",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "에이전트 개념",
+      "basisDate": "2026-09-07",
+      "basisNote": "2026-09-07에 읽은 동결 본문 기준입니다. 사실의 발생일이나 제품 완성일을 뜻하지 않습니다.",
+      "nodeIds": [
+        "concept-agent"
+      ],
+      "claim": "에이전트는 도구와 돌아온 결과를 이용해 다음 행동을 고르며, 완료에는 별도 근거가 필요합니다.",
+      "limitations": [
+        "사용한 에이전트 수나 답변 개수를 품질·자율성·생산성으로 바꾸지 않습니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "에이전트는 목표를 받아 필요한 도구를 사용하고, 환경에서 돌아온 결과를 보며 다음 행동을 선택하는 시스템이다. 맡길 일을 이해하려면 **실행 능력, 작업 구성, 허용된 행동, 실제 결과**를 함께 봐야 한다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "가령 “이번 주 연구가 현재 판단을 바꾸는지 확인해 달라”는 일에는 원문 검색, 기존 노드와의 대조, 변경 또는 보류 판단이 포함된다. 검색이 성공했거나 여러 agent가 답을 냈다는 사실만으로 이 일이 완료되지는 않는다. 실제로 무엇을 읽었고 어떤 판단을 바꿨으며, 남은 근거가 무엇인지 설명할 수 있어야 한다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ]
+    },
+    {
+      "id": "ev_3b1ee5490c4c",
+      "publicationTitle": "Atlas의 제작 사명",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "제작 역할의 현행 범위",
+      "basisDate": "2026-09-07",
+      "basisNote": "2026-09-07에 읽은 동결 본문 기준입니다. 사실의 발생일이나 제품 완성일을 뜻하지 않습니다.",
+      "nodeIds": [
+        "atlas"
+      ],
+      "claim": "Atlas의 역할에는 만들기뿐 아니라 실제 시각 확인과 공개 경계 보존이 포함됩니다.",
+      "limitations": [
+        "이 문장은 역할의 사명입니다. v8의 모든 화면과 기능이 완성됐다는 증거는 아닙니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "Build, test, visually verify, and release Homi Vault Atlas while preserving the private/public boundary.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ],
+      "editorialExplanation": {
+        "kind": "editorial_rewrite_not_quote",
+        "text": "“비공개·공개 경계를 보존하며 Homi Vault Atlas를 만들고, 검사하고, 실제 화면을 확인하고, 공개한다”는 뜻입니다. 이 한국어 문장은 영어 원문의 설명용 번역입니다."
+      }
+    },
+    {
+      "id": "ev_60b6cc180178",
+      "publicationTitle": "지식을 돌보고 바꾸지 않을 이유도 남기기",
+      "titleEdited": true,
+      "titleNote": "원문 제목 대신 공개 독자를 위해 편집한 문서명입니다.",
+      "evidenceType": "유지관리의 사명과 판단",
+      "basisDate": "2026-09-07",
+      "basisNote": "2026-09-07에 읽은 동결 본문 기준입니다. 사실의 발생일이나 제품 완성일을 뜻하지 않습니다.",
+      "nodeIds": [
+        "knowledge-upkeep"
+      ],
+      "claim": "지식이 일관되고 다시 찾을 수 있도록 돌보며, 변경이 필요하지 않을 때도 실제 이유를 남깁니다.",
+      "limitations": [
+        "다른 프로젝트의 내용을 대신 결정하거나 새 허가 절차를 만드는 근거가 아닙니다."
+      ],
+      "excerptParagraphs": [
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "Keep the Vault coherent, observable, reversible, and navigable. Coordinate conflicts and audit circulation without implementing or semantically approving another owner's work.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        },
+        {
+          "label": "",
+          "kind": "exact_excerpt",
+          "form": "paragraph",
+          "text": "0개의 신규 node·relation도 유효할 수 있다. 다만 무엇을 읽었고 왜 durable change가 필요하지 않은지 실제 근거를 남긴다.",
+          "omissions": "인용문 내부 생략 없음. 서로 떨어진 발췌는 별도 문단으로 표시합니다."
+        }
+      ],
+      "editorialExplanation": {
+        "kind": "editorial_rewrite_not_quote",
+        "text": "첫 인용문은 지식의 일관성·관찰 가능성·복구 가능성·탐색 경로를 유지하며 충돌과 순환을 살피는 역할을 설명합니다. 이 한국어 문장은 영어 원문의 설명용 번역입니다."
+      }
+    }
+  ]
+}
