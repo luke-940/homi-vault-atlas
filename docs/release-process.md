@@ -36,15 +36,15 @@ Pages 주소와 저장소 identity는 유지한다. Pages의 기존 workflow 배
 아래 명령은 이미 만들어진 `dist`를 패키징한다. 소스 변경을 검토·커밋한 깨끗한 현재 checkout에서만 실행한다. 법적 고지의 Markdown은 `licenses/` 안에서만 허용한다. `COMMIT_SHA`에는 해당 빌드의 실제 커밋을 넣는다.
 
 ```sh
-node scripts/verify-artifact.mjs --dist dist --commit COMMIT_SHA --tag v8.0.0
-node scripts/package-release.mjs --dist dist --out release-artifact --commit COMMIT_SHA --tag v8.0.0
-node scripts/verify-artifact.mjs --package release-artifact --commit COMMIT_SHA --tag v8.0.0
+node scripts/verify-artifact.mjs --dist dist --commit COMMIT_SHA --tag v8.1.0
+node scripts/package-release.mjs --dist dist --out release-artifact --commit COMMIT_SHA --tag v8.1.0
+node scripts/verify-artifact.mjs --package release-artifact --commit COMMIT_SHA --tag v8.1.0
 ```
 
 배포 후에는 같은 패키지를 기준으로 HTTP 바이트를 확인한다.
 
 ```sh
-node scripts/verify-artifact.mjs --package release-artifact --commit COMMIT_SHA --tag v8.0.0 --url https://luke-940.github.io/homi-vault-atlas/
+node scripts/verify-artifact.mjs --package release-artifact --commit COMMIT_SHA --tag v8.1.0 --url https://luke-940.github.io/homi-vault-atlas/
 ```
 
 검증은 추가 파일, 빠진 파일, 중복 경로, 경로 탈출, 심볼릭 링크, 지원하지 않는 archive entry, source map/편집 원본, commit/version/snapshot 불일치를 거부한다. URL readback은 등록된 HTTPS Pages 주소만 허용한다. 개인정보나 원문 내용을 오류 메시지에 출력하지 않는다.
@@ -59,4 +59,4 @@ build·패키지 검증이 실패하면 외부 배포가 실행되지 않는다.
 
 ## 버전 변경 시
 
-`package.json` 버전과 `scripts/build.mjs`의 release metadata 버전을 함께 갱신한다. `release.json`의 `contentBasis`는 실제 공개 자료 기준일을 반영해야 한다. 릴리스 workflow는 버전이나 기준일을 자동으로 고치지 않는다.
+`package.json`과 `package-lock.json`의 버전을 함께 갱신한다. 빌드는 `package.json`의 버전을 읽어 release metadata에 기록한다. `release.json`의 `contentBasis`는 실제 공개 자료 기준일을 반영하는지 별도로 확인한다. 릴리스 workflow는 버전이나 기준일을 자동으로 고치지 않는다.

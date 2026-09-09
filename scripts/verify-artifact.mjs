@@ -3,6 +3,8 @@ import { createHash } from "node:crypto";
 import { gunzipSync } from "node:zlib";
 import { resolve, posix } from "node:path";
 import { pathToFileURL } from "node:url";
+import { validateSpatial } from "./validate-islands.mjs";
+import { validateAssets, BASIS_DECODER_CONTRACT } from "./validate-assets.mjs";
 import { validateContent, validateStaticReader } from "./validate-content.mjs";
 
 export const sha256 = (bytes) =>
@@ -14,6 +16,27 @@ const SHA = /^[a-f\d]{64}$/u;
 const COMMIT = /^[a-f\d]{40}$/u;
 const VERSION = /^8\.\d+\.\d+(?:-[a-z\d][a-z\d.-]*)?$/iu;
 const manifestName = "artifact-manifest.json";
+// Explicit v8.1 public asset slots. Add a new reviewed asset by exact path.
+const PUBLIC_ASSET_PATHS = new Set([
+  "assets/atlas-v81-world.glb",
+  "assets/atlas-v81-rocket.glb",
+  "assets/atlas-v81-groot.glb",
+  "assets/atlas-v81-common.glb",
+  "assets/atlas-v81-atlas.glb",
+  "assets/collision/rocket.json",
+  "assets/collision/groot.json",
+  "assets/collision/common.json",
+  "assets/collision/atlas.json",
+  "assets/maps/world.webp",
+  "assets/maps/rocket.webp",
+  "assets/maps/groot.webp",
+  "assets/maps/common.webp",
+  "assets/maps/atlas.webp",
+  "assets/textures/water-normal.webp",
+  "assets/rocket-lenses.webp",
+  "assets/basis/basis_transcoder.js",
+  "assets/basis/basis_transcoder.wasm"
+]);
 
 export function safePath(value) {
   return (
@@ -97,7 +120,7 @@ function assertExactInventory(expected, actual) {
     fail("Artifact byte inventory differs.");
 }
 
-export function verifyFiles(files, { expectedCommit, expectedTag } = {}) {
+export function verifyFiles(files, { expectedCommit, expectedTag, privatePatterns = [] } = {}) {
   const map = new Map(files.map((file) => [file.path, file.body]));
   if (map.size !== files.length) fail("Artifact contains duplicate paths.");
   for (const required of [
@@ -106,6 +129,9 @@ export function verifyFiles(files, { expectedCommit, expectedTag } = {}) {
     "index.html",
     "reading.html",
     "app.js",
+    "app.css",
+    "fonts/atlas-sans.woff2",
+    "fonts/atlas-serif.woff2",
     "data/content.json",
     "data/evidence.json",
   ]) {
@@ -121,12 +147,14 @@ export function verifyFiles(files, { expectedCommit, expectedTag } = {}) {
     "app.js.LEGAL.txt",
     "data/content.json",
     "data/evidence.json",
+    "data/islands.json",
+    "data/map.json",
   ]);
   for (const file of files) {
     const allowed =
       rootFiles.has(file.path) ||
       /^chunks\/[a-zA-Z0-9_-]+\.js(?:\.LEGAL\.txt)?$/u.test(file.path) ||
-      /^assets\/[a-zA-Z0-9_-]+\.(?:glb|webp|png|jpe?g)$/u.test(file.path) ||
+      PUBLIC_ASSET_PATHS.has(file.path) ||
       /^fonts\/[a-zA-Z0-9_-]+\.woff2$/u.test(file.path) ||
       /^licenses\/[a-zA-Z0-9_.-]+\.(?:txt|md)$/u.test(file.path);
     if (
@@ -163,9 +191,23 @@ export function verifyFiles(files, { expectedCommit, expectedTag } = {}) {
     .digest("hex");
   if (snapshot !== release.contentSnapshot)
     fail("Public content snapshot binding differs.");
+  if (Number(release.version.split(".")[1]) >= 1) {
+    for (const required of [...Object.keys(BASIS_DECODER_CONTRACT), "data/islands.json", "data/map.json", "assets/atlas-v81-world.glb", "assets/maps/world.webp", "assets/textures/water-normal.webp", ...["rocket","groot","common","atlas"].flatMap(id => [`assets/atlas-v81-${id}.glb`, `assets/collision/${id}.json`, `assets/maps/${id}.webp`])]) {
+      if (!map.has(required)) fail("A required v8.1 public spatial asset is missing.");
+    }
+    if (!SHA.test(release.publicDataSnapshot)) fail("Public spatial data snapshot is missing.");
+    const dataSnapshot = createHash("sha256");
+    for (const name of ["content.json", "evidence.json", "islands.json", "map.json"]) dataSnapshot.update(name + "\0").update(map.get("data/" + name)).update("\0");
+    if (dataSnapshot.digest("hex") !== release.publicDataSnapshot) fail("Public spatial data snapshot differs.");
+    const spatial = validateSpatial(parseJSON(map.get("data/islands.json"), "Public islands"), parseJSON(map.get("data/map.json"), "Public map"), parseJSON(map.get("data/content.json"), "Public content"), parseJSON(map.get("data/evidence.json"), "Public evidence"), { privatePatterns });
+    if (!spatial.valid) fail("Public spatial data validation failed.");
+    const assets = validateAssets(files, { spatial: parseJSON(map.get("data/islands.json"), "Public islands"), privatePatterns });
+    if (!assets.valid) fail(`Public asset contract failed with ${assets.issues.length} issue(s).`);
+  }
   const validation = validateContent(
     parseJSON(map.get("data/content.json"), "Public content"),
     parseJSON(map.get("data/evidence.json"), "Public evidence"),
+    { privatePatterns },
   );
   if (!validation.valid)
     fail(
@@ -175,6 +217,7 @@ export function verifyFiles(files, { expectedCommit, expectedTag } = {}) {
     map.get("reading.html").toString("utf8"),
     parseJSON(map.get("data/content.json"), "Public content"),
     parseJSON(map.get("data/evidence.json"), "Public evidence"),
+    { privatePatterns },
   );
   if (!reader.valid)
     fail(
@@ -299,6 +342,7 @@ export async function verifyPackage(directory, options = {}) {
   const verified = verifyFiles(files, {
     expectedCommit: options.expectedCommit ?? binding.sourceCommit,
     expectedTag: options.expectedTag ?? binding.tag,
+    privatePatterns: options.privatePatterns ?? [],
   });
   if (
     verified.release.commit !== binding.sourceCommit ||
