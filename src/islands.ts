@@ -39,6 +39,8 @@ export interface ShorelineSpec {
 export interface IslandSpec {
   id: ProjectId; label: string; coast: Vec2[]; groundY: number; entry: Vec3;
   entryCamera: CameraPose; extent: number; modelUrl: string; collisionUrl: string;
+  sceneStages?: { id: 'base'|'landscape'; url: string; required: boolean; quality: 'all' }[];
+  sharedResources?: string[];
   mapImage: string; mapBounds: { minX: number; maxX: number; minZ: number; maxZ: number };
   limits: { polarAngleRadians: Vec2; distanceRangeMetres: Vec2; minEyeY: number; panInset: number; groundClearance: number };
   assets: IslandAsset[]; places: KnowledgeObject[]; subInteractions: KnowledgeObject[];

@@ -290,7 +290,7 @@
         ],
         "fovDegrees": 50
       },
-      "modelUrl": "assets/atlas-v81-rocket.glb",
+      "modelUrl": "assets/atlas-v82-rocket.glb",
       "collisionUrl": "assets/collision/rocket.json",
       "mapImage": "assets/maps/rocket.webp",
       "mapBounds": {
@@ -322,21 +322,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            2.8,
-            1.8,
-            1.6
+            2.8000001907348633,
+            1.799999713897705,
+            1.5999984741210938
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              -5.4,
-              2.4,
-              25.2
+              -5.400000095367432,
+              2.4000000953674316,
+              25.200000762939453
             ],
             "max": [
-              -2.6,
-              4.2,
-              26.8
+              -2.5999999046325684,
+              4.199999809265137,
+              26.799999237060547
             ]
           },
           "reservedFootprint": [
@@ -369,21 +369,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            3.2,
-            1.8,
-            1.4
+            3.1999998092651367,
+            1.799999713897705,
+            1.4000005722045898
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              3.9,
-              2.4,
-              15.3
+              3.9000000953674316,
+              2.4000000953674316,
+              15.300000190734863
             ],
             "max": [
-              7.1,
-              4.2,
-              16.7
+              7.099999904632568,
+              4.199999809265137,
+              16.700000762939453
             ]
           },
           "reservedFootprint": [
@@ -416,21 +416,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            12,
-            11,
-            12
+            12.0,
+            10.487712383270264,
+            12.0
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              -6,
-              2.4,
-              -10
+              -6.0,
+              2.4000000953674316,
+              -10.0
             ],
             "max": [
-              6,
-              13.4,
-              2
+              6.0,
+              12.887712478637695,
+              2.0
             ]
           },
           "reservedFootprint": [
@@ -463,21 +463,21 @@
           ],
           "rotationYDegrees": 180,
           "geometrySize": [
-            6.8,
+            6.799999237060547,
             4.5,
-            2.2
+            2.200000762939453
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              -23.4,
-              2.4,
-              22.9
+              -23.399999618530273,
+              2.4000000953674316,
+              22.899999618530273
             ],
             "max": [
-              -16.6,
-              6.9,
-              25.1
+              -16.600000381469727,
+              6.900000095367432,
+              25.100000381469727
             ]
           },
           "reservedFootprint": [
@@ -510,21 +510,21 @@
           ],
           "rotationYDegrees": 180,
           "geometrySize": [
-            6,
-            3.4,
-            4
+            6.0,
+            3.4000000953674316,
+            4.0
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              17,
-              2.4,
-              22
+              17.0,
+              2.4000000953674316,
+              22.0
             ],
             "max": [
-              23,
-              5.8,
-              26
+              23.0,
+              5.800000190734863,
+              26.0
             ]
           },
           "reservedFootprint": [
@@ -557,21 +557,21 @@
           ],
           "rotationYDegrees": 90,
           "geometrySize": [
-            8,
-            4.6,
-            4
+            1.6000003814697266,
+            4.599999904632568,
+            6.969074726104736
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              -29,
-              2.4,
-              -15
+              -28.725000381469727,
+              2.4000000953674316,
+              -14.484537124633789
             ],
             "max": [
-              -25,
-              7,
-              -7
+              -27.125,
+              7.0,
+              -7.515462398529053
             ]
           },
           "reservedFootprint": [
@@ -604,21 +604,21 @@
           ],
           "rotationYDegrees": 147.000479,
           "geometrySize": [
-            3.2,
-            3.8,
-            3.2
+            3.873260498046875,
+            3.369999885559082,
+            3.873260498046875
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              -13.581999999999999,
-              2.4,
-              12.851
+              -13.918630599975586,
+              2.4000000953674316,
+              12.51436996459961
             ],
             "max": [
-              -10.382,
-              6.2,
-              16.051000000000002
+              -10.045370101928711,
+              5.769999980926514,
+              16.387630462646484
             ]
           },
           "reservedFootprint": [
@@ -651,21 +651,21 @@
           ],
           "rotationYDegrees": 98.000457,
           "geometrySize": [
-            3.2,
-            3.8,
-            3.2
+            3.194845199584961,
+            3.125,
+            3.162454128265381
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              -23.386000000000003,
-              2.4,
-              -2.5380000000000003
+              -23.367225646972656,
+              2.4000000953674316,
+              -2.5192270278930664
             ],
             "max": [
-              -20.186,
-              6.2,
-              0.6620000000000001
+              -20.172380447387695,
+              5.525000095367432,
+              0.6432271003723145
             ]
           },
           "reservedFootprint": [
@@ -698,21 +698,21 @@
           ],
           "rotationYDegrees": 49.001252,
           "geometrySize": [
-            3.2,
-            3.8,
-            3.2
+            3.950145721435547,
+            3.5099997520446777,
+            3.950145721435547
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              -18.204,
-              2.4,
-              -20.033
+              -18.579072952270508,
+              2.4000000953674316,
+              -20.40807342529297
             ],
             "max": [
-              -15.004,
-              6.2,
-              -16.833
+              -14.628927230834961,
+              5.909999847412109,
+              -16.457927703857422
             ]
           },
           "reservedFootprint": [
@@ -745,21 +745,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            3.2,
-            3.8,
-            3.2
+            2.799999952316284,
+            3.244999885559082,
+            2.940000534057617
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              -1.6,
-              2.4,
-              -27.6
+              -1.399999976158142,
+              2.4000000953674316,
+              -27.399999618530273
             ],
             "max": [
-              1.6,
-              6.2,
-              -24.4
+              1.399999976158142,
+              5.644999980926514,
+              -24.459999084472656
             ]
           },
           "reservedFootprint": [
@@ -792,21 +792,21 @@
           ],
           "rotationYDegrees": -49.001252,
           "geometrySize": [
-            3.2,
-            3.8,
-            3.2
+            3.992922782897949,
+            3.258035182952881,
+            3.950145721435547
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              15.004,
-              2.4,
-              -20.033
+              14.586150169372559,
+              2.4000000953674316,
+              -20.40807342529297
             ],
             "max": [
-              18.204,
-              6.2,
-              -16.833
+              18.579072952270508,
+              5.6580352783203125,
+              -16.457927703857422
             ]
           },
           "reservedFootprint": [
@@ -839,21 +839,21 @@
           ],
           "rotationYDegrees": -98.000457,
           "geometrySize": [
-            3.2,
-            3.8,
-            3.2
+            3.249126434326172,
+            2.679999828338623,
+            3.162454128265381
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              20.186,
-              2.4,
-              -2.5380000000000003
+              20.118099212646484,
+              2.4000000953674316,
+              -2.5192270278930664
             ],
             "max": [
-              23.386000000000003,
-              6.2,
-              0.6620000000000001
+              23.367225646972656,
+              5.079999923706055,
+              0.6432271003723145
             ]
           },
           "reservedFootprint": [
@@ -886,21 +886,21 @@
           ],
           "rotationYDegrees": -147.000479,
           "geometrySize": [
-            3.2,
-            3.8,
-            3.2
+            3.873260498046875,
+            3.25,
+            3.873260498046875
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              10.382,
-              2.4,
-              12.851
+              10.045370101928711,
+              2.4000000953674316,
+              12.51436996459961
             ],
             "max": [
-              13.581999999999999,
-              6.2,
-              16.051000000000002
+              13.918630599975586,
+              5.650000095367432,
+              16.387630462646484
             ]
           },
           "reservedFootprint": [
@@ -933,21 +933,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            2.2,
-            1.05,
-            1.2
+            2.1999998092651367,
+            1.0497491359710693,
+            1.200000286102295
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              -7.1,
-              2.4,
-              3.2
+              -7.099999904632568,
+              2.4000000953674316,
+              3.1999998092651367
             ],
             "max": [
-              -4.9,
-              3.45,
-              4.4
+              -4.900000095367432,
+              3.449749231338501,
+              4.400000095367432
             ]
           },
           "reservedFootprint": [
@@ -980,21 +980,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            2.2,
-            1.05,
-            1.2
+            2.1999999284744263,
+            1.0497491359710693,
+            1.200000286102295
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              -3.1,
-              2.4,
-              3.2
+              -3.0999999046325684,
+              2.4000000953674316,
+              3.1999998092651367
             ],
             "max": [
-              -0.9,
-              3.45,
-              4.4
+              -0.8999999761581421,
+              3.449749231338501,
+              4.400000095367432
             ]
           },
           "reservedFootprint": [
@@ -1027,21 +1027,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            2.2,
-            1.05,
-            1.2
+            2.1999999284744263,
+            1.0497491359710693,
+            1.200000286102295
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              0.9,
-              2.4,
-              3.2
+              0.8999999761581421,
+              2.4000000953674316,
+              3.1999998092651367
             ],
             "max": [
-              3.1,
-              3.45,
-              4.4
+              3.0999999046325684,
+              3.449749231338501,
+              4.400000095367432
             ]
           },
           "reservedFootprint": [
@@ -1074,21 +1074,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            2.2,
-            1.05,
-            1.2
+            2.1999998092651367,
+            1.0497491359710693,
+            1.200000286102295
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              4.9,
-              2.4,
-              3.2
+              4.900000095367432,
+              2.4000000953674316,
+              3.1999998092651367
             ],
             "max": [
-              7.1,
-              3.45,
-              4.4
+              7.099999904632568,
+              3.449749231338501,
+              4.400000095367432
             ]
           },
           "reservedFootprint": [
@@ -13717,7 +13717,29 @@
           "offsetY": 0.012,
           "noInlandOutline": true
         }
-      }
+      },
+      "sceneStages": [
+        {
+          "id": "base",
+          "url": "assets/atlas-v82-rocket.glb",
+          "required": true,
+          "quality": "all"
+        },
+        {
+          "id": "landscape",
+          "url": "assets/atlas-v82-rocket-landscape.glb",
+          "required": false,
+          "quality": "all"
+        }
+      ],
+      "sharedResources": [
+        "assets/shared/02574b6c38d208d2cd2ebe7e.ktx2",
+        "assets/shared/0a768451206e95b833258ed8.ktx2",
+        "assets/shared/1e01d91d0bb070b025860f37.ktx2",
+        "assets/shared/486b0d376be95dfe9bf00002.ktx2",
+        "assets/shared/a8c6b22760eb2a38ef602c89.ktx2",
+        "assets/shared/c8aa9c0fac740159992932a3.ktx2"
+      ]
     },
     {
       "id": "groot",
@@ -14032,7 +14054,7 @@
         ],
         "fovDegrees": 50
       },
-      "modelUrl": "assets/atlas-v81-groot.glb",
+      "modelUrl": "assets/atlas-v82-groot.glb",
       "collisionUrl": "assets/collision/groot.json",
       "mapImage": "assets/maps/groot.webp",
       "mapBounds": {
@@ -14064,21 +14086,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            2.8,
-            1.8,
-            1.6
+            1.940000295639038,
+            1.2039999961853027,
+            1.3700008392333984
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              -5.4,
-              2.4,
-              12.2
+              -4.970000267028809,
+              2.4000000953674316,
+              12.3149995803833
             ],
             "max": [
-              -2.6,
-              4.2,
-              13.8
+              -3.0299999713897705,
+              3.6040000915527344,
+              13.6850004196167
             ]
           },
           "reservedFootprint": [
@@ -14111,21 +14133,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            8,
-            7.5,
-            2.2
+            7.084573984146118,
+            6.74103307723999,
+            1.732748031616211
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              3,
-              2.4,
-              -26.1
+              3.4323365688323975,
+              2.4000000953674316,
+              -25.790000915527344
             ],
             "max": [
-              11,
-              9.9,
-              -23.9
+              10.516910552978516,
+              9.141033172607422,
+              -24.057252883911133
             ]
           },
           "reservedFootprint": [
@@ -14158,21 +14180,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            10.078,
-            8.424,
-            10.364
+            7.795499801635742,
+            4.273255348205566,
+            7.5
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              -19.168,
-              2.3,
-              -10.654
+              -16.89550018310547,
+              2.4000000953674316,
+              -7.800000190734863
             ],
             "max": [
-              -9.09,
-              10.824,
-              -0.29000000000000004
+              -9.100000381469727,
+              6.673255443572998,
+              -0.3000001907348633
             ]
           },
           "reservedFootprint": [
@@ -14233,21 +14255,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            5,
-            2.7,
-            2.5
+            7.10999870300293,
+            3.424309730529785,
+            5.115882873535156
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              11.5,
-              2.4,
-              -13.25
+              10.444999694824219,
+              2.4000000953674316,
+              -14.557941436767578
             ],
             "max": [
-              16.5,
-              5.1,
-              -10.75
+              17.55499839782715,
+              5.824309825897217,
+              -9.442058563232422
             ]
           },
           "reservedFootprint": [
@@ -14280,21 +14302,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            4,
-            2.2,
-            3
+            3.200000762939453,
+            1.380000114440918,
+            2.3050003051757812
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              -18,
-              2.4,
-              -20.5
+              -17.600000381469727,
+              2.4000000953674316,
+              -20.125
             ],
             "max": [
-              -14,
-              4.6,
-              -17.5
+              -14.399999618530273,
+              3.7800002098083496,
+              -17.81999969482422
             ]
           },
           "reservedFootprint": [
@@ -14327,21 +14349,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            4,
-            2.2,
-            3
+            3.65000057220459,
+            2.1100001335144043,
+            2.6700000762939453
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              15,
-              2.4,
-              9.5
+              15.175000190734863,
+              2.4000000953674316,
+              9.675000190734863
             ],
             "max": [
-              19,
-              4.6,
-              12.5
+              18.825000762939453,
+              4.510000228881836,
+              12.345000267028809
             ]
           },
           "reservedFootprint": [
@@ -14374,21 +14396,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            3.2,
-            2.6,
-            1.6
+            2.9000000953674316,
+            1.8894882202148438,
+            1.5
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              -1.6,
-              2.4,
-              -6.8
+              -1.4500000476837158,
+              2.4000000953674316,
+              -6.699999809265137
             ],
             "max": [
-              1.6,
-              5,
-              -5.2
+              1.4500000476837158,
+              4.289488315582275,
+              -5.199999809265137
             ]
           },
           "reservedFootprint": [
@@ -14421,21 +14443,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            6.72,
-            5.61,
-            6.17
+            6.695500373840332,
+            5.604320049285889,
+            6.15000057220459
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              -15.36,
-              2.4,
-              10.19
+              -15.345499992370605,
+              2.4000000953674316,
+              10.199999809265137
             ],
             "max": [
-              -8.64,
-              8.01,
-              16.36
+              -8.649999618530273,
+              8.00432014465332,
+              16.350000381469727
             ]
           },
           "reservedFootprint": [
@@ -14740,14 +14762,14 @@
           ],
           "foundationTopY": 2.4,
           "interactionAnchor": [
-            14.72,
-            3.56,
-            -11.23
+            12.7,
+            3.55,
+            -11.4
           ],
           "cameraLookAt": [
-            14.72,
-            3.56,
-            -11.23
+            14,
+            3.9,
+            -12
           ],
           "viewingPosition": [
             14,
@@ -14756,14 +14778,14 @@
           ],
           "arrivalPose": {
             "position": [
-              14,
-              10.8,
-              -5
+              13,
+              7.5,
+              -4
             ],
             "target": [
-              14.72,
-              3.56,
-              -11.23
+              14,
+              3.9,
+              -12
             ],
             "fovDegrees": 50
           },
@@ -14778,14 +14800,14 @@
             "kind": "component",
             "partId": "context-handle",
             "localPoint": [
-              0.72,
-              1.16,
-              0.77
+              -1.3,
+              1.15,
+              0.6
             ],
             "worldPoint": [
-              14.72,
-              3.56,
-              -11.23
+              12.7,
+              3.55,
+              -11.4
             ]
           }
         },
@@ -24294,7 +24316,31 @@
           "offsetY": 0.012,
           "noInlandOutline": true
         }
-      }
+      },
+      "sceneStages": [
+        {
+          "id": "base",
+          "url": "assets/atlas-v82-groot.glb",
+          "required": true,
+          "quality": "all"
+        },
+        {
+          "id": "landscape",
+          "url": "assets/atlas-v82-groot-landscape.glb",
+          "required": false,
+          "quality": "all"
+        }
+      ],
+      "sharedResources": [
+        "assets/shared/02574b6c38d208d2cd2ebe7e.ktx2",
+        "assets/shared/0a768451206e95b833258ed8.ktx2",
+        "assets/shared/1e01d91d0bb070b025860f37.ktx2",
+        "assets/shared/486b0d376be95dfe9bf00002.ktx2",
+        "assets/shared/a6e63d974181911496019e13.ktx2",
+        "assets/shared/a8c6b22760eb2a38ef602c89.ktx2",
+        "assets/shared/c8aa9c0fac740159992932a3.ktx2",
+        "assets/shared/d512b5b609489c380999719a.ktx2"
+      ]
     },
     {
       "id": "common",
@@ -24585,7 +24631,7 @@
         ],
         "fovDegrees": 50
       },
-      "modelUrl": "assets/atlas-v81-common.glb",
+      "modelUrl": "assets/atlas-v82-common.glb",
       "collisionUrl": "assets/collision/common.json",
       "mapImage": "assets/maps/common.webp",
       "mapBounds": {
@@ -24617,21 +24663,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            19,
-            10,
-            12
+            18.799999237060547,
+            8.87000036239624,
+            12.619999408721924
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              -9.5,
-              2.4,
-              -15
+              -9.399999618530273,
+              2.4000000953674316,
+              -14.899999618530273
             ],
             "max": [
-              9.5,
-              12.4,
-              -3
+              9.399999618530273,
+              11.270000457763672,
+              -2.2800002098083496
             ]
           },
           "reservedFootprint": [
@@ -24664,21 +24710,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            4.6,
-            2.8,
-            2.2
+            4.450000762939453,
+            2.799999713897705,
+            2.1299999952316284
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              -19.3,
-              2.4,
-              -0.1
+              -19.225000381469727,
+              2.4000000953674316,
+              -0.08000004291534424
             ],
             "max": [
-              -14.7,
-              5.2,
-              2.1
+              -14.774999618530273,
+              5.199999809265137,
+              2.049999952316284
             ]
           },
           "reservedFootprint": [
@@ -24711,20 +24757,20 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            6,
-            5,
-            5
+            6.0,
+            5.0,
+            5.0
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              12,
-              2.4,
+              12.0,
+              2.4000000953674316,
               -16.5
             ],
             "max": [
-              18,
-              7.4,
+              18.0,
+              7.400000095367432,
               -11.5
             ]
           },
@@ -24758,21 +24804,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            4.6,
-            2.8,
-            2.2
+            4.450000762939453,
+            2.799999713897705,
+            2.130000114440918
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              -18.3,
-              2.4,
-              -17.1
+              -18.225000381469727,
+              2.4000000953674316,
+              -17.079999923706055
             ],
             "max": [
-              -13.7,
-              5.2,
-              -14.9
+              -13.774999618530273,
+              5.199999809265137,
+              -14.949999809265137
             ]
           },
           "reservedFootprint": [
@@ -24805,21 +24851,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            4.6,
-            2.8,
-            2.2
+            4.450000762939453,
+            2.799999713897705,
+            2.130000114440918
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              14.7,
-              2.4,
-              6.9
+              14.774999618530273,
+              2.4000000953674316,
+              6.920000076293945
             ],
             "max": [
-              19.3,
-              5.2,
-              9.1
+              19.225000381469727,
+              5.199999809265137,
+              9.050000190734863
             ]
           },
           "reservedFootprint": [
@@ -24852,21 +24898,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            5.8,
-            4.255,
-            6
+            5.795499801635742,
+            4.253627300262451,
+            6.0
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              -14.9,
-              2.4,
-              13.4
+              -14.895500183105469,
+              2.4000000953674316,
+              13.399999618530273
             ],
             "max": [
-              -9.1,
-              6.654999999999999,
-              19.4
+              -9.100000381469727,
+              6.653627395629883,
+              19.399999618530273
             ]
           },
           "reservedFootprint": [
@@ -24930,13 +24976,13 @@
           ],
           "foundationTopY": 2.4,
           "interactionAnchor": [
-            3.675,
-            3.8,
-            -3
+            -8.4,
+            4.4,
+            -4.35
           ],
           "cameraLookAt": [
             0,
-            6.9,
+            6.0,
             -9
           ],
           "viewingPosition": [
@@ -24946,13 +24992,13 @@
           ],
           "arrivalPose": {
             "position": [
-              0,
-              14.2,
-              4
+              28.4029,
+              15.0815,
+              7.2294
             ],
             "target": [
               0,
-              6.9,
+              6,
               -9
             ],
             "fovDegrees": 50
@@ -24968,14 +25014,14 @@
             "kind": "component",
             "partId": "R-lower-arcades/front-left-pier",
             "localPoint": [
-              3.675,
-              1.4,
-              6
+              -8.4,
+              2.0,
+              4.65
             ],
             "worldPoint": [
-              3.675,
-              3.8,
-              -3
+              -8.4,
+              4.4,
+              -4.35
             ]
           }
         },
@@ -34235,7 +34281,29 @@
           "offsetY": 0.012,
           "noInlandOutline": true
         }
-      }
+      },
+      "sceneStages": [
+        {
+          "id": "base",
+          "url": "assets/atlas-v82-common.glb",
+          "required": true,
+          "quality": "all"
+        },
+        {
+          "id": "landscape",
+          "url": "assets/atlas-v82-common-landscape.glb",
+          "required": false,
+          "quality": "all"
+        }
+      ],
+      "sharedResources": [
+        "assets/shared/02574b6c38d208d2cd2ebe7e.ktx2",
+        "assets/shared/0a768451206e95b833258ed8.ktx2",
+        "assets/shared/1e01d91d0bb070b025860f37.ktx2",
+        "assets/shared/486b0d376be95dfe9bf00002.ktx2",
+        "assets/shared/a8c6b22760eb2a38ef602c89.ktx2",
+        "assets/shared/c8aa9c0fac740159992932a3.ktx2"
+      ]
     },
     {
       "id": "atlas",
@@ -34502,7 +34570,7 @@
         ],
         "fovDegrees": 50
       },
-      "modelUrl": "assets/atlas-v81-atlas.glb",
+      "modelUrl": "assets/atlas-v82-atlas.glb",
       "collisionUrl": "assets/collision/atlas.json",
       "mapImage": "assets/maps/atlas.webp",
       "mapBounds": {
@@ -34534,21 +34602,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            16,
-            17,
-            13
+            16.000015258789062,
+            16.999999523162842,
+            13.00001573562622
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              -8,
-              2.4,
-              -14.5
+              -8.000007629394531,
+              2.4000000953674316,
+              -14.500007629394531
             ],
             "max": [
-              8,
-              19.4,
-              -1.5
+              8.000007629394531,
+              19.399999618530273,
+              -1.4999918937683105
             ]
           },
           "reservedFootprint": [
@@ -34581,21 +34649,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            5,
-            1.2,
-            3.8
+            5.0,
+            1.7606596946716309,
+            3.8000001907348633
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
               -2.5,
-              2.4,
-              4.1
+              2.4000000953674316,
+              4.099999904632568
             ],
             "max": [
               2.5,
-              5,
-              7.9
+              4.1606597900390625,
+              7.900000095367432
             ]
           },
           "reservedFootprint": [
@@ -34628,21 +34696,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            2.4,
-            2.6,
-            1.6
+            2.3999996185302734,
+            2.5999999046325684,
+            1.6000003814697266
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              -14.2,
-              2.4,
-              6.2
+              -14.199999809265137,
+              2.4000000953674316,
+              6.199999809265137
             ],
             "max": [
-              -11.8,
-              5,
-              7.8
+              -11.800000190734863,
+              5.0,
+              7.800000190734863
             ]
           },
           "reservedFootprint": [
@@ -34675,21 +34743,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            2.4,
-            2.6,
-            1.6
+            2.3999996185302734,
+            2.5999999046325684,
+            1.6000003814697266
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              11.8,
-              2.4,
-              4.2
+              11.800000190734863,
+              2.4000000953674316,
+              4.199999809265137
             ],
             "max": [
-              14.2,
-              5,
-              5.8
+              14.199999809265137,
+              5.0,
+              5.800000190734863
             ]
           },
           "reservedFootprint": [
@@ -34722,21 +34790,21 @@
           ],
           "rotationYDegrees": 0,
           "geometrySize": [
-            1.6,
-            1.5,
+            1.6000003814697266,
+            1.4951179027557373,
             0.5
           ],
           "foundationTopY": 2.4,
           "worldAssemblyBounds": {
             "min": [
-              -5.8,
-              2.4,
-              1.05
+              -5.800000190734863,
+              2.4000000953674316,
+              1.0499999523162842
             ],
             "max": [
-              -4.2,
-              3.9,
-              1.55
+              -4.199999809265137,
+              3.895117998123169,
+              1.5499999523162842
             ]
           },
           "reservedFootprint": [
@@ -34790,8 +34858,8 @@
           ],
           "cameraLookAt": [
             0,
-            10.2,
-            -8
+            4,
+            0
           ],
           "viewingPosition": [
             12,
@@ -34801,13 +34869,13 @@
           "arrivalPose": {
             "position": [
               12,
-              20,
+              11,
               15
             ],
             "target": [
               0,
-              10.2,
-              -8
+              4,
+              0
             ],
             "fovDegrees": 50
           },
@@ -43000,7 +43068,29 @@
           "offsetY": 0.012,
           "noInlandOutline": true
         }
-      }
+      },
+      "sceneStages": [
+        {
+          "id": "base",
+          "url": "assets/atlas-v82-atlas.glb",
+          "required": true,
+          "quality": "all"
+        },
+        {
+          "id": "landscape",
+          "url": "assets/atlas-v82-atlas-landscape.glb",
+          "required": false,
+          "quality": "all"
+        }
+      ],
+      "sharedResources": [
+        "assets/shared/02574b6c38d208d2cd2ebe7e.ktx2",
+        "assets/shared/0a768451206e95b833258ed8.ktx2",
+        "assets/shared/1e01d91d0bb070b025860f37.ktx2",
+        "assets/shared/486b0d376be95dfe9bf00002.ktx2",
+        "assets/shared/a8c6b22760eb2a38ef602c89.ktx2",
+        "assets/shared/c8aa9c0fac740159992932a3.ktx2"
+      ]
     }
   ]
 }

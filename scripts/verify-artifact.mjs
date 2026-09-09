@@ -4,6 +4,7 @@ import { gunzipSync } from "node:zlib";
 import { resolve, posix } from "node:path";
 import { pathToFileURL } from "node:url";
 import { validateSpatial } from "./validate-islands.mjs";
+import { validateAssetManifest } from './asset-manifest.mjs';
 import { validateAssets, BASIS_DECODER_CONTRACT } from "./validate-assets.mjs";
 import { validateContent, validateStaticReader } from "./validate-content.mjs";
 
@@ -18,6 +19,23 @@ const VERSION = /^8\.\d+\.\d+(?:-[a-z\d][a-z\d.-]*)?$/iu;
 const manifestName = "artifact-manifest.json";
 // Explicit v8.1 public asset slots. Add a new reviewed asset by exact path.
 const PUBLIC_ASSET_PATHS = new Set([
+  "assets/asset-manifest.json",
+  "assets/maps/loading-world.webp",
+  "assets/shores/world.png",
+  "assets/shores/rocket.png",
+  "assets/shores/groot.png",
+  "assets/shores/common.png",
+  "assets/shores/atlas.png",
+  "assets/atlas-v82-marine.glb",
+  "assets/atlas-v82-rocket-landscape.glb",
+  "assets/atlas-v82-groot-landscape.glb",
+  "assets/atlas-v82-common-landscape.glb",
+  "assets/atlas-v82-atlas-landscape.glb",
+  "assets/atlas-v82-world.glb",
+  "assets/atlas-v82-rocket.glb",
+  "assets/atlas-v82-groot.glb",
+  "assets/atlas-v82-common.glb",
+  "assets/atlas-v82-atlas.glb",
   "assets/atlas-v81-world.glb",
   "assets/atlas-v81-rocket.glb",
   "assets/atlas-v81-groot.glb",
@@ -33,6 +51,10 @@ const PUBLIC_ASSET_PATHS = new Set([
   "assets/maps/common.webp",
   "assets/maps/atlas.webp",
   "assets/textures/water-normal.webp",
+  "assets/illustrations/groot-v82.webp",
+  "assets/illustrations/rocket-v82.webp",
+  "assets/illustrations/common-v82.webp",
+  "assets/illustrations/atlas-v82.webp",
   "assets/rocket-lenses.webp",
   "assets/basis/basis_transcoder.js",
   "assets/basis/basis_transcoder.wasm"
@@ -155,6 +177,7 @@ export function verifyFiles(files, { expectedCommit, expectedTag, privatePattern
       rootFiles.has(file.path) ||
       /^chunks\/[a-zA-Z0-9_-]+\.js(?:\.LEGAL\.txt)?$/u.test(file.path) ||
       PUBLIC_ASSET_PATHS.has(file.path) ||
+      /^assets\/shared\/[a-f0-9]{24}\.ktx2$/u.test(file.path) ||
       /^fonts\/[a-zA-Z0-9_-]+\.woff2$/u.test(file.path) ||
       /^licenses\/[a-zA-Z0-9_.-]+\.(?:txt|md)$/u.test(file.path);
     if (
@@ -192,7 +215,12 @@ export function verifyFiles(files, { expectedCommit, expectedTag, privatePattern
   if (snapshot !== release.contentSnapshot)
     fail("Public content snapshot binding differs.");
   if (Number(release.version.split(".")[1]) >= 1) {
-    for (const required of [...Object.keys(BASIS_DECODER_CONTRACT), "data/islands.json", "data/map.json", "assets/atlas-v81-world.glb", "assets/maps/world.webp", "assets/textures/water-normal.webp", ...["rocket","groot","common","atlas"].flatMap(id => [`assets/atlas-v81-${id}.glb`, `assets/collision/${id}.json`, `assets/maps/${id}.webp`])]) {
+    if(Number(release.version.split(".")[1])>=2){
+      validateAssetManifest(files,parseJSON(map.get("data/islands.json"),"Public islands"));
+      if(files.some(f=>/^assets\/atlas-v81-/.test(f.path)))fail("Legacy scene files are not a v8.2 publication surface.");
+    }
+    const scenePrefix=Number(release.version.split(".")[1])>=2?"atlas-v82":"atlas-v81";
+    for (const required of [...Object.keys(BASIS_DECODER_CONTRACT), "data/islands.json", "data/map.json", `assets/${scenePrefix}-world.glb`, "assets/maps/world.webp", "assets/textures/water-normal.webp", ...["rocket","groot","common","atlas"].flatMap(id => [`assets/${scenePrefix}-${id}.glb`, `assets/collision/${id}.json`, `assets/maps/${id}.webp`])]) {
       if (!map.has(required)) fail("A required v8.1 public spatial asset is missing.");
     }
     if (!SHA.test(release.publicDataSnapshot)) fail("Public spatial data snapshot is missing.");

@@ -93,7 +93,7 @@ test("reading evidence does not expose the internal index array and artwork is e
   first.pop();
   assert.ok(evidenceFor("rocket").length > 0);
   assert.deepEqual(evidenceFor("unknown-19"), []);
-  assert.equal(artworkFor("groot"), undefined);
+  assert.equal(artworkFor("groot"), "assets/illustrations/groot-v82.webp");
   assert.equal(artworkFor("groot-transfer"), undefined);
   assert.equal(artworkFor("rocket-desks"), "assets/rocket-lenses.webp");
   assert.equal(artworkFor("groot-moko"), undefined);

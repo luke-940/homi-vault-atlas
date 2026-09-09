@@ -27,6 +27,8 @@ export class SceneResources {
   }
   release(root:THREE.Object3D){
     const set=this.roots.get(root);if(!set)return;this.roots.delete(root);
+    // Instance buffers belong to the root, while geometry/materials may be shared.
+    root.traverse(object=>{if(object instanceof THREE.InstancedMesh)object.dispose();});
     for(const resource of set){
       const count=(this.references.get(resource)??1)-1;
       if(count>0){this.references.set(resource,count);continue;}
@@ -41,6 +43,6 @@ export class SceneResources {
     }
   }
   discard(root:THREE.Object3D){this.acquire(root);this.release(root);}
-  dispose(){for(const root of [...this.roots.keys()])this.release(root);}
+  dispose(){const roots=[...this.roots.keys()];for(const root of roots)if(root.parent&&this.roots.has(root.parent))root.removeFromParent();for(const root of roots)this.release(root);}
   get counts(){return {roots:this.roots.size,resources:this.references.size,images:this.images.size};}
 }

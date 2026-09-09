@@ -204,9 +204,9 @@ export function inspectKTX2(bytes, { privatePatterns = [] } = {}) {
   return { mime: "image/ktx2", bytes: bytes.length, width, height, levels, colorModel, transfer, metadata, decodedPixels: "not_checked" };
 }
 
-const extrasKeys = new Set(["atlasIslandId", "atlasSceneKind", "atlasVersion", "atlasUnits", "atlasUp", "atlasInstanceId", "atlasConstructionKitId", "atlasPartId", "atlasRole", "atlasTerrain", "atlasSourcePartCount", "interactionIds", "atlasFoliage", "atlasWindWeight", "atlasLOD", "atlasLODGroup", "atlasLODScreenHeights", "atlasMotion", "atlasMotionAxis", "atlasMotionDegrees", "atlasMotionPeriodSeconds", "atlasLodRoot", "atlasLodLevel", "atlasLodRadius"]);
+const extrasKeys = new Set(["atlasIslandId", "atlasSceneKind", "atlasVersion", "atlasUnits", "atlasUp", "atlasInstanceId", "atlasConstructionKitId", "atlasPartId", "atlasRole", "atlasTerrain", "atlasSourcePartCount", "interactionIds", "atlasFoliage", "atlasWindWeight", "atlasLOD", "atlasLODGroup", "atlasLODScreenHeights", "atlasMotion", "atlasMotionAxis", "atlasMotionDegrees", "atlasMotionPeriodSeconds", "atlasLodRoot", "atlasLodLevel", "atlasLodRadius", "atlasDecoration", "atlasVegetation"]);
 const extensions = new Set(["EXT_meshopt_compression", "KHR_mesh_quantization", "KHR_texture_basisu", "EXT_texture_webp", "KHR_materials_unlit", "KHR_materials_emissive_strength", "KHR_texture_transform"]);
-export function inspectGLB(bytes, { privatePatterns = [], places = [] } = {}) {
+export function inspectGLB(bytes, { privatePatterns = [], places = [], externalImages = new Map() } = {}) {
   check(bytes.length >= 28 && bytes.length <= MAX_FILE && bytes.readUInt32LE(0) === 0x46546c67 && bytes.readUInt32LE(4) === 2 && bytes.readUInt32LE(8) === bytes.length, "GLB_HEADER");
   let offset = 12, json, binary;
   while (offset < bytes.length) {
@@ -241,7 +241,8 @@ export function inspectGLB(bytes, { privatePatterns = [], places = [] } = {}) {
     for (const key of Object.keys(node.extras ?? {})) check(extrasKeys.has(key), "GLB_UNREVIEWED_EXTRAS", "json.nodes.extras.[unapproved-field]");
     const e = node.extras ?? {};
     for (const key of ["atlasIslandId", "atlasSceneKind", "atlasVersion", "atlasUnits", "atlasInstanceId", "atlasConstructionKitId", "atlasPartId", "atlasRole", "atlasLODGroup"]) if (key in e) check(typeof e[key] === "string" && ID.test(e[key]), "GLB_EXTRAS_TYPE");
-    for (const key of ["atlasTerrain", "atlasFoliage", "atlasLodRoot"]) if (key in e) check(typeof e[key] === "boolean", "GLB_EXTRAS_TYPE");
+    for (const key of ["atlasTerrain", "atlasFoliage", "atlasLodRoot", "atlasDecoration"]) if (key in e) check(typeof e[key] === "boolean", "GLB_EXTRAS_TYPE");
+    if (e.atlasVegetation !== undefined) check(["tree","understory"].includes(e.atlasVegetation), "GLB_VEGETATION_TYPE");
     if (e.interactionIds) check(Array.isArray(e.interactionIds) && e.interactionIds.every(id => typeof id === "string" && ID.test(id)), "GLB_INTERACTION_IDS");
     if (e.atlasMotion) check(["turn", "open", "foliage", "rotate", "clock"].includes(e.atlasMotion) && node.mesh === undefined, "GLB_MOTION_REQUIRES_EMPTY_PIVOT");
     if (["rotate","clock"].includes(e.atlasMotion)) check(["X","Y","Z"].includes(e.atlasMotionAxis) && Number.isFinite(e.atlasMotionDegrees) && Math.abs(e.atlasMotionDegrees)>0 && Math.abs(e.atlasMotionDegrees)<=30 && e.interactionIds?.length>0, "GLB_ROTATE_MOTION_CONTRACT");
@@ -279,7 +280,10 @@ export function inspectGLB(bytes, { privatePatterns = [], places = [] } = {}) {
   let primitives = 0;
   for (const mesh of json.meshes ?? []) for (const primitive of mesh.primitives ?? []) {
     primitives++; const position = json.accessors?.[primitive.attributes?.POSITION], uv = json.accessors?.[primitive.attributes?.TEXCOORD_0];
-    check(position?.type === "VEC3" && position.min && position.max && uv?.type === "VEC2" && uv.count === position.count, "GLB_POSITION_UV_CONTRACT");
+    const material=json.materials?.[primitive.material];
+    const textures=[material?.pbrMetallicRoughness?.baseColorTexture,material?.pbrMetallicRoughness?.metallicRoughnessTexture,material?.normalTexture,material?.occlusionTexture,material?.emissiveTexture].filter(Boolean);
+    check(position?.type === "VEC3" && position.min && position.max && (!uv || uv.type === "VEC2" && uv.count === position.count), "GLB_POSITION_UV_CONTRACT");
+    for(const texture of textures){const coordinate=texture.extensions?.KHR_texture_transform?.texCoord??texture.texCoord??0,attribute=json.accessors?.[primitive.attributes?.[`TEXCOORD_${coordinate}`]];check(attribute?.type==="VEC2"&&attribute.count===position.count,"GLB_POSITION_UV_CONTRACT");}
     check(primitive.mode === undefined || primitive.mode === 4, "GLB_PRIMITIVE_MODE");
     if (primitive.indices !== undefined) {
       const index = json.accessors?.[primitive.indices]; check(index?.type === "SCALAR" && [5121, 5123, 5125].includes(index.componentType) && index.count % 3 === 0, "GLB_INDEX_REFERENCE");
@@ -288,7 +292,17 @@ export function inspectGLB(bytes, { privatePatterns = [], places = [] } = {}) {
     check(json.materials?.[primitive.material], "GLB_MATERIAL_REFERENCE");
   }
   check(primitives > 0, "GLB_EMPTY_GEOMETRY");
-  const images = (json.images ?? []).map(image => { check(!image.uri && Number.isInteger(image.bufferView), "GLB_EXTERNAL_IMAGE"); const view = json.bufferViews?.[image.bufferView]; check(view && view.buffer === 0 && !view.extensions?.EXT_meshopt_compression, "GLB_IMAGE_BUFFER"); return inspectImage(binary.subarray(view.byteOffset ?? 0, (view.byteOffset ?? 0) + view.byteLength), image.mimeType, { privatePatterns }); });
+  const images = (json.images ?? []).map(image => {
+    if (image.uri !== undefined) {
+      check(/^shared\/[a-f0-9]{24}\.ktx2$/u.test(image.uri) && image.bufferView === undefined && image.mimeType === "image/ktx2", "GLB_EXTERNAL_IMAGE_PATH");
+      const bytes = externalImages.get(image.uri);
+      check(Buffer.isBuffer(bytes) && createHash("sha256").update(bytes).digest("hex").startsWith(image.uri.slice(7,31)), "GLB_EXTERNAL_IMAGE_IDENTITY");
+      return inspectImage(bytes, image.mimeType, {privatePatterns});
+    }
+    check(Number.isInteger(image.bufferView), "GLB_IMAGE_BUFFER");
+    const view=json.bufferViews?.[image.bufferView];check(view && view.buffer === 0 && !view.extensions?.EXT_meshopt_compression, "GLB_IMAGE_BUFFER");
+    return inspectImage(binary.subarray(view.byteOffset??0,(view.byteOffset??0)+view.byteLength),image.mimeType,{privatePatterns});
+  });
   const textureSources = (json.textures ?? []).map(texture => {
     const webp = texture.extensions?.EXT_texture_webp;
     if (webp !== undefined) {
@@ -367,17 +381,19 @@ export function inspectCollision(bytes, { privatePatterns = [], island } = {}) {
 }
 
 export function validateAssets(files, { privatePatterns = [], spatial } = {}) {
+  const externalImages = new Map(files.filter(f => /^assets\/shared\/[a-f0-9]{24}\.ktx2$/u.test(f.path)).map(f => [f.path.slice(7),f.body]));
   const issues = [], checked = [];
   files.forEach((file, assetIndex) => {
     if (!file.path.startsWith("assets/")) return;
     try {
       let result;
-      if (file.path.startsWith("assets/basis/")) {
+      if(file.path==="assets/asset-manifest.json"){scan(parseJSON(file.body),privatePatterns);result={metadataChecked:true,contract:"validated_by_artifact_verifier"};}
+      else if (file.path.startsWith("assets/basis/")) {
         const expected = BASIS_DECODER_CONTRACT[file.path];
         check(expected && file.body.length === expected.bytes && createHash("sha256").update(file.body).digest("hex") === expected.sha256, "BASIS_DECODER_IDENTITY");
         result = { bytes: file.body.length, vendorBytes: "exact_three_0.185.1", metadataChecked: "bound_to_reviewed_vendor_bytes" };
       }
-      else if (file.path.endsWith(".glb")) { const id = /^assets\/atlas-v81-(rocket|groot|common|atlas)\.glb$/u.exec(file.path)?.[1], island = spatial?.islands?.find(i => i.id === id); result = inspectGLB(file.body, { privatePatterns, places: island ? [...island.places, ...island.subInteractions] : [] }); }
+      else if (file.path.endsWith(".glb")) { const id = /^assets\/atlas-v8[12]-(rocket|groot|common|atlas)\.glb$/u.exec(file.path)?.[1], island = spatial?.islands?.find(i => i.id === id); result = inspectGLB(file.body, { privatePatterns, externalImages, places: island ? [...island.places, ...island.subInteractions] : [] }); }
       else if (/^assets\/collision\/.+\.json$/u.test(file.path)) { const id = file.path.split("/").at(-1).slice(0, -5); result = inspectCollision(file.body, { privatePatterns, island: spatial?.islands?.find(i => i.id === id) }); }
       else { const ext = file.path.split(".").at(-1), mime = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", ktx2: "image/ktx2" }[ext]; check(mime, "ASSET_FORMAT_UNSUPPORTED"); result = inspectImage(file.body, mime, { privatePatterns }); }
       checked.push({ assetIndex, ...result });

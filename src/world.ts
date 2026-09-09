@@ -13,8 +13,11 @@ import { islands, islandById, placeById, type IslandSpec, type KnowledgeObject }
 import { ATMOSPHERE_COLOR, AtlasWater, inPolygon, edgeDistance } from "./water";
 import { CameraSolids, pathRoute, validPanPoint, type CollisionShape } from "./camera-geometry";
 import { cameraRoute, sampleCameraRoute, type CameraRoute } from "./camera-travel";
+import { batchDecorations, applyVegetationWind, type InstanceSelection } from "./scene-batching";
+import { AtlasMarine } from "./marine";
+import { finishResearchCabinet, finishAtlasWorkshop } from "./exhibit-finish";
 import { SceneResources } from "./scene-resources";
-import { applyAtlasSceneMaterials, applyAtlasMaterialTreatment } from "./material-treatment";
+import { applyAtlasSceneMaterials, applyAtlasMaterialTreatment, finishV82Materials } from "./material-treatment";
 
 export const anchors:Record<ProjectId,[number,number,number]>={rocket:[-8,0,-4],groot:[6,0,-1],common:[-7,0,7],atlas:[2,0,7]};
 const terrainScale:Record<ProjectId,number>={rocket:.12,groot:.13,common:.12,atlas:.12};
@@ -24,12 +27,13 @@ export type CameraSnapshot={sceneId:SceneId;position:Triple;target:Triple;zoom:n
 export type SceneState={sceneId:SceneId;stage:"loading"|"ready"|"error";message?:string};
 export type PlacePosition={x:number;y:number;visible:boolean;depth:number};
 type Options={
+  initialScene?:SceneId;
   onReady:()=>void;onError:(reason:string)=>void;onSelect:(id:ProjectId)=>void;
   onProject:(positions:Record<string,{x:number;y:number;visible:boolean}>)=>void;
   onSelectPlace?:(placeId:string)=>void;onPlaces?:(positions:Record<string,PlacePosition>)=>void;
   onSceneState?:(state:SceneState)=>void;
 };
-type LoadedScene={id:SceneId;root:THREE.Group;solids:CameraSolids;bytes:number;loadMs:number};
+type LoadedScene={id:SceneId;root:THREE.Group;solids:CameraSolids;bytes:number;loadMs:number;landscape?:THREE.Group;landscapeLoading?:boolean;landscapeStatus?:string};
 type Travel={route:CameraRoute;target:THREE.Vector3;startTarget:THREE.Vector3;fov:number;startFov:number;elapsedMs:number};
 const vec=(p:readonly number[])=>new THREE.Vector3(p[0],p[1],p[2]);
 
@@ -41,6 +45,8 @@ export class AtlasWorld {
   model:THREE.Group|null=null;
   private current?:LoadedScene;
   private worldCache?:LoadedScene;
+  private sceneCache=new Map<SceneId,LoadedScene>();
+  private sharedTextures=new Map<string,THREE.Texture>();
   private options:Options;
   private host:HTMLElement;
   private observer:ResizeObserver;
@@ -54,6 +60,7 @@ export class AtlasWorld {
   private ktx2:KTX2Loader;
   private loader:GLTFLoader;
   private resources=new SceneResources();
+  private previousCacheEnabled=THREE.Cache.enabled;
   private generation=0;
   private request?:AbortController;
   private disposed=false;
@@ -61,7 +68,9 @@ export class AtlasWorld {
   private ready=false;
   private reduced=false;
   private paused=false;
-  private quality:"high"|"low"="high";
+  private quality:"auto"|"high"|"low"="auto";
+  private automaticLight=false;
+  private lastQualityReview=0;
   private mobile=false;
   private frame=0;
   private dirty=true;
@@ -71,6 +80,8 @@ export class AtlasWorld {
   private animatedSeconds=0;
   private frames=0;
   private frameSamples:number[]=[];
+  private callbackSamples:number[]=[];
+  private cpuSamples:number[]=[];
   private transitionSamples:number[]=[];
   private lastDiagnostic=0;
   private lastProjection=0;
@@ -85,16 +96,22 @@ export class AtlasWorld {
   private pointerDown?:{x:number;y:number;time:number};
   private focusedMeshes:THREE.Mesh[]=[];
   private pulses:{mesh:THREE.Mesh;original:THREE.Material|THREE.Material[];temporary:THREE.Material[];start:number}[]=[];
+  private instancePulses:{mesh:THREE.InstancedMesh;index:number;original:THREE.Color;start:number}[]=[];
   private motions:{object:THREE.Object3D;base:THREE.Euler;kind:string;phase:number;axis:"x"|"y"|"z";radians:number;period:number;activeSince:number|null}[]=[];
   private lods:{root:THREE.Object3D;levels:THREE.Object3D[];radius:number;level:number}[]=[];
   private lastStage:SceneState={sceneId:"world",stage:"loading"};
   private desiredScene:SceneId="world";
   private pendingSnapshot?:CameraSnapshot;
   private normalReady=false;
+  private marine?:AtlasMarine;
+  private marineRequest?:Promise<void>;
+  private marineStatus="not_requested";
+  private windTime={value:0};
   private loadingStarted=0;
 
   constructor(host:HTMLElement,options:Options){
     this.host=host;this.options=options;this.mobile=host.clientWidth<=800;
+    THREE.Cache.enabled=true;
     this.renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:"high-performance"});
     this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));
     this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFShadowMap;
@@ -118,13 +135,13 @@ export class AtlasWorld {
     this.sky=new THREE.Mesh(new THREE.SphereGeometry(950,24,12),new THREE.MeshBasicMaterial({color:ATMOSPHERE_COLOR,side:THREE.BackSide,depthWrite:false,depthTest:false,fog:false}));
     this.sky.name="atlas-atmosphere";this.sky.renderOrder=-1000;this.sky.frustumCulled=false;this.scene.add(this.sky);
     this.controls=new OrbitControls(this.camera,canvas);
-    this.controls.enableDamping=true;this.controls.dampingFactor=.08;
-    this.controls.screenSpacePanning=false;this.controls.rotateSpeed=.45;this.controls.zoomSpeed=.7;
-    this.controls.panSpeed=.65;
+    this.controls.enableDamping=true;this.controls.dampingFactor=.12;
+    this.controls.screenSpacePanning=false;this.controls.rotateSpeed=.65;this.controls.zoomSpeed=.9;
+    this.controls.panSpeed=.85;
     this.controls.addEventListener("start",this.onControlStart);
     this.controls.addEventListener("end",this.onControlEnd);
     this.controls.addEventListener("change",this.onControlChange);
-    this.setSceneCamera("world");
+    this.setSceneCamera(options.initialScene??"world");
     this.composer=new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene,this.camera));
     this.ao=new SSAOPass(this.scene,this.camera,512,512,12);
@@ -140,7 +157,7 @@ export class AtlasWorld {
     new THREE.TextureLoader().load("./assets/textures/water-normal.webp",texture=>{
       if(this.disposed){texture.dispose();return;}this.water.setNormal(texture);this.normalReady=true;this.invalidate();
     },undefined,()=>{this.normalReady=false;});
-    void this.loadScene("world");this.invalidate();
+    void this.loadScene(options.initialScene??"world");this.invalidate();
   }
 
   get sceneId():SceneId{return this.current?.id??"world";}
@@ -155,11 +172,11 @@ export class AtlasWorld {
     this.loadingStarted=performance.now();this.announce({sceneId:id,stage:"loading"});
     try{
       let loaded:LoadedScene;
-      if(id==="world"&&this.worldCache)loaded=this.worldCache;
+      if(this.sceneCache.has(id)){loaded=this.sceneCache.get(id)!;this.sceneCache.delete(id);this.sceneCache.set(id,loaded);}
       else{
         const spec=id==="world"?undefined:islandById.get(id);
         if(id!=="world"&&!spec)throw new Error("Unknown island");
-        const url=spec?.modelUrl??"./assets/atlas-v81-world.glb";
+        const url=spec?.modelUrl??"./assets/atlas-v82-world.glb";
         const [response,collisionResponse]=await Promise.all([
           fetch(url,{signal:request.signal}),spec?fetch(spec.collisionUrl,{signal:request.signal}):Promise.resolve(null),
         ]);
@@ -169,17 +186,23 @@ export class AtlasWorld {
         const gltf=await this.loader.parseAsync(buffer,new URL("./assets/",location.href).href);
         if(token!==this.generation||this.disposed){this.resources.discard(gltf.scene);return false;}
         loaded={id,root:gltf.scene,solids:new CameraSolids((collision as {shapes:CollisionShape[]}).shapes),bytes:buffer.byteLength,loadMs:performance.now()-this.loadingStarted};
-        applyAtlasSceneMaterials(loaded.root);this.resources.acquire(loaded.root);
+        this.shareTextures(loaded.root);applyAtlasSceneMaterials(loaded.root);finishV82Materials(loaded.root);finishResearchCabinet(loaded.root);finishAtlasWorkshop(loaded.root);batchDecorations(loaded.root);applyVegetationWind(loaded.root,this.windTime);this.resources.acquire(loaded.root);
         loaded.root.traverse(object=>{
           if(object instanceof THREE.Mesh){object.castShadow=true;object.receiveShadow=true;}
         });
         if(id==="world")this.worldCache=loaded;
+        this.sceneCache.set(id,loaded);
       }
       if(token!==this.generation||this.disposed)return false;
       this.clearPulse();const previous=this.current;
       if(previous&&previous!==loaded)this.scene.remove(previous.root);
       this.current=loaded;this.model=loaded.root;this.scene.add(loaded.root);
-      if(previous&&previous!==loaded&&previous!==this.worldCache)this.resources.release(previous.root);
+      // Two detailed islands plus the small overview are kept; eviction owns disposal.
+      for(const [key,cached] of [...this.sceneCache]){
+        if(this.sceneCache.size<=3)break;
+        if(key==="world"||cached===loaded)continue;
+        this.sceneCache.delete(key);this.releaseScene(cached);
+      }
       this.selectedPlaceId=undefined;this.hoveredPlaceId=undefined;this.travel=null;this.focusedMeshes=[];
       this.configureScene(id);this.collectAnimatedObjects();this.setSceneCamera(id);
       const pending=this.pendingSnapshot;this.pendingSnapshot=undefined;
@@ -187,6 +210,7 @@ export class AtlasWorld {
       this.frameSamples=[];this.lastRender=0;
       this.transitionSamples.push(performance.now()-this.loadingStarted);if(this.transitionSamples.length>30)this.transitionSamples.shift();
       this.announce({sceneId:id,stage:"ready"});
+      this.marine?.setScene(id);void this.ensureMarine();void this.loadLandscape(loaded,request,token);
       if(!this.ready){this.ready=true;this.options.onReady();}
       this.invalidate();return true;
     }catch(error){
@@ -196,6 +220,64 @@ export class AtlasWorld {
       if(!this.current)this.options.onError(message);
       this.invalidate();return false;
     }
+  }
+  private releaseScene(loaded:LoadedScene){
+    if(loaded.landscape){loaded.landscape.removeFromParent();this.resources.release(loaded.landscape);}
+    this.resources.release(loaded.root);
+  }
+  private async loadLandscape(loaded:LoadedScene,request:AbortController,token:number){
+    if(loaded.id==="world"||loaded.landscape||loaded.landscapeLoading)return;
+    const stage=islandById.get(loaded.id)?.sceneStages?.find(s=>s.id==="landscape");if(!stage)return;
+    loaded.landscapeLoading=true;loaded.landscapeStatus="loading";
+    try{
+      const response=await fetch(stage.url,{signal:request.signal});if(!response.ok)throw new Error("Landscape unavailable");
+      const bytes=await response.arrayBuffer();if(this.disposed||token!==this.generation)return;
+      const gltf=await this.loader.parseAsync(bytes,new URL("./assets/",location.href).href);
+      if(this.disposed||token!==this.generation){this.resources.discard(gltf.scene);return;}
+      this.shareTextures(gltf.scene);applyAtlasSceneMaterials(gltf.scene);finishV82Materials(gltf.scene);batchDecorations(gltf.scene);applyVegetationWind(gltf.scene,this.windTime);
+      gltf.scene.traverse(o=>{if(o instanceof THREE.Mesh){o.castShadow=true;o.receiveShadow=true;}});
+      this.resources.acquire(gltf.scene);loaded.landscape=gltf.scene;loaded.root.add(gltf.scene);loaded.landscapeStatus="ready";
+      const base=loaded.root.userData.batching??{batches:0,instances:0},extra=gltf.scene.userData.batching;
+      loaded.root.userData.batching={batches:base.batches+extra.batches,instances:base.instances+extra.instances};
+      this.invalidate();
+    }catch{loaded.landscapeStatus=request.signal.aborted?"cancelled":"unavailable";}
+    finally{loaded.landscapeLoading=false;}
+  }
+  private ensureMarine(){
+    if(this.marineRequest||this.marine)return this.marineRequest;
+    this.marineStatus="loading";
+    this.marineRequest=(async()=>{
+      try{
+        const response=await fetch("./assets/atlas-v82-marine.glb");if(!response.ok)throw new Error("Marine asset unavailable");
+        const buffer=await response.arrayBuffer();if(this.disposed)return;
+        const gltf=await this.loader.parseAsync(buffer,new URL("./assets/",location.href).href);
+        if(this.disposed){this.resources.discard(gltf.scene);return;}
+        this.shareTextures(gltf.scene);this.resources.acquire(gltf.scene);
+        this.marine=new AtlasMarine(gltf.scene);this.marine.setScene(this.sceneId);this.scene.add(this.marine.root);
+        this.water.setVessel(this.marine.vessel);this.marineStatus="ready";this.invalidate();
+      }catch{this.marineStatus="unavailable";}
+    })();
+    return this.marineRequest;
+  }
+  private shareTextures(root:THREE.Group){
+    const replaced=new Set<THREE.Texture>(),retainedImages=new Set<unknown>();
+    root.traverse(object=>{
+      if(!(object instanceof THREE.Mesh))return;
+      for(const material of Array.isArray(object.material)?object.material:[object.material]){
+        for(const [slot,value] of Object.entries(material)){
+          if(!(value instanceof THREE.Texture)||!value.name.startsWith("texture-"))continue;
+          const key=[value.name,value.colorSpace,value.wrapS,value.wrapT,...value.repeat.toArray(),...value.offset.toArray(),value.rotation].join(":");
+          const existing=this.sharedTextures.get(key);
+          if(existing&&existing!==value){(material as unknown as Record<string,unknown>)[slot]=existing;replaced.add(value);retainedImages.add(existing.source.data);}
+          else if(!existing){
+            this.sharedTextures.set(key,value);
+            const lease=new THREE.Mesh(new THREE.BufferGeometry(),new THREE.MeshBasicMaterial({map:value}));
+            this.resources.acquire(lease);retainedImages.add(value.source.data);
+          }else retainedImages.add(value.source.data);
+        }
+      }
+    });
+    for(const texture of replaced){texture.dispose();const data=texture.source?.data as {close?:()=>void}|undefined;if(data&&!retainedImages.has(data))data.close?.();}
   }
   async enterIsland(id:ProjectId,placeId?:string){
     this.desiredScene=id;this.pendingSnapshot=undefined;
@@ -229,6 +311,7 @@ export class AtlasWorld {
     if(ok)this.applySnapshot(snapshot);return ok;
   }
   private cancelPendingLoad(){
+    if(this.current&&this.desiredScene===this.current.id&&this.lastStage.stage==="ready")return;
     this.generation++;this.request?.abort();this.request=undefined;
     // A saved scene is not renderable while its WebGL context is lost.
     // History/Reader restoration must preserve the visible recovery state.
@@ -254,8 +337,7 @@ export class AtlasWorld {
     Object.assign(this.sun.shadow.camera,{left:-radius,right:radius,top:radius,bottom:-radius,near:1,far:detail?240:100});
     this.sun.shadow.camera.updateProjectionMatrix();
     (this.scene.fog as THREE.FogExp2).density=detail?.0018:.006;
-    const all=detail?[islandById.get(id)!]:islands;
-    this.water.setShore(all.map(spec=>({coast:spec.coast,exclusion:spec.shoreline.dock.pierExclusionXZ,scale:detail?1:terrainScale[spec.id],offset:detail?[0,0]:[anchors[spec.id][0],anchors[spec.id][2]],foamWidth:spec.shoreline.foam.widthByProfile[spec.shoreline.defaultProfile],foamOpacity:spec.shoreline.foam.opacityByProfile[spec.shoreline.defaultProfile],segmentOverrides:spec.shoreline.segmentOverrides})),detail);
+    this.water.setShore(id,detail,()=>this.invalidate());
     this.ao.kernelRadius=detail?1.5:2.2;
     this.resize();
   }
@@ -293,7 +375,7 @@ export class AtlasWorld {
     let points=[position];
     if(this.current&&this.current.solids.sweep(this.camera.position,position)<1)points=pathRoute(this.camera.position,position,this.island.paths);
     this.beginTravel(points,target,this.camera.fov);
-    this.pulsePlace(place);this.invalidate();
+    this.pulsePlace(place);this.resize();this.invalidate();
   }
   private beginTravel(points:THREE.Vector3[],target:THREE.Vector3,fov:number){
     if(this.reduced){
@@ -360,18 +442,23 @@ export class AtlasWorld {
     if(value){cancelAnimationFrame(this.frame);this.frame=0;}else{this.lastTick=performance.now();this.invalidate();}
     this.updateDiagnostics();
   }
-  setQuality(value:"high"|"low"){
-    this.quality=value;this.frameSamples=[];
-    const ratio=value==="low"?1:Math.min(devicePixelRatio,1.6);
+  setQuality(value:"auto"|"high"|"low"){
+    this.quality=value;this.frameSamples=[];this.automaticLight=false;this.applyQuality();
+  }
+  private applyQuality(){
+    const light=this.quality==="low"||this.automaticLight;
+    const ratio=Math.min(devicePixelRatio,light?1:this.quality==="high"?1.6:1.25);
     this.renderer.setPixelRatio(ratio);this.composer.setPixelRatio(ratio);
-    this.renderer.shadowMap.enabled=value==="high";
-    this.sun.shadow.map?.dispose();this.sun.shadow.map=null;this.sun.shadow.mapSize.set(value==="high"?2048:1024,value==="high"?2048:1024);
+    this.renderer.shadowMap.enabled=this.quality!=="low";
+    this.sun.shadow.map?.dispose();this.sun.shadow.map=null;
+    const size=light?1024:2048;this.sun.shadow.mapSize.set(size,size);
     this.resize();this.invalidate();
   }
   private resize(){
     const {width,height}=this.host.getBoundingClientRect();if(!width||!height)return;
     this.mobile=width<=800;this.renderer.setSize(width,height,false);this.camera.aspect=width/height;
     if(width>900&&this.sceneId==="world")this.camera.setViewOffset(width,height,-width*.08,height*.16,width,height);
+    else if(width>800&&this.sceneId!=="world"&&this.selectedPlaceId)this.camera.setViewOffset(width,height,width*.10,0,width,height);
     else if(width<=800&&this.sceneId!=="world")this.camera.setViewOffset(width,height,0,height*.17,width,height);
     else this.camera.clearViewOffset();
     this.camera.updateProjectionMatrix();this.composer?.setSize(width,height);
@@ -388,6 +475,12 @@ export class AtlasWorld {
     this.raycaster.setFromCamera(new THREE.Vector2((event.clientX-bounds.left)/bounds.width*2-1,-(event.clientY-bounds.top)/bounds.height*2+1),this.camera);
     for(const hit of this.raycaster.intersectObject(this.model,true)){
       if(!this.visibleInHierarchy(hit.object))continue;
+      if(hit.object instanceof THREE.InstancedMesh&&hit.instanceId!==undefined){
+        const selection=(hit.object.userData.instanceSelections as InstanceSelection[]|undefined)?.[hit.instanceId];
+        if(this.sceneId==="world"&&selection?.atlasIslandId&&selection.atlasIslandId in anchors)return {kind:"island",id:selection.atlasIslandId as ProjectId};
+        const id=selection?.interactionIds?.find(id=>placeById.get(id)?.islandId===this.sceneId);
+        if(id)return {kind:"place",id};
+      }
       let object:THREE.Object3D|null=hit.object;
       if(this.sceneId==="world"){
         while(object){
@@ -453,7 +546,9 @@ export class AtlasWorld {
   }
   private animate=(now:number)=>{
     this.frame=0;if(this.disposed||this.contextLost||this.paused||document.hidden)return;
-    const dt=Math.min((now-this.lastTick)/1000,.08);this.lastTick=now;
+    const callbackElapsed=now-this.lastTick;if(callbackElapsed>0&&callbackElapsed<500){this.callbackSamples.push(callbackElapsed);if(this.callbackSamples.length>360)this.callbackSamples.shift();}
+    const cpuStart=performance.now();
+    const dt=Math.min(callbackElapsed/1000,.08);this.lastTick=now;
     const before=this.camera.position.clone(),beforeTarget=this.controls.target.clone();
     const authoredTravel=!!this.travel;
     if(this.travel){
@@ -465,13 +560,24 @@ export class AtlasWorld {
     }
     this.controls.update();this.enforceCamera(authoredTravel);
     const moved=before.distanceToSquared(this.camera.position)+beforeTarget.distanceToSquared(this.controls.target)>.0000001;
-    if(!this.reduced){this.animatedSeconds+=dt;this.water.setTime(this.animatedSeconds);this.animateDetails(now);}
+    if(!this.reduced){this.animatedSeconds+=dt;this.water.setTime(this.animatedSeconds);this.windTime.value=this.animatedSeconds;this.marine?.update(this.animatedSeconds);this.animateDetails(now);}
     this.updateLods();this.sky.position.copy(this.camera.position);
     const interval=this.quality==="low"?1000/30:1000/60;
     if((now-this.lastRender>=interval-1)&&(this.dirty||moved||!this.reduced)){
       const elapsed=this.lastRender?now-this.lastRender:0;this.lastRender=now;this.renderer.info.reset();
-      if(this.quality==="high")this.composer.render(dt);else this.renderer.render(this.scene,this.camera);
+      if(this.quality!=="low"&&!this.automaticLight)this.composer.render(dt);else this.renderer.render(this.scene,this.camera);
+      this.cpuSamples.push(performance.now()-cpuStart);if(this.cpuSamples.length>360)this.cpuSamples.shift();
       this.frames++;this.dirty=false;
+      if(this.quality==="auto"&&now-this.lastQualityReview>5000&&this.frameSamples.length>=120){
+        this.lastQualityReview=now;
+        const sorted=[...this.frameSamples].sort((a,b)=>a-b),p95=sorted[Math.floor(sorted.length*.95)];
+        // Only lower render cost; keep the complete landscape and all knowledge objects.
+        const cpu=this.cpuSamples.reduce((a,b)=>a+b,0)/this.cpuSamples.length;
+        const mean=sorted.reduce((a,b)=>a+b,0)/sorted.length;
+        const jitter=Math.sqrt(sorted.reduce((a,b)=>a+(b-mean)**2,0)/sorted.length)/mean;
+        // A steady low callback cadence in an embedded/offscreen browser is not render overload.
+        if(p95>28&&(cpu>8||jitter>.15)&&!this.automaticLight){this.automaticLight=true;this.applyQuality();}
+      }
       if(now-this.lastProjection>=50){this.lastProjection=now;this.projectLabels();}
       if(this.model&&elapsed>0&&elapsed<500){this.frameSamples.push(elapsed);if(this.frameSamples.length>360)this.frameSamples.shift();}
       if(now-this.lastDiagnostic>500){this.lastDiagnostic=now;this.updateDiagnostics();}
@@ -523,6 +629,17 @@ export class AtlasWorld {
   private pulsePlace(place:KnowledgeObject){
     this.clearPulse();if(!this.model)return;
     this.model.traverse(object=>{
+      if(object instanceof THREE.InstancedMesh){
+        const selections=object.userData.instanceSelections as InstanceSelection[]|undefined;
+        selections?.forEach((selection,index)=>{
+          if(!selection.interactionIds?.includes(place.id))return;
+          const original=new THREE.Color(1,1,1);if(object.instanceColor)object.getColorAt(index,original);
+          object.setColorAt(index,new THREE.Color(1.28,1.15,.87));
+          this.instancePulses.push({mesh:object,index,original,start:performance.now()});
+        });
+        if(object.instanceColor)object.instanceColor.needsUpdate=true;
+        return;
+      }
       if(!(object instanceof THREE.Mesh)||!(object.userData.interactionIds as string[]|undefined)?.includes(place.id))return;
       this.focusedMeshes.push(object);const original=object.material,temporary=(Array.isArray(original)?original:[original]).map(material=>{
         const clone=material.clone();applyAtlasMaterialTreatment(clone);if(clone instanceof THREE.MeshStandardMaterial){clone.emissive.set("#b28a4b");clone.emissiveIntensity=.16;}return clone;
@@ -548,17 +665,27 @@ export class AtlasWorld {
       } else motion.object.rotation.copy(motion.base);
     }
     for(const pulse of this.pulses)for(const material of pulse.temporary)if(material instanceof THREE.MeshStandardMaterial)material.emissiveIntensity=.06+Math.max(0,1-(now-pulse.start)/1700)*.16;
-    if(this.pulses.length&&now-this.pulses[0].start>2000)this.clearPulse();
+    for(const pulse of this.instancePulses){
+      pulse.mesh.setColorAt(pulse.index,pulse.original.clone().lerp(new THREE.Color(1.28,1.15,.87),Math.max(0,1-(now-pulse.start)/1700)));
+      pulse.mesh.instanceColor!.needsUpdate=true;
+    }
+    const pulseStart=this.pulses[0]?.start??this.instancePulses[0]?.start;
+    if(pulseStart!==undefined&&now-pulseStart>2000)this.clearPulse();
   }
-  private clearPulse(){for(const p of this.pulses){p.mesh.material=p.original;for(const material of p.temporary)material.dispose();}for(const m of this.motions)if(m.kind!=="foliage"&&m.kind!=="clock")m.object.rotation.copy(m.base);this.pulses=[];this.focusedMeshes=[];}
+  private clearPulse(){
+    for(const p of this.pulses){p.mesh.material=p.original;for(const material of p.temporary)material.dispose();}
+    for(const p of this.instancePulses){p.mesh.setColorAt(p.index,p.original);p.mesh.instanceColor!.needsUpdate=true;}
+    for(const m of this.motions)if(m.kind!=="foliage"&&m.kind!=="clock")m.object.rotation.copy(m.base);
+    this.pulses=[];this.instancePulses=[];this.focusedMeshes=[];
+  }
   getMetrics(){
     const samples=[...this.frameSamples],sorted=[...samples].sort((a,b)=>a-b);
     const mean=samples.length?samples.reduce((s,n)=>s+n,0)/samples.length:null;
-    return {sceneId:this.sceneId,stage:this.lastStage.stage,loaded:!!this.model,quality:this.quality,paused:this.paused,reduced:this.reduced,contextLost:this.contextLost,frames:this.frames,
+    return {sceneId:this.sceneId,stage:this.lastStage.stage,loaded:!!this.model,quality:this.quality,automaticLight:this.automaticLight,paused:this.paused,reduced:this.reduced,contextLost:this.contextLost,frames:this.frames,
       drawCalls:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles,geometries:this.renderer.info.memory.geometries,textures:this.renderer.info.memory.textures,
-      frameMs:mean,fps:mean?1000/mean:null,p50:sorted.length?sorted[Math.floor(sorted.length*.5)]:null,p95:sorted.length?sorted[Math.floor(sorted.length*.95)]:null,
+      callbackMs:this.callbackSamples.length?this.callbackSamples.reduce((s,n)=>s+n,0)/this.callbackSamples.length:null,cpuMs:this.cpuSamples.length?this.cpuSamples.reduce((s,n)=>s+n,0)/this.cpuSamples.length:null,frameMs:mean,fps:mean?1000/mean:null,p50:sorted.length?sorted[Math.floor(sorted.length*.5)]:null,p95:sorted.length?sorted[Math.floor(sorted.length*.95)]:null,
       frameSamples:samples,transitionMs:[...this.transitionSamples],loadMs:this.current?.loadMs??null,modelBytes:this.current?.bytes??null,collisionSolids:this.current?.solids.count??0,
-      resourceOwnership:this.resources.counts,waterNormalReady:this.normalReady,lodGroups:this.lods.length,camera:this.camera.position.toArray(),target:this.controls.target.toArray(),selectedPlaceId:this.selectedPlaceId??null};
+      batching:this.model?.userData.batching,resourceOwnership:this.resources.counts,sceneCache:[...this.sceneCache.keys()],sharedTextureCount:this.sharedTextures.size,waterNormalReady:this.normalReady,marineStatus:this.marineStatus,landscapeStatus:this.current?.landscapeStatus??"not_required",lodGroups:this.lods.length,camera:this.camera.position.toArray(),target:this.controls.target.toArray(),selectedPlaceId:this.selectedPlaceId??null};
   }
   private updateDiagnostics(){
     const metrics=this.getMetrics();(window as unknown as {__ATLAS_DIAGNOSTICS__:unknown}).__ATLAS_DIAGNOSTICS__=metrics;
@@ -570,7 +697,8 @@ export class AtlasWorld {
     const canvas=this.renderer.domElement;
     canvas.removeEventListener("pointerdown",this.onDown);canvas.removeEventListener("pointerup",this.onUp);canvas.removeEventListener("pointermove",this.onMove);canvas.removeEventListener("pointerleave",this.onLeave);canvas.removeEventListener("keydown",this.onKey);
     canvas.removeEventListener("webglcontextlost",this.onContextLost);canvas.removeEventListener("webglcontextrestored",this.onContextRestored);document.removeEventListener("visibilitychange",this.onVisibility);
-    this.resources.dispose();this.water.dispose();this.sky.geometry.dispose();this.sky.material.dispose();this.environment.dispose();this.sun.shadow.map?.dispose();
+    this.resources.dispose();this.sceneCache.clear();this.sharedTextures.clear();this.water.dispose();this.sky.geometry.dispose();this.sky.material.dispose();this.environment.dispose();this.sun.shadow.map?.dispose();
     this.ao.dispose();this.output.dispose();this.composer.dispose();this.renderer.dispose();canvas.remove();
+    THREE.Cache.clear();THREE.Cache.enabled=this.previousCacheEnabled;
   }
 }

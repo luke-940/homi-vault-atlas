@@ -394,8 +394,17 @@ export function validateSpatial(data, map, content, evidence, { privatePatterns 
   let assetCount = 0;
   for (const [ii, island] of islands.entries()) {
     const path = `spatial.islands[${ii}]`;
-    shape(island, ['id','label','coast','groundY','entry','extent','entryCamera','modelUrl','collisionUrl','mapImage','mapBounds','limits','assets','places','subInteractions','paths','reservedFootprints','shoreline'], path);
-    for (const [key, expected] of [['modelUrl', `assets/atlas-v81-${island.id}.glb`], ['collisionUrl', `assets/collision/${island.id}.json`], ['mapImage', `assets/maps/${island.id}.webp`]]) if (island[key] !== expected) issue(`${path}.${key}`, 'Asset URL differs from the registered island contract.');
+    shape(island, ['id','label','coast','groundY','entry','extent','entryCamera','modelUrl','collisionUrl','mapImage','mapBounds','limits','assets','places','subInteractions','paths','reservedFootprints','shoreline','sceneStages','sharedResources'], path);
+    for (const [key, expected] of [['modelUrl', `assets/atlas-v81-${island.id}.glb`], ['collisionUrl', `assets/collision/${island.id}.json`], ['mapImage', `assets/maps/${island.id}.webp`]]) if (island[key] !== expected && !(key==='modelUrl' && island[key]===`assets/atlas-v82-${island.id}.glb`)) issue(`${path}.${key}`, 'Asset URL differs from the registered island contract.');
+    if (island.sceneStages !== undefined) {
+      if (!Array.isArray(island.sceneStages) || island.sceneStages.length !== 2) issue(`${path}.sceneStages`, 'Two loading stages required.');
+      else for (const [stageIndex, stage] of island.sceneStages.entries()) {
+        shape(stage, ['id','url','required','quality'], `${path}.sceneStages[${stageIndex}]`);
+        const id=stageIndex===0?'base':'landscape';
+        if(stage.id!==id||stage.url!==`assets/atlas-v82-${island.id}${stageIndex?'-landscape':''}.glb`||stage.required!==(stageIndex===0)||stage.quality!=='all')issue(`${path}.sceneStages`, 'Unregistered loading stage.');
+      }
+      if (!Array.isArray(island.sharedResources) || island.sharedResources.some(url=>!/^assets\/shared\/[a-f0-9]{24}\.ktx2$/u.test(url)) || new Set(island.sharedResources).size!==island.sharedResources.length) issue(`${path}.sharedResources`, 'Invalid shared texture references.');
+    }
     vector(island.entry, 3, `${path}.entry`);
     if (island.groundY !== 2.4 || !finite(island.extent) || island.extent <= 0) issue(path, 'Invalid ground level or extent.');
     for (const [i, point] of array(island.coast, `${path}.coast`).entries()) vector(point, 2, `${path}.coast[${i}]`);
