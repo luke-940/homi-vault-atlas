@@ -1,6 +1,18 @@
-# Atlas v8 content model
+# Atlas v8.1 content and space model
 
-The browser reads only the reviewed `public/data/content.json` and `public/data/evidence.json`. These contain 43 content nodes and 23 readable evidence records. Private research inventories, source snapshots, source locations, and exclusion dictionaries do not belong in this repository or the built site.
+The browser reads the reviewed `public/data/content.json`, `evidence.json`, `islands.json`, and `map.json`. The narrative dataset contains 38 content nodes, 23 readable evidence records and 51 exact excerpts. Space and map records link to these same identities. Private research inventories, source snapshots, source locations, and exclusion dictionaries do not belong in this repository or the built site.
+
+Groot's seven nodes comprise its introduction and six philosophy and judgment research stories: the roots of judgment, thinking through play, context, appropriate reliance, transfer and updating judgment. Game, character and implementation-progress exhibitions are outside the current publication scope.
+
+## Space and map contracts
+
+`IslandSpec` binds each island to its own scene, entry camera, allowed camera range, paths, physical places, collision file and orthographic map. `KnowledgeObject` binds an actual named object surface to reviewed content and explicit actions. Sub-interactions can point to an existing paragraph or a guide action without inventing another story node.
+
+`AtlasMapEntry` records a safe display name and selected real containment. The map contains 51 reviewed locations and 50 containment edges. Editorial topic links and the designed island layout remain separate. Atlas itself runs outside the Vault and has no fabricated Vault folder.
+
+The world, island, map, search and Reader share story/evidence IDs. Current story addresses remain valid. Retired story addresses show a safe notice with links to the world and static Reader; retired content is not republished. Island and map routes store their own selection and camera state; closing the Reader restores the saved island and view. The static Reader remains available when WebGL fails.
+
+Spatial checks live in `scripts/validate-islands.mjs`. `scripts/validate-assets.mjs` checks embedded images, allowed metadata, physical interaction identities, collision solids and compressed container declarations. These checks do not claim actual ray hits, decoded compression equivalence, frame rate or visual quality; those require separate runtime evidence.
 
 ## Runtime API
 

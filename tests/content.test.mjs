@@ -28,7 +28,8 @@ test("the reviewed public corpus is structurally valid and every node opens read
     valid: true,
     issues: [],
   });
-  assert.equal(nodes.length, 43);
+  assert.equal(nodes.length, 38);
+  assert.equal(rawEvidence.records.flatMap(record => record.excerptParagraphs).length, 51);
   for (const node of nodes)
     assert.ok(
       evidenceFor(node.id).some(
@@ -46,7 +47,8 @@ test("the reviewed public corpus is structurally valid and every node opens read
 test("project routing keeps shared research foundations distinct from independent projects", () => {
   assert.equal(projectFor("horizon-base"), "rocket");
   assert.equal(projectFor("desk-science"), "rocket");
-  assert.equal(projectFor("groot-moko"), "groot");
+  assert.equal(projectFor("groot-judgment-roots"), "groot");
+  assert.throws(() => projectFor("groot-unregistered-17"), RangeError);
   for (const id of [
     "common",
     "knowledge-library",
@@ -64,22 +66,23 @@ test("project routing keeps shared research foundations distinct from independen
 test("search handles compatibility width, case, spacing, and Korean initial consonants", () => {
   assert.equal(searchNodes("  ＲＯＣＫＥＴ　 ")[0].id, "rocket");
   assert.equal(searchNodes("ㄱㄹㅌ")[0].id, "groot");
-  assert.equal(searchNodes("ㅁㅋ")[0].id, "groot-moko");
+  assert.equal(searchNodes("ㅁㄹㅇㅈㅇ")[0].id, "groot-judgment-context");
+  assert.deepEqual(searchNodes("ㅁㅋ"), []);
   assert.ok(
-    searchNodes("카드대결").some((node) => node.id === "groot-adventure"),
+    searchNodes("맥락의정원").some((node) => node.id === "groot-judgment-context"),
   );
   assert.ok(
-    searchNodes("카드\n  대결").some((node) => node.id === "groot-adventure"),
+    searchNodes("맥락의\n  정원").some((node) => node.id === "groot-judgment-context"),
   );
   assert.deepEqual(searchNodes("  "), nodes);
 });
 
 test("search requires every term and applies a project filter before ranking", () => {
   assert.ok(
-    searchNodes("모코 성장", "groot").some((node) => node.id === "groot-moko"),
+    searchNodes("생각 근거", "groot").some((node) => node.id === "groot-judgment-update"),
   );
-  assert.deepEqual(searchNodes("모코", "rocket"), []);
-  assert.deepEqual(searchNodes("모코 TOKEN_NO_MATCH_83"), []);
+  assert.deepEqual(searchNodes("맥락의 정원", "rocket"), []);
+  assert.deepEqual(searchNodes("맥락의 TOKEN_NO_MATCH_83"), []);
   assert.ok(
     searchNodes("", "common").every((node) => projectFor(node.id) === "common"),
   );
@@ -90,12 +93,12 @@ test("reading evidence does not expose the internal index array and artwork is e
   first.pop();
   assert.ok(evidenceFor("rocket").length > 0);
   assert.deepEqual(evidenceFor("unknown-19"), []);
-  assert.equal(artworkFor("groot-adventure"), "assets/groot-harbor.webp");
-  assert.equal(artworkFor("groot-hana"), "assets/groot-characters.webp");
+  assert.equal(artworkFor("groot"), undefined);
+  assert.equal(artworkFor("groot-transfer"), undefined);
   assert.equal(artworkFor("rocket-desks"), "assets/rocket-lenses.webp");
   assert.equal(artworkFor("groot-moko"), undefined);
   assert.equal(artworkFor("toString"), undefined);
-  assert.equal(nodeById.get("groot-moko")?.kind, "fictional-character");
+  assert.equal(nodeById.get("groot-judgment-roots")?.kind, "research-story");
 });
 
 test("a new project identity, duplicate evidence, and dangling navigation are rejected", () => {
@@ -274,4 +277,36 @@ test("changed source bytes and missing private mappings cannot produce exact-sou
       (issue) => issue.message === "Private mapping is missing.",
     ),
   );
+});
+
+const retiredIds = ["groot-adventure", "groot-living", "groot-relationships", "groot-moko", "groot-rin", "groot-hana", "groot-art-explore", "groot-art-characters", "groot-art-combat", "groot-art-dialogue", "groot-choices"];
+test("retired game identities cannot return through search, evidence, artwork or prefix routing", () => {
+  for (const id of retiredIds) {
+    assert.equal(nodeById.has(id), false, id);
+    assert.deepEqual(searchNodes(id), [], id);
+    assert.deepEqual(evidenceFor(id), [], id);
+    assert.equal(artworkFor(id), undefined, id);
+    assert.throws(() => projectFor(id), RangeError, id);
+    const {content,evidence}=copy(); content.nodes.at(-1).id=id;
+    assert.equal(validateContent(content,evidence).valid,false,id);
+  }
+});
+test("equal counts cannot replace evidence identities, exact quote bytes or review order", () => {
+  for (const mutate of [
+    e => {e.records.at(-1).id="ev_000000000017";},
+    e => {e.records.at(-1).excerptParagraphs[0].text+=" ";},
+    e => {const r=e.records.find(r=>r.excerptParagraphs.length>1);[r.excerptParagraphs[0],r.excerptParagraphs[1]]=[r.excerptParagraphs[1],r.excerptParagraphs[0]];},
+    e => {e.records.at(-1).nodeIds=["groot"];},
+  ]) {
+    const {content,evidence}=copy(); mutate(evidence);
+    assert.equal(evidence.records.length,23);
+    assert.equal(evidence.records.flatMap(r=>r.excerptParagraphs).length,51);
+    assert.equal(validateContent(content,evidence).valid,false);
+  }
+});
+test("registered research IDs cannot acquire abandoned kinds or retired tour identities", () => {
+  const {content,evidence}=copy();content.nodes.at(-1).kind="game-design";
+  assert.equal(validateContent(content,evidence).valid,false);
+  const fresh=copy();fresh.content.routes[0].id="route-game-life";
+  assert.equal(validateContent(fresh.content,fresh.evidence).valid,false);
 });

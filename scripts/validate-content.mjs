@@ -1,3 +1,4 @@
+import { validateSpatial } from "./validate-islands.mjs";
 import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
@@ -24,16 +25,6 @@ export const APPROVED_NODE_IDS = Object.freeze([
   "horizon-acceleration",
   "horizon-constraints",
   "horizon-fragmentation",
-  "groot-adventure",
-  "groot-living",
-  "groot-relationships",
-  "groot-moko",
-  "groot-rin",
-  "groot-hana",
-  "groot-art-explore",
-  "groot-art-characters",
-  "groot-art-combat",
-  "groot-art-dialogue",
   "concept-evidence",
   "concept-memory",
   "concept-graphs",
@@ -45,9 +36,315 @@ export const APPROVED_NODE_IDS = Object.freeze([
   "papers-lens",
   "rocket-delegation",
   "rocket-feedback",
-  "groot-choices",
   "concept-agent",
+  "groot-judgment-roots",
+  "groot-thinking-play",
+  "groot-judgment-context",
+  "groot-appropriate-reliance",
+  "groot-transfer",
+  "groot-judgment-update"
 ]);
+const APPROVED_EVIDENCE = Object.freeze([
+  {
+    "id": "ev_6d3799f3fa4a",
+    "nodeIds": [
+      "rocket"
+    ],
+    "excerptSha256": [
+      "23ec1c059d6bb44f8bcda4fc5ff6f92263d0a493f59d0c97e339932d84eb3dba",
+      "16c7b88516cffa7314a9f1ca51d03c750a3b0ed00ced832b4a1d4c2226ab4cad"
+    ]
+  },
+  {
+    "id": "ev_5a50e42fa6ae",
+    "nodeIds": [
+      "rocket-desks",
+      "desk-frontier",
+      "desk-compute",
+      "desk-physical",
+      "desk-science",
+      "desk-markets",
+      "desk-society",
+      "desk-governance"
+    ],
+    "excerptSha256": [
+      "2dafc65480f1c52837324315ef8505634529c7b9789bad5c66aaad69120b74af",
+      "f3212d7a8bc9caa05cd4a0a78a2fb891373b5776c5e36da1aeeff346d3c2b89d",
+      "ee93d27a5e9df9a9b665e71a9417381b6e95f6c210289e8fb8db9b45ddb57435",
+      "a6dd16398134f7576633f0bf0c675a76501973b25768abec7f26d468bc83a9a4",
+      "ca2e64e4b1d3355f7a29af649f5a9d8eabd7499906556fb1552b9621d0a062db",
+      "b2c0531ba4e43345a1e87207a69102c7ac1c76d17fafa04ff6e3ce223b14d610",
+      "21857bf8f281919716d99eb2a5f1bce6316c89434a20585a3b89c02060d6c701"
+    ]
+  },
+  {
+    "id": "ev_021e376c6fb3",
+    "nodeIds": [
+      "rocket-clocks"
+    ],
+    "excerptSha256": [
+      "e457798d551f321082f2c300dd3e80569b55d19b32ba53965a621a3dd8a56549"
+    ]
+  },
+  {
+    "id": "ev_a4311d8e432a",
+    "nodeIds": [
+      "rocket-horizon",
+      "horizon-base",
+      "horizon-acceleration",
+      "horizon-constraints",
+      "horizon-fragmentation"
+    ],
+    "excerptSha256": [
+      "5622e38f682a771139ddcd90239c9eea23782e0c98917e9f4f28164deb6650fc",
+      "16a0f901d2a68206cdfac8ac70f1afba8bd6d47be31475cb0941f1c6de828a50"
+    ]
+  },
+  {
+    "id": "ev_51aaa52883ca",
+    "nodeIds": [
+      "rocket-delegation"
+    ],
+    "excerptSha256": [
+      "abdda9501bb1c0f525961caf75652001bb259e1e5411e6db1e01931e3ac50ecd"
+    ]
+  },
+  {
+    "id": "ev_8e8f52dfcfa9",
+    "nodeIds": [
+      "rocket-feedback"
+    ],
+    "excerptSha256": [
+      "381b6dcf79903ac3b7c8edb6e18d04f45fa5d64d982114bc626314bff3f90a3d",
+      "d59d25a6a1f539cf50479a2ae1bb143fb406cd8f238d9746eee230acaaebc69c"
+    ]
+  },
+  {
+    "id": "ev_76037ae33609",
+    "nodeIds": [
+      "knowledge-library",
+      "concept-reuse"
+    ],
+    "excerptSha256": [
+      "21fb527fbacf8ba7e02341ec958038473815027070944230f1ac2ecf18ecb696",
+      "310bec49f1bbb2ecc746ade031b61da84ff98a9fa651cea0953674ef8c96ef39"
+    ]
+  },
+  {
+    "id": "ev_1f18a275ea79",
+    "nodeIds": [
+      "research-cycle",
+      "daily-lens",
+      "weekly-lens",
+      "papers-lens"
+    ],
+    "excerptSha256": [
+      "8fd874de075ab7b9d923962c8f1cb7264ef38ecc98d2b41f2050578eaa401c00",
+      "c38a49bd9889aa0f8730283e97f261e2e0034f3210d396b4dd81aac331571762",
+      "e1156f572cf39dd21ad442396c1ebd68608eb7b47d0b9ed33b0e017a6691af63"
+    ]
+  },
+  {
+    "id": "ev_c2689a9ddbae",
+    "nodeIds": [
+      "concept-memory"
+    ],
+    "excerptSha256": [
+      "4543e887366693ed85a869b4e096f4becbc0af75c787247afa02c9be4d2f1cf0"
+    ]
+  },
+  {
+    "id": "ev_d2e09fce25de",
+    "nodeIds": [
+      "concept-evidence"
+    ],
+    "excerptSha256": [
+      "38d91ef57ad9f31a69bc1d0bfe1b6d845a8bd7add3156df156cd6bf6183b54d0",
+      "08bdfff79dbc6a7311930bdd8627313172ba9c673deb95aa52b0dd4b0de2a7cd"
+    ]
+  },
+  {
+    "id": "ev_433e6970cdbf",
+    "nodeIds": [
+      "concept-graphs"
+    ],
+    "excerptSha256": [
+      "9063f700e2b62d52eea33ba216d28995cf99884477bb60b37280f2c5c9eb5749",
+      "37a52f681e14362e9a307f036fcad176edf45f2e987e76609e023890253f60c0",
+      "6691519065e535f9f5449d0e93eb9ff4d86a4372257ebe7114c1e4979892af06"
+    ]
+  },
+  {
+    "id": "ev_8341193205b0",
+    "nodeIds": [
+      "concept-world-model"
+    ],
+    "excerptSha256": [
+      "310f2612daf90a7df3acf012c1c6ff8530229ecaee7c36b435eded1dae21996b"
+    ]
+  },
+  {
+    "id": "ev_9fac734984f9",
+    "nodeIds": [
+      "concept-trust"
+    ],
+    "excerptSha256": [
+      "1c828b05209033c0da9a6233b3aa1d5c7ae65fa6d3c062d44d5a09a287d3f017",
+      "a7e6756ca21a55c443964ebf7190ad4e5e0755eef577f6871ab4964318c6a54c"
+    ]
+  },
+  {
+    "id": "ev_fb116cbb9579",
+    "nodeIds": [
+      "concept-agent"
+    ],
+    "excerptSha256": [
+      "6db7d480c97604244514f31e0d4bc4ab0a41270cd3c948c32daf83b216449ebd",
+      "b918aaa937bcabd807943cb6b7cba3cdcbe0ccef7e261b0035589ee2f2aaf210"
+    ]
+  },
+  {
+    "id": "ev_3b1ee5490c4c",
+    "nodeIds": [
+      "atlas"
+    ],
+    "excerptSha256": [
+      "fba0db6b908f562ddee821388e89c61841e75609ae687d250d215219f78f23c2"
+    ]
+  },
+  {
+    "id": "ev_60b6cc180178",
+    "nodeIds": [
+      "knowledge-upkeep"
+    ],
+    "excerptSha256": [
+      "38e06835fb3bc462d4b0dd88d73685458dabe73c52687db1a602e8c7e64c8732",
+      "6691519065e535f9f5449d0e93eb9ff4d86a4372257ebe7114c1e4979892af06"
+    ]
+  },
+  {
+    "id": "ev_6bd9aef81ea2",
+    "nodeIds": [
+      "groot"
+    ],
+    "excerptSha256": [
+      "2fce5ba2b11b2ee4838e0839dcb0462e1c626be489eccc374425ed536d3b64d7",
+      "698b08ead0b25048a282d3d2c2b4283658319e0698feacc4441febd073f785ce",
+      "9fe22a763fa71f91a7287ca16a060c7706ec424ae21f6c3f8c7e0840f132fbc4",
+      "1cd1a0c7454513621ff6e36b1b03cb7dfcbf28311f7733ca147004aa875fc7f9"
+    ]
+  },
+  {
+    "id": "ev_91d127624ba3",
+    "nodeIds": [
+      "groot-judgment-roots"
+    ],
+    "excerptSha256": [
+      "f1db4652eaae7ac8b8b5071ec95ff92cff8e5d08c2e4abc57a027e6e14f5837f",
+      "14706eb073ca45f5b699654c14c04ec02bfaa06adce57ec4c608aae63a10b281"
+    ]
+  },
+  {
+    "id": "ev_953f4651f03c",
+    "nodeIds": [
+      "groot-thinking-play"
+    ],
+    "excerptSha256": [
+      "24b4737f1cd55865c8c6573eb34c8b2d556c1c47944d6eb73fbc421ebc00ab0a",
+      "49751c53c679e848829e10a0e3edba391e1762abed65b367bf823a4f25937fa1",
+      "c7966c81e909c8ad0b8339cc093b95e9d3b62d49e186f9a97ab62e8b1898bc3d"
+    ]
+  },
+  {
+    "id": "ev_1414d3c65f54",
+    "nodeIds": [
+      "groot-judgment-context"
+    ],
+    "excerptSha256": [
+      "8d87d12ac5f04d187e00859a2d14cbf5c0cfba8a12b4236d363bf73fa525dd82",
+      "72e7532380863429520ce80927ebdc0048ee497877fb39dba8409aa30319f11b"
+    ]
+  },
+  {
+    "id": "ev_f8dfc6b27083",
+    "nodeIds": [
+      "groot-appropriate-reliance"
+    ],
+    "excerptSha256": [
+      "e201441746f8f3dc930447f7607b93bb9d2d2c48d132f136504676c6d05d7c7d",
+      "aeefad981fb09e9776b892b54e1d6085a1f69fa5bf356a1a511df409a3903828"
+    ]
+  },
+  {
+    "id": "ev_1be0527494fc",
+    "nodeIds": [
+      "groot-transfer"
+    ],
+    "excerptSha256": [
+      "d5fd3eb675d8c472615d24c2f9b0257e8f98c387b035ef240b38e13b24205e78",
+      "6cb64ca59ec75ad2e19c14ed6f8cf145622a3bcde2276246eb686a8c16cfade6"
+    ]
+  },
+  {
+    "id": "ev_5170fab763e6",
+    "nodeIds": [
+      "groot-judgment-update"
+    ],
+    "excerptSha256": [
+      "508925784e01304ae2f98daa1551a92ffdce119aae3a376c0bf4150454bba233",
+      "e201441746f8f3dc930447f7607b93bb9d2d2c48d132f136504676c6d05d7c7d"
+    ]
+  }
+]);
+const APPROVED_ROUTE_IDS = Object.freeze([
+  "route-first-impression",
+  "route-future",
+  "route-groot-research",
+  "route-knowledge",
+  "route-how-to-trust",
+  "route-memory",
+  "route-atlas"
+]);
+const APPROVED_NODE_KINDS = Object.freeze({
+  "rocket": "project",
+  "groot": "project",
+  "atlas": "project",
+  "knowledge-library": "foundation",
+  "research-cycle": "foundation",
+  "knowledge-upkeep": "foundation",
+  "rocket-desks": "research-map",
+  "desk-frontier": "research-desk",
+  "desk-compute": "research-desk",
+  "desk-physical": "research-desk",
+  "desk-science": "research-desk",
+  "desk-markets": "research-desk",
+  "desk-society": "research-desk",
+  "desk-governance": "research-desk",
+  "rocket-clocks": "research-story",
+  "rocket-horizon": "research-story",
+  "horizon-base": "scenario",
+  "horizon-acceleration": "scenario",
+  "horizon-constraints": "scenario",
+  "horizon-fragmentation": "scenario",
+  "concept-evidence": "knowledge-concept",
+  "concept-memory": "knowledge-concept",
+  "concept-graphs": "knowledge-concept",
+  "concept-world-model": "knowledge-concept",
+  "concept-trust": "knowledge-concept",
+  "concept-reuse": "knowledge-concept",
+  "daily-lens": "research-practice",
+  "weekly-lens": "research-practice",
+  "papers-lens": "research-practice",
+  "rocket-delegation": "research-story",
+  "rocket-feedback": "research-story",
+  "concept-agent": "knowledge-concept",
+  "groot-judgment-roots": "research-story",
+  "groot-thinking-play": "research-story",
+  "groot-judgment-context": "research-story",
+  "groot-appropriate-reliance": "research-story",
+  "groot-transfer": "research-story",
+  "groot-judgment-update": "research-story"
+});
 
 const NODE_KINDS = new Set([
   "project",
@@ -56,9 +353,6 @@ const NODE_KINDS = new Set([
   "research-desk",
   "research-story",
   "scenario",
-  "game-design",
-  "fictional-character",
-  "goal-art",
   "knowledge-concept",
   "research-practice",
 ]);
@@ -260,8 +554,10 @@ export function validateContent(
   nonemptyFields(evidence, ["readingNote"], "evidence");
   const nodes = Array.isArray(content.nodes) ? content.nodes : [];
   const records = Array.isArray(evidence.records) ? evidence.records : [];
-  if (nodes.length !== 43)
-    issue("content.nodes", "Expected 43 reviewed content nodes.");
+  if (nodes.length !== 38)
+    issue("content.nodes", "Expected 38 reviewed content nodes.");
+  if (records.reduce((count, record) => count + (Array.isArray(record.excerptParagraphs) ? record.excerptParagraphs.length : 0), 0) !== 51)
+    issue("evidence.records", "Expected 51 reviewed exact excerpts.");
   if (records.length !== 23 || evidence.recordCount !== records.length)
     issue(
       "evidence.records",
@@ -299,7 +595,7 @@ export function validateContent(
       ["id", "kind", "title", "eyebrow", "summary", "state"],
       p,
     );
-    if (!NODE_KINDS.has(node.kind)) issue(`${p}.kind`, "Unknown content kind.");
+    if (!NODE_KINDS.has(node.kind) || APPROVED_NODE_KINDS[node.id] !== node.kind) issue(`${p}.kind`, "Content kind differs from its reviewed identity.");
     if (
       ["rocket", "groot", "atlas"].includes(node.id) !==
       (node.kind === "project")
@@ -318,6 +614,9 @@ export function validateContent(
       content.routes.map((r) => r?.id),
       "content.routes",
     );
+    const routeIds = new Set(content.routes.map(route => route?.id));
+    if (routeIds.size !== APPROVED_ROUTE_IDS.length || APPROVED_ROUTE_IDS.some(id => !routeIds.has(id)))
+      issue("content.routes", "Routes differ from the reviewed identity allowlist.");
     content.routes.forEach((route, i) => {
       const p = `content.routes[${i}]`;
       const fields = ["id", "title", "description", "steps"];
@@ -390,6 +689,15 @@ export function validateContent(
       ],
       p,
     );
+    const reviewed = APPROVED_EVIDENCE.find(entry => entry.id === record.id);
+    if (!reviewed) issue(`${p}.id`, "Evidence is outside the reviewed identity allowlist.");
+    else {
+      if (JSON.stringify(record.nodeIds) !== JSON.stringify(reviewed.nodeIds))
+        issue(`${p}.nodeIds`, "Evidence-to-story binding differs from the reviewed selection.");
+      const quoteHashes = (Array.isArray(record.excerptParagraphs) ? record.excerptParagraphs : []).map(excerpt => typeof excerpt?.text === "string" ? sha256(excerpt.text) : null);
+      if (JSON.stringify(quoteHashes) !== JSON.stringify(reviewed.excerptSha256))
+        issue(`${p}.excerptParagraphs`, "Exact excerpt bytes or order differ from the reviewed selection.");
+    }
     if (!/^ev_[a-f\d]{12}$/u.test(record.id ?? ""))
       issue(`${p}.id`, "Evidence identity must be opaque.");
     if (record.titleEdited !== true)
@@ -688,6 +996,26 @@ export function validateStaticReader(
         );
     }
   });
+  // The static reader is also a downloadable publication surface. Hidden
+  // scripts, attributes and comments must not evade the visible-prose scan.
+  if (/<(?:script|iframe|object|embed)\b/iu.test(html) || /<[a-z][^>]*\s+on[a-z]+\s*=/iu.test(html))
+    issue("reading.active", "The static reader must not contain executable or embedded content.");
+  let completeSurface = decode(html).normalize("NFKC");
+  try { completeSurface += `\n${decodeURIComponent(completeSurface)}`; } catch { /* Literal percent signs. */ }
+  if (/(?:[a-z][a-z\d+.-]*:\/\/|\bmailto:|\bdata:|\/Users\/|\/home\/|\/private\/|[a-z]:\\|\[\[|\b(?:source_path|snapshot_path|canonical_path|raw_source|source_sha256|char_start|char_end)\b)/iu.test(completeSurface))
+    issue("reading.hidden", "Reader source contains an unapproved publication surface.");
+  // The deterministic reader has two fixed, reviewed HTML declarations at
+  // byte zero. Their reserved tag name is syntax, not a company reference.
+  // Exempt only this exact prefix from the private-name scan; changed metadata,
+  // attributes, comments, CSS and all visible text remain in the scan. The
+  // path/credential scan above still checks the complete original source.
+  const fixedHead = '<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">';
+  const publicationSource = html.startsWith(fixedHead) ? html.slice(fixedHead.length) : html;
+  let privateSurface = decode(publicationSource).normalize("NFKC");
+  try { privateSurface += `\n${decodeURIComponent(privateSurface)}`; } catch { /* Literal percent signs. */ }
+  for (const pattern of privatePatterns)
+    if (pattern.expression.test(privateSurface))
+      issue("reading.hidden", `Private publication rule matched (${pattern.id}).`);
   let surface = plain(html).normalize("NFKC");
   try {
     surface += `\n${decodeURIComponent(surface)}`;
@@ -734,7 +1062,7 @@ export async function validateDist(
   { privatePatterns = [], dataDirectory } = {},
 ) {
   const issues = [];
-  for (const name of ["content.json", "evidence.json"]) {
+  for (const name of ["content.json", "evidence.json", "islands.json", "map.json"]) {
     try {
       const built = await readFile(resolve(directory, "data", name));
       if (
@@ -804,6 +1132,10 @@ async function main() {
     ? compilePrivatePatterns(JSON.parse(await readFile(patternPath, "utf8")))
     : [];
   const result = validateContent(content, evidence, { privatePatterns });
+  const [spatial, atlasMap] = await Promise.all(["islands.json", "map.json"].map(async name => JSON.parse(await readFile(resolve(dataDirectory, name), "utf8"))));
+  const space = validateSpatial(spatial, atlasMap, content, evidence, { privatePatterns });
+  result.issues.push(...space.issues);
+  result.valid &&= space.valid;
   if (mapPath) {
     const exact = await verifyPrivateEvidence(
       evidence,
@@ -826,6 +1158,8 @@ async function main() {
         ...result,
         nodes: content.nodes?.length,
         evidenceRecords: evidence.records?.length,
+        exactExcerpts: evidence.records?.reduce((n, record) => n + record.excerptParagraphs.length, 0),
+        spatialObjects: spatial.islands?.reduce((n, island) => n + island.places.length + island.subInteractions.length, 0),
         distReader: options["--dist"] ? "checked" : "not_run",
         privateDictionary: patternPath ? "checked" : "not_provided",
         exactSourceProof: mapPath ? "checked" : "not_run",

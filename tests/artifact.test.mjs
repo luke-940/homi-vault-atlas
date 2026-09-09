@@ -13,6 +13,8 @@ import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { gunzipSync, gzipSync } from "node:zlib";
 import { createArchive, packageRelease } from "../scripts/package-release.mjs";
+import { compilePrivatePatterns } from "../scripts/validate-content.mjs";
+import { validateSpatial } from "../scripts/validate-islands.mjs";
 import {
   verifyFiles,
   verifyDist,
@@ -33,6 +35,10 @@ const evidenceBytes = await readFile(
 );
 const content = JSON.parse(contentBytes);
 const evidence = JSON.parse(evidenceBytes);
+const runtimeFiles = new Map(await Promise.all([
+  "fonts/atlas-sans.woff2", "fonts/atlas-serif.woff2",
+  "assets/basis/basis_transcoder.js", "assets/basis/basis_transcoder.wasm",
+].map(async path => [path, await readFile(new URL("../public/" + path, import.meta.url))])));
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const json = (value) => Buffer.from(JSON.stringify(value));
 const escape = (value) =>
@@ -78,6 +84,8 @@ function fixture() {
     ["reading.html", reader()],
     ["app.js", Buffer.from("export const ready = true;")],
     ["app.css", Buffer.from("body{color:#183839}")],
+    ["fonts/atlas-sans.woff2", runtimeFiles.get("fonts/atlas-sans.woff2")],
+    ["fonts/atlas-serif.woff2", runtimeFiles.get("fonts/atlas-serif.woff2")],
     ["data/content.json", Buffer.from(contentBytes)],
     ["data/evidence.json", Buffer.from(evidenceBytes)],
     [
@@ -431,4 +439,148 @@ test("an unregistered production address is rejected before any fetch is attempt
     /registered/i,
   );
   assert.equal(fetch.mock.callCount(), 0);
+});
+
+const spatialBytes = await readFile(new URL('../public/data/islands.json', import.meta.url));
+const mapBytes = await readFile(new URL('../public/data/map.json', import.meta.url));
+const onePixelWebP = Buffer.from('UklGRh4AAABXRUJQVlA4TBEAAAAvAAAAAAdQxuKVtv+BiOh/AAA=', 'base64');
+function modelFixture(island, change = () => {}) {
+  // Valid triangle geometry for format/identity tests; no visual-quality claim.
+  const positions = Buffer.alloc(36); [0,0,0,1,0,0,0,1,0].forEach((n,i)=>positions.writeFloatLE(n,i*4));
+  const uv = Buffer.alloc(24); [0,0,1,0,0,1].forEach((n,i)=>uv.writeFloatLE(n,i*4));
+  const binary = Buffer.concat([positions,uv,Buffer.from([0,0,1,0,2,0,0,0])]);
+  const places = island ? [...island.places,...island.subInteractions] : [];
+  const leaves = places.flatMap((p,i)=>p.physicalPartIds.map((part,j)=>({name:`part_${i}_${j}`,mesh:0,extras:{atlasInstanceId:p.interactionAssetId,atlasPartId:part,interactionIds:[p.id]}})));
+  if(!leaves.length)leaves.push({name:'overview_surface',mesh:0});
+  const document = {asset:{version:'2.0'},scene:0,scenes:[{nodes:[0]}],nodes:[{name:'island_root',children:leaves.map((_,i)=>i+1)},...leaves],meshes:[{primitives:[{attributes:{POSITION:0,TEXCOORD_0:1},indices:2,material:0}]}],materials:[{}],accessors:[{bufferView:0,componentType:5126,count:3,type:'VEC3',min:[0,0,0],max:[1,1,0]},{bufferView:1,componentType:5126,count:3,type:'VEC2'},{bufferView:2,componentType:5123,count:3,type:'SCALAR'}],bufferViews:[{buffer:0,byteOffset:0,byteLength:36},{buffer:0,byteOffset:36,byteLength:24},{buffer:0,byteOffset:60,byteLength:6}],buffers:[{byteLength:binary.length}]};
+  change(document);
+  let body=Buffer.from(JSON.stringify(document));body=Buffer.concat([body,Buffer.alloc((4-body.length%4)%4,32)]);
+  const header=Buffer.alloc(12),jh=Buffer.alloc(8),bh=Buffer.alloc(8);header.writeUInt32LE(0x46546c67);header.writeUInt32LE(2,4);header.writeUInt32LE(28+body.length+binary.length,8);jh.writeUInt32LE(body.length);jh.writeUInt32LE(0x4e4f534a,4);bh.writeUInt32LE(binary.length);bh.writeUInt32LE(0x004e4942,4);return Buffer.concat([header,jh,body,bh,binary]);
+}
+function spatialFixture() {
+  const map = fixture();
+  for (const [path, body] of runtimeFiles) map.set(path, body);
+  map.set('data/islands.json', spatialBytes); map.set('data/map.json', mapBytes);
+  for (const island of JSON.parse(spatialBytes).islands) {
+    const id=island.id;
+    map.set(`assets/atlas-v81-${id}.glb`,modelFixture(island));
+    map.set(`assets/collision/${id}.json`,json({schema:'atlas.collision.v1',islandId:id,units:'metres',up:'+Y',worldSpace:true,ground:{levelY:island.groundY,waterY:0,coast:island.coast},shapes:[{id:'fixture_wall',instanceId:`${id}-fixture`,partId:'wall',type:'box',center:[0,1,0],halfSize:[1,1,1],rotationY:0,bounds:{min:[-1,0,-1],max:[1,2,1]}}]}));
+    map.set(`assets/maps/${id}.webp`,onePixelWebP);
+  }
+  map.set('assets/atlas-v81-world.glb',modelFixture());
+  map.set('assets/maps/world.webp',onePixelWebP);
+  map.set('assets/textures/water-normal.webp',onePixelWebP);
+  const release=JSON.parse(map.get('release.json')); release.version='8.1.0';
+  const snapshot=createHash('sha256');
+  for(const name of ['content.json','evidence.json','islands.json','map.json'])snapshot.update(name+'\0').update(map.get('data/'+name)).update('\0');
+  release.publicDataSnapshot=snapshot.digest('hex');map.set('release.json',json(release));return map;
+}
+const spatialExpected={...expected,expectedTag:'v8.1.0'};
+test('v8.1 binds all four public datasets and requires each actual map, model and collision payload',()=>{
+ const map=spatialFixture();assert.equal(verifyFiles(sealed(map),spatialExpected).release.version,'8.1.0');
+ for(const path of ['data/map.json','assets/atlas-v81-groot.glb','assets/collision/common.json','assets/maps/rocket.webp','assets/maps/world.webp','assets/textures/water-normal.webp']){
+   const changed=new Map(map);changed.delete(path);assert.throws(()=>verifyFiles(sealed(changed),spatialExpected),/required/i);
+ }
+ map.set('data/map.json',Buffer.concat([mapBytes,Buffer.from('\n')]));assert.throws(()=>verifyFiles(sealed(map),spatialExpected),/snapshot/i);
+});
+test('decoder and texture allowlists permit self-hosted runtime assets but no arbitrary script or map export',()=>{
+ const map=spatialFixture();
+ map.set('assets/basis/basis_transcoder.js',runtimeFiles.get('assets/basis/basis_transcoder.js'));
+ map.set('assets/basis/basis_transcoder.wasm',runtimeFiles.get('assets/basis/basis_transcoder.wasm'));
+ map.set('assets/textures/water-normal.webp',onePixelWebP);
+ assert.equal(verifyFiles(sealed(map),spatialExpected).release.version,'8.1.0');
+ const malformedTexture=new Map(map);malformedTexture.set('assets/textures/water-normal.webp',Buffer.from('INVALID_CONTAINER'));
+ assert.throws(()=>verifyFiles(sealed(malformedTexture),spatialExpected),/asset contract/i);
+ for(const path of ['assets/basis/custom-loader.js','assets/maps/source.json','assets/collision/extra.json','assets/textures/source.txt','assets/textures/surface-17.webp','assets/textures/surface-17.ktx2']){
+  const changed=new Map(map);changed.set(path,Buffer.from('SENTINEL_47'));assert.throws(()=>verifyFiles(sealed(changed),spatialExpected),/non-public/i);
+ }
+});
+
+test('a fresh manifest cannot republish retired artworks or the legacy world under old or invented paths',()=>{
+ const map=spatialFixture();
+ for(const path of ['assets/groot-harbor.webp','assets/groot-characters.webp','assets/groot-combat.webp','assets/groot-dialogue.webp','assets/atlas-world.glb','assets/renamed-art.webp']){
+  const changed=new Map(map);changed.set(path,path.endsWith('.glb')?modelFixture():onePixelWebP);
+  assert.throws(()=>verifyFiles(sealed(changed),spatialExpected),/non-public/i,path);
+ }
+});
+test('hidden static-reader source is a publication surface even when visible articles and hashes match',()=>{
+ const privatePatterns=compilePrivatePatterns({patterns:[{pattern:'SENTINEL_PRIVATE_61'}]});
+ const html=reader().toString();
+ const variants=[
+  html.replace('</body>','<script type="application/json">SENTINEL_PRIVATE_61</script></body>'),
+  html.replace('<body>','<body data-hidden="SENTINEL_PRIVATE_61">'),
+  html.replace('</body>','<!-- SENTINEL_PRIVATE_61 --></body>'),
+  html.replace('<body>','<body data-hidden="SENTINEL_&#80;RIVATE_61">'),
+  html.replace('</body>','<script></script></body>'),
+  html.replace('<body>','<body onload="void 0">'),
+  html.replace('<body>','<body data-hidden="/Users/SENTINEL_PRIVATE_61">'),
+ ];
+ for(const source of variants){const map=fixture();map.set('reading.html',Buffer.from(source));assert.throws(()=>verifyFiles(sealed(map),{...expected,privatePatterns}),error=>/reader contract/i.test(error.message)&&!error.message.includes('SENTINEL_PRIVATE_61'));}
+ assert.equal(verifyFiles(sealed(fixture()),{...expected,privatePatterns}).release.version,'8.0.0');
+});
+test('private publication rules reach unused GLB metadata through final artifact verification',()=>{
+ const map=spatialFixture();map.set('assets/atlas-v81-world.glb',modelFixture(undefined,j=>j.nodes.push({name:'SENTINEL_PRIVATE_61'})));
+ assert.equal(verifyFiles(sealed(map),spatialExpected).release.version,'8.1.0');
+ const privatePatterns=compilePrivatePatterns({patterns:[{pattern:'SENTINEL_PRIVATE_61'}]});
+ assert.throws(()=>verifyFiles(sealed(map),{...spatialExpected,privatePatterns}),error=>/asset contract/i.test(error.message)&&!error.message.includes('SENTINEL_PRIVATE_61'));
+});
+
+
+test('required screen files and exact vendored decoder bytes cannot be omitted or substituted',()=>{
+ const map=spatialFixture();assert.equal(verifyFiles(sealed(map),spatialExpected).release.version,'8.1.0');
+ for(const path of ['app.css',...runtimeFiles.keys()]){
+  const missing=new Map(map);missing.delete(path);assert.throws(()=>verifyFiles(sealed(missing),spatialExpected),/required/i,path);
+ }
+ for(const path of ['assets/basis/basis_transcoder.js','assets/basis/basis_transcoder.wasm']){
+  const replaced=new Map(map);const bytes=Buffer.from(map.get(path));bytes[bytes.length-1]^=1;replaced.set(path,bytes);
+  assert.throws(()=>verifyFiles(sealed(replaced),spatialExpected),/asset contract/i,path);
+ }
+});
+
+test('asset provenance fields and collision metadata cannot hide unreviewed source prose',()=>{
+ const map=spatialFixture();const island=JSON.parse(spatialBytes).islands.find(i=>i.id==='common');
+ for(const field of ['raw_source','source_path','snapshot_path','canonical_path','source_sha256','char_start','char_end']){
+  const glb=new Map(map);glb.set('assets/atlas-v81-common.glb',modelFixture(island,d=>{d.asset[field]='SYNTHETIC_UNREVIEWED_BODY_61';}));
+  assert.throws(()=>verifyFiles(sealed(glb),spatialExpected),/asset contract/i,field);
+  const collision=new Map(map),data=JSON.parse(collision.get('assets/collision/common.json'));data[field]='SYNTHETIC_UNREVIEWED_BODY_61';collision.set('assets/collision/common.json',json(data));
+  assert.throws(()=>verifyFiles(sealed(collision),spatialExpected),/asset contract/i,field);
+ }
+ for(const pick of [d=>d,d=>d.ground,d=>d.shapes[0],d=>d.shapes[0].bounds]){
+  const changed=new Map(map),data=JSON.parse(changed.get('assets/collision/common.json'));pick(data).unreviewedNote='SYNTHETIC_UNREVIEWED_BODY_61';changed.set('assets/collision/common.json',json(data));
+  assert.throws(()=>verifyFiles(sealed(changed),spatialExpected),/asset contract/i);
+ }
+ assert.equal(verifyFiles(sealed(map),spatialExpected).release.version,'8.1.0');
+});
+
+
+test('map cameras retain the reviewed crop independently of terrain extent',()=>{
+ const spatial=JSON.parse(spatialBytes),atlasMap=JSON.parse(mapBytes);
+ assert.equal(validateSpatial(spatial,atlasMap,content,evidence).valid,true);
+ for(const island of spatial.islands){
+  const previousCrop=structuredClone(spatial),changed=previousCrop.islands.find(i=>i.id===island.id);
+  changed.mapBounds={minX:-changed.extent,maxX:changed.extent,minZ:-changed.extent,maxZ:changed.extent};
+  const result=validateSpatial(previousCrop,atlasMap,content,evidence);
+  assert.ok(result.issues.some(i=>i.path.endsWith('.mapBounds')),island.id+' must reject the clipped former crop');
+ }
+});
+
+
+test('fixed reader head is HTML syntax while private names in every other surface still fail',()=>{
+ const privatePatterns=compilePrivatePatterns({patterns:[{pattern:'\\bmeta\\b',flags:'iu'}]});
+ const fixedHead='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">';
+ const source=reader().toString().replace('<!doctype html><html lang="ko"><body>',fixedHead+'<style>.record-note{color:#566965}</style></head><body>');
+ const check=html=>{const files=fixture();files.set('reading.html',Buffer.from(html));return verifyFiles(sealed(files),{...expected,privatePatterns});};
+ assert.equal(check(source).release.version,'8.0.0');
+ const variants=[
+  source.replace('</body>','<p>Meta</p></body>'),
+  source.replace('</body>','<!-- Meta --></body>'),
+  source.replace('<body>','<body data-hidden="Meta">'),
+  source.replace('<body>','<body data-hidden="M&#101;ta">'),
+  source.replace('<body>','<body data-hidden="%4Deta">'),
+  source.replace('</style>','.other{content:"Meta"}</style>'),
+  source.replace('</head>','<meta name="description" content="Meta"></head>'),
+  source.replace('content="width=device-width,initial-scale=1"','content="Meta"'),
+  source.replace('</body>',`<div data-hidden='${fixedHead}'>record</div></body>`),
+ ];
+ for(const html of variants)assert.throws(()=>check(html),/reader contract/i);
 });

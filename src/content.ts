@@ -12,9 +12,6 @@ export interface AtlasNode {
     | "research-desk"
     | "research-story"
     | "scenario"
-    | "game-design"
-    | "fictional-character"
-    | "goal-art"
     | "knowledge-concept"
     | "research-practice";
   title: string;
@@ -88,6 +85,7 @@ export const projects: AtlasNode[] = [
 });
 
 export function projectFor(id: string): ProjectId {
+  if (id !== "common" && !nodeById.has(id)) throw new RangeError(`Unknown Atlas content route: ${id}`);
   if (id === "atlas") return "atlas";
   if (
     id === "rocket" ||
@@ -124,14 +122,6 @@ export function evidenceFor(nodeId: string): EvidenceRecord[] {
 }
 
 const artwork: Readonly<Record<string, string>> = {
-  groot: "assets/groot-harbor.webp",
-  "groot-art-explore": "assets/groot-harbor.webp",
-  "groot-adventure": "assets/groot-harbor.webp",
-  "groot-art-characters": "assets/groot-characters.webp",
-  "groot-rin": "assets/groot-characters.webp",
-  "groot-hana": "assets/groot-characters.webp",
-  "groot-art-combat": "assets/groot-combat.webp",
-  "groot-art-dialogue": "assets/groot-dialogue.webp",
   "rocket-desks": "assets/rocket-lenses.webp",
 };
 

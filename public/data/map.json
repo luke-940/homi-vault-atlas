@@ -1,0 +1,1121 @@
+{
+  "schemaVersion": "1.0",
+  "language": "ko",
+  "readingNote": "폴더 이름과 문서 표제는 읽기 쉽게 편집했습니다. 포함관계는 실제 위치를 따릅니다. 문서를 고른 뒤 ‘자료 읽기’를 누르면 공개용 설명과 선별 발췌를 볼 수 있습니다. 원문 전체를 공개하는 것은 아닙니다.",
+  "entries": [
+    {
+      "id": "ct_cb94ddc80fcc",
+      "kind": "document",
+      "label": "자료의 종류와 관계를 읽는 기준",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "concept-graphs",
+        "knowledge-upkeep"
+      ],
+      "evidenceIds": [
+        "ev_433e6970cdbf",
+        "ev_60b6cc180178"
+      ],
+      "islandIds": [
+        "common"
+      ]
+    },
+    {
+      "id": "ct_dbdb3bfb853f",
+      "kind": "folder",
+      "label": "지식 체계 안내",
+      "labelEdited": true,
+      "contentNodeIds": [],
+      "evidenceIds": [],
+      "islandIds": [
+        "common"
+      ]
+    },
+    {
+      "id": "ct_fe8b4096a9fc",
+      "kind": "folder",
+      "label": "운영 안내",
+      "labelEdited": true,
+      "contentNodeIds": [],
+      "evidenceIds": [],
+      "islandIds": [
+        "common"
+      ]
+    },
+    {
+      "id": "ct_fffc1bcbb1b4",
+      "kind": "folder",
+      "label": "자료 보관함",
+      "labelEdited": true,
+      "contentNodeIds": [],
+      "evidenceIds": [],
+      "islandIds": [
+        "common",
+        "groot",
+        "rocket"
+      ]
+    },
+    {
+      "id": "ct_fffc3a47d745",
+      "kind": "document",
+      "label": "계산과 인프라의 연구 질문",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "desk-compute"
+      ],
+      "evidenceIds": [
+        "ev_5a50e42fa6ae"
+      ],
+      "islandIds": [
+        "rocket"
+      ]
+    },
+    {
+      "id": "ct_dae0ba8ea6a1",
+      "kind": "folder",
+      "label": "일곱 연구 질문",
+      "labelEdited": true,
+      "contentNodeIds": [],
+      "evidenceIds": [],
+      "islandIds": [
+        "rocket"
+      ]
+    },
+    {
+      "id": "ct_25f518f997ed",
+      "kind": "folder",
+      "label": "Rocket",
+      "labelEdited": true,
+      "contentNodeIds": [],
+      "evidenceIds": [],
+      "islandIds": [
+        "rocket"
+      ]
+    },
+    {
+      "id": "ct_3a136bb619e7",
+      "kind": "document",
+      "label": "능력의 경계 — 연구 질문",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "desk-frontier"
+      ],
+      "evidenceIds": [
+        "ev_5a50e42fa6ae"
+      ],
+      "islandIds": [
+        "rocket"
+      ]
+    },
+    {
+      "id": "ct_f84ef3f84057",
+      "kind": "document",
+      "label": "제도와 권리의 연구 질문",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "desk-governance"
+      ],
+      "evidenceIds": [
+        "ev_5a50e42fa6ae"
+      ],
+      "islandIds": [
+        "rocket"
+      ]
+    },
+    {
+      "id": "ct_1d754b2e1d9a",
+      "kind": "document",
+      "label": "시장과 구조의 연구 질문",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "desk-markets"
+      ],
+      "evidenceIds": [
+        "ev_5a50e42fa6ae"
+      ],
+      "islandIds": [
+        "rocket"
+      ]
+    },
+    {
+      "id": "ct_059e4592e468",
+      "kind": "document",
+      "label": "물리 세계의 AI — 연구 질문",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "desk-physical"
+      ],
+      "evidenceIds": [
+        "ev_5a50e42fa6ae"
+      ],
+      "islandIds": [
+        "rocket"
+      ]
+    },
+    {
+      "id": "ct_6a780b17565f",
+      "kind": "document",
+      "label": "과학과 발견의 연구 질문",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "desk-science"
+      ],
+      "evidenceIds": [
+        "ev_5a50e42fa6ae"
+      ],
+      "islandIds": [
+        "rocket"
+      ]
+    },
+    {
+      "id": "ct_cad334eac1ec",
+      "kind": "document",
+      "label": "일과 사회의 연구 질문",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "desk-society"
+      ],
+      "evidenceIds": [
+        "ev_5a50e42fa6ae"
+      ],
+      "islandIds": [
+        "rocket"
+      ]
+    },
+    {
+      "id": "ct_d27051a8d229",
+      "kind": "folder",
+      "label": "Groot",
+      "labelEdited": true,
+      "contentNodeIds": [],
+      "evidenceIds": [],
+      "islandIds": [
+        "groot"
+      ]
+    },
+    {
+      "id": "ct_b143cbbbadf0",
+      "kind": "document",
+      "label": "판단의 근거를 지키는 철학",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "groot"
+      ],
+      "evidenceIds": [
+        "ev_6bd9aef81ea2"
+      ],
+      "islandIds": [
+        "groot"
+      ]
+    },
+    {
+      "id": "ct_72060c40bad6",
+      "kind": "folder",
+      "label": "철학과 연구 지식",
+      "labelEdited": true,
+      "contentNodeIds": [],
+      "evidenceIds": [],
+      "islandIds": [
+        "groot"
+      ]
+    },
+    {
+      "id": "ct_bf4ee8496751",
+      "kind": "document",
+      "label": "목표를 받아 행동하는 시스템",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "concept-agent"
+      ],
+      "evidenceIds": [
+        "ev_fb116cbb9579"
+      ],
+      "islandIds": [
+        "common"
+      ]
+    },
+    {
+      "id": "ct_4a34bb9a96a2",
+      "kind": "folder",
+      "label": "개념",
+      "labelEdited": true,
+      "contentNodeIds": [],
+      "evidenceIds": [],
+      "islandIds": [
+        "common"
+      ]
+    },
+    {
+      "id": "ct_e53e0d00b4b0",
+      "kind": "document",
+      "label": "다음 작업으로 이어 가는 운영 기억",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "concept-memory"
+      ],
+      "evidenceIds": [
+        "ev_c2689a9ddbae"
+      ],
+      "islandIds": [
+        "common"
+      ]
+    },
+    {
+      "id": "ct_55896d52c4bb",
+      "kind": "folder",
+      "label": "운영 기억과 해석",
+      "labelEdited": true,
+      "contentNodeIds": [],
+      "evidenceIds": [],
+      "islandIds": [
+        "common"
+      ]
+    },
+    {
+      "id": "ct_b08be4e59fc1",
+      "kind": "folder",
+      "label": "전략",
+      "labelEdited": true,
+      "contentNodeIds": [],
+      "evidenceIds": [],
+      "islandIds": [
+        "common"
+      ]
+    },
+    {
+      "id": "ct_97db98857fef",
+      "kind": "document",
+      "label": "자료를 찾아 답의 근거로 쓰는 과정",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "concept-evidence"
+      ],
+      "evidenceIds": [
+        "ev_d2e09fce25de"
+      ],
+      "islandIds": [
+        "common"
+      ]
+    },
+    {
+      "id": "ct_2f749547166e",
+      "kind": "document",
+      "label": "읽은 자료를 다시 쓰는 지식",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "knowledge-library",
+        "concept-reuse"
+      ],
+      "evidenceIds": [
+        "ev_76037ae33609"
+      ],
+      "islandIds": [
+        "common"
+      ]
+    },
+    {
+      "id": "ct_edbd54e5c4c5",
+      "kind": "document",
+      "label": "확인한 결과와 남은 한계",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "concept-trust"
+      ],
+      "evidenceIds": [
+        "ev_9fac734984f9"
+      ],
+      "islandIds": [
+        "common"
+      ]
+    },
+    {
+      "id": "ct_f4d17937985e",
+      "kind": "document",
+      "label": "장면의 변화와 행동 결과",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "concept-world-model"
+      ],
+      "evidenceIds": [
+        "ev_8341193205b0"
+      ],
+      "islandIds": [
+        "common"
+      ]
+    },
+    {
+      "id": "ct_7628a34cf1fb",
+      "kind": "document",
+      "label": "주제별 논문 입구",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "papers-lens"
+      ],
+      "evidenceIds": [
+        "ev_1f18a275ea79"
+      ],
+      "islandIds": [
+        "common"
+      ]
+    },
+    {
+      "id": "ct_3a266bcf7b09",
+      "kind": "folder",
+      "label": "주제별 논문 입구",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "papers-lens"
+      ],
+      "evidenceIds": [],
+      "islandIds": [
+        "common"
+      ]
+    },
+    {
+      "id": "ct_3c49901277f1",
+      "kind": "folder",
+      "label": "논문",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "papers-lens"
+      ],
+      "evidenceIds": [],
+      "islandIds": [
+        "common"
+      ]
+    },
+    {
+      "id": "ct_efd8daa64149",
+      "kind": "document",
+      "label": "Rocket의 연구 목적과 현재 입구",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "rocket"
+      ],
+      "evidenceIds": [
+        "ev_6d3799f3fa4a"
+      ],
+      "islandIds": [
+        "rocket"
+      ]
+    },
+    {
+      "id": "ct_12adc066e403",
+      "kind": "document",
+      "label": "변화의 시계와 조건에 따른 전망",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "rocket-clocks",
+        "rocket-horizon",
+        "horizon-base",
+        "horizon-acceleration",
+        "horizon-constraints",
+        "horizon-fragmentation"
+      ],
+      "evidenceIds": [
+        "ev_021e376c6fb3",
+        "ev_a4311d8e432a"
+      ],
+      "islandIds": [
+        "rocket"
+      ]
+    },
+    {
+      "id": "ct_2701f6312c23",
+      "kind": "folder",
+      "label": "전망과 연구",
+      "labelEdited": true,
+      "contentNodeIds": [],
+      "evidenceIds": [],
+      "islandIds": [
+        "rocket"
+      ]
+    },
+    {
+      "id": "ct_b50daf087d0b",
+      "kind": "document",
+      "label": "작업 위임의 범위와 남은 조건",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "rocket-delegation"
+      ],
+      "evidenceIds": [
+        "ev_51aaa52883ca"
+      ],
+      "islandIds": [
+        "rocket"
+      ]
+    },
+    {
+      "id": "ct_3df0f17526fe",
+      "kind": "folder",
+      "label": "능력의 경계",
+      "labelEdited": true,
+      "contentNodeIds": [],
+      "evidenceIds": [],
+      "islandIds": [
+        "rocket"
+      ]
+    },
+    {
+      "id": "ct_5a43bb8075c9",
+      "kind": "folder",
+      "label": "주제별 연구",
+      "labelEdited": true,
+      "contentNodeIds": [],
+      "evidenceIds": [],
+      "islandIds": [
+        "rocket"
+      ]
+    },
+    {
+      "id": "ct_ed1039a27eeb",
+      "kind": "document",
+      "label": "개선이 다음 연구에 돌아오는 조건",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "rocket-feedback"
+      ],
+      "evidenceIds": [
+        "ev_a4311d8e432a",
+        "ev_8e8f52dfcfa9"
+      ],
+      "islandIds": [
+        "rocket"
+      ]
+    },
+    {
+      "id": "ct_0f4ca6391f40",
+      "kind": "document",
+      "label": "오늘의 자료에서 한 주의 해석과 연구 근거로",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "daily-lens",
+        "papers-lens",
+        "research-cycle",
+        "weekly-lens"
+      ],
+      "evidenceIds": [
+        "ev_1f18a275ea79"
+      ],
+      "islandIds": [
+        "common"
+      ]
+    },
+    {
+      "id": "ct_451a9cf6ecfa",
+      "kind": "folder",
+      "label": "한 주의 기록",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "weekly-lens"
+      ],
+      "evidenceIds": [],
+      "islandIds": [
+        "common"
+      ]
+    },
+    {
+      "id": "ct_e08055b5eb8f",
+      "kind": "folder",
+      "label": "날짜별 연구 기록",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "research-cycle"
+      ],
+      "evidenceIds": [],
+      "islandIds": [
+        "common"
+      ]
+    },
+    {
+      "id": "ct_4410f39138e2",
+      "kind": "folder",
+      "label": "하루의 기록",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "daily-lens"
+      ],
+      "evidenceIds": [],
+      "islandIds": [
+        "common"
+      ]
+    },
+    {
+      "id": "ct_615ae9f7c81e",
+      "kind": "folder",
+      "label": "2026년 9월의 기록",
+      "labelEdited": true,
+      "contentNodeIds": [],
+      "evidenceIds": [],
+      "islandIds": []
+    },
+    {
+      "id": "ct_6d1c3eb8b880",
+      "kind": "folder",
+      "label": "보존된 연구",
+      "labelEdited": true,
+      "contentNodeIds": [],
+      "evidenceIds": [],
+      "islandIds": [
+        "groot"
+      ]
+    },
+    {
+      "id": "ct_6a07f1cb98f3",
+      "kind": "folder",
+      "label": "철학과 전략",
+      "labelEdited": true,
+      "contentNodeIds": [],
+      "evidenceIds": [],
+      "islandIds": [
+        "groot"
+      ]
+    },
+    {
+      "id": "ct_fbeed0274bad",
+      "kind": "folder",
+      "label": "흥미와 경험의 연구",
+      "labelEdited": true,
+      "contentNodeIds": [],
+      "evidenceIds": [],
+      "islandIds": [
+        "groot"
+      ]
+    },
+    {
+      "id": "ct_8f7f322a6be7",
+      "kind": "folder",
+      "label": "근거와 판단의 연구",
+      "labelEdited": true,
+      "contentNodeIds": [],
+      "evidenceIds": [],
+      "islandIds": [
+        "groot"
+      ]
+    },
+    {
+      "id": "ct_7cb60cb31763",
+      "kind": "document",
+      "label": "생각의 주도권에 관한 연구",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "groot"
+      ],
+      "evidenceIds": [
+        "ev_6bd9aef81ea2"
+      ],
+      "islandIds": [
+        "groot"
+      ]
+    },
+    {
+      "id": "ct_0e859f94f4b9",
+      "kind": "document",
+      "label": "판단을 이루는 활동과 기반",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "groot-judgment-roots"
+      ],
+      "evidenceIds": [
+        "ev_91d127624ba3"
+      ],
+      "islandIds": [
+        "groot"
+      ]
+    },
+    {
+      "id": "ct_abb3e5517751",
+      "kind": "document",
+      "label": "판단과 주변 조건",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "groot-judgment-context"
+      ],
+      "evidenceIds": [
+        "ev_1414d3c65f54"
+      ],
+      "islandIds": [
+        "groot"
+      ]
+    },
+    {
+      "id": "ct_dc65dc2a71aa",
+      "kind": "document",
+      "label": "발견과 생각이 재미가 되는 경험",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "groot-thinking-play"
+      ],
+      "evidenceIds": [
+        "ev_953f4651f03c"
+      ],
+      "islandIds": [
+        "groot"
+      ]
+    },
+    {
+      "id": "ct_872c476ba8b1",
+      "kind": "document",
+      "label": "보상과 의미 있는 진행의 차이",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "groot-thinking-play"
+      ],
+      "evidenceIds": [
+        "ev_953f4651f03c"
+      ],
+      "islandIds": [
+        "groot"
+      ]
+    },
+    {
+      "id": "ct_ff9292a8862d",
+      "kind": "document",
+      "label": "다른 장면에서도 다시 쓰는 판단",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "groot-transfer"
+      ],
+      "evidenceIds": [
+        "ev_1be0527494fc"
+      ],
+      "islandIds": [
+        "groot"
+      ]
+    },
+    {
+      "id": "ct_e915627319d6",
+      "kind": "document",
+      "label": "근거에 맞게 믿고 생각을 바꾸는 법",
+      "labelEdited": true,
+      "contentNodeIds": [
+        "groot-appropriate-reliance",
+        "groot-judgment-update"
+      ],
+      "evidenceIds": [
+        "ev_5170fab763e6",
+        "ev_f8dfc6b27083"
+      ],
+      "islandIds": [
+        "groot"
+      ]
+    }
+  ],
+  "containmentEdges": [
+    {
+      "sourceId": "ct_fffc1bcbb1b4",
+      "targetId": "ct_fe8b4096a9fc",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_fe8b4096a9fc",
+      "targetId": "ct_dbdb3bfb853f",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_dbdb3bfb853f",
+      "targetId": "ct_cb94ddc80fcc",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_fffc1bcbb1b4",
+      "targetId": "ct_25f518f997ed",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_25f518f997ed",
+      "targetId": "ct_dae0ba8ea6a1",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_dae0ba8ea6a1",
+      "targetId": "ct_fffc3a47d745",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_dae0ba8ea6a1",
+      "targetId": "ct_3a136bb619e7",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_dae0ba8ea6a1",
+      "targetId": "ct_f84ef3f84057",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_dae0ba8ea6a1",
+      "targetId": "ct_1d754b2e1d9a",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_dae0ba8ea6a1",
+      "targetId": "ct_059e4592e468",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_dae0ba8ea6a1",
+      "targetId": "ct_6a780b17565f",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_dae0ba8ea6a1",
+      "targetId": "ct_cad334eac1ec",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_fffc1bcbb1b4",
+      "targetId": "ct_d27051a8d229",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_d27051a8d229",
+      "targetId": "ct_72060c40bad6",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_72060c40bad6",
+      "targetId": "ct_b143cbbbadf0",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_fffc1bcbb1b4",
+      "targetId": "ct_4a34bb9a96a2",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_4a34bb9a96a2",
+      "targetId": "ct_bf4ee8496751",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_fffc1bcbb1b4",
+      "targetId": "ct_b08be4e59fc1",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_b08be4e59fc1",
+      "targetId": "ct_55896d52c4bb",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_55896d52c4bb",
+      "targetId": "ct_e53e0d00b4b0",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_4a34bb9a96a2",
+      "targetId": "ct_97db98857fef",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_4a34bb9a96a2",
+      "targetId": "ct_2f749547166e",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_4a34bb9a96a2",
+      "targetId": "ct_edbd54e5c4c5",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_4a34bb9a96a2",
+      "targetId": "ct_f4d17937985e",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_fffc1bcbb1b4",
+      "targetId": "ct_3c49901277f1",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_3c49901277f1",
+      "targetId": "ct_3a266bcf7b09",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_3a266bcf7b09",
+      "targetId": "ct_7628a34cf1fb",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_25f518f997ed",
+      "targetId": "ct_efd8daa64149",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_25f518f997ed",
+      "targetId": "ct_2701f6312c23",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_2701f6312c23",
+      "targetId": "ct_12adc066e403",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_2701f6312c23",
+      "targetId": "ct_5a43bb8075c9",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_5a43bb8075c9",
+      "targetId": "ct_3df0f17526fe",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_3df0f17526fe",
+      "targetId": "ct_b50daf087d0b",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_3df0f17526fe",
+      "targetId": "ct_ed1039a27eeb",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_fffc1bcbb1b4",
+      "targetId": "ct_e08055b5eb8f",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_e08055b5eb8f",
+      "targetId": "ct_451a9cf6ecfa",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_451a9cf6ecfa",
+      "targetId": "ct_0f4ca6391f40",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_e08055b5eb8f",
+      "targetId": "ct_4410f39138e2",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_4410f39138e2",
+      "targetId": "ct_615ae9f7c81e",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_72060c40bad6",
+      "targetId": "ct_6d1c3eb8b880",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_6d1c3eb8b880",
+      "targetId": "ct_6a07f1cb98f3",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_6d1c3eb8b880",
+      "targetId": "ct_fbeed0274bad",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_6d1c3eb8b880",
+      "targetId": "ct_8f7f322a6be7",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_6a07f1cb98f3",
+      "targetId": "ct_7cb60cb31763",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_6a07f1cb98f3",
+      "targetId": "ct_0e859f94f4b9",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_6a07f1cb98f3",
+      "targetId": "ct_abb3e5517751",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_fbeed0274bad",
+      "targetId": "ct_dc65dc2a71aa",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_fbeed0274bad",
+      "targetId": "ct_872c476ba8b1",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_fbeed0274bad",
+      "targetId": "ct_ff9292a8862d",
+      "relation": "contains"
+    },
+    {
+      "sourceId": "ct_8f7f322a6be7",
+      "targetId": "ct_e915627319d6",
+      "relation": "contains"
+    }
+  ],
+  "editorialConnections": [
+    {
+      "sourceId": "pl_b02668b8702f",
+      "targetId": "pl_e591ec3f2052",
+      "relation": "organizes",
+      "label": "일곱 연구 질문으로 나누어 읽습니다.",
+      "kind": "derived",
+      "sourceContentId": "rocket",
+      "targetContentId": "rocket-desks"
+    },
+    {
+      "sourceId": "pl_e591ec3f2052",
+      "targetId": "pl_b4f92b5b3544",
+      "relation": "synthesizes_into",
+      "label": "분야별 판단을 종합해 전망을 고칩니다.",
+      "kind": "derived",
+      "sourceContentId": "rocket-desks",
+      "targetContentId": "rocket-horizon"
+    },
+    {
+      "sourceId": "pl_a33ddb7b8510",
+      "targetId": "pl_b4f92b5b3544",
+      "relation": "explains",
+      "label": "서로 다른 속도가 전망의 갈림길을 설명합니다.",
+      "kind": "derived",
+      "sourceContentId": "rocket-clocks",
+      "targetContentId": "rocket-horizon"
+    },
+    {
+      "sourceId": "pl_630db00c2ff7",
+      "targetId": "pl_b40426eb1052",
+      "relation": "part_of",
+      "label": "연구의 방법과 한계를 깊게 읽습니다.",
+      "kind": "derived",
+      "sourceContentId": "papers-lens",
+      "targetContentId": "research-cycle"
+    },
+    {
+      "sourceId": "pl_b40426eb1052",
+      "targetId": "pl_b926085c0810",
+      "relation": "curates_into",
+      "label": "다음 판단에 쓸 의미를 선별해 남깁니다.",
+      "kind": "derived",
+      "sourceContentId": "research-cycle",
+      "targetContentId": "knowledge-library"
+    },
+    {
+      "sourceId": "pl_552131f49d63",
+      "targetId": "pl_b926085c0810",
+      "relation": "maintains",
+      "label": "현재의 의미와 다시 찾는 길을 돌봅니다.",
+      "kind": "derived",
+      "sourceContentId": "knowledge-upkeep",
+      "targetContentId": "knowledge-library"
+    },
+    {
+      "sourceId": "pl_d75b56494d08",
+      "targetId": "pl_b02668b8702f",
+      "relation": "presents",
+      "label": "연구의 구조와 질문을 보여 줍니다.",
+      "kind": "derived",
+      "sourceContentId": "atlas",
+      "targetContentId": "rocket"
+    },
+    {
+      "sourceId": "pl_d75b56494d08",
+      "targetId": "pl_b926085c0810",
+      "relation": "presents",
+      "label": "선별한 지식의 의미와 관계를 보여 줍니다.",
+      "kind": "derived",
+      "sourceContentId": "atlas",
+      "targetContentId": "knowledge-library"
+    },
+    {
+      "sourceId": "pl_733ab0fb865d",
+      "targetId": "pl_24173582ec7a",
+      "relation": "part_of",
+      "label": "Groot가 남긴 연구 질문을 소개합니다.",
+      "kind": "derived",
+      "sourceContentId": "groot-judgment-roots",
+      "targetContentId": "groot"
+    },
+    {
+      "sourceId": "pl_d22facea740c",
+      "targetId": "pl_24173582ec7a",
+      "relation": "part_of",
+      "label": "Groot가 남긴 연구 질문을 소개합니다.",
+      "kind": "derived",
+      "sourceContentId": "groot-thinking-play",
+      "targetContentId": "groot"
+    },
+    {
+      "sourceId": "pl_f7476857f05f",
+      "targetId": "pl_24173582ec7a",
+      "relation": "part_of",
+      "label": "Groot가 남긴 연구 질문을 소개합니다.",
+      "kind": "derived",
+      "sourceContentId": "groot-judgment-context",
+      "targetContentId": "groot"
+    },
+    {
+      "sourceId": "pl_eb68f2c6f66d",
+      "targetId": "pl_24173582ec7a",
+      "relation": "part_of",
+      "label": "Groot가 남긴 연구 질문을 소개합니다.",
+      "kind": "derived",
+      "sourceContentId": "groot-appropriate-reliance",
+      "targetContentId": "groot"
+    },
+    {
+      "sourceId": "pl_c9b2366868f2",
+      "targetId": "pl_24173582ec7a",
+      "relation": "part_of",
+      "label": "Groot가 남긴 연구 질문을 소개합니다.",
+      "kind": "derived",
+      "sourceContentId": "groot-transfer",
+      "targetContentId": "groot"
+    },
+    {
+      "sourceId": "pl_c4d8c653205b",
+      "targetId": "pl_24173582ec7a",
+      "relation": "part_of",
+      "label": "Groot가 남긴 연구 질문을 소개합니다.",
+      "kind": "derived",
+      "sourceContentId": "groot-judgment-update",
+      "targetContentId": "groot"
+    },
+    {
+      "sourceId": "pl_733ab0fb865d",
+      "targetId": "pl_f7476857f05f",
+      "relation": "explains",
+      "label": "판단 활동을 맥락과 함께 살펴봅니다.",
+      "kind": "derived",
+      "sourceContentId": "groot-judgment-roots",
+      "targetContentId": "groot-judgment-context"
+    },
+    {
+      "sourceId": "pl_eb68f2c6f66d",
+      "targetId": "pl_c4d8c653205b",
+      "relation": "explains",
+      "label": "근거에 따른 수용과 보류, 판단 변경을 함께 다룹니다.",
+      "kind": "derived",
+      "sourceContentId": "groot-appropriate-reliance",
+      "targetContentId": "groot-judgment-update"
+    },
+    {
+      "sourceId": "pl_d22facea740c",
+      "targetId": "pl_c9b2366868f2",
+      "relation": "explains",
+      "label": "흥미로운 경험과 다른 장면에서의 활용을 구분해 연구합니다.",
+      "kind": "derived",
+      "sourceContentId": "groot-thinking-play",
+      "targetContentId": "groot-transfer"
+    },
+    {
+      "sourceId": "pl_d75b56494d08",
+      "targetId": "pl_24173582ec7a",
+      "relation": "presents",
+      "label": "철학과 보존된 연구 질문을 소개합니다.",
+      "kind": "derived",
+      "sourceContentId": "atlas",
+      "targetContentId": "groot"
+    }
+  ]
+}
