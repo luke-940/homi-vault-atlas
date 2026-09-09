@@ -123,7 +123,7 @@ function Artwork({
     <figure className={`artwork ${large ? "large" : ""}`}>
       <img
         src={`./${src}`}
-        alt="서로 다른 연구 질문을 표현한 일곱 관측 장치의 제작 이미지"
+        alt="일곱 연구 질문을 렌즈 안의 장면으로 표현한 제작 이미지"
         loading="lazy"
       />
       <figcaption>
