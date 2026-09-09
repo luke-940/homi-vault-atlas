@@ -32,6 +32,7 @@ import {
   evidenceRecords,
   evidenceFor,
   artworkFor,
+  artworkDescriptionFor,
   projectFor,
   searchNodes,
   type AtlasNode,
@@ -118,17 +119,18 @@ function Artwork({
   large?: boolean;
 }) {
   const src = artworkFor(node.id);
+  const description = artworkDescriptionFor(node.id);
   if (!src) return null;
   return (
     <figure className={`artwork ${large ? "large" : ""}`}>
       <img
         src={`./${src}`}
-        alt="일곱 연구 질문을 렌즈 안의 장면으로 표현한 제작 이미지"
+        alt={description?.alt ?? "프로젝트 설명 삽화"}
         loading="lazy"
       />
       <figcaption>
-        <span>연구 구조 표현</span>
-        서로 다른 질문으로 같은 변화를 읽습니다.
+        <span>생성 삽화 · 개념 표현</span>
+        {description?.caption}
       </figcaption>
     </figure>
   );
@@ -207,7 +209,10 @@ export default function App() {
     try { const v = localStorage.getItem("atlas-reduced-motion"); if (v !== null) return v === "true"; } catch {}
     return matchMedia("(prefers-reduced-motion: reduce)").matches;
   });
-  const [low, setLow] = useState(false);
+  const [quality, setQuality] = useState<"auto" | "high" | "low">(() => {
+    try { const saved = localStorage.getItem("atlas-quality"); if (saved === "high" || saved === "low") return saved; } catch {}
+    return "auto";
+  });
   const host = useRef<HTMLDivElement>(null);
   const background = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLElement>(null);
@@ -261,6 +266,9 @@ export default function App() {
   const auxModal = entry.ui?.modal ?? null;
   const modalKind = auxModal || (isMap ? "map" : hasPanel ? "reader" : null);
   const searchOpen = modalKind === "search";
+  const [sceneRequested, setSceneRequested] = useState(false);
+  const wantsScene = isWorld || Boolean(routeIsland);
+  useEffect(() => { if (wantsScene) setSceneRequested(true); }, [wantsScene]);
   const invalid = !isWorld && !routeIsland && !isMap && !hasPanel;
   const activeProject = sourceNode ? projectFor(sourceNode.id) : routeIsland?.id;
   const activeIsland = sceneState.sceneId === "world" ? undefined : islandById.get(sceneState.sceneId);
@@ -352,7 +360,7 @@ export default function App() {
       const el = placeLabels.current[place.id], p = positions.current[place.id];
       if (!el) continue;
       const rank = candidates.findIndex(item => item.id === place.id);
-      let visible = Boolean(p?.visible && rank >= 0 && rank < maxLabels && !currentState.current.modalKind);
+      let visible = Boolean(p?.visible && rank >= 0 && rank < maxLabels && !currentState.current.modalKind && place.id !== currentState.current.selectedPlaceId);
       let x = 0, y = 0;
       if (visible) {
         const w = Math.min(el.offsetWidth || 170, width - 32), h = el.offsetHeight || 44;
@@ -379,11 +387,13 @@ export default function App() {
   callbacks.current = { selectIsland, selectPlace, updateLabels };
 
   useEffect(() => {
+    if (!sceneRequested) return;
     let disposed = false;
     import("./world").then(({ AtlasWorld }) => {
       if (disposed || !host.current) return;
       try {
         world.current = new AtlasWorld(host.current, {
+          initialScene: routeIsland?.id ?? "world",
           onReady: () => setReady(true),
           onError: setError,
           onSelect: project => callbacks.current.selectIsland(project),
@@ -406,16 +416,16 @@ export default function App() {
           },
         });
         world.current.setReduced(reduced);
-        world.current.setQuality(low ? "low" : "high");
+        world.current.setQuality(quality);
         setWorldEpoch(value => value + 1);
       } catch {
         setError("이 환경에서는 3D 화면을 열 수 없습니다. 지도와 자료 읽기는 계속 이용할 수 있습니다.");
       }
     }).catch(() => setError("장면을 불러오지 못했습니다. 지도와 자료 읽기는 계속 이용할 수 있습니다."));
     return () => { disposed = true; world.current?.dispose(); world.current = null; };
-  }, [retry]);
+  }, [retry, sceneRequested]);
   useEffect(() => { world.current?.setReduced(reduced); }, [reduced]);
-  useEffect(() => { world.current?.setQuality(low ? "low" : "high"); }, [low]);
+  useEffect(() => { world.current?.setQuality(quality); try { localStorage.setItem("atlas-quality", quality); } catch {} }, [quality]);
   useEffect(() => {
     world.current?.setPaused(Boolean(modalKind));
     if (background.current) background.current.inert = Boolean(modalKind);
@@ -588,7 +598,7 @@ export default function App() {
   return (
     <>
       <a className="skip-link" href="#reading-content" onClick={event => { event.preventDefault(); go("/projects"); }}>프로젝트와 자료로 바로 가기</a>
-      <main className={`app atlas-v81 ${hasPanel ? "has-panel" : ""} ${record ? "has-reader" : ""} ${isCollection ? "has-collection" : ""} ${inIsland ? "in-island" : ""} ${selectedIsland && !inIsland ? "island-preview-open" : ""} ${selectedPlace && inIsland ? "place-panel-open" : ""} ${modalKind ? "modal-open" : ""}`}>
+      <main className={`app atlas-v81 atlas-v82 ${hasPanel ? "has-panel" : ""} ${record ? "has-reader" : ""} ${isCollection ? "has-collection" : ""} ${inIsland ? "in-island" : ""} ${selectedIsland && !inIsland ? "island-preview-open" : ""} ${selectedPlace && inIsland ? "place-panel-open" : ""} ${modalKind ? "modal-open" : ""}`}>
         <div ref={background} className="exploration-background">
           <header className="topbar">
             <a href="#/world" className="brand" aria-label="Homi Atlas 세계로"><span className="brand-mark">H</span><span>HOMI <b>ATLAS</b><small>OUR WORK, IN A WORLD.</small></span></a>
@@ -599,7 +609,7 @@ export default function App() {
               <button className="desktop-map" data-atlas-focus="nav-map" onClick={() => openMap(selectedContentId)}><MapIcon size={16} /> 지도</button>
               <button className="desktop-find" data-atlas-focus="nav-search" onClick={() => openModal("search")}>자료 찾기 <Search size={16} /></button>
             </nav>
-            <span className="edition">FIELD NOTES · 08.1</span>
+            <span className="edition">FIELD NOTES · 08.2</span>
             <div className="mobile-top-actions"><button aria-label="지도" onClick={() => openMap(selectedContentId)}><MapIcon size={18} /><span>지도</span></button><button aria-label="자료 찾기" onClick={() => openModal("search")}><Search size={18} /><span>찾기</span></button></div>
           </header>
           <div className="world-area">
@@ -618,7 +628,7 @@ export default function App() {
               {entryHint && !selectedPlace && sceneState.stage === "ready" && <aside className="entry-guide"><button aria-label="입장 안내 닫기" className="icon-button" onClick={() => setEntryHint(false)}><X size={17} /></button><small>{invalidPlaceRequested ? "장소 주소를 확인해 주세요" : "여기서부터 둘러보세요"}</small><strong>{activeIsland.places[0]?.label}</strong><p>{invalidPlaceRequested ? "이 섬에서 해당 장소를 찾지 못해 입구를 펼쳤습니다. 장소 목록에서 다시 골라 보세요." : "풍경을 움직여 가까이 다가가거나, 장소 이름을 눌러 보세요."}</p></aside>}
               {reduced && <div className="motion-badge"><Pause size={13} /> 움직임 줄이기 켜짐</div>}
             </>}
-            {(!ready || error) && <div className={`world-loading ${error ? "failed" : ""}`} role="status">
+            {(!ready || error) && <div className={`world-loading ${error ? "failed" : ""}`} style={{backgroundImage:"linear-gradient(#123b4099,#123b40d9),url(./assets/maps/loading-world.webp)"}} role="status">
               {error ? <><div><Compass size={26} /><small className="fallback-art-caption">풍경을 불러오지 못해도 지도와 자료를 읽을 수 있습니다.</small><p>{error}</p><div className="failure-actions"><button className="button" onClick={() => { setError(""); setReady(false); setRetry(v => v + 1); }}>3D 다시 불러오기 <RotateCcw size={16} /></button><button className="button outline" onClick={() => openMap()}>지도 보기 <MapIcon size={16} /></button></div><a className="fallback-reading-link" href="./reading.html">글로만 읽기</a></div></> : <><span className="loading-ring" /><span>우리의 세계를 펼치는 중</span><small>풍경을 준비하는 동안에도 자료를 읽을 수 있습니다.</small><a className="text-link light" href="./reading.html">글로만 읽기 <BookOpen size={16} /></a></>}
             </div>}
             {ready && sceneState.stage !== "ready" && !error && <aside className={`island-load-notice ${sceneState.stage === "error" ? "failed" : ""}`} role="status"><strong>{sceneState.stage === "loading" ? "섬을 가까이 펼치는 중" : "섬을 불러오지 못했습니다"}</strong><p>{sceneState.message || "지금 보이는 풍경은 준비가 끝날 때까지 유지됩니다."}</p><div>{sceneState.stage === "error" && routeIsland && <button className="button" onClick={() => void world.current?.enterIsland(routeIsland.id, params.get("place") || undefined)}>섬 다시 불러오기</button>}<button className="button outline" onClick={() => { ++sceneRequest.current; go("/world"); }}>전체 세계</button>{routeIsland && <button className="text-link" onClick={() => go(nodePath(destinations[routeIsland.id].entry))}>소개 읽기</button>}</div></aside>}
@@ -627,7 +637,7 @@ export default function App() {
             {selectedIsland && !inIsland && !error && <aside className="island-preview" aria-label={`${destinations[selectedIsland].name} 섬 소개`}><button className="icon-button panel-dismiss" aria-label="섬 선택 닫기" onClick={() => setSelectedIsland(undefined)}><X size={18} /></button><span className="overline">{destinations[selectedIsland].number} / {destinations[selectedIsland].caption}</span><h2>{destinations[selectedIsland].name}</h2><p>{selectedIslandNode?.summary}</p><span className="preview-count">{islandById.get(selectedIsland)?.places.length}곳의 장소 · 자유롭게 둘러보기</span><div className="selection-actions"><button className="button" data-atlas-focus="island-enter" onClick={() => enterIsland(selectedIsland)}>입장 <ArrowRight size={17} /></button><button className="button outline" data-atlas-focus="island-introduction" onClick={() => go(nodePath(destinations[selectedIsland].entry))}>소개 읽기 <BookOpen size={17} /></button></div><small className="preview-note">풍경을 움직여 탐험하고, 궁금한 이야기는 펼쳐 읽습니다.</small></aside>}
             {selectedPlace && inIsland && sceneState.stage === "ready" && !error && <aside className="place-summary" aria-label={`${selectedPlace.label} 설명`}><button className="icon-button panel-dismiss" aria-label="장소 설명 닫기" onClick={closePlace}><X size={18} /></button><span className="overline">{destinations[selectedPlace.islandId].name} · {selectedPlace.label}</span><h2 tabIndex={-1}>{selectedNode?.title || selectedPlace.label}</h2><p>{selectedNode?.summary || (selectedPlace.question === selectedPlace.label ? guideNode?.summary : undefined) || selectedPlace.question}</p>{selectedNode && <small className="place-state">{selectedNode.state}</small>}{selectedPlace.contentIds.length > 1 && <div className="place-content-tabs" aria-label="이 장소의 이야기">{selectedPlace.contentIds.map(nodeId => <button key={nodeId} aria-pressed={selectedNode?.id === nodeId} onClick={() => setSelectedContentId(nodeId)}>{nodeById.get(nodeId)?.title}</button>)}</div>}{children.length > 0 && <div className="subobject-list" aria-label="가까이 볼 대상">{children.map(place => <button key={place.id} onClick={() => selectPlace(place.id)}>{place.label}<ArrowUpRight size={14} /></button>)}</div>}<div className="selection-actions">{selectedNode ? <><button className="button" data-atlas-focus="place-read" onClick={() => { const action = selectedPlace.actions.find(a => a.action === "open-reader" && a.nodeId === selectedNode.id); if (action) actionFor(action); else go(nodePath(selectedNode.id)); }}>자료 읽기 <BookOpen size={17} /></button><button className="button outline" data-atlas-focus="place-map" onClick={() => openMap(selectedNode.id, selectedPlace.islandId)}>지도에서 보기 <MapIcon size={17} /></button></> : selectedPlace.actions.map((action, index) => <button key={index} className={`button ${index ? "outline" : ""}`} onClick={() => actionFor(action)}>{action.label}<ArrowRight size={16} /></button>)}</div></aside>}
             {!error && ready && <div className="world-tools"><span className="interaction-hint">드래그해 둘러보기 · 스크롤로 가까이</span><div className="tool-group"><button aria-label="가까이 보기" title="가까이 보기" onClick={() => world.current?.zoom(0.82)}><Plus size={18} /></button><button aria-label="멀리 보기" title="멀리 보기" onClick={() => world.current?.zoom(1.22)}><Minus size={18} /></button><button aria-label="왼쪽으로 돌려 보기" title="왼쪽으로 돌려 보기" onClick={() => world.current?.rotate(-Math.PI / 12)}><ChevronLeft size={18} /></button><button aria-label="오른쪽으로 돌려 보기" title="오른쪽으로 돌려 보기" onClick={() => world.current?.rotate(Math.PI / 12)}><ChevronRight size={18} /></button><button aria-label="처음 시점" title="처음 시점" onClick={resetCamera}><RotateCcw size={17} /></button><button aria-label="조작 안내와 화면 설정" title="조작 안내와 화면 설정" onClick={() => openModal("help")}><HelpCircle size={18} /></button></div></div>}
-            {isWorld && !error && <footer className="world-footer"><span>HOMI ATLAS · VOL. 08.1</span><span>장소는 이야기로, 이야기는 근거로.</span></footer>}
+            {isWorld && !error && <footer className="world-footer"><span>HOMI ATLAS · VOL. 08.2</span><span>장소는 이야기로, 이야기는 근거로.</span></footer>}
           </div>
           {invalid && <section className="not-found"><Compass size={28} /><h1>이 주소에서 찾을 수 있는 자료가 없습니다.</h1><p>세계와 자료 목록에서 다시 이어갈 수 있습니다.</p><button className="button" onClick={() => go("/world", { replace: true })}>전체 세계 <ArrowRight size={16} /></button><a href="./reading.html">글로만 읽기</a></section>}
         </div>
@@ -845,6 +855,7 @@ export default function App() {
                 <div className="project-grid">
                   {projects.map((n) => (
                     <a href={`#${nodePath(n.id)}`} key={n.id}>
+                      {artworkFor(n.id) && <img className="project-card-art" src={`./${artworkFor(n.id)}`} alt={artworkDescriptionFor(n.id)?.alt} loading="lazy" />}
                       <span className="project-index">
                         {destinations[projectFor(n.id)].number}
                       </span>
@@ -940,7 +951,7 @@ export default function App() {
         </aside>}
         {modalKind === "map" && <AtlasMap ref={modalRef} camera={ready ? entry.ui?.camera : undefined} view={params.get("view") === "vault" ? "vault" : "islands"} islandId={mapIsland} selectedNodeId={mapNode} selectedPlaceId={mapPlaceId} onPlaceChange={setMapPlaceId} expanded={mapExpanded} onExpanded={setMapExpanded} onChange={updateMap} onClose={closeModal} onRead={nodeId => go(nodePath(nodeId))} onEnter={showNodeOnIsland} onEnterIsland={project => enterIsland(project)} onEnterPlace={(project, placeId) => enterIsland(project, placeId)} />}
         {searchOpen && <div className="modal-backdrop" onClick={event => { if (event.target === event.currentTarget) closeModal(); }}><section ref={modalRef} className="search-dialog" role="dialog" aria-modal="true" aria-labelledby="search-title"><div className="search-heading"><h1 className="overline" id="search-title">이 세계의 이야기 찾기</h1><button className="icon-button" aria-label="검색 닫기" onClick={closeModal}><X size={20} /></button></div><label className="search-input"><Search size={23} /><input value={searchDraft} onChange={event => { setSearchDraft(event.target.value); if (!composing.current) setSearch(event.target.value); }} onCompositionStart={() => { composing.current = true; }} onCompositionEnd={event => { composing.current = false; setSearch(event.currentTarget.value); }} placeholder="프로젝트, 이야기, 궁금한 개념" aria-label="검색어" autoComplete="off" data-atlas-focus="search-input" /><kbd>ESC</kbd></label><div className="search-filters" aria-label="검색 범위">{(["all", ...worldIds] as const).map(project => <button key={project} aria-pressed={filter === project} onClick={() => setFilter(project)}>{project === "all" ? "모든 이야기" : destinations[project].name}</button>)}</div><div className="search-count" aria-live="polite">{search ? `“${search}”와 이어지는` : "지금 둘러볼 수 있는"} 이야기 {results.length}개 <small>아틀라스에 담은 이야기에서 찾습니다.</small></div><div className="search-results">{results.map(node => <article className="search-result" key={node.id}><small>{destinations[projectFor(node.id)].name} / {node.eyebrow}</small><h2>{node.title}</h2><p>{node.summary}</p><div className="search-destinations"><button data-atlas-focus={`search-read-${node.id}`} onClick={() => go(nodePath(node.id))}><BookOpen size={15} /> 자료 읽기</button><button data-atlas-focus={`search-map-${node.id}`} onClick={() => openMap(node.id)}><MapIcon size={15} /> 지도에서 보기</button><button data-atlas-focus={`search-island-${node.id}`} onClick={() => showNodeOnIsland(node.id)}><Compass size={15} /> 섬에서 보기</button></div></article>)}{!results.length && <div className="search-empty"><BookOpen size={28} /><h2>다른 말로 찾아볼까요?</h2><p>‘기억’, ‘판단’, ‘연구’처럼 짧은 말로 찾아보세요.</p>{filter !== "all" && <button className="text-link" onClick={() => setFilter("all")}>전체에서 찾기 <ArrowRight size={16} /></button>}<button className="text-link" onClick={() => { setSearch(""); setSearchDraft(""); setFilter("all"); }}>모든 이야기 보기 <ArrowRight size={16} /></button></div>}</div></section></div>}
-        {modalKind === "help" && <div className="modal-backdrop"><section ref={modalRef} className="camera-help-dialog" role="dialog" aria-modal="true" aria-labelledby="camera-help-title"><button className="icon-button panel-dismiss" aria-label="조작 안내 닫기" onClick={closeModal}><X size={20} /></button><span className="overline">자유롭게, 가까이</span><h1 id="camera-help-title" tabIndex={-1} data-modal-heading>풍경을 둘러보는 방법</h1><div className="camera-help-grid"><section><h2>마우스와 터치</h2><p>드래그하면 주위를 둘러봅니다. 스크롤하거나 두 손가락을 벌리면 가까이 다가갑니다.</p><p>섬 안에서는 오른쪽 드래그, Shift와 드래그, 두 손가락을 함께 움직여 자리를 옮길 수 있습니다.</p></section><section><h2>키보드</h2><p>섬 화면이 선택된 상태에서 방향키로 이동합니다. Q·E로 회전하고 +·−로 거리를 바꿉니다. Home을 누르면 처음 시점으로 돌아갑니다.</p><p>Tab으로 풍경 밖의 버튼과 자료로 이동할 수 있습니다.</p></section></div><div className="camera-pan-controls" aria-label="카메라 위치 이동"><Move size={17} /><button onClick={() => moveFromHelp(0, -2)}>앞으로</button><button onClick={() => moveFromHelp(-2, 0)}>왼쪽</button><button onClick={() => moveFromHelp(2, 0)}>오른쪽</button><button onClick={() => moveFromHelp(0, 2)}>뒤로</button></div><div className="preference-row"><button aria-pressed={reduced} onClick={toggleReduced}><Pause size={17} /><span>움직임 줄이기<small>물과 나뭇잎, 자동 시점 전환을 멈춥니다.</small></span><strong>{reduced ? "켜짐" : "꺼짐"}</strong></button><button aria-pressed={low} onClick={() => setLow(!low)}><Layers size={17} /><span>가벼운 화면<small>그림자와 화면 효과를 줄여 움직임을 가볍게 합니다.</small></span><strong>{low ? "켜짐" : "꺼짐"}</strong></button></div><p className="editorial-note">장소의 크기와 위치는 이야기를 표현하는 구성입니다. 성과나 중요도의 순위가 아닙니다.</p><a className="text-link" href="./reading.html">글로만 읽기 <BookOpen size={16} /></a></section></div>}
+        {modalKind === "help" && <div className="modal-backdrop"><section ref={modalRef} className="camera-help-dialog" role="dialog" aria-modal="true" aria-labelledby="camera-help-title"><button className="icon-button panel-dismiss" aria-label="조작 안내 닫기" onClick={closeModal}><X size={20} /></button><span className="overline">자유롭게, 가까이</span><h1 id="camera-help-title" tabIndex={-1} data-modal-heading>풍경을 둘러보는 방법</h1><div className="camera-help-grid"><section><h2>마우스와 터치</h2><p>드래그하면 주위를 둘러봅니다. 스크롤하거나 두 손가락을 벌리면 가까이 다가갑니다.</p><p>섬 안에서는 오른쪽 드래그, Shift와 드래그, 두 손가락을 함께 움직여 자리를 옮길 수 있습니다.</p></section><section><h2>키보드</h2><p>섬 화면이 선택된 상태에서 방향키로 이동합니다. Q·E로 회전하고 +·−로 거리를 바꿉니다. Home을 누르면 처음 시점으로 돌아갑니다.</p><p>Tab으로 풍경 밖의 버튼과 자료로 이동할 수 있습니다.</p></section></div><div className="camera-pan-controls" aria-label="카메라 위치 이동"><Move size={17} /><button onClick={() => moveFromHelp(0, -2)}>앞으로</button><button onClick={() => moveFromHelp(-2, 0)}>왼쪽</button><button onClick={() => moveFromHelp(2, 0)}>오른쪽</button><button onClick={() => moveFromHelp(0, 2)}>뒤로</button></div><div className="preference-row"><button aria-pressed={reduced} onClick={toggleReduced}><Pause size={17} /><span>움직임 줄이기<small>물과 나뭇잎, 자동 시점 전환을 멈춥니다.</small></span><strong>{reduced ? "켜짐" : "꺼짐"}</strong></button><label className="quality-preference"><Layers size={17} /><span>화면 품질<small>자동은 움직임에 맞춰 해상도와 효과를 조절합니다.</small></span><select aria-label="화면 품질" value={quality} onChange={event => setQuality(event.target.value as "auto" | "high" | "low")}><option value="auto">자동</option><option value="high">선명하게</option><option value="low">가볍게</option></select></label></div><p className="editorial-note">장소의 크기와 위치는 이야기를 표현하는 구성입니다. 성과나 중요도의 순위가 아닙니다.</p><a className="text-link" href="./reading.html">글로만 읽기 <BookOpen size={16} /></a></section></div>}
         {modalKind === "reading-help" && <div className="modal-backdrop"><section ref={modalRef} className="camera-help-dialog" role="dialog" aria-modal="true" aria-labelledby="reading-help-title"><button className="icon-button panel-dismiss" aria-label="자료 읽기 안내 닫기" onClick={closeModal}><X size={20} /></button><span className="overline">이야기에서 근거로</span><h1 id="reading-help-title" tabIndex={-1} data-modal-heading>자료는 이렇게 읽습니다.</h1><div className="reading-help-steps"><section><span>01</span><h2>먼저, 이야기의 뜻을 읽습니다.</h2><p>프로젝트가 향하는 곳과 현재 상태를 짧은 설명으로 만납니다.</p></section><section><span>02</span><h2>궁금한 대목은 근거로 이어갑니다.</h2><p>‘설명 너머의 근거’에서 기준일과 선별한 원문 발췌를 확인할 수 있습니다. Atlas가 풀어 쓴 설명은 원문과 구분합니다.</p></section><section><span>03</span><h2>다시, 탐색을 이어 갑니다.</h2><p>읽기 화면 위쪽의 돌아가기 버튼으로 탐색을 이어 갑니다. 풍경에서 시작했다면 보던 장소와 시점이 유지됩니다.</p></section></div><div className="selection-actions"><button className="button" onClick={() => go("/projects")}>이야기 둘러보기 <BookOpen size={17} /></button><button className="button outline" onClick={() => openModal("search")}>자료 찾기 <Search size={17} /></button></div></section></div>}
         {modalKind === "places" && activeIsland && <div className="modal-backdrop"><section ref={modalRef} className="places-dialog" role="dialog" aria-modal="true" aria-labelledby="places-title"><button className="icon-button panel-dismiss" aria-label="장소 목록 닫기" onClick={closeModal}><X size={20} /></button><span className="overline">{activeIsland.label}</span><h1 id="places-title" tabIndex={-1} data-modal-heading>어디를 가까이 볼까요?</h1><p>장소를 고르면 풍경 속으로 다가갑니다.</p><div className="island-place-list">{activeIsland.places.map((place, index) => <button key={place.id} data-atlas-focus={`list-${place.id}`} onClick={() => selectPlace(place.id)}><span>{String(index + 1).padStart(2, "0")}</span><div><strong>{place.label}</strong><small>{place.question}</small></div><ArrowUpRight size={17} /></button>)}</div></section></div>}
 

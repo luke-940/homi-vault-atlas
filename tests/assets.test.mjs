@@ -55,7 +55,7 @@ test("missing physical part, missing UV and nonfinite geometry cannot pass", () 
 test("invalid indices, cycles and external image references are rejected", () => {
   fails(() => inspectGLB(glb((j, bin) => { bin.writeUInt16LE(9, 60); })), "GLB_INDEX_OUT_OF_RANGE");
   fails(() => inspectGLB(glb(j => { j.nodes[1].children = [0]; })), "GLB_NODE_CYCLE");
-  fails(() => inspectGLB(glb(j => { j.images[0].uri = "elsewhere.png"; })), "GLB_EXTERNAL_IMAGE");
+  fails(() => inspectGLB(glb(j => { j.images[0].uri = "elsewhere.png"; })), "GLB_EXTERNAL_IMAGE_PATH");
 });
 test("motion metadata belongs to a named empty pivot", () => {
   fails(() => inspectGLB(glb(j => { j.nodes[1].extras.atlasMotion = "open"; })), "GLB_MOTION_REQUIRES_EMPTY_PIVOT");
@@ -197,4 +197,9 @@ test("a reviewed color profile never permits EXIF or XMP metadata", () => {
     const bytes = webpContainer([webpExtended(), webpChunk("ICCP", reviewedSrgbICC), onePixelWebpPayload(), webpChunk(type, Buffer.from("ExampleHiddenTerm"))]);
     fails(() => inspectImage(bytes, "image/webp"), "IMAGE_PRIVATE_METADATA");
   }
+});
+
+test("untextured foliage may omit UVs while textured surfaces require their declared coordinate set",()=>{
+ assert.ok(inspectGLB(glb(j=>{delete j.meshes[0].primitives[0].attributes.TEXCOORD_0;j.materials[0]={pbrMetallicRoughness:{baseColorFactor:[.2,.4,.3,1]}};})).primitives>0);
+ fails(()=>inspectGLB(glb(j=>{j.materials[0].pbrMetallicRoughness.baseColorTexture.texCoord=1;})),"GLB_POSITION_UV_CONTRACT");
 });

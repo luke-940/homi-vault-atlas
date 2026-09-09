@@ -121,13 +121,16 @@ export function evidenceFor(nodeId: string): EvidenceRecord[] {
   return [...(evidenceByNode.get(nodeId) ?? [])];
 }
 
-const artwork: Readonly<Record<string, string>> = {
-  "rocket-desks": "assets/rocket-lenses.webp",
+const artwork: Readonly<Record<string, {src:string;alt:string;caption:string}>> = {
+  "rocket-desks": {src:"assets/rocket-lenses.webp",alt:"일곱 연구 질문을 각각의 렌즈 안에 표현한 삽화",caption:"일곱 질문으로 같은 변화를 읽습니다."},
+  rocket: {src:"assets/illustrations/rocket-v82.webp",alt:"관측 장치와 일곱 표본 전시가 놓인 해안 연구 정원 삽화",caption:"변화를 여러 관점에서 살피는 Rocket의 연구를 표현했습니다."},
+  groot: {src:"assets/illustrations/groot-v82.webp",alt:"정보와 경험을 함께 살피는 곡면 테이블과 관찰판이 놓인 숲속 정원 삽화",caption:"정보와 시간, 경험과 권한을 함께 살피는 판단의 정원입니다."},
+  "groot-judgment-context": {src:"assets/illustrations/groot-v82.webp",alt:"네 관찰판과 기록 도구를 둔 열린 정원 삽화",caption:"같은 행동도 그때의 상황과 함께 읽습니다."},
+  "knowledge-library": {src:"assets/illustrations/common-v82.webp",alt:"노트와 자료, 책을 펼쳐 놓은 열린 도서관과 열람 정원 삽화",caption:"오늘의 발견을 정리하고, 다음 질문에서 다시 꺼내 봅니다."},
+  atlas: {src:"assets/illustrations/atlas-v82.webp",alt:"네 섬의 모형과 지도책, 측량 도구가 놓인 지도 제작자의 테이블 삽화",caption:"공간을 둘러보다가 이야기와 근거로 이어지는 Atlas를 표현했습니다."},
 };
-
-export function artworkFor(nodeId: string): string | undefined {
-  return Object.hasOwn(artwork, nodeId) ? artwork[nodeId] : undefined;
-}
+export function artworkFor(nodeId:string):string|undefined{return Object.hasOwn(artwork,nodeId)?artwork[nodeId].src:undefined;}
+export function artworkDescriptionFor(nodeId:string){return Object.hasOwn(artwork,nodeId)?artwork[nodeId]:undefined;}
 
 const normalize = (value: string) =>
   value.normalize("NFKC").toLowerCase().replace(/\s+/gu, " ").trim();

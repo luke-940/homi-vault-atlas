@@ -100,7 +100,8 @@ test('an existing scene load applies its queued matching history camera after de
   for (const savedScene of ['world', 'groot']) {
     const calls = [], pose = camera(savedScene), loaded = { id: 'world', root: {} };
     const renderer = {
-      disposed: false, contextLost: false, generation: 0, worldCache: loaded,
+      disposed: false, contextLost: false, generation: 0, worldCache: loaded, sceneCache: new Map([['world',loaded]]),
+      ensureMarine() {}, loadLandscape() {},
       pendingSnapshot: pose, transitionSamples: [], ready: true,
       announce(value) { calls.push(['stage', value.stage]); },
       clearPulse() {}, scene: { add() {} }, configureScene() {}, collectAnimatedObjects() {},
@@ -112,4 +113,10 @@ test('an existing scene load applies its queued matching history camera after de
       ...(savedScene === 'world' ? [['apply', pose]] : []), ['stage', 'ready']]);
     assert.equal(renderer.pendingSnapshot, undefined);
   }
+});
+
+test('returning to an already ready scene preserves its optional landscape request',()=>{
+ let aborted=false;const renderer={current:{id:'groot'},desiredScene:'groot',lastStage:state('groot','ready'),generation:2,request:{abort(){aborted=true;}}};
+ AtlasWorld.prototype.cancelPendingLoad.call(renderer);assert.equal(aborted,false);assert.equal(renderer.generation,2);
+ renderer.desiredScene='common';renderer.announce=()=>{};AtlasWorld.prototype.cancelPendingLoad.call(renderer);assert.equal(aborted,true);assert.equal(renderer.generation,3);
 });

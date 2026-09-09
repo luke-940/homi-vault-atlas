@@ -2356,3 +2356,14 @@ img {
 .atlas-v81 .map-topic-connections button strong { display: block; font-size: 14px; font-weight: 500; margin: 6px 0; }
 .atlas-v81 .map-topic-connections button small { display: block; font-size: 11px; line-height: 1.7; }
 .atlas-v81 .map-topic-connections button > svg { position: absolute; right: 0; top: 45%; }
+
+.quality-preference{display:flex;align-items:center;gap:12px;padding:16px;border:1px solid var(--line);border-radius:12px}.quality-preference span{flex:1}.quality-preference small{display:block;font-size:12px;margin-top:5px;opacity:.7}.quality-preference select{font:inherit;color:inherit;background:#f5efe1;border:1px solid #c3b69b;border-radius:8px;padding:8px}
+
+.project-card-art{display:block;width:100%;aspect-ratio:2/1;object-fit:cover;border-radius:3px;margin:0 0 22px}.project-grid a:has(.project-card-art){padding-top:22px}.artwork figcaption{line-height:1.65}
+
+.atlas-v82 .world-loading{background-size:cover;background-position:center;}
+.atlas-v82 .project-card-art{aspect-ratio:3/2;object-fit:cover;transition:transform .45s ease;}
+.atlas-v82 .project-card:hover .project-card-art{transform:scale(1.025);}
+@media(prefers-reduced-motion:reduce){.atlas-v82 .project-card-art{transition:none;}}
+
+.atlas-v82 h1[tabindex="-1"]:focus{outline:none;}
