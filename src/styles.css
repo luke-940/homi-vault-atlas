@@ -793,8 +793,8 @@ img {
   position: relative;
 }
 .visual-entry img {
-  aspect-ratio: 1.75;
-  object-position: center 40%;
+  aspect-ratio: 1.5;
+  object-position: center;
 }
 .visual-entry > span {
   position: absolute;
