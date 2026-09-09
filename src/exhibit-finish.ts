@@ -19,7 +19,7 @@ export function finishResearchCabinet(root:THREE.Group){
   if(!(object instanceof THREE.Mesh)||Array.isArray(object.material)||!object.material.name.startsWith('m_ivory'))return;
   const backing=object.material.clone() as THREE.MeshStandardMaterial;backing.color.set('#285452');backing.roughness=.92;object.material=backing;
  });
- const lod=new THREE.Group();lod.name='seven-instrument-miniatures';lod.userData={atlasLodRoot:true,atlasLodRadius:2.1};
+ const lod=new THREE.Group();lod.name='seven-instrument-miniatures';lod.userData={atlasLodRoot:true,atlasLodRadius:2.1,atlasLodNearPixels:80,atlasLodFarPixels:24};
  const detail=new THREE.Group(),distant=new THREE.Group();detail.userData.atlasLodLevel=0;distant.userData.atlasLodLevel=1;lod.add(detail,distant);
  for(let i=1;i<=7;i++){
   const source=root.getObjectByName(`rocket-lens-${i}`);if(!source)continue;

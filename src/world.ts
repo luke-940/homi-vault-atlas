@@ -620,8 +620,9 @@ export class AtlasWorld {
     const height=this.host.clientHeight,vertical=2*Math.tan(THREE.MathUtils.degToRad(this.camera.fov)/2);
     for(const lod of this.lods){
       const center=lod.root.getWorldPosition(new THREE.Vector3()),pixels=2*lod.radius/Math.max(.1,this.camera.position.distanceTo(center))/vertical*height;
-      const desired=pixels>320?0:pixels>96?1:2;
-      const threshold=desired<lod.level?(lod.level===2?96:320)*1.15:(lod.level===0?320:96)*.85;
+      const near=lod.root.userData.atlasLodNearPixels??320,far=lod.root.userData.atlasLodFarPixels??96;
+      const desired=pixels>near?0:pixels>far?1:2;
+      const threshold=desired<lod.level?(lod.level===2?far:near)*1.15:(lod.level===0?near:far)*.85;
       if(desired!==lod.level&&(desired<lod.level?pixels>threshold:pixels<threshold))lod.level=Math.min(desired,lod.levels.length-1);
       lod.levels.forEach((object,i)=>object.visible=i===lod.level);
     }
