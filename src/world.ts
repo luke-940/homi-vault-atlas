@@ -289,7 +289,11 @@ export class AtlasWorld {
       const distance=ranked.find(x=>x.spec.id===id)!.distance;loaded.root.visible=distance<80;
     }
     const details=[...this.sceneCache.values()].filter(s=>s.id!=='world').sort((a,b)=>ranked.find(x=>x.spec.id===a.id)!.distance-ranked.find(x=>x.spec.id===b.id)!.distance);
-    for(const loaded of details.slice(2))if(loaded!==this.current){this.sceneCache.delete(loaded.id);this.releaseScene(loaded);}
+    // Keep the active reader/route region even offshore, then only the nearest neighbour.
+    // Slicing by distance first could retain two neighbours plus a distant pinned current region.
+    const keep=new Set<LoadedScene>();if(this.current?.id!=='world')keep.add(this.current!);
+    for(const loaded of details)if(keep.size<2)keep.add(loaded);
+    for(const loaded of details)if(!keep.has(loaded)){this.sceneCache.delete(loaded.id);this.releaseScene(loaded);}
     // Only hide the matching overview island after its detail is ready and visible.
     this.worldCache?.root.traverse(object=>{
       if(!object.userData.atlasOverviewIsland)return;
