@@ -1,5 +1,5 @@
 {
-  "schema": "atlas.assets.v82",
+  "schema": "atlas.assets.v83",
   "sources": [
     {
       "id": "atlas-authored",
@@ -12,12 +12,12 @@
       "notice": "licenses/assets-NOTICE.md"
     },
     {
-      "id": "quaternius-nature",
+      "id": "quaternius-nature-megakit",
       "license": "CC0-1.0",
       "notice": "licenses/assets-NOTICE.md"
     },
     {
-      "id": "quaternius-whale",
+      "id": "polyhaven",
       "license": "CC0-1.0",
       "notice": "licenses/assets-NOTICE.md"
     },
@@ -44,172 +44,373 @@
   ],
   "assets": [
     {
-      "path": "assets/atlas-v82-atlas-landscape.glb",
-      "bytes": 482264,
-      "sha256": "72d37ec405910f468d256cccbd10f26c3d2517aa4955b32223f46ade6dc9b76d",
+      "path": "assets/atlas-v83-atlas-landscape.glb",
+      "bytes": 1110848,
+      "sha256": "ef10e330eda842a6b122304f8acd602d84d3ae743d41777b991c6ca198634d17",
       "stage": "island-landscape",
       "quality": "all",
-      "dependencies": [],
+      "lod": "detail",
+      "dependencies": [
+        "assets/shared/19578d3a80c09c3789302c28.ktx2",
+        "assets/shared/4028c87ac751c118982715ca.ktx2",
+        "assets/shared/74108ddee4c42d975eb01fa5.ktx2",
+        "assets/shared/8c1ab534ac3e9ee371a82346.ktx2",
+        "assets/shared/9ce128e5ee8af191f701967d.ktx2",
+        "assets/shared/adc1d995f0c142d8c784da0c.ktx2",
+        "assets/shared/e786666a3fdf3c1e85fe8c3a.ktx2",
+        "assets/shared/f9bc1a7d064e693f8be78ac5.ktx2",
+        "assets/shared/fafa55904fd83760315fa707.ktx2"
+      ],
       "sourceIds": [
-        "quaternius-nature"
-      ]
+        "quaternius-nature-megakit"
+      ],
+      "animations": [],
+      "skins": 0
     },
     {
-      "path": "assets/atlas-v82-atlas.glb",
-      "bytes": 1958004,
-      "sha256": "d4700b0a921695f7ceba1b0b2693ce06f8c7bd36d05709df5ed5337d2a99495f",
+      "path": "assets/atlas-v83-atlas.glb",
+      "bytes": 2980424,
+      "sha256": "d79a70d5c5a3e487a0b65520dc51087e27c49c3ccf5c0312021a80246d787c6a",
       "stage": "island-base",
       "quality": "all",
+      "lod": "detail",
       "dependencies": [
-        "assets/shared/02574b6c38d208d2cd2ebe7e.ktx2",
         "assets/shared/0a768451206e95b833258ed8.ktx2",
-        "assets/shared/1e01d91d0bb070b025860f37.ktx2",
-        "assets/shared/486b0d376be95dfe9bf00002.ktx2",
-        "assets/shared/a8c6b22760eb2a38ef602c89.ktx2",
-        "assets/shared/c8aa9c0fac740159992932a3.ktx2"
+        "assets/shared/1e9ca5ba60f519b17ffc2bbb.ktx2",
+        "assets/shared/1ebf0d8ecabd19590aed1e97.ktx2",
+        "assets/shared/218efb36d0dab082f48f0786.ktx2",
+        "assets/shared/226a589e30fe3228eebcf4ed.ktx2",
+        "assets/shared/36129f097d53ec6c504d7eea.ktx2",
+        "assets/shared/388530a721548d62084c602c.ktx2",
+        "assets/shared/4077b02b8a6a6d5ae7962a69.ktx2",
+        "assets/shared/47998eedd7763bb8bccf982d.ktx2",
+        "assets/shared/4bdb6692f7f812191d9e3d64.ktx2",
+        "assets/shared/53442d2b7c5115fe5677be23.ktx2",
+        "assets/shared/58484376b0e3635406a30716.ktx2",
+        "assets/shared/72c019b5a73b1fb6a691d2bc.ktx2",
+        "assets/shared/7e6ae4d5be389366c6e6b05e.ktx2",
+        "assets/shared/7f531cf9a6e2ccb8cb31694d.ktx2",
+        "assets/shared/7fa4ff599d38bee8f2ae33a7.ktx2",
+        "assets/shared/7fd78df03b460fa3885e5a0a.ktx2",
+        "assets/shared/875185b73f4c5606b09a018f.ktx2",
+        "assets/shared/8aba25a3f9c03e671b4c5eaf.ktx2",
+        "assets/shared/9a47b6deaf1e782b88a738b2.ktx2",
+        "assets/shared/a0e015c090f106a262b53aee.ktx2",
+        "assets/shared/a21b3868dad39b8bc1b3f387.ktx2",
+        "assets/shared/a2d45eb623a833885bd25783.ktx2",
+        "assets/shared/aa995c1cd813fb349d393515.ktx2",
+        "assets/shared/ae42020c7abaa007880f30f4.ktx2",
+        "assets/shared/ba4ec9ce3550cf21e634e14e.ktx2",
+        "assets/shared/bdfdd2c0f79054a39b5c0bdf.ktx2",
+        "assets/shared/c06ea3f3d478221afa5ab603.ktx2",
+        "assets/shared/cd0d2952aff2233a216ec453.ktx2",
+        "assets/shared/dacc8fa5ebec14092138eb4e.ktx2",
+        "assets/shared/eb1768677fe5da776843a18e.ktx2",
+        "assets/shared/edd7da6872aa95ca59b5080f.ktx2",
+        "assets/shared/f9576d32a1e06d3bd0949358.ktx2"
       ],
       "sourceIds": [
         "atlas-authored",
-        "quaternius-nature",
+        "polyhaven",
+        "quaternius-nature-megakit",
         "kenney-furniture",
-        "surface-sources"
-      ]
-    },
-    {
-      "path": "assets/atlas-v82-common-landscape.glb",
-      "bytes": 532108,
-      "sha256": "59e4a999ac758920333e702aaaf776c2b15a5d1f2fde35187375e54d89c4a933",
-      "stage": "island-landscape",
-      "quality": "all",
-      "dependencies": [],
-      "sourceIds": [
-        "quaternius-nature"
-      ]
-    },
-    {
-      "path": "assets/atlas-v82-common.glb",
-      "bytes": 2609856,
-      "sha256": "00761db95b77e9c77c752d66fea0556fc3a945131e1395f754759480bb0e1094",
-      "stage": "island-base",
-      "quality": "all",
-      "dependencies": [
-        "assets/shared/02574b6c38d208d2cd2ebe7e.ktx2",
-        "assets/shared/0a768451206e95b833258ed8.ktx2",
-        "assets/shared/1e01d91d0bb070b025860f37.ktx2",
-        "assets/shared/486b0d376be95dfe9bf00002.ktx2",
-        "assets/shared/a8c6b22760eb2a38ef602c89.ktx2",
-        "assets/shared/c8aa9c0fac740159992932a3.ktx2"
-      ],
-      "sourceIds": [
-        "atlas-authored",
-        "quaternius-nature",
-        "kenney-furniture",
-        "surface-sources"
-      ]
-    },
-    {
-      "path": "assets/atlas-v82-groot-landscape.glb",
-      "bytes": 615168,
-      "sha256": "b2ce66292bfda60aed1a8861d64ea876c2ecb7df2e9087d60c0875ddcd20a9fc",
-      "stage": "island-landscape",
-      "quality": "all",
-      "dependencies": [],
-      "sourceIds": [
-        "quaternius-nature"
-      ]
-    },
-    {
-      "path": "assets/atlas-v82-groot.glb",
-      "bytes": 2717504,
-      "sha256": "60373661912c1c15d1822ef964256347e0d1bb847674ffa8634133b0a56efa4e",
-      "stage": "island-base",
-      "quality": "all",
-      "dependencies": [
-        "assets/shared/02574b6c38d208d2cd2ebe7e.ktx2",
-        "assets/shared/0a768451206e95b833258ed8.ktx2",
-        "assets/shared/1e01d91d0bb070b025860f37.ktx2",
-        "assets/shared/486b0d376be95dfe9bf00002.ktx2",
-        "assets/shared/a6e63d974181911496019e13.ktx2",
-        "assets/shared/a8c6b22760eb2a38ef602c89.ktx2",
-        "assets/shared/c8aa9c0fac740159992932a3.ktx2",
-        "assets/shared/d512b5b609489c380999719a.ktx2"
-      ],
-      "sourceIds": [
-        "atlas-authored",
-        "quaternius-nature",
-        "kenney-furniture",
-        "surface-sources"
-      ]
-    },
-    {
-      "path": "assets/atlas-v82-marine.glb",
-      "bytes": 44344,
-      "sha256": "d3dc623377785f8e4956e5d3d1be2b1aad547c7a5bc5fb200bb6ec18645b207c",
-      "stage": "initial",
-      "quality": "all",
-      "dependencies": [
-        "assets/shared/27e1181767cb08579a60684b.ktx2"
-      ],
-      "sourceIds": [
         "kenney-pirate",
-        "quaternius-whale",
-        "atlas-authored"
-      ]
+        "surface-sources"
+      ],
+      "animations": [],
+      "skins": 0
     },
     {
-      "path": "assets/atlas-v82-rocket-landscape.glb",
-      "bytes": 707484,
-      "sha256": "8ec58488f44fd52d5da75f6d4065fb1e75cff1eb0b0d34bf60f57f16a567ccaf",
+      "path": "assets/atlas-v83-common-landscape.glb",
+      "bytes": 1127924,
+      "sha256": "b022fe624643ce5fc4e9f1a5d07d7b8ac23a6735345709ab197e56413b7a4986",
       "stage": "island-landscape",
       "quality": "all",
-      "dependencies": [],
+      "lod": "detail",
+      "dependencies": [
+        "assets/shared/19578d3a80c09c3789302c28.ktx2",
+        "assets/shared/4028c87ac751c118982715ca.ktx2",
+        "assets/shared/74108ddee4c42d975eb01fa5.ktx2",
+        "assets/shared/8c1ab534ac3e9ee371a82346.ktx2",
+        "assets/shared/9ce128e5ee8af191f701967d.ktx2",
+        "assets/shared/adc1d995f0c142d8c784da0c.ktx2",
+        "assets/shared/e786666a3fdf3c1e85fe8c3a.ktx2",
+        "assets/shared/f9bc1a7d064e693f8be78ac5.ktx2",
+        "assets/shared/fafa55904fd83760315fa707.ktx2"
+      ],
       "sourceIds": [
-        "quaternius-nature"
-      ]
+        "quaternius-nature-megakit"
+      ],
+      "animations": [],
+      "skins": 0
     },
     {
-      "path": "assets/atlas-v82-rocket.glb",
-      "bytes": 2873004,
-      "sha256": "a0288b31cf01eaa140754c2fdb955b1c227c8a3369b9d9e291a006adaa0c7941",
+      "path": "assets/atlas-v83-common.glb",
+      "bytes": 3913936,
+      "sha256": "9d4b7718aef87b539802f750b441dd8e3ae5368aded7049e1821a7a4c9f6f657",
       "stage": "island-base",
       "quality": "all",
+      "lod": "detail",
       "dependencies": [
-        "assets/shared/02574b6c38d208d2cd2ebe7e.ktx2",
         "assets/shared/0a768451206e95b833258ed8.ktx2",
-        "assets/shared/1e01d91d0bb070b025860f37.ktx2",
-        "assets/shared/486b0d376be95dfe9bf00002.ktx2",
-        "assets/shared/a8c6b22760eb2a38ef602c89.ktx2",
-        "assets/shared/c8aa9c0fac740159992932a3.ktx2"
+        "assets/shared/1e9ca5ba60f519b17ffc2bbb.ktx2",
+        "assets/shared/1ebf0d8ecabd19590aed1e97.ktx2",
+        "assets/shared/1ef62b0480d09756cd3f9a52.ktx2",
+        "assets/shared/218efb36d0dab082f48f0786.ktx2",
+        "assets/shared/226a589e30fe3228eebcf4ed.ktx2",
+        "assets/shared/36129f097d53ec6c504d7eea.ktx2",
+        "assets/shared/388530a721548d62084c602c.ktx2",
+        "assets/shared/47998eedd7763bb8bccf982d.ktx2",
+        "assets/shared/4bdb6692f7f812191d9e3d64.ktx2",
+        "assets/shared/53442d2b7c5115fe5677be23.ktx2",
+        "assets/shared/58484376b0e3635406a30716.ktx2",
+        "assets/shared/72c019b5a73b1fb6a691d2bc.ktx2",
+        "assets/shared/7e6ae4d5be389366c6e6b05e.ktx2",
+        "assets/shared/7f531cf9a6e2ccb8cb31694d.ktx2",
+        "assets/shared/7fa4ff599d38bee8f2ae33a7.ktx2",
+        "assets/shared/7fd78df03b460fa3885e5a0a.ktx2",
+        "assets/shared/8aba25a3f9c03e671b4c5eaf.ktx2",
+        "assets/shared/9a47b6deaf1e782b88a738b2.ktx2",
+        "assets/shared/a21b3868dad39b8bc1b3f387.ktx2",
+        "assets/shared/a2d45eb623a833885bd25783.ktx2",
+        "assets/shared/aa995c1cd813fb349d393515.ktx2",
+        "assets/shared/ae42020c7abaa007880f30f4.ktx2",
+        "assets/shared/ba4ec9ce3550cf21e634e14e.ktx2",
+        "assets/shared/bc9316562357fec1f857fcfc.ktx2",
+        "assets/shared/bdfdd2c0f79054a39b5c0bdf.ktx2",
+        "assets/shared/c06ea3f3d478221afa5ab603.ktx2",
+        "assets/shared/cd0d2952aff2233a216ec453.ktx2",
+        "assets/shared/d36e84ede69fc274ab53d2d8.ktx2",
+        "assets/shared/dacc8fa5ebec14092138eb4e.ktx2",
+        "assets/shared/eb1768677fe5da776843a18e.ktx2",
+        "assets/shared/edd7da6872aa95ca59b5080f.ktx2",
+        "assets/shared/f1b8096aed6d21e79ddd88ab.ktx2",
+        "assets/shared/f9576d32a1e06d3bd0949358.ktx2"
       ],
       "sourceIds": [
         "atlas-authored",
-        "quaternius-nature",
+        "polyhaven",
+        "quaternius-nature-megakit",
         "kenney-furniture",
+        "kenney-pirate",
         "surface-sources"
-      ]
+      ],
+      "animations": [],
+      "skins": 0
     },
     {
-      "path": "assets/atlas-v82-world.glb",
-      "bytes": 2890200,
-      "sha256": "10f3251fc430b058927837ea4b42dd1e3182e0a264d920f96a85d2cd4ced9cee",
-      "stage": "initial",
+      "path": "assets/atlas-v83-groot-landscape.glb",
+      "bytes": 1148188,
+      "sha256": "6925ef201acea2d176dd4fbbf2eef8cc95ec07fd2f85ead88f413efc48c25b63",
+      "stage": "island-landscape",
       "quality": "all",
+      "lod": "detail",
       "dependencies": [
-        "assets/shared/02574b6c38d208d2cd2ebe7e.ktx2",
+        "assets/shared/19578d3a80c09c3789302c28.ktx2",
+        "assets/shared/4028c87ac751c118982715ca.ktx2",
+        "assets/shared/74108ddee4c42d975eb01fa5.ktx2",
+        "assets/shared/8c1ab534ac3e9ee371a82346.ktx2",
+        "assets/shared/9ce128e5ee8af191f701967d.ktx2",
+        "assets/shared/adc1d995f0c142d8c784da0c.ktx2",
+        "assets/shared/e786666a3fdf3c1e85fe8c3a.ktx2",
+        "assets/shared/f9bc1a7d064e693f8be78ac5.ktx2",
+        "assets/shared/fafa55904fd83760315fa707.ktx2"
+      ],
+      "sourceIds": [
+        "quaternius-nature-megakit"
+      ],
+      "animations": [],
+      "skins": 0
+    },
+    {
+      "path": "assets/atlas-v83-groot.glb",
+      "bytes": 3725244,
+      "sha256": "4e741e2011487edc5e7359fb042940300d177938711f9564a23cf644fc2324ea",
+      "stage": "island-base",
+      "quality": "all",
+      "lod": "detail",
+      "dependencies": [
         "assets/shared/0a768451206e95b833258ed8.ktx2",
-        "assets/shared/1e01d91d0bb070b025860f37.ktx2",
-        "assets/shared/486b0d376be95dfe9bf00002.ktx2",
+        "assets/shared/1e9ca5ba60f519b17ffc2bbb.ktx2",
+        "assets/shared/1ebf0d8ecabd19590aed1e97.ktx2",
+        "assets/shared/1ef62b0480d09756cd3f9a52.ktx2",
+        "assets/shared/218efb36d0dab082f48f0786.ktx2",
+        "assets/shared/226a589e30fe3228eebcf4ed.ktx2",
+        "assets/shared/36129f097d53ec6c504d7eea.ktx2",
+        "assets/shared/388530a721548d62084c602c.ktx2",
+        "assets/shared/47998eedd7763bb8bccf982d.ktx2",
+        "assets/shared/4bdb6692f7f812191d9e3d64.ktx2",
+        "assets/shared/53442d2b7c5115fe5677be23.ktx2",
+        "assets/shared/58484376b0e3635406a30716.ktx2",
+        "assets/shared/72c019b5a73b1fb6a691d2bc.ktx2",
+        "assets/shared/7e6ae4d5be389366c6e6b05e.ktx2",
+        "assets/shared/7f531cf9a6e2ccb8cb31694d.ktx2",
+        "assets/shared/7fa4ff599d38bee8f2ae33a7.ktx2",
+        "assets/shared/7fd78df03b460fa3885e5a0a.ktx2",
+        "assets/shared/8aba25a3f9c03e671b4c5eaf.ktx2",
+        "assets/shared/9a47b6deaf1e782b88a738b2.ktx2",
+        "assets/shared/a21b3868dad39b8bc1b3f387.ktx2",
+        "assets/shared/a2d45eb623a833885bd25783.ktx2",
         "assets/shared/a6e63d974181911496019e13.ktx2",
-        "assets/shared/a8c6b22760eb2a38ef602c89.ktx2",
-        "assets/shared/c8aa9c0fac740159992932a3.ktx2",
-        "assets/shared/d512b5b609489c380999719a.ktx2"
+        "assets/shared/aa995c1cd813fb349d393515.ktx2",
+        "assets/shared/ae42020c7abaa007880f30f4.ktx2",
+        "assets/shared/ba4ec9ce3550cf21e634e14e.ktx2",
+        "assets/shared/bc9316562357fec1f857fcfc.ktx2",
+        "assets/shared/bdfdd2c0f79054a39b5c0bdf.ktx2",
+        "assets/shared/c06ea3f3d478221afa5ab603.ktx2",
+        "assets/shared/cd0d2952aff2233a216ec453.ktx2",
+        "assets/shared/d36e84ede69fc274ab53d2d8.ktx2",
+        "assets/shared/d512b5b609489c380999719a.ktx2",
+        "assets/shared/dacc8fa5ebec14092138eb4e.ktx2",
+        "assets/shared/eb1768677fe5da776843a18e.ktx2",
+        "assets/shared/edd7da6872aa95ca59b5080f.ktx2",
+        "assets/shared/f1b8096aed6d21e79ddd88ab.ktx2",
+        "assets/shared/f9576d32a1e06d3bd0949358.ktx2"
       ],
       "sourceIds": [
         "atlas-authored",
-        "quaternius-nature",
+        "polyhaven",
+        "quaternius-nature-megakit",
         "kenney-furniture",
+        "kenney-pirate",
         "surface-sources"
-      ]
+      ],
+      "animations": [],
+      "skins": 0
+    },
+    {
+      "path": "assets/atlas-v83-marine.glb",
+      "bytes": 1063520,
+      "sha256": "356dce506bc235f8d726ebd4214c9db0016bede4ab369b9574c88e44ac7651ec",
+      "stage": "initial",
+      "quality": "all",
+      "lod": "detail",
+      "dependencies": [
+        "assets/shared/266adb6deff6dd3702acf6b6.ktx2",
+        "assets/shared/47e1e668804875fe2863fc13.ktx2",
+        "assets/shared/4e6aa644ce0a4d34f614c233.ktx2",
+        "assets/shared/6ec65d130cdef79adf73d28e.ktx2",
+        "assets/shared/70b3f7679cc83af9dd1bb6b3.ktx2",
+        "assets/shared/7a71730fe4b3eaca92cc20ec.ktx2",
+        "assets/shared/95379925eeaaa51857ec5e86.ktx2",
+        "assets/shared/9fecf2a7d091b22468df1c69.ktx2",
+        "assets/shared/babaace1a01728700ba11e84.ktx2",
+        "assets/shared/be518516c84d2f950e5dd79f.ktx2",
+        "assets/shared/c1b4dc8fb5f0a4abb0df2d6c.ktx2",
+        "assets/shared/ceb70b3954a3364977289b5b.ktx2"
+      ],
+      "sourceIds": [
+        "atlas-authored",
+        "polyhaven"
+      ],
+      "animations": [
+        "WhaleSwim"
+      ],
+      "skins": 16
+    },
+    {
+      "path": "assets/atlas-v83-rocket-landscape.glb",
+      "bytes": 1166560,
+      "sha256": "bc02b79c9752646cf5d4ee3b53c200b6312b3a2b6b72d97da7724daceb661074",
+      "stage": "island-landscape",
+      "quality": "all",
+      "lod": "detail",
+      "dependencies": [
+        "assets/shared/19578d3a80c09c3789302c28.ktx2",
+        "assets/shared/4028c87ac751c118982715ca.ktx2",
+        "assets/shared/74108ddee4c42d975eb01fa5.ktx2",
+        "assets/shared/8c1ab534ac3e9ee371a82346.ktx2",
+        "assets/shared/9ce128e5ee8af191f701967d.ktx2",
+        "assets/shared/adc1d995f0c142d8c784da0c.ktx2",
+        "assets/shared/e786666a3fdf3c1e85fe8c3a.ktx2",
+        "assets/shared/f9bc1a7d064e693f8be78ac5.ktx2",
+        "assets/shared/fafa55904fd83760315fa707.ktx2"
+      ],
+      "sourceIds": [
+        "quaternius-nature-megakit"
+      ],
+      "animations": [],
+      "skins": 0
+    },
+    {
+      "path": "assets/atlas-v83-rocket.glb",
+      "bytes": 3959124,
+      "sha256": "3bc0e434d169d1b9d21688dec598134eb4658f41377413f482901d9103d17af0",
+      "stage": "island-base",
+      "quality": "all",
+      "lod": "detail",
+      "dependencies": [
+        "assets/shared/08fde507974616792aa045b1.ktx2",
+        "assets/shared/0a768451206e95b833258ed8.ktx2",
+        "assets/shared/1e9ca5ba60f519b17ffc2bbb.ktx2",
+        "assets/shared/1ebf0d8ecabd19590aed1e97.ktx2",
+        "assets/shared/218efb36d0dab082f48f0786.ktx2",
+        "assets/shared/226a589e30fe3228eebcf4ed.ktx2",
+        "assets/shared/36129f097d53ec6c504d7eea.ktx2",
+        "assets/shared/388530a721548d62084c602c.ktx2",
+        "assets/shared/47998eedd7763bb8bccf982d.ktx2",
+        "assets/shared/4ad11e78591ab5aa2e40859e.ktx2",
+        "assets/shared/4bdb6692f7f812191d9e3d64.ktx2",
+        "assets/shared/53442d2b7c5115fe5677be23.ktx2",
+        "assets/shared/58484376b0e3635406a30716.ktx2",
+        "assets/shared/693f17d769a0736cf55ecd2d.ktx2",
+        "assets/shared/72c019b5a73b1fb6a691d2bc.ktx2",
+        "assets/shared/7e6ae4d5be389366c6e6b05e.ktx2",
+        "assets/shared/7f531cf9a6e2ccb8cb31694d.ktx2",
+        "assets/shared/7fa4ff599d38bee8f2ae33a7.ktx2",
+        "assets/shared/7fd78df03b460fa3885e5a0a.ktx2",
+        "assets/shared/8aba25a3f9c03e671b4c5eaf.ktx2",
+        "assets/shared/9a47b6deaf1e782b88a738b2.ktx2",
+        "assets/shared/a21b3868dad39b8bc1b3f387.ktx2",
+        "assets/shared/a2d45eb623a833885bd25783.ktx2",
+        "assets/shared/aa995c1cd813fb349d393515.ktx2",
+        "assets/shared/ae42020c7abaa007880f30f4.ktx2",
+        "assets/shared/ba4ec9ce3550cf21e634e14e.ktx2",
+        "assets/shared/bdfdd2c0f79054a39b5c0bdf.ktx2",
+        "assets/shared/c06ea3f3d478221afa5ab603.ktx2",
+        "assets/shared/cd0d2952aff2233a216ec453.ktx2",
+        "assets/shared/dacc8fa5ebec14092138eb4e.ktx2",
+        "assets/shared/eb1768677fe5da776843a18e.ktx2",
+        "assets/shared/edd7da6872aa95ca59b5080f.ktx2",
+        "assets/shared/f9576d32a1e06d3bd0949358.ktx2"
+      ],
+      "sourceIds": [
+        "atlas-authored",
+        "polyhaven",
+        "quaternius-nature-megakit",
+        "kenney-furniture",
+        "kenney-pirate",
+        "surface-sources"
+      ],
+      "animations": [],
+      "skins": 0
+    },
+    {
+      "path": "assets/atlas-v83-world.glb",
+      "bytes": 1196880,
+      "sha256": "1dd9ce5a35cec970dcfeecece2c1bbce41dbb5415a030f6f47d05c45d1b97d07",
+      "stage": "initial",
+      "quality": "all",
+      "lod": "overview",
+      "dependencies": [
+        "assets/shared/19578d3a80c09c3789302c28.ktx2",
+        "assets/shared/74108ddee4c42d975eb01fa5.ktx2",
+        "assets/shared/8c1ab534ac3e9ee371a82346.ktx2",
+        "assets/shared/9ce128e5ee8af191f701967d.ktx2",
+        "assets/shared/adc1d995f0c142d8c784da0c.ktx2",
+        "assets/shared/e786666a3fdf3c1e85fe8c3a.ktx2",
+        "assets/shared/fafa55904fd83760315fa707.ktx2"
+      ],
+      "sourceIds": [
+        "atlas-authored",
+        "polyhaven",
+        "quaternius-nature-megakit",
+        "kenney-furniture",
+        "kenney-pirate",
+        "surface-sources"
+      ],
+      "animations": [],
+      "skins": 0
     },
     {
       "path": "assets/basis/basis_transcoder.js",
@@ -217,6 +418,7 @@
       "sha256": "8478b5b6d6b74e7d3082b89f6417321d8d1dc0307f2b30d4484bb11b441696a1",
       "stage": "initial",
       "quality": "all",
+      "lod": "none",
       "dependencies": [],
       "sourceIds": [
         "basis-decoder"
@@ -228,6 +430,7 @@
       "sha256": "6cf17dc889352c42e9acf8897107978d127005fe3386c36a0e3845e27967630a",
       "stage": "initial",
       "quality": "all",
+      "lod": "none",
       "dependencies": [],
       "sourceIds": [
         "basis-decoder"
@@ -235,10 +438,11 @@
     },
     {
       "path": "assets/collision/atlas.json",
-      "bytes": 155675,
-      "sha256": "3ffe3604649ad587ec53211247345917e08c7df313795c8f405c4e06198a95fa",
+      "bytes": 155871,
+      "sha256": "54054d90463844657cdf942ae999501ee98a73c4a8e7defa720390df904a8ad1",
       "stage": "island-base",
       "quality": "all",
+      "lod": "none",
       "dependencies": [],
       "sourceIds": [
         "atlas-authored"
@@ -250,6 +454,7 @@
       "sha256": "916cee0e6a5f01501cc65999e8fd993f93cad80c8515e9fe73ea674c3cfd2d4e",
       "stage": "island-base",
       "quality": "all",
+      "lod": "none",
       "dependencies": [],
       "sourceIds": [
         "atlas-authored"
@@ -261,6 +466,7 @@
       "sha256": "7b30477f8376c2fad512428f011eee6ab28be9792c89f4de5f64367926e39104",
       "stage": "island-base",
       "quality": "all",
+      "lod": "none",
       "dependencies": [],
       "sourceIds": [
         "atlas-authored"
@@ -272,6 +478,7 @@
       "sha256": "773e0d8a13c5c929d0db8c3466ea35ffd573d2aaa985e929f7d2d11172b96e64",
       "stage": "island-base",
       "quality": "all",
+      "lod": "none",
       "dependencies": [],
       "sourceIds": [
         "atlas-authored"
@@ -283,6 +490,7 @@
       "sha256": "5f3c6057082e538417333586847f1d780892e575cee85a2dee2c0d44c578bc82",
       "stage": "reading",
       "quality": "all",
+      "lod": "none",
       "dependencies": [],
       "sourceIds": [
         "atlas-generated"
@@ -294,6 +502,7 @@
       "sha256": "d129df55e7e58c18cd7f14d84fe0663cca260e02078c71e66025297e572a55d8",
       "stage": "reading",
       "quality": "all",
+      "lod": "none",
       "dependencies": [],
       "sourceIds": [
         "atlas-generated"
@@ -305,6 +514,7 @@
       "sha256": "f0b428856a4bef0748a181e94732bf5613b893ce4af02a97405613a57ef4c06d",
       "stage": "reading",
       "quality": "all",
+      "lod": "none",
       "dependencies": [],
       "sourceIds": [
         "atlas-generated"
@@ -316,6 +526,7 @@
       "sha256": "89586496281e8c3df50a282511ea8abcdb3124ca5d1e9b6e85708ea711bb0665",
       "stage": "reading",
       "quality": "all",
+      "lod": "none",
       "dependencies": [],
       "sourceIds": [
         "atlas-generated"
@@ -323,85 +534,120 @@
     },
     {
       "path": "assets/maps/atlas.webp",
-      "bytes": 104402,
-      "sha256": "919834bfb253586cd7ce352730110486265486dea3caffc2640684e5eb8bc3dc",
+      "bytes": 329048,
+      "sha256": "3d486cabd05bfc0ef63fbfa52a7352f6f27e5b50b139988a41a472ba858823f4",
       "stage": "map",
       "quality": "all",
+      "lod": "none",
       "dependencies": [],
       "sourceIds": [
         "atlas-authored",
-        "quaternius-nature",
+        "polyhaven",
+        "quaternius-nature-megakit",
         "kenney-furniture",
+        "kenney-pirate",
         "surface-sources"
       ]
     },
     {
       "path": "assets/maps/common.webp",
-      "bytes": 102940,
-      "sha256": "26652681939ed065c3bcaaf26f8b9b82de86061e9c31f71544085544b7a36f1a",
+      "bytes": 359534,
+      "sha256": "2d2ed8b02eb48d05767412a7796f5268b9755e6d3c444bf89af70a4ce530e3a2",
       "stage": "map",
       "quality": "all",
+      "lod": "none",
       "dependencies": [],
       "sourceIds": [
         "atlas-authored",
-        "quaternius-nature",
+        "polyhaven",
+        "quaternius-nature-megakit",
         "kenney-furniture",
+        "kenney-pirate",
+        "surface-sources"
+      ]
+    },
+    {
+      "path": "assets/maps/groot-card.webp",
+      "bytes": 51714,
+      "sha256": "aa7495289cc38fd5cf89aafe5fcca5a25fda8c4a970bda3f4d6316317beb079e",
+      "stage": "map",
+      "quality": "all",
+      "lod": "none",
+      "dependencies": [],
+      "sourceIds": [
+        "atlas-authored",
+        "polyhaven",
+        "quaternius-nature-megakit",
+        "kenney-furniture",
+        "kenney-pirate",
         "surface-sources"
       ]
     },
     {
       "path": "assets/maps/groot.webp",
-      "bytes": 113310,
-      "sha256": "48cb3378655fe5e3b7e620e7cbaf816cda511924fe9542ea14a642e7c51484d6",
+      "bytes": 390490,
+      "sha256": "0386e17d1d72e0b76704801c8eb390aaeed811af2f6846383e11d2360d528d7c",
       "stage": "map",
       "quality": "all",
+      "lod": "none",
       "dependencies": [],
       "sourceIds": [
         "atlas-authored",
-        "quaternius-nature",
+        "polyhaven",
+        "quaternius-nature-megakit",
         "kenney-furniture",
+        "kenney-pirate",
         "surface-sources"
       ]
     },
     {
       "path": "assets/maps/loading-world.webp",
-      "bytes": 146752,
-      "sha256": "c9e3a718d1664f982449da6e21e93c0effc2f2a9caea0fb1d2cf944119f12596",
+      "bytes": 77722,
+      "sha256": "1336a9c7196530c1efd75819a30f07c02dc4b96b682c9447b4ff692b8b1cd6a5",
       "stage": "map",
       "quality": "all",
+      "lod": "none",
       "dependencies": [],
       "sourceIds": [
         "atlas-authored",
-        "quaternius-nature",
+        "polyhaven",
+        "quaternius-nature-megakit",
         "kenney-furniture",
+        "kenney-pirate",
         "surface-sources"
       ]
     },
     {
       "path": "assets/maps/rocket.webp",
-      "bytes": 111862,
-      "sha256": "1b0ad5988aab1847ab108b0bfa90b18b20bc441fd632106f4ba45e7de7725950",
+      "bytes": 404282,
+      "sha256": "0cf329eeab21a9b6400974aec3fa615515454f07e7180145cd3ca6e3ce3571f7",
       "stage": "map",
       "quality": "all",
+      "lod": "none",
       "dependencies": [],
       "sourceIds": [
         "atlas-authored",
-        "quaternius-nature",
+        "polyhaven",
+        "quaternius-nature-megakit",
         "kenney-furniture",
+        "kenney-pirate",
         "surface-sources"
       ]
     },
     {
       "path": "assets/maps/world.webp",
-      "bytes": 77500,
-      "sha256": "ae7d04e70cc2f765cf45eea030bc3f6c3765d2874cfb3ebc09f39c4a87f60b5a",
+      "bytes": 144082,
+      "sha256": "087033888734cb7561a01152bfc6064a959e1eab2c8392be70cab7db401541c7",
       "stage": "map",
       "quality": "all",
+      "lod": "none",
       "dependencies": [],
       "sourceIds": [
         "atlas-authored",
-        "quaternius-nature",
+        "polyhaven",
+        "quaternius-nature-megakit",
         "kenney-furniture",
+        "kenney-pirate",
         "surface-sources"
       ]
     },
@@ -411,21 +657,26 @@
       "sha256": "d8e08217820158155c97b8bfa228cec9b443334f4572362b7c8cee8ffbb12e9b",
       "stage": "reading",
       "quality": "all",
+      "lod": "none",
       "dependencies": [],
       "sourceIds": [
         "atlas-generated"
       ]
     },
     {
-      "path": "assets/shared/02574b6c38d208d2cd2ebe7e.ktx2",
-      "bytes": 57636,
-      "sha256": "02574b6c38d208d2cd2ebe7ef34533cfb3810eb65e6eba178a50379dbabd11d7",
+      "path": "assets/shared/08fde507974616792aa045b1.ktx2",
+      "bytes": 75486,
+      "sha256": "08fde507974616792aa045b1574a61a1c13069a7939fa3d7f893a5df2cc1d21f",
       "stage": "shared",
       "quality": "all",
+      "lod": "shared",
       "dependencies": [],
       "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
         "surface-sources"
-      ]
+      ],
+      "colorSpace": "srgb"
     },
     {
       "path": "assets/shared/0a768451206e95b833258ed8.ktx2",
@@ -433,43 +684,584 @@
       "sha256": "0a768451206e95b833258ed87e0da669de6529f11eedd08e514ad88c1d990b21",
       "stage": "shared",
       "quality": "all",
+      "lod": "shared",
       "dependencies": [],
       "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
         "surface-sources"
-      ]
+      ],
+      "colorSpace": "srgb"
     },
     {
-      "path": "assets/shared/1e01d91d0bb070b025860f37.ktx2",
-      "bytes": 77605,
-      "sha256": "1e01d91d0bb070b025860f37cd797b96d66632463574d9382553a531beecb5b4",
+      "path": "assets/shared/19578d3a80c09c3789302c28.ktx2",
+      "bytes": 64549,
+      "sha256": "19578d3a80c09c3789302c28cda64b0313d91cd43697cca74e29d2a9a828d90c",
       "stage": "shared",
       "quality": "all",
+      "lod": "shared",
       "dependencies": [],
       "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
         "surface-sources"
-      ]
+      ],
+      "colorSpace": "srgb"
     },
     {
-      "path": "assets/shared/27e1181767cb08579a60684b.ktx2",
-      "bytes": 8907,
-      "sha256": "27e1181767cb08579a60684b0320f728993995ac5e511f0f233539bb0e4c5365",
+      "path": "assets/shared/1e9ca5ba60f519b17ffc2bbb.ktx2",
+      "bytes": 67536,
+      "sha256": "1e9ca5ba60f519b17ffc2bbbfcbf17093f33c897b84ffaef5ad26448a79857e8",
       "stage": "shared",
       "quality": "all",
+      "lod": "shared",
       "dependencies": [],
       "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
         "surface-sources"
-      ]
+      ],
+      "colorSpace": "linear"
     },
     {
-      "path": "assets/shared/486b0d376be95dfe9bf00002.ktx2",
-      "bytes": 68829,
-      "sha256": "486b0d376be95dfe9bf00002ce5251300132d3ede75d32601454054d5dca8c30",
+      "path": "assets/shared/1ebf0d8ecabd19590aed1e97.ktx2",
+      "bytes": 75872,
+      "sha256": "1ebf0d8ecabd19590aed1e97431c87bd2ab8b9557bf076424dc226b5c386217d",
       "stage": "shared",
       "quality": "all",
+      "lod": "shared",
       "dependencies": [],
       "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
         "surface-sources"
-      ]
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/1ef62b0480d09756cd3f9a52.ktx2",
+      "bytes": 14326,
+      "sha256": "1ef62b0480d09756cd3f9a52b21d30f5a339d84d0c2e1d93782dd0af74195ff8",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/218efb36d0dab082f48f0786.ktx2",
+      "bytes": 75676,
+      "sha256": "218efb36d0dab082f48f0786b0623557a6ef27ee4bd6f618b8f4f7916a065b83",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/226a589e30fe3228eebcf4ed.ktx2",
+      "bytes": 95561,
+      "sha256": "226a589e30fe3228eebcf4edc3e9ef56c289d8f1067884414b014e5c79a9f265",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "srgb"
+    },
+    {
+      "path": "assets/shared/266adb6deff6dd3702acf6b6.ktx2",
+      "bytes": 78093,
+      "sha256": "266adb6deff6dd3702acf6b666c13520bb6be3dd8cbd289eb98bb406f1d10017",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/36129f097d53ec6c504d7eea.ktx2",
+      "bytes": 51296,
+      "sha256": "36129f097d53ec6c504d7eeafc0cee351e3c7cd3e579df08cf2d3611fa8752e2",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/388530a721548d62084c602c.ktx2",
+      "bytes": 59087,
+      "sha256": "388530a721548d62084c602cb9272cc31fe1abdb667655d98b6924b16cb8323f",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/4028c87ac751c118982715ca.ktx2",
+      "bytes": 5496,
+      "sha256": "4028c87ac751c118982715ca78bda09ed7b34f2ad0488c7de3a253d6d98fbffb",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "srgb"
+    },
+    {
+      "path": "assets/shared/4077b02b8a6a6d5ae7962a69.ktx2",
+      "bytes": 79160,
+      "sha256": "4077b02b8a6a6d5ae7962a696866fbd17eff3eb8e8cf2a6a4a398ce4df1c946f",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "srgb"
+    },
+    {
+      "path": "assets/shared/47998eedd7763bb8bccf982d.ktx2",
+      "bytes": 69739,
+      "sha256": "47998eedd7763bb8bccf982dfbec62e904990fed33b084ebcbd8c7675d395fbf",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "srgb"
+    },
+    {
+      "path": "assets/shared/47e1e668804875fe2863fc13.ktx2",
+      "bytes": 72807,
+      "sha256": "47e1e668804875fe2863fc13fb65e5372c47bbb34ce1cc980b8eca8b7d51928d",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "srgb"
+    },
+    {
+      "path": "assets/shared/4ad11e78591ab5aa2e40859e.ktx2",
+      "bytes": 62037,
+      "sha256": "4ad11e78591ab5aa2e40859e870cf595e44cd51bfacf01aa53e46cdbe11be796",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/4bdb6692f7f812191d9e3d64.ktx2",
+      "bytes": 67699,
+      "sha256": "4bdb6692f7f812191d9e3d6496531ff45bacb2a9ec10df9f33663ccf297b2c11",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "srgb"
+    },
+    {
+      "path": "assets/shared/4e6aa644ce0a4d34f614c233.ktx2",
+      "bytes": 86677,
+      "sha256": "4e6aa644ce0a4d34f614c233b5774b4474ffd2f9884d12a21dd7faa5959f2c16",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "srgb"
+    },
+    {
+      "path": "assets/shared/53442d2b7c5115fe5677be23.ktx2",
+      "bytes": 66703,
+      "sha256": "53442d2b7c5115fe5677be2335e8af03bb37f04fd6b6cda8b1648700707f1277",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "srgb"
+    },
+    {
+      "path": "assets/shared/58484376b0e3635406a30716.ktx2",
+      "bytes": 78901,
+      "sha256": "58484376b0e3635406a3071666683e96cca6c16fed33115e8c32294adbc8d2ed",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/693f17d769a0736cf55ecd2d.ktx2",
+      "bytes": 81037,
+      "sha256": "693f17d769a0736cf55ecd2d44499be405b56a54c3f13b45d088d9f3b841c565",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/6ec65d130cdef79adf73d28e.ktx2",
+      "bytes": 76889,
+      "sha256": "6ec65d130cdef79adf73d28e15edf9ccdc6cbe60cb2103433439bbeb53e28fd3",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/70b3f7679cc83af9dd1bb6b3.ktx2",
+      "bytes": 82268,
+      "sha256": "70b3f7679cc83af9dd1bb6b3470119fe5944830f8488b4b65452543e2ba1b018",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/72c019b5a73b1fb6a691d2bc.ktx2",
+      "bytes": 55644,
+      "sha256": "72c019b5a73b1fb6a691d2bcaf5838c166bc72e673cdf98e9c68472c7bd14faf",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/74108ddee4c42d975eb01fa5.ktx2",
+      "bytes": 31733,
+      "sha256": "74108ddee4c42d975eb01fa54163d914e42694fcecca90756a3d326104130993",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "srgb"
+    },
+    {
+      "path": "assets/shared/7a71730fe4b3eaca92cc20ec.ktx2",
+      "bytes": 79948,
+      "sha256": "7a71730fe4b3eaca92cc20eca24e04e99fccf039d5a86dc8be180c0af62936b2",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "srgb"
+    },
+    {
+      "path": "assets/shared/7e6ae4d5be389366c6e6b05e.ktx2",
+      "bytes": 79727,
+      "sha256": "7e6ae4d5be389366c6e6b05e722dd1a7eb22040419f801443978a30bedd19bee",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "srgb"
+    },
+    {
+      "path": "assets/shared/7f531cf9a6e2ccb8cb31694d.ktx2",
+      "bytes": 72606,
+      "sha256": "7f531cf9a6e2ccb8cb31694d0f9ac311f0e173400645950b21defcc060a6054b",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "srgb"
+    },
+    {
+      "path": "assets/shared/7fa4ff599d38bee8f2ae33a7.ktx2",
+      "bytes": 58875,
+      "sha256": "7fa4ff599d38bee8f2ae33a710feb25ea05402aa730ec10734d08b0f1b1e812e",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "srgb"
+    },
+    {
+      "path": "assets/shared/7fd78df03b460fa3885e5a0a.ktx2",
+      "bytes": 87369,
+      "sha256": "7fd78df03b460fa3885e5a0ae6515e402e2a6390d23543cea3578213f600c65f",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "srgb"
+    },
+    {
+      "path": "assets/shared/875185b73f4c5606b09a018f.ktx2",
+      "bytes": 75682,
+      "sha256": "875185b73f4c5606b09a018fe0c42562c5d57c48713c953bef1978e8a1df89f8",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/8aba25a3f9c03e671b4c5eaf.ktx2",
+      "bytes": 48578,
+      "sha256": "8aba25a3f9c03e671b4c5eaf2b3fc2122b6ad1a66accf2d1021e57bfab81b58f",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/8c1ab534ac3e9ee371a82346.ktx2",
+      "bytes": 55035,
+      "sha256": "8c1ab534ac3e9ee371a823468efc24670702b319bfeca36b18fb53f13328a604",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "srgb"
+    },
+    {
+      "path": "assets/shared/95379925eeaaa51857ec5e86.ktx2",
+      "bytes": 69666,
+      "sha256": "95379925eeaaa51857ec5e8661063ce874383a611704fa57f0ea0c38df6f2e7c",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/9a47b6deaf1e782b88a738b2.ktx2",
+      "bytes": 77996,
+      "sha256": "9a47b6deaf1e782b88a738b2bc430133898b129173363fed38f0f4a97fb0ccd5",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "srgb"
+    },
+    {
+      "path": "assets/shared/9ce128e5ee8af191f701967d.ktx2",
+      "bytes": 77903,
+      "sha256": "9ce128e5ee8af191f701967d2f9a2591af9ec8f15699788bfe7adcd2583931a6",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/9fecf2a7d091b22468df1c69.ktx2",
+      "bytes": 73328,
+      "sha256": "9fecf2a7d091b22468df1c699a88c6f519f3eed40fe52302cf1aa36997218d9c",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "srgb"
+    },
+    {
+      "path": "assets/shared/a0e015c090f106a262b53aee.ktx2",
+      "bytes": 99309,
+      "sha256": "a0e015c090f106a262b53aee9572142357b21ff667732a182e298aa1092ebe2e",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/a21b3868dad39b8bc1b3f387.ktx2",
+      "bytes": 77455,
+      "sha256": "a21b3868dad39b8bc1b3f38737b8a6330be3fec9e3f85f7a583dcec3b9dc30be",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/a2d45eb623a833885bd25783.ktx2",
+      "bytes": 73692,
+      "sha256": "a2d45eb623a833885bd25783c538579f99bf2d9b73ad52b7153332e318fd8286",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
     },
     {
       "path": "assets/shared/a6e63d974181911496019e13.ktx2",
@@ -477,32 +1269,209 @@
       "sha256": "a6e63d974181911496019e1358f678ee4a6c845390a843cb137a1b8b87df0589",
       "stage": "shared",
       "quality": "all",
+      "lod": "shared",
       "dependencies": [],
       "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
         "surface-sources"
-      ]
+      ],
+      "colorSpace": "srgb"
     },
     {
-      "path": "assets/shared/a8c6b22760eb2a38ef602c89.ktx2",
-      "bytes": 77424,
-      "sha256": "a8c6b22760eb2a38ef602c8957a2fe61b2bcb4cc1e5997373b86984321aeb816",
+      "path": "assets/shared/aa995c1cd813fb349d393515.ktx2",
+      "bytes": 84578,
+      "sha256": "aa995c1cd813fb349d393515d866e99b2913629ed215138dbf497725a100dc44",
       "stage": "shared",
       "quality": "all",
+      "lod": "shared",
       "dependencies": [],
       "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
         "surface-sources"
-      ]
+      ],
+      "colorSpace": "linear"
     },
     {
-      "path": "assets/shared/c8aa9c0fac740159992932a3.ktx2",
-      "bytes": 69052,
-      "sha256": "c8aa9c0fac740159992932a36e21500c24d92bd59978ca32996d491df2134df4",
+      "path": "assets/shared/adc1d995f0c142d8c784da0c.ktx2",
+      "bytes": 14947,
+      "sha256": "adc1d995f0c142d8c784da0c09d9d0fdb8dd797e45b8477bf3d90c656d7a9105",
       "stage": "shared",
       "quality": "all",
+      "lod": "shared",
       "dependencies": [],
       "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
         "surface-sources"
-      ]
+      ],
+      "colorSpace": "srgb"
+    },
+    {
+      "path": "assets/shared/ae42020c7abaa007880f30f4.ktx2",
+      "bytes": 82904,
+      "sha256": "ae42020c7abaa007880f30f4694a9ae4e6b1d1863322bc2742738b0e0f7153b6",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "srgb"
+    },
+    {
+      "path": "assets/shared/ba4ec9ce3550cf21e634e14e.ktx2",
+      "bytes": 58849,
+      "sha256": "ba4ec9ce3550cf21e634e14e57ad11d2c418d5e78d978bdeef1d8a185a9d025f",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/babaace1a01728700ba11e84.ktx2",
+      "bytes": 65835,
+      "sha256": "babaace1a01728700ba11e84e02c4b5e5d2734082c6203d48704896fdc0f988b",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/bc9316562357fec1f857fcfc.ktx2",
+      "bytes": 28062,
+      "sha256": "bc9316562357fec1f857fcfc33aca954a7cf851b03e5bb31e8ee7283f44f2e88",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "srgb"
+    },
+    {
+      "path": "assets/shared/bdfdd2c0f79054a39b5c0bdf.ktx2",
+      "bytes": 81733,
+      "sha256": "bdfdd2c0f79054a39b5c0bdf29080b49ff9bdde17d8478880e08b7f53126afa8",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/be518516c84d2f950e5dd79f.ktx2",
+      "bytes": 80888,
+      "sha256": "be518516c84d2f950e5dd79f7a4b7bb22dda48c302cbd8f938285503b7912089",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/c06ea3f3d478221afa5ab603.ktx2",
+      "bytes": 69314,
+      "sha256": "c06ea3f3d478221afa5ab60339e68681d5bb1488097fa8fee6cb4efcdea4001b",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/c1b4dc8fb5f0a4abb0df2d6c.ktx2",
+      "bytes": 79472,
+      "sha256": "c1b4dc8fb5f0a4abb0df2d6cc3a431e1df52534aeb38269feaa9266ec5457604",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/cd0d2952aff2233a216ec453.ktx2",
+      "bytes": 83366,
+      "sha256": "cd0d2952aff2233a216ec453dc898891364a051c42f96c5a6edf45aaeb040134",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/ceb70b3954a3364977289b5b.ktx2",
+      "bytes": 53247,
+      "sha256": "ceb70b3954a3364977289b5b43ab418f7774630effb302658d346092cb49cc61",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/d36e84ede69fc274ab53d2d8.ktx2",
+      "bytes": 52566,
+      "sha256": "d36e84ede69fc274ab53d2d8914b712a074eec25b64679be50bb41be171e1bd1",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
     },
     {
       "path": "assets/shared/d512b5b609489c380999719a.ktx2",
@@ -510,61 +1479,142 @@
       "sha256": "d512b5b609489c380999719acd986a57689334b8c8a8d125fde57591167fb61b",
       "stage": "shared",
       "quality": "all",
+      "lod": "shared",
       "dependencies": [],
       "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
         "surface-sources"
-      ]
+      ],
+      "colorSpace": "linear"
     },
     {
-      "path": "assets/shores/atlas.png",
-      "bytes": 74203,
-      "sha256": "f79fb5386925a049fca722a579a155ac3442c85dd2d96053e801a11d7bd827c1",
-      "stage": "initial",
+      "path": "assets/shared/dacc8fa5ebec14092138eb4e.ktx2",
+      "bytes": 78093,
+      "sha256": "dacc8fa5ebec14092138eb4e6ab7b0020325050e18efaaa8bc2d1ae074df65f0",
+      "stage": "shared",
       "quality": "all",
+      "lod": "shared",
       "dependencies": [],
       "sourceIds": [
-        "atlas-authored"
-      ]
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
     },
     {
-      "path": "assets/shores/common.png",
-      "bytes": 76431,
-      "sha256": "5e6d2fce7d881e88e68400e15535d8f582647a825eabfda807b35dee674bf79c",
-      "stage": "initial",
+      "path": "assets/shared/e786666a3fdf3c1e85fe8c3a.ktx2",
+      "bytes": 71603,
+      "sha256": "e786666a3fdf3c1e85fe8c3aecd8b2545052523aa8977c1a41818619d2510f34",
+      "stage": "shared",
       "quality": "all",
+      "lod": "shared",
       "dependencies": [],
       "sourceIds": [
-        "atlas-authored"
-      ]
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
     },
     {
-      "path": "assets/shores/groot.png",
-      "bytes": 80321,
-      "sha256": "ff6fa5cf52279f83b3f57696b34371eb4d7599b3ed0b1869cc987cef36119325",
-      "stage": "initial",
+      "path": "assets/shared/eb1768677fe5da776843a18e.ktx2",
+      "bytes": 79578,
+      "sha256": "eb1768677fe5da776843a18e1d59c847ca7f7f2ed9cc82a6c2b2eec44ab63976",
+      "stage": "shared",
       "quality": "all",
+      "lod": "shared",
       "dependencies": [],
       "sourceIds": [
-        "atlas-authored"
-      ]
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
     },
     {
-      "path": "assets/shores/rocket.png",
-      "bytes": 80927,
-      "sha256": "0712e42bdfd0020f3de24caebceb8ce41efa4b25a339054c69aa9d66e66810f8",
-      "stage": "initial",
+      "path": "assets/shared/edd7da6872aa95ca59b5080f.ktx2",
+      "bytes": 86657,
+      "sha256": "edd7da6872aa95ca59b5080f2c772dccc8b952ef1a28f55bd6c1df1ced5b9b4e",
+      "stage": "shared",
       "quality": "all",
+      "lod": "shared",
       "dependencies": [],
       "sourceIds": [
-        "atlas-authored"
-      ]
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
     },
     {
-      "path": "assets/shores/world.png",
-      "bytes": 157051,
-      "sha256": "61fecbb21d7b46751efcba9d49e7a0967e5d7a195eee8a37c33f9be5873b6a27",
+      "path": "assets/shared/f1b8096aed6d21e79ddd88ab.ktx2",
+      "bytes": 55831,
+      "sha256": "f1b8096aed6d21e79ddd88ab83a1b2ce7dfeea71bdba3981efa9361da5c545bc",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/f9576d32a1e06d3bd0949358.ktx2",
+      "bytes": 83693,
+      "sha256": "f9576d32a1e06d3bd09493584e9ef53688835d312e0230033d693ed830dfcf72",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "linear"
+    },
+    {
+      "path": "assets/shared/f9bc1a7d064e693f8be78ac5.ktx2",
+      "bytes": 72804,
+      "sha256": "f9bc1a7d064e693f8be78ac5c74aa5fb7fe593a750bf708f6ae0544093bb476a",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "srgb"
+    },
+    {
+      "path": "assets/shared/fafa55904fd83760315fa707.ktx2",
+      "bytes": 30823,
+      "sha256": "fafa55904fd83760315fa7077395702010e38dfbcb0ad13589cefefd0ecc7a55",
+      "stage": "shared",
+      "quality": "all",
+      "lod": "shared",
+      "dependencies": [],
+      "sourceIds": [
+        "quaternius-nature-megakit",
+        "polyhaven",
+        "surface-sources"
+      ],
+      "colorSpace": "srgb"
+    },
+    {
+      "path": "assets/shores/v83-world.png",
+      "bytes": 137207,
+      "sha256": "753c851f39546a29c033263daf9bde5dabe8f932f8fd9d0c9ab8d59c6962afbb",
       "stage": "initial",
       "quality": "all",
+      "lod": "none",
       "dependencies": [],
       "sourceIds": [
         "atlas-authored"
@@ -576,6 +1626,7 @@
       "sha256": "153d69d68b71904d648d540c6ce336e8f955bd0b80a082167e08375aa4d3e9c8",
       "stage": "initial",
       "quality": "all",
+      "lod": "none",
       "dependencies": [],
       "sourceIds": [
         "surface-sources"

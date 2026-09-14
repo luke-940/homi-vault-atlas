@@ -394,14 +394,18 @@ export function validateSpatial(data, map, content, evidence, { privatePatterns 
   let assetCount = 0;
   for (const [ii, island] of islands.entries()) {
     const path = `spatial.islands[${ii}]`;
-    shape(island, ['id','label','coast','groundY','entry','extent','entryCamera','modelUrl','collisionUrl','mapImage','mapBounds','limits','assets','places','subInteractions','paths','reservedFootprints','shoreline','sceneStages','sharedResources'], path);
-    for (const [key, expected] of [['modelUrl', `assets/atlas-v81-${island.id}.glb`], ['collisionUrl', `assets/collision/${island.id}.json`], ['mapImage', `assets/maps/${island.id}.webp`]]) if (island[key] !== expected && !(key==='modelUrl' && island[key]===`assets/atlas-v82-${island.id}.glb`)) issue(`${path}.${key}`, 'Asset URL differs from the registered island contract.');
+    shape(island, ['id','label','coast','groundY','entry','extent','entryCamera','modelUrl','collisionUrl','mapImage','mapBounds','limits','assets','places','subInteractions','paths','reservedFootprints','shoreline','sceneStages','sharedResources','worldTransform','freeFlight','detailDistances'], path);
+    for (const [key, expected] of [['modelUrl', `assets/atlas-v81-${island.id}.glb`], ['collisionUrl', `assets/collision/${island.id}.json`], ['mapImage', `assets/maps/${island.id}.webp`]]) if (island[key] !== expected && !(key==='modelUrl' && [`assets/atlas-v82-${island.id}.glb`,`assets/atlas-v83-${island.id}.glb`].includes(island[key]))) issue(`${path}.${key}`, 'Asset URL differs from the registered island contract.');
+    if(island.worldTransform){
+      const expected={rocket:[-60,0,-50],groot:[55,0,-30],common:[-55,0,55],atlas:[42,0,65]};
+      if(JSON.stringify(island.worldTransform)!==JSON.stringify({translation:expected[island.id],scale:1})||JSON.stringify(island.freeFlight)!==JSON.stringify({min:[-235,.7,-230],max:[235,180,230]})||JSON.stringify(island.detailDistances)!==JSON.stringify({load:90,show:80,cacheRegions:2}))issue(path,'Unregistered world movement contract.');
+    }
     if (island.sceneStages !== undefined) {
       if (!Array.isArray(island.sceneStages) || island.sceneStages.length !== 2) issue(`${path}.sceneStages`, 'Two loading stages required.');
       else for (const [stageIndex, stage] of island.sceneStages.entries()) {
         shape(stage, ['id','url','required','quality'], `${path}.sceneStages[${stageIndex}]`);
         const id=stageIndex===0?'base':'landscape';
-        if(stage.id!==id||stage.url!==`assets/atlas-v82-${island.id}${stageIndex?'-landscape':''}.glb`||stage.required!==(stageIndex===0)||stage.quality!=='all')issue(`${path}.sceneStages`, 'Unregistered loading stage.');
+        if(stage.id!==id||![`assets/atlas-v82-${island.id}${stageIndex?'-landscape':''}.glb`,`assets/atlas-v83-${island.id}${stageIndex?'-landscape':''}.glb`].includes(stage.url)||stage.required!==(stageIndex===0)||stage.quality!=='all')issue(`${path}.sceneStages`, 'Unregistered loading stage.');
       }
       if (!Array.isArray(island.sharedResources) || island.sharedResources.some(url=>!/^assets\/shared\/[a-f0-9]{24}\.ktx2$/u.test(url)) || new Set(island.sharedResources).size!==island.sharedResources.length) issue(`${path}.sharedResources`, 'Invalid shared texture references.');
     }
@@ -428,11 +432,12 @@ export function validateSpatial(data, map, content, evidence, { privatePatterns 
     const localObjects=[...(island.places??[]),...(island.subInteractions??[])];const localIds=new Set(localObjects.map(p=>p.id));
     for(const p of localObjects){
       const pp=`${path}.object`;
-      shape(p,['id','islandId','label','kind','question','contentIds','parentId','assetId','interactionAssetId','physicalPartIds','assetOrigin','foundationTopY','interactionAnchor','cameraLookAt','viewingPosition','arrivalPose','actions','selectionProxy'],pp);
+      shape(p,['id','islandId','label','kind','question','contentIds','parentId','assetId','interactionAssetId','physicalPartIds','additionalHitNodes','assetOrigin','foundationTopY','interactionAnchor','cameraLookAt','viewingPosition','arrivalPose','actions','selectionProxy'],pp);
       if(p.islandId!==island.id||!['derived','guide'].includes(p.kind)||!assetIds.has(p.assetId)||!assetIds.has(p.interactionAssetId))issue(pp,'Object has an invalid island, kind or asset binding.');
       if(p.parentId&&!localIds.has(p.parentId))issue(pp,'Object parent is outside its island.');
       for(const key of ['assetOrigin','interactionAnchor','cameraLookAt','viewingPosition'])vector(p[key],3,`${pp}.${key}`);
       pose(p.arrivalPose,`${pp}.arrivalPose`);if(!same(p.arrivalPose?.target,p.cameraLookAt))issue(pp,'Arrival target differs from the authored focus.');
+      if(p.additionalHitNodes!==undefined&&(!Array.isArray(p.additionalHitNodes)||new Set(p.additionalHitNodes).size!==p.additionalHitNodes.length||p.additionalHitNodes.some(n=>typeof n!=='string'||!new RegExp('^'+island.id+'-study-[a-z0-9.-]+$').test(n))))issue(pp,'Additional physical hits must name reviewed exhibit objects.');
       if(!p.physicalPartIds?.length||p.physicalPartIds.some(id=>typeof id!=='string'||!id))issue(pp,'Physical part binding is missing.');
       for(const id of array(p.contentIds,`${pp}.contentIds`)){if(!nodes.has(id)||projectFor(id)!==island.id)issue(pp,'Object content is missing or belongs to a different island.');covered.add(id);}
       if(!p.contentIds?.length&&p.kind!=='guide')issue(pp,'A knowledge object needs readable content.');

@@ -1,3 +1,4 @@
+import {WORLD_OFFSETS} from "./environment";
 import React, { forwardRef, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, ArrowUpRight, BookOpen, ChevronRight, Compass, FileText, Folder, Map as MapIcon, X } from "lucide-react";
 import { nodeById, type ProjectId } from "./content";
@@ -22,8 +23,8 @@ interface Props {
   onEnterPlace: (id: ProjectId, placeId: string) => void;
 }
 // These share the authored overview layout. Final renderer readback must confirm image alignment.
-const worldBounds = { minX: -14, maxX: 14, minZ: -11, maxZ: 15 };
-const worldAnchors: Record<ProjectId, [number, number]> = { rocket: [-8, -4], groot: [6, -1], common: [-7, 7], atlas: [2, 7] };
+const worldBounds = { minX: -110, maxX: 110, minZ: -105, maxZ: 115 };
+const worldAnchors: Record<ProjectId, [number, number]> = { rocket: [-60, -50], groot: [55, -30], common: [-55, 55], atlas: [42, 65] };
 const parentOf = new Map(containmentEdges.map(edge => [edge.targetId, edge.sourceId]));
 const childrenOf = new Map<string, AtlasMapEntry[]>();
 for (const edge of containmentEdges) {
@@ -52,11 +53,12 @@ function SceneMapImage({ src, label, onAvailable, onAspect }: { src: string; lab
 export const AtlasMap = forwardRef<HTMLElement, Props>(function AtlasMap(props, ref) {
   const { view, islandId, selectedNodeId, expanded, onExpanded, onChange } = props;
   const island = islandId ? islandById.get(islandId) : undefined;
-  const candidateNode = selectedNodeId ? nodeById.get(selectedNodeId) : undefined;
   const localPlaceId = props.selectedPlaceId;
   const setLocalPlaceId = props.onPlaceChange;
   const localPlace = localPlaceId ? placeById.get(localPlaceId) : undefined;
-  const selectedNode = !localPlace || localPlace.contentIds.includes(selectedNodeId || "") ? candidateNode : undefined;
+  const activeNodeId = selectedNodeId ?? (localPlace && localPlace.islandId === islandId ? localPlace.contentIds[0] : undefined);
+  const candidateNode = activeNodeId ? nodeById.get(activeNodeId) : undefined;
+  const selectedNode = !localPlace || localPlace.contentIds.includes(activeNodeId || "") ? candidateNode : undefined;
   const nodePlaces = selectedNode ? placesForNode(selectedNode.id) : [];
   const selectedPlace = (localPlaceId ? placeById.get(localPlaceId) : undefined) ?? nodePlaces.find(place => place.islandId === islandId);
   const relatedConnections = selectedNode ? editorialConnections.filter(connection => connection.sourceContentId === selectedNode.id || connection.targetContentId === selectedNode.id) : [];
@@ -117,8 +119,11 @@ export const AtlasMap = forwardRef<HTMLElement, Props>(function AtlasMap(props, 
     });
   }, [islandId, size, imageAspect]);
   const cameraMark = useMemo(() => {
-    const camera = props.camera;
-    if (!camera || camera.sceneId !== (islandId ?? "world")) return undefined;
+    const original = props.camera;
+    const offset=islandId?WORLD_OFFSETS[islandId]:[0,0,0];
+    const translate=(p:[number,number,number])=>p.map((v,i)=>v-offset[i]) as [number,number,number];
+    const camera=original?.coordinates==='world-v83'&&islandId?{...original,position:translate(original.position),target:translate(original.target)}:original;
+    if (!camera || (islandId && camera.sceneId !== islandId) || (!islandId && camera.coordinates !== "world-v83")) return undefined;
     const bounds = island?.mapBounds ?? worldBounds;
     const width = Math.min(size.width, size.height * imageAspect), height = width / imageAspect;
     const left = (size.width - width) / 2, top = (size.height - height) / 2;

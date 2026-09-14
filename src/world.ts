@@ -10,20 +10,20 @@ import { SSAOPass } from "three/addons/postprocessing/SSAOPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import type { ProjectId } from "./content";
 import { islands, islandById, placeById, type IslandSpec, type KnowledgeObject } from "./islands";
-import { ATMOSPHERE_COLOR, AtlasWater, inPolygon, edgeDistance } from "./water";
-import { CameraSolids, pathRoute, validPanPoint, type CollisionShape } from "./camera-geometry";
+import { ATMOSPHERE_COLOR, AtlasWater, inPolygon } from "./water";
+import { CameraSolids, type CollisionShape } from "./camera-geometry";
 import { cameraRoute, sampleCameraRoute, type CameraRoute } from "./camera-travel";
 import { batchDecorations, applyVegetationWind, type InstanceSelection } from "./scene-batching";
 import { AtlasMarine } from "./marine";
-import { finishResearchCabinet, finishAtlasWorkshop } from "./exhibit-finish";
 import { SceneResources } from "./scene-resources";
-import { applyAtlasSceneMaterials, applyAtlasMaterialTreatment, finishV82Materials } from "./material-treatment";
+import { AtlasFlight, type FlightState, type FlightAxes } from "./flight";
+import { WORLD_OFFSETS, WORLD_BOUNDS, MOON_DIRECTION, worldPoint, localPoint, waterHeight, NightSky } from "./environment";
+import { treatNightMaterials } from "./night-materials";
 
-export const anchors:Record<ProjectId,[number,number,number]>={rocket:[-8,0,-4],groot:[6,0,-1],common:[-7,0,7],atlas:[2,0,7]};
-const terrainScale:Record<ProjectId,number>={rocket:.12,groot:.13,common:.12,atlas:.12};
+export const anchors=WORLD_OFFSETS;
 type SceneId="world"|ProjectId;
 type Triple=[number,number,number];
-export type CameraSnapshot={sceneId:SceneId;position:Triple;target:Triple;zoom:number;selectedPlaceId?:string;fov?:number};
+export type CameraSnapshot={sceneId:SceneId;position:Triple;target:Triple;zoom:number;selectedPlaceId?:string;fov?:number;mode?:'orbit'|'flight';direction?:Triple;coordinates?:'world-v83'};
 export type SceneState={sceneId:SceneId;stage:"loading"|"ready"|"error";message?:string};
 export type PlacePosition={x:number;y:number;visible:boolean;depth:number};
 type Options={
@@ -32,6 +32,7 @@ type Options={
   onProject:(positions:Record<string,{x:number;y:number;visible:boolean}>)=>void;
   onSelectPlace?:(placeId:string)=>void;onPlaces?:(positions:Record<string,PlacePosition>)=>void;
   onSceneState?:(state:SceneState)=>void;
+  onFlightState?:(state:FlightState)=>void;onRegion?:(id:ProjectId)=>void;
 };
 type LoadedScene={id:SceneId;root:THREE.Group;solids:CameraSolids;bytes:number;loadMs:number;landscape?:THREE.Group;landscapeLoading?:boolean;landscapeStatus?:string};
 type Travel={route:CameraRoute;target:THREE.Vector3;startTarget:THREE.Vector3;fov:number;startFov:number;elapsedMs:number};
@@ -42,6 +43,11 @@ export class AtlasWorld {
   readonly scene=new THREE.Scene();
   readonly camera=new THREE.PerspectiveCamera(37,1,.1,1100);
   readonly controls:OrbitControls;
+  readonly flight:AtlasFlight;
+  private nightSky:NightSky;
+  private regionRequests=new Map<SceneId,{abort:AbortController;promise:Promise<LoadedScene|undefined>}>();
+  private lastRegionReview=0;
+  private practicalLights:THREE.PointLight[]=[];
   model:THREE.Group|null=null;
   private current?:LoadedScene;
   private worldCache?:LoadedScene;
@@ -66,6 +72,7 @@ export class AtlasWorld {
   private disposed=false;
   private contextLost=false;
   private ready=false;
+  private firstReadyAt:number|null=null;
   private reduced=false;
   private paused=false;
   private quality:"auto"|"high"|"low"="auto";
@@ -104,10 +111,13 @@ export class AtlasWorld {
   private pendingSnapshot?:CameraSnapshot;
   private normalReady=false;
   private marine?:AtlasMarine;
+  private sceneryFocus?:"whale"|"lighthouse";
+  private sceneryOffset=new THREE.Vector3(12,6,16);
   private marineRequest?:Promise<void>;
   private marineStatus="not_requested";
   private windTime={value:0};
   private loadingStarted=0;
+  private wasFlying=false;
 
   constructor(host:HTMLElement,options:Options){
     this.host=host;this.options=options;this.mobile=host.clientWidth<=800;
@@ -115,23 +125,24 @@ export class AtlasWorld {
     this.renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:"high-performance"});
     this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));
     this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFShadowMap;
-    this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=.95;
-    this.renderer.setClearColor("#0b343b");this.renderer.info.autoReset=false;
+    this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.05;
+    this.renderer.setClearColor("#081625");this.renderer.info.autoReset=false;
     const canvas=this.renderer.domElement;
     canvas.tabIndex=0;canvas.setAttribute("role","application");
-    canvas.setAttribute("aria-label","섬을 탐험하는 3D 화면. 방향키로 이동, Q와 E로 회전, 더하기와 빼기로 확대 또는 축소, Home으로 처음 시점으로 돌아갑니다.");
+    canvas.setAttribute("aria-label","밤의 군도를 탐험하는 3D 화면. 자유 비행 시작 후 W A S D로 이동, Space로 상승, C로 하강, Shift로 빠르게 이동합니다. Esc로 마우스를 해제합니다.");
     host.append(canvas);
     const pmrem=new THREE.PMREMGenerator(this.renderer),room=new RoomEnvironment();
     this.environment=pmrem.fromScene(room,.04);this.scene.environment=this.environment.texture;
-    this.scene.environmentIntensity=.35;room.dispose();pmrem.dispose();
-    this.scene.fog=new THREE.FogExp2("#123c40",.006);
-    this.scene.add(new THREE.HemisphereLight("#cee9df","#364d49",1.25));
-    this.sun=new THREE.DirectionalLight("#ffe4b5",2.5);this.sun.castShadow=true;
+    this.scene.environmentIntensity=.12;room.dispose();pmrem.dispose();
+    this.scene.fog=new THREE.FogExp2("#081625",.0014);
+    this.scene.add(new THREE.HemisphereLight("#91b4e1","#183536",.43));
+    this.sun=new THREE.DirectionalLight("#a6c5ef",.72);this.sun.castShadow=true;
     this.sun.shadow.mapSize.set(2048,2048);this.sun.shadow.normalBias=.025;
     this.sun.shadow.bias=-.00015;this.sun.shadow.radius=2;
     this.scene.add(this.sun,this.sun.target);
-    const fill=new THREE.DirectionalLight("#88c9d0",.65);fill.position.set(18,30,16);this.scene.add(fill);
-    this.water=new AtlasWater(this.camera);this.scene.add(this.water.mesh);
+    this.nightSky=new NightSky();this.scene.add(this.nightSky.root);
+    for(let i=0;i<6;i++){const light=new THREE.PointLight("#ffbd74",95,13,2);this.practicalLights.push(light);this.scene.add(light);}
+    this.water=new AtlasWater(this.camera,this.renderer);this.scene.add(this.water.mesh);
     this.sky=new THREE.Mesh(new THREE.SphereGeometry(950,24,12),new THREE.MeshBasicMaterial({color:ATMOSPHERE_COLOR,side:THREE.BackSide,depthWrite:false,depthTest:false,fog:false}));
     this.sky.name="atlas-atmosphere";this.sky.renderOrder=-1000;this.sky.frustumCulled=false;this.scene.add(this.sky);
     this.controls=new OrbitControls(this.camera,canvas);
@@ -141,6 +152,12 @@ export class AtlasWorld {
     this.controls.addEventListener("start",this.onControlStart);
     this.controls.addEventListener("end",this.onControlEnd);
     this.controls.addEventListener("change",this.onControlChange);
+    this.flight=new AtlasFlight(this.camera,canvas,()=>{this.sceneryFocus=undefined;this.travel=null;this.dirty=true;this.invalidate();},state=>{
+      this.controls.enabled=!state.active&&!this.paused&&!this.contextLost;
+      if(!state.active&&this.wasFlying)this.controls.target.copy(this.camera.position).addScaledVector(this.camera.getWorldDirection(new THREE.Vector3()),8);
+      this.wasFlying=state.active;
+      this.options.onFlightState?.(state);this.invalidate();
+    });
     this.setSceneCamera(options.initialScene??"world");
     this.composer=new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene,this.camera));
@@ -176,7 +193,7 @@ export class AtlasWorld {
       else{
         const spec=id==="world"?undefined:islandById.get(id);
         if(id!=="world"&&!spec)throw new Error("Unknown island");
-        const url=spec?.modelUrl??"./assets/atlas-v82-world.glb";
+        const url=spec?.modelUrl??"./assets/atlas-v83-world.glb";
         const [response,collisionResponse]=await Promise.all([
           fetch(url,{signal:request.signal}),spec?fetch(spec.collisionUrl,{signal:request.signal}):Promise.resolve(null),
         ]);
@@ -186,16 +203,16 @@ export class AtlasWorld {
         const gltf=await this.loader.parseAsync(buffer,new URL("./assets/",location.href).href);
         if(token!==this.generation||this.disposed){this.resources.discard(gltf.scene);return false;}
         loaded={id,root:gltf.scene,solids:new CameraSolids((collision as {shapes:CollisionShape[]}).shapes),bytes:buffer.byteLength,loadMs:performance.now()-this.loadingStarted};
-        this.shareTextures(loaded.root);applyAtlasSceneMaterials(loaded.root);finishV82Materials(loaded.root);finishResearchCabinet(loaded.root);finishAtlasWorkshop(loaded.root);batchDecorations(loaded.root);applyVegetationWind(loaded.root,this.windTime);this.resources.acquire(loaded.root);
+        this.shareTextures(loaded.root);treatNightMaterials(loaded.root);batchDecorations(loaded.root);applyVegetationWind(loaded.root,this.windTime);this.resources.acquire(loaded.root);
         loaded.root.traverse(object=>{
           if(object instanceof THREE.Mesh){object.castShadow=true;object.receiveShadow=true;}
         });
-        if(id==="world")this.worldCache=loaded;
+        if(id==="world")this.worldCache=loaded;else {loaded.root.position.fromArray(WORLD_OFFSETS[id]);loaded.root.userData.atlasIslandId=id;}
         this.sceneCache.set(id,loaded);
       }
       if(token!==this.generation||this.disposed)return false;
-      this.clearPulse();const previous=this.current;
-      if(previous&&previous!==loaded)this.scene.remove(previous.root);
+      this.clearPulse();
+      // Keep the lightweight neighbouring islands in the common world. Visibility follows distance.
       this.current=loaded;this.model=loaded.root;this.scene.add(loaded.root);
       // Two detailed islands plus the small overview are kept; eviction owns disposal.
       for(const [key,cached] of [...this.sceneCache]){
@@ -211,7 +228,8 @@ export class AtlasWorld {
       this.transitionSamples.push(performance.now()-this.loadingStarted);if(this.transitionSamples.length>30)this.transitionSamples.shift();
       this.announce({sceneId:id,stage:"ready"});
       this.marine?.setScene(id);void this.ensureMarine();void this.loadLandscape(loaded,request,token);
-      if(!this.ready){this.ready=true;this.options.onReady();}
+      if(id!=="world")void this.ensureRegion("world");
+      if(!this.ready){this.ready=true;this.firstReadyAt=performance.now();this.options.onReady();}
       this.invalidate();return true;
     }catch(error){
       if(this.disposed||token!==this.generation||request.signal.aborted)return false;
@@ -222,38 +240,98 @@ export class AtlasWorld {
     }
   }
   private releaseScene(loaded:LoadedScene){
+    loaded.root.removeFromParent();
     if(loaded.landscape){loaded.landscape.removeFromParent();this.resources.release(loaded.landscape);}
     this.resources.release(loaded.root);
   }
-  private async loadLandscape(loaded:LoadedScene,request:AbortController,token:number){
+  private ensureRegion(id:SceneId):Promise<LoadedScene|undefined>{
+    const cached=this.sceneCache.get(id);if(cached){
+      if(id!=="world"&&!cached.landscape&&!cached.landscapeLoading&&[undefined,"cancelled"].includes(cached.landscapeStatus))void this.loadLandscape(cached,new AbortController());
+      return Promise.resolve(cached);
+    }
+    const running=this.regionRequests.get(id);if(running)return running.promise;
+    const abort=new AbortController();
+    const promise=(async()=>{
+      try{
+        const spec=id==='world'?undefined:islandById.get(id);
+        const [res,collisionRes]=await Promise.all([fetch(spec?.modelUrl??'./assets/atlas-v83-world.glb',{signal:abort.signal}),spec?fetch(spec.collisionUrl,{signal:abort.signal}):Promise.resolve(null)]);
+        if(!res.ok||collisionRes&&!collisionRes.ok)throw Error('Region unavailable');
+        const [bytes,collision]=await Promise.all([res.arrayBuffer(),collisionRes?.json()??Promise.resolve({shapes:[]})]);
+        if(abort.signal.aborted||this.disposed)return;
+        const gltf=await this.loader.parseAsync(bytes,new URL('./assets/',location.href).href);
+        if(abort.signal.aborted||this.disposed){this.resources.discard(gltf.scene);return;}
+        // A foreground route may have completed the same region while this request was decoding.
+        const existing=this.sceneCache.get(id);if(existing){this.resources.discard(gltf.scene);return existing;}
+        const loaded:LoadedScene={id,root:gltf.scene,solids:new CameraSolids(collision.shapes),bytes:bytes.byteLength,loadMs:0};
+        this.shareTextures(loaded.root);treatNightMaterials(loaded.root);batchDecorations(loaded.root);applyVegetationWind(loaded.root,this.windTime);
+        if(id!=='world'){loaded.root.position.fromArray(WORLD_OFFSETS[id]);loaded.root.userData.atlasIslandId=id;}else this.worldCache=loaded;
+        this.resources.acquire(loaded.root);this.sceneCache.set(id,loaded);this.scene.add(loaded.root);
+        await this.loadLandscape(loaded,abort);this.invalidate();return loaded;
+      }catch{return undefined;}finally{this.regionRequests.delete(id);}
+    })();
+    this.regionRequests.set(id,{abort,promise});return promise;
+  }
+  private reviewRegions(now:number){
+    if(!this.current||now-this.lastRegionReview<400)return;this.lastRegionReview=now;
+    const ranked=islands.map(spec=>({spec,distance:this.camera.position.distanceTo(worldPoint([0,5,0],spec.id))})).sort((a,b)=>a.distance-b.distance);
+    const wanted=new Set<SceneId>(ranked.filter((x,index)=>x.distance<(index===0?90:60)).slice(0,2).map(x=>x.spec.id));
+    if(this.sceneId!=='world'&&!wanted.has(this.sceneId)){if(wanted.size>=2)wanted.delete([...wanted][wanted.size-1]);wanted.add(this.sceneId);}
+    for(const id of wanted)void this.ensureRegion(id);
+    for(const [id,request]of this.regionRequests)if(id!=='world'&&!wanted.has(id))request.abort.abort();
+    const closest=ranked[0],horizontal=localPoint(this.camera.position,closest.spec.id).setY(0).length();
+    const entered=this.sceneCache.get(closest.spec.id);
+    if(this.flight.state.active&&entered&&closest.spec.id!==this.sceneId&&horizontal<closest.spec.extent+8&&this.camera.position.y<70){
+      this.clearPulse();this.current=entered;this.model=entered.root;this.desiredScene=entered.id;this.selectedPlaceId=undefined;
+      this.collectAnimatedObjects();this.configureScene(entered.id);this.announce({sceneId:entered.id,stage:'ready'});this.options.onRegion?.(closest.spec.id);
+    }
+    for(const [id,loaded]of this.sceneCache){
+      if(id==='world')continue;
+      const distance=ranked.find(x=>x.spec.id===id)!.distance;loaded.root.visible=distance<80;
+    }
+    const details=[...this.sceneCache.values()].filter(s=>s.id!=='world').sort((a,b)=>ranked.find(x=>x.spec.id===a.id)!.distance-ranked.find(x=>x.spec.id===b.id)!.distance);
+    // Keep the active reader/route region even offshore, then only the nearest neighbour.
+    // Slicing by distance first could retain two neighbours plus a distant pinned current region.
+    const keep=new Set<LoadedScene>();if(this.current?.id!=='world')keep.add(this.current!);
+    for(const loaded of details)if(keep.size<2)keep.add(loaded);
+    for(const loaded of details)if(!keep.has(loaded)){this.sceneCache.delete(loaded.id);this.releaseScene(loaded);}
+    // Only hide the matching overview island after its detail is ready and visible.
+    this.worldCache?.root.traverse(object=>{
+      if(!object.userData.atlasOverviewIsland)return;
+      const detail=this.sceneCache.get(object.userData.atlasOverviewIsland);object.visible=!(detail?.root.visible);
+    });
+    const lamps=islands.flatMap(spec=>spec.places.map(p=>({position:worldPoint([p.viewingPosition[0]-1,3.27,p.viewingPosition[2]+.45],spec.id)}))).sort((a,b)=>a.position.distanceToSquared(this.camera.position)-b.position.distanceToSquared(this.camera.position));
+    this.practicalLights.forEach((light,i)=>{light.visible=i<(this.quality==='low'?3:6)&&lamps[i].position.distanceTo(this.camera.position)<70;light.position.copy(lamps[i].position);});
+    this.sun.target.position.copy(this.camera.position).setY(0);this.sun.position.copy(this.sun.target.position).addScaledVector(MOON_DIRECTION,120);
+  }
+  private async loadLandscape(loaded:LoadedScene,request:AbortController,token?:number){
     if(loaded.id==="world"||loaded.landscape||loaded.landscapeLoading)return;
     const stage=islandById.get(loaded.id)?.sceneStages?.find(s=>s.id==="landscape");if(!stage)return;
     loaded.landscapeLoading=true;loaded.landscapeStatus="loading";
     try{
       const response=await fetch(stage.url,{signal:request.signal});if(!response.ok)throw new Error("Landscape unavailable");
-      const bytes=await response.arrayBuffer();if(this.disposed||token!==this.generation)return;
+      const bytes=await response.arrayBuffer();if(this.disposed||this.sceneCache.get(loaded.id)!==loaded||request.signal.aborted||token!==undefined&&token!==this.generation)return;
       const gltf=await this.loader.parseAsync(bytes,new URL("./assets/",location.href).href);
-      if(this.disposed||token!==this.generation){this.resources.discard(gltf.scene);return;}
-      this.shareTextures(gltf.scene);applyAtlasSceneMaterials(gltf.scene);finishV82Materials(gltf.scene);batchDecorations(gltf.scene);applyVegetationWind(gltf.scene,this.windTime);
+      if(this.disposed||this.sceneCache.get(loaded.id)!==loaded||request.signal.aborted||token!==undefined&&token!==this.generation){this.resources.discard(gltf.scene);return;}
+      this.shareTextures(gltf.scene);treatNightMaterials(gltf.scene);batchDecorations(gltf.scene);applyVegetationWind(gltf.scene,this.windTime);
       gltf.scene.traverse(o=>{if(o instanceof THREE.Mesh){o.castShadow=true;o.receiveShadow=true;}});
       this.resources.acquire(gltf.scene);loaded.landscape=gltf.scene;loaded.root.add(gltf.scene);loaded.landscapeStatus="ready";
       const base=loaded.root.userData.batching??{batches:0,instances:0},extra=gltf.scene.userData.batching;
       loaded.root.userData.batching={batches:base.batches+extra.batches,instances:base.instances+extra.instances};
       this.invalidate();
     }catch{loaded.landscapeStatus=request.signal.aborted?"cancelled":"unavailable";}
-    finally{loaded.landscapeLoading=false;}
+    finally{loaded.landscapeLoading=false;if(loaded.landscapeStatus==="loading")loaded.landscapeStatus="cancelled";}
   }
   private ensureMarine(){
     if(this.marineRequest||this.marine)return this.marineRequest;
     this.marineStatus="loading";
     this.marineRequest=(async()=>{
       try{
-        const response=await fetch("./assets/atlas-v82-marine.glb");if(!response.ok)throw new Error("Marine asset unavailable");
+        const response=await fetch("./assets/atlas-v83-marine.glb");if(!response.ok)throw new Error("Marine asset unavailable");
         const buffer=await response.arrayBuffer();if(this.disposed)return;
         const gltf=await this.loader.parseAsync(buffer,new URL("./assets/",location.href).href);
         if(this.disposed){this.resources.discard(gltf.scene);return;}
         this.shareTextures(gltf.scene);this.resources.acquire(gltf.scene);
-        this.marine=new AtlasMarine(gltf.scene);this.marine.setScene(this.sceneId);this.scene.add(this.marine.root);
+        this.marine=new AtlasMarine(gltf.scene,gltf.animations);this.marine.setScene(this.sceneId);this.scene.add(this.marine.root);
         this.water.setVessel(this.marine.vessel);this.marineStatus="ready";this.invalidate();
       }catch{this.marineStatus="unavailable";}
     })();
@@ -280,6 +358,7 @@ export class AtlasWorld {
     for(const texture of replaced){texture.dispose();const data=texture.source?.data as {close?:()=>void}|undefined;if(data&&!retainedImages.has(data))data.close?.();}
   }
   async enterIsland(id:ProjectId,placeId?:string){
+    this.flight.stop();this.sceneryFocus=undefined;
     this.desiredScene=id;this.pendingSnapshot=undefined;
     let success=true;
     if(this.sceneId!==id||!this.current)success=await this.loadScene(id);
@@ -288,6 +367,7 @@ export class AtlasWorld {
     return success;
   }
   async showWorld(snapshot?:CameraSnapshot){
+    this.flight.stop();this.sceneryFocus=undefined;
     this.desiredScene="world";this.pendingSnapshot=undefined;
     const alreadyCurrent=this.sceneId==="world"&&!!this.current;
     if(alreadyCurrent)this.cancelPendingLoad();
@@ -295,7 +375,17 @@ export class AtlasWorld {
     if(success){if(snapshot?.sceneId==="world")this.applySnapshot(snapshot);else this.focus();}
     return success;
   }
-  captureCamera():CameraSnapshot{return {sceneId:this.sceneId,position:this.camera.position.toArray() as Triple,target:this.controls.target.toArray() as Triple,zoom:this.camera.zoom,fov:this.camera.fov,selectedPlaceId:this.selectedPlaceId};}
+  captureCamera():CameraSnapshot{return {sceneId:this.sceneId,position:this.camera.position.toArray() as Triple,target:this.controls.target.toArray() as Triple,zoom:this.camera.zoom,fov:this.camera.fov,selectedPlaceId:this.selectedPlaceId,coordinates:'world-v83',mode:this.flight.state.active?'flight':'orbit',direction:this.camera.getWorldDirection(new THREE.Vector3()).toArray() as Triple};}
+  startFlight(){this.flight.start();this.resize();}
+  stopFlight(){this.flight.stop();this.resize();}
+  setFlightAxes(value:Partial<FlightAxes>){this.flight.setAxes(value);}
+  visitScenery(id:'whale'|'lighthouse'){
+    this.flight.stop();this.selectedPlaceId=undefined;this.sceneryFocus=id;this.resize();
+    const target=id==='lighthouse'?new THREE.Vector3(62,14,49):this.marine?.whalePosition.setY(.5)??new THREE.Vector3(144,.5,-18);
+    const position=target.clone().add(id==='lighthouse'?new THREE.Vector3(15,4,22):new THREE.Vector3(12,6,16));
+    const high=Math.max(30,this.camera.position.y);
+    this.beginTravel([this.camera.position.clone().setY(high),position.clone().setY(high),position],target,52);
+  }
   async restoreCamera(snapshot:CameraSnapshot,expectedScene?:SceneId){
     if(!snapshot||!this.validSnapshot(snapshot)||(expectedScene&&snapshot.sceneId!==expectedScene))return false;
     expectedScene??=snapshot.sceneId;
@@ -321,22 +411,27 @@ export class AtlasWorld {
     return (snapshot.sceneId==="world"||islandById.has(snapshot.sceneId))&&[...snapshot.position,...snapshot.target,snapshot.zoom,snapshot.fov??37].every(Number.isFinite)&&snapshot.position.length===3&&snapshot.target.length===3&&snapshot.zoom>0;
   }
   private applySnapshot(snapshot:CameraSnapshot){
-    this.travel=null;this.controls.enableDamping=false;
+    this.flight.stop();this.sceneryFocus=undefined;this.travel=null;this.controls.enableDamping=false;
     this.controls.update();
     this.camera.position.fromArray(snapshot.position);this.controls.target.fromArray(snapshot.target);
-    this.camera.zoom=snapshot.zoom;this.camera.fov=snapshot.fov??37;this.camera.updateProjectionMatrix();
+    if(snapshot.coordinates!=='world-v83'){
+      if(snapshot.sceneId==='world'){this.camera.position.multiplyScalar(8);this.controls.target.multiplyScalar(8);}
+      else{this.camera.position.add(vec(WORLD_OFFSETS[snapshot.sceneId]));this.controls.target.add(vec(WORLD_OFFSETS[snapshot.sceneId]));}
+    }
+    if(snapshot.mode==='flight'&&snapshot.direction&&snapshot.coordinates==='world-v83')this.controls.target.copy(this.camera.position).addScaledVector(vec(snapshot.direction).normalize(),8);
+    this.camera.zoom=snapshot.zoom;this.camera.fov=snapshot.fov??48;this.camera.updateProjectionMatrix();
     this.selectedPlaceId=snapshot.selectedPlaceId;this.controls.update();this.controls.enableDamping=!this.reduced;
     this.saveSafePose();this.frameSamples=[];this.invalidate();
   }
   private configureScene(id:SceneId){
     const detail=id!=="world";
-    this.controls.enablePan=detail;this.controls.minDistance=detail?5.5:10;this.controls.maxDistance=detail?105:57;
-    this.controls.minPolarAngle=detail?.25:.35;this.controls.maxPolarAngle=detail?1.3:1.15;
-    const radius=detail?48:25;this.sun.position.set(detail?-65:-18,detail?100:28,detail?-45:-12);
-    this.sun.target.position.set(0,0,0);
-    Object.assign(this.sun.shadow.camera,{left:-radius,right:radius,top:radius,bottom:-radius,near:1,far:detail?240:100});
+    this.controls.enablePan=true;this.controls.minDistance=.75;this.controls.maxDistance=500;
+    this.controls.minPolarAngle=.04;this.controls.maxPolarAngle=Math.PI-.04;
+    const radius=75;this.sun.target.position.copy(this.camera.position).setY(0);
+    this.sun.position.copy(this.sun.target.position).addScaledVector(MOON_DIRECTION,120);
+    Object.assign(this.sun.shadow.camera,{left:-radius,right:radius,top:radius,bottom:-radius,near:1,far:280});
     this.sun.shadow.camera.updateProjectionMatrix();
-    (this.scene.fog as THREE.FogExp2).density=detail?.0018:.006;
+    (this.scene.fog as THREE.FogExp2).density=.0014;
     this.water.setShore(id,detail,()=>this.invalidate());
     this.ao.kernelRadius=detail?1.5:2.2;
     this.resize();
@@ -344,48 +439,58 @@ export class AtlasWorld {
   private setSceneCamera(id:SceneId){
     const spec=id==="world"?undefined:islandById.get(id);
     this.controls.enableDamping=false;this.controls.update();
-    this.camera.fov=spec?50:37;this.camera.zoom=1;
-    this.camera.position.copy(spec?vec(spec.entryCamera.position):new THREE.Vector3(this.mobile?23:12,this.mobile?30:18,this.mobile?35:24));
-    this.controls.target.copy(spec?vec(spec.entryCamera.target):new THREE.Vector3(-1,.5,2));
+    this.camera.fov=48;this.camera.zoom=1;
+    this.camera.position.copy(spec?worldPoint(spec.entryCamera.position,spec.id):new THREE.Vector3(138,125,183));
+    this.controls.target.copy(spec?worldPoint(spec.entryCamera.target,spec.id):new THREE.Vector3(-5,0,8));
     if(spec&&this.mobile){this.camera.position.sub(this.controls.target).multiplyScalar(1.2).add(this.controls.target);this.camera.fov=55;}
+    if(!spec&&this.mobile){this.camera.position.set(205,175,225);this.camera.fov=82;}
     this.camera.updateProjectionMatrix();this.controls.update();this.controls.enableDamping=!this.reduced;this.saveSafePose();this.invalidate();
   }
   focus(id?:ProjectId){
     if(this.sceneId!=="world")return;
+    this.flight.stop();
     this.activeProject=id;this.selectedPlaceId=undefined;
     const anchor=id?anchors[id]:undefined;
-    const position=anchor?new THREE.Vector3(anchor[0]+(this.mobile?12:10),this.mobile?16:13,anchor[2]+16):new THREE.Vector3(this.mobile?23:12,this.mobile?30:18,this.mobile?35:24);
-    const target=anchor?new THREE.Vector3(anchor[0],1.6,anchor[2]):new THREE.Vector3(-1,.5,2);
-    this.beginTravel([position],target,37);
+    const position=anchor?vec(anchor).add(new THREE.Vector3(48,40,65)):this.mobile?new THREE.Vector3(205,175,225):new THREE.Vector3(138,125,183);
+    const target=anchor?vec(anchor).setY(4):new THREE.Vector3(-5,0,8);
+    this.beginTravel([position],target,this.mobile&&!anchor?82:48);
   }
   focusPlace(placeId:string){
     const place=placeById.get(placeId);if(!place||this.sceneId!==place.islandId||!this.island)return;
+    this.flight.stop();this.sceneryFocus=undefined;
     this.selectedPlaceId=placeId;
-    const target=vec(place.cameraLookAt),position=vec(place.arrivalPose.position);
-    this.camera.fov=place.arrivalPose.fovDegrees??50;this.camera.updateProjectionMatrix();
+    const target=worldPoint(place.cameraLookAt,place.islandId),position=worldPoint(place.arrivalPose.position,place.islandId);
+    this.camera.fov=this.mobile?60:(place.arrivalPose.fovDegrees??50);this.camera.updateProjectionMatrix();
     const asset=this.island.assets.find(a=>a.id===place.interactionAssetId)??this.island.assets.find(a=>a.id===place.assetId);
     if(asset){
       const bounds=new THREE.Box3(vec(asset.worldAssemblyBounds.min),vec(asset.worldAssemblyBounds.max));
       const radius=bounds.getSize(new THREE.Vector3()).length()/2;
+      position.y=target.y+Math.min(4.8,Math.max(1.7,radius*.35));
       const vertical=THREE.MathUtils.degToRad(this.camera.fov)/2;
       const horizontal=Math.atan(Math.tan(vertical)*this.camera.aspect*(this.mobile?.82:.72));
       const fit=radius/Math.sin(Math.min(vertical,horizontal))*1.18;
       const offset=position.clone().sub(target);if(offset.length()<fit)position.copy(target).add(offset.setLength(Math.min(105,fit)));
     }
+    // A narrow viewport needs an elevated sightline over the forest edge.
+    if(this.mobile){const horizontalDistance=Math.hypot(position.x-target.x,position.z-target.z);position.y=target.y+Math.max(8,horizontalDistance*.58);}
     let points=[position];
-    if(this.current&&this.current.solids.sweep(this.camera.position,position)<1)points=pathRoute(this.camera.position,position,this.island.paths);
+    if(this.current&&this.current.solids.sweep(localPoint(this.camera.position,place.islandId),localPoint(position,place.islandId))<1){
+      const height=Math.max(this.camera.position.y,position.y,24);
+      points=[this.camera.position.clone().setY(height),position.clone().setY(height),position];
+    }
     this.beginTravel(points,target,this.camera.fov);
     this.pulsePlace(place);this.resize();this.invalidate();
   }
   private beginTravel(points:THREE.Vector3[],target:THREE.Vector3,fov:number){
     if(this.reduced){
       const position=points[points.length-1];
-      if(!this.current?.solids.contains(position)){this.camera.position.copy(position);this.controls.target.copy(target);this.camera.fov=fov;this.camera.updateProjectionMatrix();this.controls.update();this.saveSafePose();}
+      const blocked=this.current?.id!=='world'&&this.current?.solids.contains(localPoint(position,this.current.id));
+      if(!blocked){this.camera.position.copy(position);this.controls.target.copy(target);this.camera.fov=fov;this.camera.updateProjectionMatrix();this.controls.update();this.saveSafePose();}
       this.travel=null;
     }else this.travel={route:cameraRoute(this.camera.position,points),target:target.clone(),startTarget:this.controls.target.clone(),fov,startFov:this.camera.fov,elapsedMs:0};
     this.invalidate();
   }
-  reset(){this.selectedPlaceId=undefined;this.activeProject=undefined;this.travel=null;this.setSceneCamera(this.sceneId);}
+  reset(){this.flight.stop();this.sceneryFocus=undefined;this.selectedPlaceId=undefined;this.activeProject=undefined;this.travel=null;this.setSceneCamera(this.sceneId);}
   zoom(factor:number){
     if(!Number.isFinite(factor)||factor<=0)return;
     this.travel=null;const offset=this.camera.position.clone().sub(this.controls.target);
@@ -393,7 +498,7 @@ export class AtlasWorld {
     this.camera.position.copy(this.controls.target).add(offset);this.enforceCamera();this.controls.update();this.invalidate();
   }
   pan(dx:number,dz:number){
-    if(!this.island)return;this.travel=null;
+    this.travel=null;
     const right=new THREE.Vector3().subVectors(this.camera.position,this.controls.target).setY(0).normalize();
     const screenRight=new THREE.Vector3(right.z,0,-right.x),delta=screenRight.multiplyScalar(dx).addScaledVector(right,dz);
     this.camera.position.add(delta);this.controls.target.add(delta);this.enforceCamera();this.controls.update();this.invalidate();
@@ -403,32 +508,18 @@ export class AtlasWorld {
     this.camera.position.copy(this.controls.target).add(offset);this.enforceCamera();this.controls.update();this.invalidate();
   }
   private saveSafePose(){this.safePosition.copy(this.camera.position);this.safeTarget.copy(this.controls.target);}
-  private enforceCamera(authoredTravel=false){
-    const spec=this.island;if(!spec){this.saveSafePose();return;}
-    const targetMoved=this.controls.target.distanceToSquared(this.safeTarget)>.000001;
-    if(targetMoved&&!this.travel&&!authoredTravel){
-      const valid=(p:THREE.Vector3)=>validPanPoint(p,spec.coast,[]);
-      if(!valid(this.controls.target)){
-        let corrected:THREE.Vector3;
-        if(!valid(this.safeTarget)){
-          // A look-at point can sit inside architecture. Only the eye collides with solids.
-          // A restored target outside the coast may move continuously inward, never jump to a path.
-          const clearance=(p:THREE.Vector3)=>edgeDistance(p.x,p.z,spec.coast)*(inPolygon(p.x,p.z,spec.coast)?1:-1);
-          const inward=clearance(this.controls.target)>=clearance(this.safeTarget)-.00001;
-          corrected=inward?this.controls.target.clone():this.safeTarget.clone();
-        }
-        else{
-          let lo=0,hi=1;for(let i=0;i<12;i++){const t=(lo+hi)/2;if(valid(this.safeTarget.clone().lerp(this.controls.target,t)))lo=t;else hi=t;}
-          corrected=this.safeTarget.clone().lerp(this.controls.target,lo);
-        }
-        const shift=corrected.clone().sub(this.controls.target);this.controls.target.copy(corrected);this.camera.position.add(shift);
-      }
-      this.selectedPlaceId=undefined;
+  private enforceCamera(_authoredTravel=false){
+    this.camera.position.clamp(WORLD_BOUNDS.min,WORLD_BOUNDS.max);
+    let floor=waterHeight(this.camera.position.x,this.camera.position.z,this.animatedSeconds)+.7;
+    for(const spec of islands){
+      const local=localPoint(this.camera.position,spec.id);
+      if(inPolygon(local.x,local.z,spec.coast))floor=Math.max(floor,3.15);
+      const loaded=this.sceneCache.get(spec.id);if(!loaded)continue;
+      const prior=localPoint(this.safePosition,spec.id),t=loaded.solids.sweep(prior,local);
+      if(t<1){this.camera.position.copy(this.safePosition.clone().lerp(this.camera.position,t));this.travel=null;}
     }
-    const floor=inPolygon(this.camera.position.x,this.camera.position.z,spec.coast)?2.85:.45;
-    this.camera.position.y=Math.max(this.camera.position.y,floor);
-    const t=this.current?.solids.sweep(this.safePosition,this.camera.position)??1;
-    if(t<1){this.camera.position.copy(this.safePosition.clone().lerp(this.camera.position,t));if(this.travel)this.travel=null;}
+    this.camera.position.y=Math.max(floor,this.camera.position.y);
+    if(this.flight.state.active)this.controls.target.copy(this.camera.position).addScaledVector(this.camera.getWorldDirection(new THREE.Vector3()),8);
     this.saveSafePose();
   }
   setReduced(value:boolean){
@@ -438,7 +529,7 @@ export class AtlasWorld {
     this.invalidate();
   }
   setPaused(value:boolean){
-    this.paused=value;this.controls.enabled=!value&&!this.contextLost;this.frameSamples=[];this.lastRender=0;
+    this.paused=value;if(value)this.flight.stop();this.controls.enabled=!value&&!this.contextLost&&!this.flight.state.active;this.frameSamples=[];this.lastRender=0;
     if(value){cancelAnimationFrame(this.frame);this.frame=0;}else{this.lastTick=performance.now();this.invalidate();}
     this.updateDiagnostics();
   }
@@ -457,7 +548,8 @@ export class AtlasWorld {
   private resize(){
     const {width,height}=this.host.getBoundingClientRect();if(!width||!height)return;
     this.mobile=width<=800;this.renderer.setSize(width,height,false);this.camera.aspect=width/height;
-    if(width>900&&this.sceneId==="world")this.camera.setViewOffset(width,height,-width*.08,height*.16,width,height);
+    if(this.flight?.state.active)this.camera.clearViewOffset();
+    else if(width>900&&this.sceneId==="world")this.camera.setViewOffset(width,height,-width*.08,height*.16,width,height);
     else if(width>800&&this.sceneId!=="world"&&this.selectedPlaceId)this.camera.setViewOffset(width,height,width*.10,0,width,height);
     else if(width<=800&&this.sceneId!=="world")this.camera.setViewOffset(width,height,0,height*.17,width,height);
     else this.camera.clearViewOffset();
@@ -465,39 +557,37 @@ export class AtlasWorld {
     this.ao?.setSize(Math.ceil(width*this.renderer.getPixelRatio()*.65),Math.ceil(height*this.renderer.getPixelRatio()*.65));
     this.invalidate();
   }
-  private onControlStart=()=>{this.interaction=true;this.travel=null;this.invalidate();};
+  private onControlStart=()=>{this.interaction=true;this.sceneryFocus=undefined;this.travel=null;this.invalidate();};
   private onControlEnd=()=>{this.interaction=false;this.invalidate();};
   private onControlChange=()=>{this.dirty=true;this.invalidate();};
   private onDown=(event:PointerEvent)=>{this.hoveredPlaceId=undefined;this.pointerDown={x:event.clientX,y:event.clientY,time:performance.now()};};
   private pickAt(event:PointerEvent):{kind:"island";id:ProjectId}|{kind:"place";id:string}|undefined{
     if(!this.model||this.contextLost||this.paused)return;
     const bounds=this.renderer.domElement.getBoundingClientRect();
-    this.raycaster.setFromCamera(new THREE.Vector2((event.clientX-bounds.left)/bounds.width*2-1,-(event.clientY-bounds.top)/bounds.height*2+1),this.camera);
-    for(const hit of this.raycaster.intersectObject(this.model,true)){
+    const pointer=this.flight.state.locked?new THREE.Vector2():new THREE.Vector2((event.clientX-bounds.left)/bounds.width*2-1,-(event.clientY-bounds.top)/bounds.height*2+1);
+    this.raycaster.setFromCamera(pointer,this.camera);
+    const roots=[...this.sceneCache.values()].filter(s=>s.root.visible).map(s=>s.root);
+    for(const hit of this.raycaster.intersectObjects(roots,true)){
       if(!this.visibleInHierarchy(hit.object))continue;
+      let selectedIsland:ProjectId|undefined,ids:string[]|undefined;
       if(hit.object instanceof THREE.InstancedMesh&&hit.instanceId!==undefined){
         const selection=(hit.object.userData.instanceSelections as InstanceSelection[]|undefined)?.[hit.instanceId];
-        if(this.sceneId==="world"&&selection?.atlasIslandId&&selection.atlasIslandId in anchors)return {kind:"island",id:selection.atlasIslandId as ProjectId};
-        const id=selection?.interactionIds?.find(id=>placeById.get(id)?.islandId===this.sceneId);
-        if(id)return {kind:"place",id};
+        ids=selection?.interactionIds;selectedIsland=selection?.atlasIslandId as ProjectId|undefined;
       }
       let object:THREE.Object3D|null=hit.object;
-      if(this.sceneId==="world"){
-        while(object){
-          const id=object.userData.atlasIslandId??(object.name.startsWith("project_")?object.name.slice(8):undefined);
-          if(id&&id in anchors)return {kind:"island",id:id as ProjectId};object=object.parent;
-        }
-        return;
-      }
       while(object){
-        const ids=object.userData.interactionIds as string[]|undefined;
-        const candidates=ids?.map(id=>placeById.get(id)).filter((p):p is KnowledgeObject=>!!p&&p.islandId===this.sceneId)??[];
-        const specific=candidates.find(p=>p.parentId&&candidates.some(parent=>parent.id===p.parentId));
-        const placeId=(specific??candidates[0])?.id;
-        if(placeId)return {kind:"place",id:placeId};object=object.parent;
+        ids??=object.userData.interactionIds;
+        selectedIsland??=object.userData.atlasIslandId??object.userData.atlasOverviewIsland;
+        object=object.parent;
       }
-      // The first visible solid occludes objects behind it.
-      return;
+      const candidates=ids?.map(id=>placeById.get(id)).filter((p):p is KnowledgeObject=>!!p)??[];
+      const place=candidates.find(p=>p.parentId&&candidates.some(parent=>parent.id===p.parentId))??candidates[0];
+      if(place){
+        if(place.islandId===this.sceneId)return {kind:'place',id:place.id};
+        return {kind:'island',id:place.islandId};
+      }
+      if(selectedIsland&&selectedIsland in anchors)return {kind:'island',id:selectedIsland};
+      if(!hit.object.userData.atlasVegetation)return;
     }
   }
   private onMove=(event:PointerEvent)=>{
@@ -516,21 +606,22 @@ export class AtlasWorld {
   };
   private onKey=(event:KeyboardEvent)=>{
     if(event.altKey||event.ctrlKey||event.metaKey)return;
+    if(this.flight.state.active)return;
     const step=event.shiftKey?3:1.2;
     const actions:Record<string,()=>void>={ArrowLeft:()=>this.pan(-step,0),ArrowRight:()=>this.pan(step,0),ArrowUp:()=>this.pan(0,-step),ArrowDown:()=>this.pan(0,step),q:()=>this.rotate(.14),Q:()=>this.rotate(.14),e:()=>this.rotate(-.14),E:()=>this.rotate(-.14),"+":()=>this.zoom(.85),"=":()=>this.zoom(.85),"-":()=>this.zoom(1.18),Home:()=>this.reset()};
     if(actions[event.key]){event.preventDefault();actions[event.key]();}
   };
   private onContextLost=(event:Event)=>{
-    event.preventDefault();this.contextLost=true;this.request?.abort();this.generation++;
+    event.preventDefault();this.flight.stop();this.contextLost=true;this.request?.abort();this.generation++;
     cancelAnimationFrame(this.frame);this.frame=0;this.controls.enabled=false;
     const message="3D 화면의 연결이 끊겼습니다. 지도와 자료 읽기는 계속 사용할 수 있습니다.";
     this.announce({sceneId:this.lastStage.sceneId,stage:"error",message});this.options.onError(message);
     this.updateDiagnostics();
   };
   private onContextRestored=()=>{
-    this.contextLost=false;this.controls.enabled=!this.paused;
+    this.contextLost=false;this.water.resetSpectrum();this.controls.enabled=!this.paused&&!this.flight.state.active;
     // Three reconstructs WebGLBackground with black during initGLContext.
-    this.renderer.setClearColor("#0b343b");
+    this.renderer.setClearColor("#081625");
     const pmrem=new THREE.PMREMGenerator(this.renderer),room=new RoomEnvironment();
     const previous=this.environment;this.environment=pmrem.fromScene(room,.04);
     this.scene.environment=this.environment.texture;previous.dispose();room.dispose();pmrem.dispose();
@@ -558,10 +649,14 @@ export class AtlasWorld {
       this.camera.fov=THREE.MathUtils.lerp(journey.startFov,journey.fov,eased);this.camera.updateProjectionMatrix();
       if(done)this.travel=null;
     }
-    this.controls.update();this.enforceCamera(authoredTravel);
+    if(this.flight.state.active){this.flight.update(dt);this.controls.target.copy(this.camera.position).addScaledVector(this.camera.getWorldDirection(new THREE.Vector3()),8);}else this.controls.update();
+    this.enforceCamera(authoredTravel);this.reviewRegions(now);
     const moved=before.distanceToSquared(this.camera.position)+beforeTarget.distanceToSquared(this.controls.target)>.0000001;
     if(!this.reduced){this.animatedSeconds+=dt;this.water.setTime(this.animatedSeconds);this.windTime.value=this.animatedSeconds;this.marine?.update(this.animatedSeconds);this.animateDetails(now);}
-    this.updateLods();this.sky.position.copy(this.camera.position);
+    if(this.sceneryFocus==='whale'&&!this.travel&&this.marine&&!this.flight.state.active){
+      const target=this.marine.whalePosition.setY(.5);this.controls.target.lerp(target,1-Math.exp(-dt*2));this.camera.position.lerp(target.clone().add(this.sceneryOffset),1-Math.exp(-dt*1.4));this.controls.update();this.enforceCamera();
+    }
+    this.updateLods();this.sky.position.copy(this.camera.position);this.nightSky.update(this.camera);
     const interval=this.quality==="low"?1000/30:1000/60;
     if((now-this.lastRender>=interval-1)&&(this.dirty||moved||!this.reduced)){
       const elapsed=this.lastRender?now-this.lastRender:0;this.lastRender=now;this.renderer.info.reset();
@@ -596,8 +691,9 @@ export class AtlasWorld {
     }else if(this.island){
       this.options.onProject({});const positions:Record<string,PlacePosition>={};
       for(const place of [...this.island.places,...this.island.subInteractions]){
-        const position=project(place.interactionAnchor);
-        const clearance=position.visible?(this.current?.solids.sweep(this.camera.position,vec(place.interactionAnchor),.03)??1):1;
+        const point=worldPoint(place.interactionAnchor,this.island.id),position=project(point.toArray());
+        if(this.sceneryFocus||point.distanceTo(this.camera.position)>85)position.visible=false;
+        const clearance=position.visible?(this.current?.solids.sweep(localPoint(this.camera.position,this.island.id),vec(place.interactionAnchor),.03)??1):1;
         if(clearance<.985)position.visible=false;
         positions[place.id]=position;
       }
@@ -643,7 +739,7 @@ export class AtlasWorld {
       }
       if(!(object instanceof THREE.Mesh)||!(object.userData.interactionIds as string[]|undefined)?.includes(place.id))return;
       this.focusedMeshes.push(object);const original=object.material,temporary=(Array.isArray(original)?original:[original]).map(material=>{
-        const clone=material.clone();applyAtlasMaterialTreatment(clone);if(clone instanceof THREE.MeshStandardMaterial){clone.emissive.set("#b28a4b");clone.emissiveIntensity=.16;}return clone;
+      const clone=material.clone();if(clone instanceof THREE.MeshStandardMaterial){clone.emissive.set("#b28a4b");clone.emissiveIntensity=.16;}return clone;
       });
       object.material=Array.isArray(original)?temporary:temporary[0];this.pulses.push({mesh:object,original,temporary,start:performance.now()});
     });
@@ -685,8 +781,8 @@ export class AtlasWorld {
     return {sceneId:this.sceneId,stage:this.lastStage.stage,loaded:!!this.model,quality:this.quality,automaticLight:this.automaticLight,paused:this.paused,reduced:this.reduced,contextLost:this.contextLost,frames:this.frames,
       drawCalls:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles,geometries:this.renderer.info.memory.geometries,textures:this.renderer.info.memory.textures,
       callbackMs:this.callbackSamples.length?this.callbackSamples.reduce((s,n)=>s+n,0)/this.callbackSamples.length:null,cpuMs:this.cpuSamples.length?this.cpuSamples.reduce((s,n)=>s+n,0)/this.cpuSamples.length:null,frameMs:mean,fps:mean?1000/mean:null,p50:sorted.length?sorted[Math.floor(sorted.length*.5)]:null,p95:sorted.length?sorted[Math.floor(sorted.length*.95)]:null,
-      frameSamples:samples,transitionMs:[...this.transitionSamples],loadMs:this.current?.loadMs??null,modelBytes:this.current?.bytes??null,collisionSolids:this.current?.solids.count??0,
-      batching:this.model?.userData.batching,resourceOwnership:this.resources.counts,sceneCache:[...this.sceneCache.keys()],sharedTextureCount:this.sharedTextures.size,waterNormalReady:this.normalReady,marineStatus:this.marineStatus,landscapeStatus:this.current?.landscapeStatus??"not_required",lodGroups:this.lods.length,camera:this.camera.position.toArray(),target:this.controls.target.toArray(),selectedPlaceId:this.selectedPlaceId??null};
+      firstReadyAt:this.firstReadyAt,frameSamples:samples,transitionMs:[...this.transitionSamples],loadMs:this.current?.loadMs??null,modelBytes:this.current?.bytes??null,collisionSolids:this.current?.solids.count??0,
+      batching:this.model?.userData.batching,resourceOwnership:this.resources.counts,sceneCache:[...this.sceneCache.keys()],sharedTextureCount:this.sharedTextures.size,waterNormalReady:this.normalReady,flight:this.flight.state,coordinates:"world-v83",marineStatus:this.marineStatus,marineMotion:this.marine?.motionStatus,sceneryFocus:this.sceneryFocus??null,landscapeStatus:this.current?.landscapeStatus??"not_required",lodGroups:this.lods.length,camera:this.camera.position.toArray(),target:this.controls.target.toArray(),selectedPlaceId:this.selectedPlaceId??null};
   }
   private updateDiagnostics(){
     const metrics=this.getMetrics();(window as unknown as {__ATLAS_DIAGNOSTICS__:unknown}).__ATLAS_DIAGNOSTICS__=metrics;
@@ -698,7 +794,7 @@ export class AtlasWorld {
     const canvas=this.renderer.domElement;
     canvas.removeEventListener("pointerdown",this.onDown);canvas.removeEventListener("pointerup",this.onUp);canvas.removeEventListener("pointermove",this.onMove);canvas.removeEventListener("pointerleave",this.onLeave);canvas.removeEventListener("keydown",this.onKey);
     canvas.removeEventListener("webglcontextlost",this.onContextLost);canvas.removeEventListener("webglcontextrestored",this.onContextRestored);document.removeEventListener("visibilitychange",this.onVisibility);
-    this.resources.dispose();this.sceneCache.clear();this.sharedTextures.clear();this.water.dispose();this.sky.geometry.dispose();this.sky.material.dispose();this.environment.dispose();this.sun.shadow.map?.dispose();
+    this.resources.dispose();this.sceneCache.clear();this.sharedTextures.clear();this.flight.dispose();this.nightSky.dispose();for(const request of this.regionRequests.values())request.abort.abort();this.marine?.dispose();this.water.dispose();this.sky.geometry.dispose();this.sky.material.dispose();this.environment.dispose();this.sun.shadow.map?.dispose();
     this.ao.dispose();this.output.dispose();this.composer.dispose();this.renderer.dispose();canvas.remove();
     THREE.Cache.clear();THREE.Cache.enabled=this.previousCacheEnabled;
   }

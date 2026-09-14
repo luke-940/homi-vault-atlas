@@ -42,6 +42,8 @@ function scan(value, patterns, field = "json", depth = 0) {
     check(!/(?:[a-z][a-z\d+.-]*:\/\/|\bmailto:|\bdata:|\/Users\/|\/home\/|\/private\/|[a-z]:\\|\[\[|-----BEGIN [A-Z ]*PRIVATE KEY-----)/iu.test(normalized), "PRIVATE_PATH_URI_OR_CREDENTIAL", field);
     check(!/\b(?:source_path|snapshot_path|canonical_path|raw_source|source_sha256|char_start|char_end)\b/iu.test(normalized), "PRIVATE_PROVENANCE_FIELD_OR_TEXT", field);
     if (field === "json.asset.generator" && writerValues.has(value)) return;
+    // Only these exact public legal-notice links are schema-bound publication metadata.
+    if (/^json\.sources\[\d+\]\.notice$/.test(field) && ["licenses/assets-NOTICE.md","licenses/basis-universal-LICENSE.txt"].includes(value)) return;
     for (const pattern of patterns) if (pattern.expression.test(normalized)) issue("PRIVATE_PUBLICATION_RULE", field);
   } else if (Array.isArray(value)) value.forEach((v, i) => scan(v, patterns, `${field}[${i}]`, depth + 1));
   else if (object(value)) for (const [key, v] of Object.entries(value)) {
@@ -204,7 +206,7 @@ export function inspectKTX2(bytes, { privatePatterns = [] } = {}) {
   return { mime: "image/ktx2", bytes: bytes.length, width, height, levels, colorModel, transfer, metadata, decodedPixels: "not_checked" };
 }
 
-const extrasKeys = new Set(["atlasIslandId", "atlasSceneKind", "atlasVersion", "atlasUnits", "atlasUp", "atlasInstanceId", "atlasConstructionKitId", "atlasPartId", "atlasRole", "atlasTerrain", "atlasSourcePartCount", "interactionIds", "atlasFoliage", "atlasWindWeight", "atlasLOD", "atlasLODGroup", "atlasLODScreenHeights", "atlasMotion", "atlasMotionAxis", "atlasMotionDegrees", "atlasMotionPeriodSeconds", "atlasLodRoot", "atlasLodLevel", "atlasLodRadius", "atlasDecoration", "atlasVegetation"]);
+const extrasKeys = new Set(["atlasIslandId", "atlasSceneKind", "atlasVersion", "atlasUnits", "atlasUp", "atlasInstanceId", "atlasConstructionKitId", "atlasPartId", "atlasRole", "atlasTerrain", "atlasSourcePartCount", "interactionIds", "atlasFoliage", "atlasWindWeight", "atlasLOD", "atlasLODGroup", "atlasLODScreenHeights", "atlasMotion", "atlasMotionAxis", "atlasMotionDegrees", "atlasMotionPeriodSeconds", "atlasLodRoot", "atlasLodLevel", "atlasLodRadius", "atlasDecoration", "atlasVegetation", "atlasLeafTint", "atlasLeafSourceNode", "atlasOverviewIsland", "atlasScenery", "bodyLengthMetres", "heightMetres"]);
 const extensions = new Set(["EXT_meshopt_compression", "KHR_mesh_quantization", "KHR_texture_basisu", "EXT_texture_webp", "KHR_materials_unlit", "KHR_materials_emissive_strength", "KHR_texture_transform"]);
 export function inspectGLB(bytes, { privatePatterns = [], places = [], externalImages = new Map() } = {}) {
   check(bytes.length >= 28 && bytes.length <= MAX_FILE && bytes.readUInt32LE(0) === 0x46546c67 && bytes.readUInt32LE(4) === 2 && bytes.readUInt32LE(8) === bytes.length, "GLB_HEADER");
@@ -223,6 +225,7 @@ export function inspectGLB(bytes, { privatePatterns = [], places = [], externalI
     if (!object(value) && !Array.isArray(value)) return;
     if (object(value) && value.extras !== undefined) { check(object(value.extras), "GLB_EXTRAS_TYPE"); for (const key of Object.keys(value.extras)) check(extrasKeys.has(key), "GLB_UNREVIEWED_EXTRAS", "json.extras.[unapproved-field]"); }
     if (object(value) && value.extensions !== undefined) for (const key of Object.keys(value.extensions)) check(extensions.has(key), "GLB_UNREVIEWED_EXTENSION");
+    if (object(value) && value.extras?.atlasLeafTint !== undefined) check(vector(value.extras.atlasLeafTint,3) && value.extras.atlasLeafTint.every(n=>n>=0&&n<=4), "GLB_LEAF_TINT");
     for (const child of Object.values(value)) customFields(child);
   }
   customFields(json);
@@ -240,6 +243,9 @@ export function inspectGLB(bytes, { privatePatterns = [], places = [], externalI
     if (node.mesh !== undefined) check(Number.isInteger(node.mesh) && json.meshes?.[node.mesh], "GLB_MESH_REFERENCE");
     for (const key of Object.keys(node.extras ?? {})) check(extrasKeys.has(key), "GLB_UNREVIEWED_EXTRAS", "json.nodes.extras.[unapproved-field]");
     const e = node.extras ?? {};
+    if(e.atlasOverviewIsland!==undefined)check(["rocket","groot","common","atlas"].includes(e.atlasOverviewIsland),"GLB_OVERVIEW_ID");
+    if(e.atlasScenery!==undefined)check(["humpback-whale","herring-gull","night-lighthouse"].includes(e.atlasScenery),"GLB_SCENERY_ID");
+    for(const key of ["bodyLengthMetres","heightMetres"])if(key in e)check(Number.isFinite(e[key])&&e[key]>0&&e[key]<=100,"GLB_SCENERY_DIMENSION");
     for (const key of ["atlasIslandId", "atlasSceneKind", "atlasVersion", "atlasUnits", "atlasInstanceId", "atlasConstructionKitId", "atlasPartId", "atlasRole", "atlasLODGroup"]) if (key in e) check(typeof e[key] === "string" && ID.test(e[key]), "GLB_EXTRAS_TYPE");
     for (const key of ["atlasTerrain", "atlasFoliage", "atlasLodRoot", "atlasDecoration"]) if (key in e) check(typeof e[key] === "boolean", "GLB_EXTRAS_TYPE");
     if (e.atlasVegetation !== undefined) check(["tree","understory"].includes(e.atlasVegetation), "GLB_VEGETATION_TYPE");
@@ -323,9 +329,10 @@ export function inspectGLB(bytes, { privatePatterns = [], places = [], externalI
   const allHitNodes = nodes.filter(n => n.mesh !== undefined && n.extras?.interactionIds?.length);
   const hitNodes = nodes.filter((n, index) => reachable.has(index) && n.mesh !== undefined && n.extras?.interactionIds?.length);
   for (const place of places) {
+    for(const name of place.additionalHitNodes??[])check(hitNodes.some(n=>n.name===name&&n.extras.atlasDecoration===true&&n.extras.interactionIds.includes(place.id)),"GLB_ADDITIONAL_HIT_MISSING");
     const matches = hitNodes.filter(n => n.extras.interactionIds.includes(place.id)); check(matches.length > 0, "GLB_PHYSICAL_HIT_MISSING");
     check(place.physicalPartIds.every(id => matches.some(n => n.extras.atlasPartId === id)), "GLB_PHYSICAL_PART_DIFFERENT");
-    check(matches.every(n => n.extras.atlasInstanceId === place.interactionAssetId || n.extras.atlasInstanceId === place.assetId), "GLB_PHYSICAL_INSTANCE_DIFFERENT");
+    check(matches.every(n => n.extras.atlasInstanceId === place.interactionAssetId || n.extras.atlasInstanceId === place.assetId || (place.additionalHitNodes?.includes(n.name) && n.extras.atlasDecoration===true)), "GLB_PHYSICAL_INSTANCE_DIFFERENT");
   }
   if (places.length) for (const node of allHitNodes) for (const id of node.extras.interactionIds) check(places.some(p => p.id === id), "GLB_UNKNOWN_INTERACTION");
   return { nodes: nodes.length, activeScene: sceneIndex, reachableNodes: reachable.size, meshes: json.meshes.length, primitives, images, interactionIds: [...new Set(hitNodes.flatMap(n => n.extras.interactionIds))], metadataChecked: true, compressedGeometryDecoded: false, actualRaycast: "not_checked" };
@@ -393,7 +400,7 @@ export function validateAssets(files, { privatePatterns = [], spatial } = {}) {
         check(expected && file.body.length === expected.bytes && createHash("sha256").update(file.body).digest("hex") === expected.sha256, "BASIS_DECODER_IDENTITY");
         result = { bytes: file.body.length, vendorBytes: "exact_three_0.185.1", metadataChecked: "bound_to_reviewed_vendor_bytes" };
       }
-      else if (file.path.endsWith(".glb")) { const id = /^assets\/atlas-v8[12]-(rocket|groot|common|atlas)\.glb$/u.exec(file.path)?.[1], island = spatial?.islands?.find(i => i.id === id); result = inspectGLB(file.body, { privatePatterns, externalImages, places: island ? [...island.places, ...island.subInteractions] : [] }); }
+      else if (file.path.endsWith(".glb")) { const id = /^assets\/atlas-v8[123]-(rocket|groot|common|atlas)\.glb$/u.exec(file.path)?.[1], island = spatial?.islands?.find(i => i.id === id); result = inspectGLB(file.body, { privatePatterns, externalImages, places: island ? [...island.places, ...island.subInteractions] : [] }); }
       else if (/^assets\/collision\/.+\.json$/u.test(file.path)) { const id = file.path.split("/").at(-1).slice(0, -5); result = inspectCollision(file.body, { privatePatterns, island: spatial?.islands?.find(i => i.id === id) }); }
       else { const ext = file.path.split(".").at(-1), mime = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", ktx2: "image/ktx2" }[ext]; check(mime, "ASSET_FORMAT_UNSUPPORTED"); result = inspectImage(file.body, mime, { privatePatterns }); }
       checked.push({ assetIndex, ...result });
