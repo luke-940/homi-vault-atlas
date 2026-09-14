@@ -290,7 +290,7 @@
         ],
         "fovDegrees": 50
       },
-      "modelUrl": "assets/atlas-v82-rocket.glb",
+      "modelUrl": "assets/atlas-v83-rocket.glb",
       "collisionUrl": "assets/collision/rocket.json",
       "mapImage": "assets/maps/rocket.webp",
       "mapBounds": {
@@ -1183,7 +1183,21 @@
               3.82,
               25.4445
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "rocket-study-bench-0-part-0",
+            "rocket-study-book-0-part-0",
+            "rocket-study-book-0-part-1",
+            "rocket-study-table-0-part-0",
+            "rocket-study-tool-0-part-0",
+            "rocket-study-tool-0-part-1",
+            "rocket-study-tool-0-part-2",
+            "rocket-study-tool-0-part-3",
+            "rocket-study-tool-0-part-4",
+            "rocket-study-tool-0-part-5",
+            "rocket-study-tool-0-part-6",
+            "rocket-study-tool-0-part-7"
+          ]
         },
         {
           "id": "pl_e591ec3f2052",
@@ -1254,7 +1268,21 @@
               3.64,
               16.138
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "rocket-study-bench-1-part-0",
+            "rocket-study-book-1-part-0",
+            "rocket-study-book-1-part-1",
+            "rocket-study-table-1-part-0",
+            "rocket-study-tool-1-part-0",
+            "rocket-study-tool-1-part-1",
+            "rocket-study-tool-1-part-2",
+            "rocket-study-tool-1-part-3",
+            "rocket-study-tool-1-part-4",
+            "rocket-study-tool-1-part-5",
+            "rocket-study-tool-1-part-6",
+            "rocket-study-tool-1-part-7"
+          ]
         },
         {
           "id": "pl_fafa0d500bca",
@@ -1325,7 +1353,21 @@
               4.1,
               13.15944
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "rocket-study-bench-2-part-0",
+            "rocket-study-book-2-part-0",
+            "rocket-study-book-2-part-1",
+            "rocket-study-table-2-part-0",
+            "rocket-study-tool-2-part-0",
+            "rocket-study-tool-2-part-1",
+            "rocket-study-tool-2-part-2",
+            "rocket-study-tool-2-part-3",
+            "rocket-study-tool-2-part-4",
+            "rocket-study-tool-2-part-5",
+            "rocket-study-tool-2-part-6",
+            "rocket-study-tool-2-part-7"
+          ]
         },
         {
           "id": "pl_eb4f72bfb7a8",
@@ -1396,7 +1438,21 @@
               4.1,
               -1.152339
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "rocket-study-bench-3-part-0",
+            "rocket-study-book-3-part-0",
+            "rocket-study-book-3-part-1",
+            "rocket-study-table-3-part-0",
+            "rocket-study-tool-3-part-0",
+            "rocket-study-tool-3-part-1",
+            "rocket-study-tool-3-part-2",
+            "rocket-study-tool-3-part-3",
+            "rocket-study-tool-3-part-4",
+            "rocket-study-tool-3-part-5",
+            "rocket-study-tool-3-part-6",
+            "rocket-study-tool-3-part-7"
+          ]
         },
         {
           "id": "pl_741225b5e2b5",
@@ -1467,7 +1523,21 @@
               4.1,
               -17.422694
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "rocket-study-bench-4-part-0",
+            "rocket-study-book-4-part-0",
+            "rocket-study-book-4-part-1",
+            "rocket-study-table-4-part-0",
+            "rocket-study-tool-4-part-0",
+            "rocket-study-tool-4-part-1",
+            "rocket-study-tool-4-part-2",
+            "rocket-study-tool-4-part-3",
+            "rocket-study-tool-4-part-4",
+            "rocket-study-tool-4-part-5",
+            "rocket-study-tool-4-part-6",
+            "rocket-study-tool-4-part-7"
+          ]
         },
         {
           "id": "pl_70bcf64192e8",
@@ -1538,7 +1608,21 @@
               4.1,
               -24.46
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "rocket-study-bench-5-part-0",
+            "rocket-study-book-5-part-0",
+            "rocket-study-book-5-part-1",
+            "rocket-study-table-5-part-0",
+            "rocket-study-tool-5-part-0",
+            "rocket-study-tool-5-part-1",
+            "rocket-study-tool-5-part-2",
+            "rocket-study-tool-5-part-3",
+            "rocket-study-tool-5-part-4",
+            "rocket-study-tool-5-part-5",
+            "rocket-study-tool-5-part-6",
+            "rocket-study-tool-5-part-7"
+          ]
         },
         {
           "id": "pl_00cf2870f81e",
@@ -1609,7 +1693,21 @@
               4.1,
               -17.422694
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "rocket-study-bench-6-part-0",
+            "rocket-study-book-6-part-0",
+            "rocket-study-book-6-part-1",
+            "rocket-study-table-6-part-0",
+            "rocket-study-tool-6-part-0",
+            "rocket-study-tool-6-part-1",
+            "rocket-study-tool-6-part-2",
+            "rocket-study-tool-6-part-3",
+            "rocket-study-tool-6-part-4",
+            "rocket-study-tool-6-part-5",
+            "rocket-study-tool-6-part-6",
+            "rocket-study-tool-6-part-7"
+          ]
         },
         {
           "id": "pl_62a76e46ed0f",
@@ -1680,7 +1778,21 @@
               4.1,
               -1.152339
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "rocket-study-bench-7-part-0",
+            "rocket-study-book-7-part-0",
+            "rocket-study-book-7-part-1",
+            "rocket-study-table-7-part-0",
+            "rocket-study-tool-7-part-0",
+            "rocket-study-tool-7-part-1",
+            "rocket-study-tool-7-part-2",
+            "rocket-study-tool-7-part-3",
+            "rocket-study-tool-7-part-4",
+            "rocket-study-tool-7-part-5",
+            "rocket-study-tool-7-part-6",
+            "rocket-study-tool-7-part-7"
+          ]
         },
         {
           "id": "pl_5b7c71862a32",
@@ -1751,7 +1863,21 @@
               4.1,
               13.15944
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "rocket-study-bench-8-part-0",
+            "rocket-study-book-8-part-0",
+            "rocket-study-book-8-part-1",
+            "rocket-study-table-8-part-0",
+            "rocket-study-tool-8-part-0",
+            "rocket-study-tool-8-part-1",
+            "rocket-study-tool-8-part-2",
+            "rocket-study-tool-8-part-3",
+            "rocket-study-tool-8-part-4",
+            "rocket-study-tool-8-part-5",
+            "rocket-study-tool-8-part-6",
+            "rocket-study-tool-8-part-7"
+          ]
         },
         {
           "id": "pl_a33ddb7b8510",
@@ -1822,7 +1948,21 @@
               5.75,
               23.79
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "rocket-study-bench-9-part-0",
+            "rocket-study-book-9-part-0",
+            "rocket-study-book-9-part-1",
+            "rocket-study-table-9-part-0",
+            "rocket-study-tool-9-part-0",
+            "rocket-study-tool-9-part-1",
+            "rocket-study-tool-9-part-2",
+            "rocket-study-tool-9-part-3",
+            "rocket-study-tool-9-part-4",
+            "rocket-study-tool-9-part-5",
+            "rocket-study-tool-9-part-6",
+            "rocket-study-tool-9-part-7"
+          ]
         },
         {
           "id": "pl_b4f92b5b3544",
@@ -1917,7 +2057,21 @@
               7.4,
               -3.87
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "rocket-study-bench-10-part-0",
+            "rocket-study-book-10-part-0",
+            "rocket-study-book-10-part-1",
+            "rocket-study-table-10-part-0",
+            "rocket-study-tool-10-part-0",
+            "rocket-study-tool-10-part-1",
+            "rocket-study-tool-10-part-2",
+            "rocket-study-tool-10-part-3",
+            "rocket-study-tool-10-part-4",
+            "rocket-study-tool-10-part-5",
+            "rocket-study-tool-10-part-6",
+            "rocket-study-tool-10-part-7"
+          ]
         },
         {
           "id": "pl_c58bed59c3a5",
@@ -1988,7 +2142,21 @@
               3.35,
               22.95
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "rocket-study-bench-11-part-0",
+            "rocket-study-book-11-part-0",
+            "rocket-study-book-11-part-1",
+            "rocket-study-table-11-part-0",
+            "rocket-study-tool-11-part-0",
+            "rocket-study-tool-11-part-1",
+            "rocket-study-tool-11-part-2",
+            "rocket-study-tool-11-part-3",
+            "rocket-study-tool-11-part-4",
+            "rocket-study-tool-11-part-5",
+            "rocket-study-tool-11-part-6",
+            "rocket-study-tool-11-part-7"
+          ]
         },
         {
           "id": "pl_c0138eabfb2c",
@@ -2059,7 +2227,21 @@
               3.37,
               -11
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "rocket-study-bench-12-part-0",
+            "rocket-study-book-12-part-0",
+            "rocket-study-book-12-part-1",
+            "rocket-study-table-12-part-0",
+            "rocket-study-tool-12-part-0",
+            "rocket-study-tool-12-part-1",
+            "rocket-study-tool-12-part-2",
+            "rocket-study-tool-12-part-3",
+            "rocket-study-tool-12-part-4",
+            "rocket-study-tool-12-part-5",
+            "rocket-study-tool-12-part-6",
+            "rocket-study-tool-12-part-7"
+          ]
         }
       ],
       "subInteractions": [
@@ -2132,7 +2314,8 @@
               3.4092338993256153,
               3.799372829220394
             ]
-          }
+          },
+          "additionalHitNodes": []
         },
         {
           "id": "horizon-condition-2",
@@ -2203,7 +2386,8 @@
               3.4092338993256153,
               3.799372829220394
             ]
-          }
+          },
+          "additionalHitNodes": []
         },
         {
           "id": "horizon-condition-3",
@@ -2274,7 +2458,8 @@
               3.4092338993256153,
               3.799372829220394
             ]
-          }
+          },
+          "additionalHitNodes": []
         },
         {
           "id": "horizon-condition-4",
@@ -2345,7 +2530,8 @@
               3.4092338993256153,
               3.799372829220394
             ]
-          }
+          },
+          "additionalHitNodes": []
         },
         {
           "id": "clock-capability",
@@ -2422,7 +2608,8 @@
               0,
               -1
             ]
-          }
+          },
+          "additionalHitNodes": []
         },
         {
           "id": "clock-physical",
@@ -2499,7 +2686,8 @@
               0,
               -1
             ]
-          }
+          },
+          "additionalHitNodes": []
         },
         {
           "id": "clock-society",
@@ -2576,7 +2764,8 @@
               0,
               -1
             ]
-          }
+          },
+          "additionalHitNodes": []
         }
       ],
       "paths": [
@@ -13721,25 +13910,77 @@
       "sceneStages": [
         {
           "id": "base",
-          "url": "assets/atlas-v82-rocket.glb",
+          "url": "assets/atlas-v83-rocket.glb",
           "required": true,
           "quality": "all"
         },
         {
           "id": "landscape",
-          "url": "assets/atlas-v82-rocket-landscape.glb",
+          "url": "assets/atlas-v83-rocket-landscape.glb",
           "required": false,
           "quality": "all"
         }
       ],
       "sharedResources": [
-        "assets/shared/02574b6c38d208d2cd2ebe7e.ktx2",
+        "assets/shared/08fde507974616792aa045b1.ktx2",
         "assets/shared/0a768451206e95b833258ed8.ktx2",
-        "assets/shared/1e01d91d0bb070b025860f37.ktx2",
-        "assets/shared/486b0d376be95dfe9bf00002.ktx2",
-        "assets/shared/a8c6b22760eb2a38ef602c89.ktx2",
-        "assets/shared/c8aa9c0fac740159992932a3.ktx2"
-      ]
+        "assets/shared/1e9ca5ba60f519b17ffc2bbb.ktx2",
+        "assets/shared/1ebf0d8ecabd19590aed1e97.ktx2",
+        "assets/shared/218efb36d0dab082f48f0786.ktx2",
+        "assets/shared/226a589e30fe3228eebcf4ed.ktx2",
+        "assets/shared/36129f097d53ec6c504d7eea.ktx2",
+        "assets/shared/388530a721548d62084c602c.ktx2",
+        "assets/shared/47998eedd7763bb8bccf982d.ktx2",
+        "assets/shared/4ad11e78591ab5aa2e40859e.ktx2",
+        "assets/shared/4bdb6692f7f812191d9e3d64.ktx2",
+        "assets/shared/53442d2b7c5115fe5677be23.ktx2",
+        "assets/shared/58484376b0e3635406a30716.ktx2",
+        "assets/shared/693f17d769a0736cf55ecd2d.ktx2",
+        "assets/shared/72c019b5a73b1fb6a691d2bc.ktx2",
+        "assets/shared/7e6ae4d5be389366c6e6b05e.ktx2",
+        "assets/shared/7f531cf9a6e2ccb8cb31694d.ktx2",
+        "assets/shared/7fa4ff599d38bee8f2ae33a7.ktx2",
+        "assets/shared/7fd78df03b460fa3885e5a0a.ktx2",
+        "assets/shared/8aba25a3f9c03e671b4c5eaf.ktx2",
+        "assets/shared/9a47b6deaf1e782b88a738b2.ktx2",
+        "assets/shared/a21b3868dad39b8bc1b3f387.ktx2",
+        "assets/shared/a2d45eb623a833885bd25783.ktx2",
+        "assets/shared/aa995c1cd813fb349d393515.ktx2",
+        "assets/shared/ae42020c7abaa007880f30f4.ktx2",
+        "assets/shared/ba4ec9ce3550cf21e634e14e.ktx2",
+        "assets/shared/bdfdd2c0f79054a39b5c0bdf.ktx2",
+        "assets/shared/c06ea3f3d478221afa5ab603.ktx2",
+        "assets/shared/cd0d2952aff2233a216ec453.ktx2",
+        "assets/shared/dacc8fa5ebec14092138eb4e.ktx2",
+        "assets/shared/eb1768677fe5da776843a18e.ktx2",
+        "assets/shared/edd7da6872aa95ca59b5080f.ktx2",
+        "assets/shared/f9576d32a1e06d3bd0949358.ktx2"
+      ],
+      "worldTransform": {
+        "translation": [
+          -60,
+          0,
+          -50
+        ],
+        "scale": 1
+      },
+      "freeFlight": {
+        "min": [
+          -235,
+          0.7,
+          -230
+        ],
+        "max": [
+          235,
+          180,
+          230
+        ]
+      },
+      "detailDistances": {
+        "load": 90,
+        "show": 80,
+        "cacheRegions": 2
+      }
     },
     {
       "id": "groot",
@@ -14054,7 +14295,7 @@
         ],
         "fovDegrees": 50
       },
-      "modelUrl": "assets/atlas-v82-groot.glb",
+      "modelUrl": "assets/atlas-v83-groot.glb",
       "collisionUrl": "assets/collision/groot.json",
       "mapImage": "assets/maps/groot.webp",
       "mapBounds": {
@@ -14586,7 +14827,14 @@
               3.48,
               13.685
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "groot-study-bench-0-part-0",
+            "groot-study-book-0-part-0",
+            "groot-study-book-0-part-1",
+            "groot-study-table-0-part-0",
+            "groot-study-tool-0-part-0"
+          ]
         },
         {
           "id": "pl_733ab0fb865d",
@@ -14662,7 +14910,14 @@
               5.8,
               -24.72
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "groot-study-bench-1-part-0",
+            "groot-study-book-1-part-0",
+            "groot-study-book-1-part-1",
+            "groot-study-table-1-part-0",
+            "groot-study-tool-1-part-0"
+          ]
         },
         {
           "id": "pl_d22facea740c",
@@ -14735,7 +14990,14 @@
               3.26,
               -0.95
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "groot-study-bench-2-part-0",
+            "groot-study-book-2-part-0",
+            "groot-study-book-2-part-1",
+            "groot-study-table-2-part-0",
+            "groot-study-tool-2-part-0"
+          ]
         },
         {
           "id": "pl_f7476857f05f",
@@ -14809,7 +15071,14 @@
               3.55,
               -11.4
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "groot-study-bench-3-part-0",
+            "groot-study-book-3-part-0",
+            "groot-study-book-3-part-1",
+            "groot-study-table-3-part-0",
+            "groot-study-tool-3-part-0"
+          ]
         },
         {
           "id": "pl_eb68f2c6f66d",
@@ -14884,7 +15153,14 @@
               3.36,
               -17.82
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "groot-study-bench-4-part-0",
+            "groot-study-book-4-part-0",
+            "groot-study-book-4-part-1",
+            "groot-study-table-4-part-0",
+            "groot-study-tool-4-part-0"
+          ]
         },
         {
           "id": "pl_c9b2366868f2",
@@ -14959,7 +15235,14 @@
               3.38,
               12.345
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "groot-study-bench-5-part-0",
+            "groot-study-book-5-part-0",
+            "groot-study-book-5-part-1",
+            "groot-study-table-5-part-0",
+            "groot-study-tool-5-part-0"
+          ]
         },
         {
           "id": "pl_c4d8c653205b",
@@ -15033,7 +15316,14 @@
               3.445,
               -5.2
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "groot-study-bench-6-part-0",
+            "groot-study-book-6-part-0",
+            "groot-study-book-6-part-1",
+            "groot-study-table-6-part-0",
+            "groot-study-tool-6-part-0"
+          ]
         }
       ],
       "subInteractions": [],
@@ -24320,27 +24610,80 @@
       "sceneStages": [
         {
           "id": "base",
-          "url": "assets/atlas-v82-groot.glb",
+          "url": "assets/atlas-v83-groot.glb",
           "required": true,
           "quality": "all"
         },
         {
           "id": "landscape",
-          "url": "assets/atlas-v82-groot-landscape.glb",
+          "url": "assets/atlas-v83-groot-landscape.glb",
           "required": false,
           "quality": "all"
         }
       ],
       "sharedResources": [
-        "assets/shared/02574b6c38d208d2cd2ebe7e.ktx2",
         "assets/shared/0a768451206e95b833258ed8.ktx2",
-        "assets/shared/1e01d91d0bb070b025860f37.ktx2",
-        "assets/shared/486b0d376be95dfe9bf00002.ktx2",
+        "assets/shared/1e9ca5ba60f519b17ffc2bbb.ktx2",
+        "assets/shared/1ebf0d8ecabd19590aed1e97.ktx2",
+        "assets/shared/1ef62b0480d09756cd3f9a52.ktx2",
+        "assets/shared/218efb36d0dab082f48f0786.ktx2",
+        "assets/shared/226a589e30fe3228eebcf4ed.ktx2",
+        "assets/shared/36129f097d53ec6c504d7eea.ktx2",
+        "assets/shared/388530a721548d62084c602c.ktx2",
+        "assets/shared/47998eedd7763bb8bccf982d.ktx2",
+        "assets/shared/4bdb6692f7f812191d9e3d64.ktx2",
+        "assets/shared/53442d2b7c5115fe5677be23.ktx2",
+        "assets/shared/58484376b0e3635406a30716.ktx2",
+        "assets/shared/72c019b5a73b1fb6a691d2bc.ktx2",
+        "assets/shared/7e6ae4d5be389366c6e6b05e.ktx2",
+        "assets/shared/7f531cf9a6e2ccb8cb31694d.ktx2",
+        "assets/shared/7fa4ff599d38bee8f2ae33a7.ktx2",
+        "assets/shared/7fd78df03b460fa3885e5a0a.ktx2",
+        "assets/shared/8aba25a3f9c03e671b4c5eaf.ktx2",
+        "assets/shared/9a47b6deaf1e782b88a738b2.ktx2",
+        "assets/shared/a21b3868dad39b8bc1b3f387.ktx2",
+        "assets/shared/a2d45eb623a833885bd25783.ktx2",
         "assets/shared/a6e63d974181911496019e13.ktx2",
-        "assets/shared/a8c6b22760eb2a38ef602c89.ktx2",
-        "assets/shared/c8aa9c0fac740159992932a3.ktx2",
-        "assets/shared/d512b5b609489c380999719a.ktx2"
-      ]
+        "assets/shared/aa995c1cd813fb349d393515.ktx2",
+        "assets/shared/ae42020c7abaa007880f30f4.ktx2",
+        "assets/shared/ba4ec9ce3550cf21e634e14e.ktx2",
+        "assets/shared/bc9316562357fec1f857fcfc.ktx2",
+        "assets/shared/bdfdd2c0f79054a39b5c0bdf.ktx2",
+        "assets/shared/c06ea3f3d478221afa5ab603.ktx2",
+        "assets/shared/cd0d2952aff2233a216ec453.ktx2",
+        "assets/shared/d36e84ede69fc274ab53d2d8.ktx2",
+        "assets/shared/d512b5b609489c380999719a.ktx2",
+        "assets/shared/dacc8fa5ebec14092138eb4e.ktx2",
+        "assets/shared/eb1768677fe5da776843a18e.ktx2",
+        "assets/shared/edd7da6872aa95ca59b5080f.ktx2",
+        "assets/shared/f1b8096aed6d21e79ddd88ab.ktx2",
+        "assets/shared/f9576d32a1e06d3bd0949358.ktx2"
+      ],
+      "worldTransform": {
+        "translation": [
+          55,
+          0,
+          -30
+        ],
+        "scale": 1
+      },
+      "freeFlight": {
+        "min": [
+          -235,
+          0.7,
+          -230
+        ],
+        "max": [
+          235,
+          180,
+          230
+        ]
+      },
+      "detailDistances": {
+        "load": 90,
+        "show": 80,
+        "cacheRegions": 2
+      }
     },
     {
       "id": "common",
@@ -24631,7 +24974,7 @@
         ],
         "fovDegrees": 50
       },
-      "modelUrl": "assets/atlas-v82-common.glb",
+      "modelUrl": "assets/atlas-v83-common.glb",
       "collisionUrl": "assets/collision/common.json",
       "mapImage": "assets/maps/common.webp",
       "mapBounds": {
@@ -25023,7 +25366,14 @@
               4.4,
               -4.35
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "common-study-bench-0-part-0",
+            "common-study-book-0-part-0",
+            "common-study-book-0-part-1",
+            "common-study-table-0-part-0",
+            "common-study-tool-0-part-0"
+          ]
         },
         {
           "id": "pl_b40426eb1052",
@@ -25106,7 +25456,14 @@
               3.26,
               2.05
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "common-study-bench-1-part-0",
+            "common-study-book-1-part-0",
+            "common-study-book-1-part-1",
+            "common-study-table-1-part-0",
+            "common-study-tool-1-part-0"
+          ]
         },
         {
           "id": "pl_630db00c2ff7",
@@ -25177,7 +25534,14 @@
               3.37,
               -13.3
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "common-study-bench-2-part-0",
+            "common-study-book-2-part-0",
+            "common-study-book-2-part-1",
+            "common-study-table-2-part-0",
+            "common-study-tool-2-part-0"
+          ]
         },
         {
           "id": "pl_bbc94a22312b",
@@ -25260,7 +25624,14 @@
               3.26,
               -14.95
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "common-study-bench-3-part-0",
+            "common-study-book-3-part-0",
+            "common-study-book-3-part-1",
+            "common-study-table-3-part-0",
+            "common-study-tool-3-part-0"
+          ]
         },
         {
           "id": "pl_85c13e74df90",
@@ -25343,7 +25714,14 @@
               3.26,
               9.05
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "common-study-bench-4-part-0",
+            "common-study-book-4-part-0",
+            "common-study-book-4-part-1",
+            "common-study-table-4-part-0",
+            "common-study-tool-4-part-0"
+          ]
         },
         {
           "id": "pl_552131f49d63",
@@ -25420,7 +25798,14 @@
               3.24,
               19.225
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "common-study-bench-5-part-0",
+            "common-study-book-5-part-0",
+            "common-study-book-5-part-1",
+            "common-study-table-5-part-0",
+            "common-study-tool-5-part-0"
+          ]
         }
       ],
       "subInteractions": [],
@@ -34285,25 +34670,78 @@
       "sceneStages": [
         {
           "id": "base",
-          "url": "assets/atlas-v82-common.glb",
+          "url": "assets/atlas-v83-common.glb",
           "required": true,
           "quality": "all"
         },
         {
           "id": "landscape",
-          "url": "assets/atlas-v82-common-landscape.glb",
+          "url": "assets/atlas-v83-common-landscape.glb",
           "required": false,
           "quality": "all"
         }
       ],
       "sharedResources": [
-        "assets/shared/02574b6c38d208d2cd2ebe7e.ktx2",
         "assets/shared/0a768451206e95b833258ed8.ktx2",
-        "assets/shared/1e01d91d0bb070b025860f37.ktx2",
-        "assets/shared/486b0d376be95dfe9bf00002.ktx2",
-        "assets/shared/a8c6b22760eb2a38ef602c89.ktx2",
-        "assets/shared/c8aa9c0fac740159992932a3.ktx2"
-      ]
+        "assets/shared/1e9ca5ba60f519b17ffc2bbb.ktx2",
+        "assets/shared/1ebf0d8ecabd19590aed1e97.ktx2",
+        "assets/shared/1ef62b0480d09756cd3f9a52.ktx2",
+        "assets/shared/218efb36d0dab082f48f0786.ktx2",
+        "assets/shared/226a589e30fe3228eebcf4ed.ktx2",
+        "assets/shared/36129f097d53ec6c504d7eea.ktx2",
+        "assets/shared/388530a721548d62084c602c.ktx2",
+        "assets/shared/47998eedd7763bb8bccf982d.ktx2",
+        "assets/shared/4bdb6692f7f812191d9e3d64.ktx2",
+        "assets/shared/53442d2b7c5115fe5677be23.ktx2",
+        "assets/shared/58484376b0e3635406a30716.ktx2",
+        "assets/shared/72c019b5a73b1fb6a691d2bc.ktx2",
+        "assets/shared/7e6ae4d5be389366c6e6b05e.ktx2",
+        "assets/shared/7f531cf9a6e2ccb8cb31694d.ktx2",
+        "assets/shared/7fa4ff599d38bee8f2ae33a7.ktx2",
+        "assets/shared/7fd78df03b460fa3885e5a0a.ktx2",
+        "assets/shared/8aba25a3f9c03e671b4c5eaf.ktx2",
+        "assets/shared/9a47b6deaf1e782b88a738b2.ktx2",
+        "assets/shared/a21b3868dad39b8bc1b3f387.ktx2",
+        "assets/shared/a2d45eb623a833885bd25783.ktx2",
+        "assets/shared/aa995c1cd813fb349d393515.ktx2",
+        "assets/shared/ae42020c7abaa007880f30f4.ktx2",
+        "assets/shared/ba4ec9ce3550cf21e634e14e.ktx2",
+        "assets/shared/bc9316562357fec1f857fcfc.ktx2",
+        "assets/shared/bdfdd2c0f79054a39b5c0bdf.ktx2",
+        "assets/shared/c06ea3f3d478221afa5ab603.ktx2",
+        "assets/shared/cd0d2952aff2233a216ec453.ktx2",
+        "assets/shared/d36e84ede69fc274ab53d2d8.ktx2",
+        "assets/shared/dacc8fa5ebec14092138eb4e.ktx2",
+        "assets/shared/eb1768677fe5da776843a18e.ktx2",
+        "assets/shared/edd7da6872aa95ca59b5080f.ktx2",
+        "assets/shared/f1b8096aed6d21e79ddd88ab.ktx2",
+        "assets/shared/f9576d32a1e06d3bd0949358.ktx2"
+      ],
+      "worldTransform": {
+        "translation": [
+          -55,
+          0,
+          55
+        ],
+        "scale": 1
+      },
+      "freeFlight": {
+        "min": [
+          -235,
+          0.7,
+          -230
+        ],
+        "max": [
+          235,
+          180,
+          230
+        ]
+      },
+      "detailDistances": {
+        "load": 90,
+        "show": 80,
+        "cacheRegions": 2
+      }
     },
     {
       "id": "atlas",
@@ -34570,7 +35008,7 @@
         ],
         "fovDegrees": 50
       },
-      "modelUrl": "assets/atlas-v82-atlas.glb",
+      "modelUrl": "assets/atlas-v83-atlas.glb",
       "collisionUrl": "assets/collision/atlas.json",
       "mapImage": "assets/maps/atlas.webp",
       "mapBounds": {
@@ -34899,7 +35337,16 @@
               3.627765,
               1.328978
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "atlas-study-bench-0-part-0",
+            "atlas-study-book-0-part-0",
+            "atlas-study-book-0-part-1",
+            "atlas-study-table-0-part-0",
+            "atlas-study-tool-0-part-0",
+            "atlas-study-tool-0-part-1",
+            "atlas-study-tool-0-part-2"
+          ]
         },
         {
           "id": "pl_43918f761413",
@@ -34974,7 +35421,16 @@
               3.55,
               7.9
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "atlas-study-bench-1-part-0",
+            "atlas-study-book-1-part-0",
+            "atlas-study-book-1-part-1",
+            "atlas-study-table-1-part-0",
+            "atlas-study-tool-1-part-0",
+            "atlas-study-tool-1-part-1",
+            "atlas-study-tool-1-part-2"
+          ]
         },
         {
           "id": "pl_88446a5c71ba",
@@ -35042,7 +35498,16 @@
               4.15,
               7.0865
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "atlas-study-bench-2-part-0",
+            "atlas-study-book-2-part-0",
+            "atlas-study-book-2-part-1",
+            "atlas-study-table-2-part-0",
+            "atlas-study-tool-2-part-0",
+            "atlas-study-tool-2-part-1",
+            "atlas-study-tool-2-part-2"
+          ]
         },
         {
           "id": "pl_db4b08d12e9e",
@@ -35110,7 +35575,16 @@
               3.35,
               5.65
             ]
-          }
+          },
+          "additionalHitNodes": [
+            "atlas-study-bench-3-part-0",
+            "atlas-study-book-3-part-0",
+            "atlas-study-book-3-part-1",
+            "atlas-study-table-3-part-0",
+            "atlas-study-tool-3-part-0",
+            "atlas-study-tool-3-part-1",
+            "atlas-study-tool-3-part-2"
+          ]
         }
       ],
       "subInteractions": [
@@ -35182,7 +35656,8 @@
               0.9,
               0.6
             ]
-          }
+          },
+          "additionalHitNodes": []
         },
         {
           "id": "atlas-model-groot",
@@ -35252,7 +35727,8 @@
               0.8,
               0.6
             ]
-          }
+          },
+          "additionalHitNodes": []
         },
         {
           "id": "atlas-model-common",
@@ -35322,7 +35798,8 @@
               1,
               0.6
             ]
-          }
+          },
+          "additionalHitNodes": []
         },
         {
           "id": "atlas-model-atlas",
@@ -35392,7 +35869,8 @@
               1.4,
               0.6
             ]
-          }
+          },
+          "additionalHitNodes": []
         }
       ],
       "paths": [
@@ -43072,25 +43550,77 @@
       "sceneStages": [
         {
           "id": "base",
-          "url": "assets/atlas-v82-atlas.glb",
+          "url": "assets/atlas-v83-atlas.glb",
           "required": true,
           "quality": "all"
         },
         {
           "id": "landscape",
-          "url": "assets/atlas-v82-atlas-landscape.glb",
+          "url": "assets/atlas-v83-atlas-landscape.glb",
           "required": false,
           "quality": "all"
         }
       ],
       "sharedResources": [
-        "assets/shared/02574b6c38d208d2cd2ebe7e.ktx2",
         "assets/shared/0a768451206e95b833258ed8.ktx2",
-        "assets/shared/1e01d91d0bb070b025860f37.ktx2",
-        "assets/shared/486b0d376be95dfe9bf00002.ktx2",
-        "assets/shared/a8c6b22760eb2a38ef602c89.ktx2",
-        "assets/shared/c8aa9c0fac740159992932a3.ktx2"
-      ]
+        "assets/shared/1e9ca5ba60f519b17ffc2bbb.ktx2",
+        "assets/shared/1ebf0d8ecabd19590aed1e97.ktx2",
+        "assets/shared/218efb36d0dab082f48f0786.ktx2",
+        "assets/shared/226a589e30fe3228eebcf4ed.ktx2",
+        "assets/shared/36129f097d53ec6c504d7eea.ktx2",
+        "assets/shared/388530a721548d62084c602c.ktx2",
+        "assets/shared/4077b02b8a6a6d5ae7962a69.ktx2",
+        "assets/shared/47998eedd7763bb8bccf982d.ktx2",
+        "assets/shared/4bdb6692f7f812191d9e3d64.ktx2",
+        "assets/shared/53442d2b7c5115fe5677be23.ktx2",
+        "assets/shared/58484376b0e3635406a30716.ktx2",
+        "assets/shared/72c019b5a73b1fb6a691d2bc.ktx2",
+        "assets/shared/7e6ae4d5be389366c6e6b05e.ktx2",
+        "assets/shared/7f531cf9a6e2ccb8cb31694d.ktx2",
+        "assets/shared/7fa4ff599d38bee8f2ae33a7.ktx2",
+        "assets/shared/7fd78df03b460fa3885e5a0a.ktx2",
+        "assets/shared/875185b73f4c5606b09a018f.ktx2",
+        "assets/shared/8aba25a3f9c03e671b4c5eaf.ktx2",
+        "assets/shared/9a47b6deaf1e782b88a738b2.ktx2",
+        "assets/shared/a0e015c090f106a262b53aee.ktx2",
+        "assets/shared/a21b3868dad39b8bc1b3f387.ktx2",
+        "assets/shared/a2d45eb623a833885bd25783.ktx2",
+        "assets/shared/aa995c1cd813fb349d393515.ktx2",
+        "assets/shared/ae42020c7abaa007880f30f4.ktx2",
+        "assets/shared/ba4ec9ce3550cf21e634e14e.ktx2",
+        "assets/shared/bdfdd2c0f79054a39b5c0bdf.ktx2",
+        "assets/shared/c06ea3f3d478221afa5ab603.ktx2",
+        "assets/shared/cd0d2952aff2233a216ec453.ktx2",
+        "assets/shared/dacc8fa5ebec14092138eb4e.ktx2",
+        "assets/shared/eb1768677fe5da776843a18e.ktx2",
+        "assets/shared/edd7da6872aa95ca59b5080f.ktx2",
+        "assets/shared/f9576d32a1e06d3bd0949358.ktx2"
+      ],
+      "worldTransform": {
+        "translation": [
+          42,
+          0,
+          65
+        ],
+        "scale": 1
+      },
+      "freeFlight": {
+        "min": [
+          -235,
+          0.7,
+          -230
+        ],
+        "max": [
+          235,
+          180,
+          230
+        ]
+      },
+      "detailDistances": {
+        "load": 90,
+        "show": 80,
+        "cacheRegions": 2
+      }
     }
   ]
 }

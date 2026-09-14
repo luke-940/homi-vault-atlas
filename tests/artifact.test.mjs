@@ -451,6 +451,7 @@ function modelFixture(island, change = () => {}) {
   const binary = Buffer.concat([positions,uv,Buffer.from([0,0,1,0,2,0,0,0])]);
   const places = island ? [...island.places,...island.subInteractions] : [];
   const leaves = places.flatMap((p,i)=>p.physicalPartIds.map((part,j)=>({name:`part_${i}_${j}`,mesh:0,extras:{atlasInstanceId:p.interactionAssetId,atlasPartId:part,interactionIds:[p.id]}})));
+  for(const p of places)for(const name of p.additionalHitNodes??[])leaves.push({name,mesh:0,extras:{atlasDecoration:true,interactionIds:[p.id]}});
   if(!leaves.length)leaves.push({name:'overview_surface',mesh:0});
   const document = {asset:{version:'2.0'},scene:0,scenes:[{nodes:[0]}],nodes:[{name:'island_root',children:leaves.map((_,i)=>i+1)},...leaves],meshes:[{primitives:[{attributes:{POSITION:0,TEXCOORD_0:1},indices:2,material:0}]}],materials:[{}],accessors:[{bufferView:0,componentType:5126,count:3,type:'VEC3',min:[0,0,0],max:[1,1,0]},{bufferView:1,componentType:5126,count:3,type:'VEC2'},{bufferView:2,componentType:5123,count:3,type:'SCALAR'}],bufferViews:[{buffer:0,byteOffset:0,byteLength:36},{buffer:0,byteOffset:36,byteLength:24},{buffer:0,byteOffset:60,byteLength:6}],buffers:[{byteLength:binary.length}]};
   change(document);

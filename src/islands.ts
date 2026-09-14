@@ -18,7 +18,7 @@ export type SelectionProxy =
 export interface KnowledgeObject {
   id: string; islandId: ProjectId; label: string; kind: 'derived' | 'guide';
   question: string; contentIds: string[]; parentId: string | null;
-  assetId: string; interactionAssetId: string; physicalPartIds: string[];
+  assetId: string; interactionAssetId: string; physicalPartIds: string[]; additionalHitNodes?:string[];
   assetOrigin: Vec3; foundationTopY: number; interactionAnchor: Vec3;
   cameraLookAt: Vec3; viewingPosition: Vec3; arrivalPose: CameraPose;
   actions: GuideAction[]; selectionProxy: SelectionProxy;
@@ -41,6 +41,9 @@ export interface IslandSpec {
   entryCamera: CameraPose; extent: number; modelUrl: string; collisionUrl: string;
   sceneStages?: { id: 'base'|'landscape'; url: string; required: boolean; quality: 'all' }[];
   sharedResources?: string[];
+  worldTransform?: {translation:Vec3;scale:1};
+  freeFlight?: Bounds3;
+  detailDistances?: {load:number;show:number;cacheRegions:2};
   mapImage: string; mapBounds: { minX: number; maxX: number; minZ: number; maxZ: number };
   limits: { polarAngleRadians: Vec2; distanceRangeMetres: Vec2; minEyeY: number; panInset: number; groundClearance: number };
   assets: IslandAsset[]; places: KnowledgeObject[]; subInteractions: KnowledgeObject[];

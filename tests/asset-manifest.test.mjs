@@ -5,7 +5,7 @@ import {validateAssetManifest} from '../scripts/asset-manifest.mjs';
 const sha=b=>createHash('sha256').update(b).digest('hex');
 function fixture(change=()=>{}){
  const body=Buffer.from('reviewed image fixture');
- const manifest={schema:'atlas.assets.v82',sources:[{id:'atlas-authored',license:'Atlas-project',notice:'licenses/assets-NOTICE.md'}],assets:[{path:'assets/map.webp',bytes:body.length,sha256:sha(body),stage:'map',quality:'all',dependencies:[],sourceIds:['atlas-authored']}]};
+ const manifest={schema:'atlas.assets.v83',sources:[{id:'atlas-authored',license:'Atlas-project',notice:'licenses/assets-NOTICE.md'}],assets:[{path:'assets/map.webp',bytes:body.length,sha256:sha(body),stage:'map',quality:'all',lod:'none',dependencies:[],sourceIds:['atlas-authored']}]};
  const files=[{path:'assets/map.webp',body},{path:'licenses/assets-NOTICE.md',body:Buffer.from('notice')}];
  change(manifest,files);files.push({path:'assets/asset-manifest.json',body:Buffer.from(JSON.stringify(manifest))});return files;
 }

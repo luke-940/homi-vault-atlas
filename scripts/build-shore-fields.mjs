@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import {deflateSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 const islands=JSON.parse(fs.readFileSync('public/data/islands.json')).islands;
-const anchors={rocket:[-8,-4],groot:[6,-1],common:[-7,7],atlas:[2,7]},scales={rocket:.12,groot:.13,common:.12,atlas:.12};
+const anchors={rocket:[-60,-50],groot:[55,-30],common:[-55,55],atlas:[42,65]},scales={rocket:1,groot:1,common:1,atlas:1};
 const inside=(x,z,p)=>{let yes=false;for(let i=0,j=p.length-1;i<p.length;j=i++){const a=p[i],b=p[j];if((a[1]>z)!==(b[1]>z)&&x<(b[0]-a[0])*(z-a[1])/(b[1]-a[1])+a[0])yes=!yes;}return yes;};
 const table=Array.from({length:256},(_,i)=>{for(let j=0;j<8;j++)i=i&1?0xedb88320^(i>>>1):i>>>1;return i>>>0;});
 const crc=b=>{let c=0xffffffff;for(const x of b)c=table[(c^x)&255]^(c>>>8);return(c^0xffffffff)>>>0;};
@@ -29,8 +29,8 @@ function filterRows(raw,side){
  return out;
 }
 fs.mkdirSync('public/assets/shores',{recursive:true});const records=[];
-for(const id of ['world',...islands.map(i=>i.id)]){
- const detail=id!=='world',extent=detail?65:35,side=512,rows=Buffer.alloc((side*4+1)*side);
+for(const id of ['v83-world']){
+ const detail=false,extent=256,side=1024,rows=Buffer.alloc((side*4+1)*side);
  const shapes=(detail?islands.filter(i=>i.id===id):islands).map(i=>{const s=detail?1:scales[i.id],off=detail?[0,0]:anchors[i.id],tr=p=>[p[0]*s+off[0],p[1]*s+off[1]];return {coast:i.coast.map(tr),exclusion:i.shoreline.dock.pierExclusionXZ.map(tr),s,shore:i.shoreline};});
  for(let y=0;y<side;y++)for(let x=0;x<side;x++){
   const px=((x+.5)/side*2-1)*extent,pz=((y+.5)/side*2-1)*extent;let nearest=24,width=.32,opacity=0,excluded=false;
